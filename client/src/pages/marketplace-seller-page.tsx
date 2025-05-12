@@ -17,7 +17,13 @@ import {
   ShoppingCart,
   Star,
   Tag,
-  BarChart3
+  BarChart3,
+  Clock,
+  CheckCircle,
+  Truck,
+  CreditCard,
+  AlertCircle,
+  XCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -30,7 +36,127 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Stepper } from "@/components/stepper";
 import { Product, Order } from "@shared/schema";
+
+// Helper to format order status
+const getOrderStatusDetails = (status: string) => {
+  switch (status) {
+    case "pending":
+      return {
+        label: "Payment Pending",
+        color: "bg-yellow-100 text-yellow-800",
+        icon: <Clock className="h-4 w-4" />
+      };
+    case "processing":
+      return {
+        label: "Processing",
+        color: "bg-blue-100 text-blue-800",
+        icon: <ShoppingCart className="h-4 w-4" />
+      };
+    case "shipped":
+      return {
+        label: "Shipped",
+        color: "bg-purple-100 text-purple-800",
+        icon: <Truck className="h-4 w-4" />
+      };
+    case "delivered":
+      return {
+        label: "Delivered",
+        color: "bg-green-100 text-green-800",
+        icon: <Package className="h-4 w-4" />
+      };
+    case "completed":
+      return {
+        label: "Completed",
+        color: "bg-green-100 text-green-800",
+        icon: <CheckCircle className="h-4 w-4" />
+      };
+    case "cancelled":
+      return {
+        label: "Cancelled",
+        color: "bg-red-100 text-red-800",
+        icon: <XCircle className="h-4 w-4" />
+      };
+    default:
+      return {
+        label: "Unknown",
+        color: "bg-gray-100 text-gray-800",
+        icon: <AlertCircle className="h-4 w-4" />
+      };
+  }
+};
+
+// Order status steps for the stepper component
+const orderSteps = [
+  {
+    title: "Order Placed",
+    description: "Order has been received",
+    icon: <ShoppingCart className="w-5 h-5" />
+  },
+  {
+    title: "Payment",
+    description: "Payment secured in escrow",
+    icon: <CreditCard className="w-5 h-5" />
+  },
+  {
+    title: "Processing",
+    description: "Preparing the order",
+    icon: <Package className="w-5 h-5" />
+  },
+  {
+    title: "Shipped",
+    description: "Order is on the way",
+    icon: <Truck className="w-5 h-5" />
+  },
+  {
+    title: "Delivered",
+    description: "Order has arrived",
+    icon: <Package className="w-5 h-5" />
+  },
+  {
+    title: "Completed",
+    description: "Payment released to seller",
+    icon: <CheckCircle className="w-5 h-5" />
+  }
+];
+
+// Helper to get current step index based on order status
+const getCurrentStepIndex = (status: string, hasPayment: boolean) => {
+  switch (status) {
+    case "pending":
+      return hasPayment ? 1 : 0;
+    case "processing":
+      return 2;
+    case "shipped":
+      return 3;
+    case "delivered":
+      return 4;
+    case "completed":
+      return 5;
+    case "cancelled":
+      return -1; // Special case for cancelled orders
+    default:
+      return 0;
+  }
+};
+
+// Allowed next statuses based on current status
+const getNextStatuses = (currentStatus: string): string[] => {
+  switch (currentStatus) {
+    case "pending":
+      return ["processing"];
+    case "processing":
+      return ["shipped", "cancelled"];
+    case "shipped":
+      return ["delivered", "cancelled"];
+    case "delivered":
+      return ["completed"];
+    default:
+      return [];
+  }
+};
 
 export default function MarketplaceSellerPage() {
   const [, navigate] = useLocation();
