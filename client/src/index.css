@@ -1,51 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Segoe+UI:wght@300;400;500;700&family=Open+Sans:wght@300;400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-      --background: 0 0% 100%;
---foreground: 20 14.3% 4.1%;
---muted: 60 4.8% 95.9%;
---muted-foreground: 25 5.3% 44.7%;
---popover: 0 0% 100%;
---popover-foreground: 20 14.3% 4.1%;
---card: 0 0% 100%;
---card-foreground: 20 14.3% 4.1%;
---border: 20 5.9% 90%;
---input: 20 5.9% 90%;
---primary: 207 90% 54%;
---primary-foreground: 211 100% 99%;
---secondary: 60 4.8% 95.9%;
---secondary-foreground: 24 9.8% 10%;
---accent: 60 4.8% 95.9%;
---accent-foreground: 24 9.8% 10%;
---destructive: 0 84.2% 60.2%;
---destructive-foreground: 60 9.1% 97.8%;
---ring: 20 14.3% 4.1%;
---radius: 0.5rem;
-  }
-  .dark {
-      --background: 240 10% 3.9%;
---foreground: 0 0% 98%;
---muted: 240 3.7% 15.9%;
---muted-foreground: 240 5% 64.9%;
---popover: 240 10% 3.9%;
---popover-foreground: 0 0% 98%;
---card: 240 10% 3.9%;
---card-foreground: 0 0% 98%;
---border: 240 3.7% 15.9%;
---input: 240 3.7% 15.9%;
---primary: 207 90% 54%;
---primary-foreground: 211 100% 99%;
---secondary: 240 3.7% 15.9%;
---secondary-foreground: 0 0% 98%;
---accent: 240 3.7% 15.9%;
---accent-foreground: 0 0% 98%;
---destructive: 0 62.8% 30.6%;
---destructive-foreground: 0 0% 98%;
---ring: 240 4.9% 83.9%;
---radius: 0.5rem;
-  }
+  /* Base colors from design spec */
+  --deep-blue: 210 100% 25%; /* #004080 */
+  --soft-yellow: 48 100% 50%; /* #ffcc00 */
+  --light-bg: 0 0% 98%; /* #f9f9f9 */
+  --primary-text: 0 0% 20%; /* #333333 */
+  --secondary-text: 0 0% 40%; /* #666666 */
+  --white: 0 0% 100%; /* #ffffff */
+
+  /* System variables */
+  --background: var(--light-bg);
+  --foreground: var(--primary-text);
+  --muted: 0 0% 96%; 
+  --muted-foreground: var(--secondary-text);
+  --popover: var(--white);
+  --popover-foreground: var(--primary-text);
+  --card: var(--white);
+  --card-foreground: var(--primary-text);
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --primary: var(--deep-blue);
+  --primary-foreground: var(--white);
+  --secondary: var(--light-bg);
+  --secondary-foreground: var(--deep-blue);
+  --accent: var(--soft-yellow);
+  --accent-foreground: var(--primary-text);
+  --destructive: 0 84% 60%;
+  --destructive-foreground: var(--white);
+  --ring: var(--deep-blue);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --deep-blue: 210 100% 30%; /* Brighter in dark mode */
+  --soft-yellow: 48 100% 50%; /* #ffcc00 */
+  --light-bg: 214 14% 10%; /* Dark background */
+  --primary-text: 0 0% 98%; /* Light text for dark mode */
+  --secondary-text: 0 0% 70%; /* Light secondary text */
+  --white: 214 14% 15%; /* Dark cards */
+
+  --background: var(--light-bg);
+  --foreground: var(--primary-text);
+  --muted: 214 14% 20%;
+  --muted-foreground: var(--secondary-text);
+  --popover: var(--white);
+  --popover-foreground: var(--primary-text);
+  --card: var(--white);
+  --card-foreground: var(--primary-text);
+  --border: 214 14% 25%;
+  --input: 214 14% 25%;
+  --primary: var(--deep-blue);
+  --primary-foreground: var(--white);
+  --secondary: 214 14% 7%;
+  --secondary-foreground: var(--white);
+  --accent: var(--soft-yellow);
+  --accent-foreground: 0 0% 10%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: var(--white);
+  --ring: var(--soft-yellow);
+  --radius: 0.5rem;
+}
 
 @layer base {
   * {
@@ -53,6 +72,56 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply antialiased bg-background text-foreground;
+    font-family: 'Roboto', 'Segoe UI', 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-foreground tracking-tight;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+
+  p {
+    @apply text-muted-foreground leading-relaxed;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-card rounded-lg shadow-sm border border-border;
+    border-radius: 8px;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground rounded font-medium transition-colors hover:bg-primary/90;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-primary border-primary border rounded font-medium transition-colors hover:bg-primary/10;
+  }
+
+  /* Navigation styles */
+  .nav-item {
+    @apply px-4 py-2 transition-colors font-medium;
+  }
+  
+  .nav-item.active {
+    @apply text-accent font-semibold;
+  }
+  
+  /* Form styles */
+  input, textarea, select {
+    @apply rounded-md border border-input px-3 py-2;
   }
 }
