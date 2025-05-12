@@ -483,15 +483,12 @@ export default function MarketplaceSellerPage() {
                       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-lg">Order #{order.id}</CardTitle>
-                          <Badge variant="outline" className={
-                            order.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                            order.status === "processing" ? "bg-blue-100 text-blue-800" :
-                            order.status === "shipped" ? "bg-purple-100 text-purple-800" :
-                            order.status === "delivered" ? "bg-green-100 text-green-800" :
-                            order.status === "completed" ? "bg-green-100 text-green-800" :
-                            "bg-red-100 text-red-800"
-                          }>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          {/* Use our helper function for consistent status styling */}
+                          <Badge variant="outline" className={getOrderStatusDetails(order.status).color}>
+                            <span className="flex items-center gap-1">
+                              {getOrderStatusDetails(order.status).icon}
+                              {getOrderStatusDetails(order.status).label}
+                            </span>
                           </Badge>
                         </div>
                         <div className="text-sm text-gray-500">
@@ -526,45 +523,54 @@ export default function MarketplaceSellerPage() {
                           </p>
                         </div>
                         <div className="flex flex-col items-end justify-between">
-                          <div className="text-lg font-bold">${order.total_amount.toFixed(2)}</div>
+                          <div className="text-lg font-bold">${parseFloat(order.total_amount).toFixed(2)}</div>
                           
-                          {/* Order Actions - only show status updates for specific statuses */}
+                          {/* Order Actions - Enhanced status update dropdown */}
                           <div className="flex gap-2 mt-2">
-                            {order.status === "pending" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleStatusUpdate(order.id, "processing")}
-                                disabled={updateOrderStatusMutation.isPending}
+                            {order.status !== "completed" && order.status !== "cancelled" && (
+                              <Select
+                                onValueChange={(value) => handleStatusUpdate(order.id, value)}
+                                disabled={updateOrderStatusMutation.isPending || getNextStatuses(order.status).length === 0}
                               >
-                                Mark as Processing
-                              </Button>
-                            )}
-                            
-                            {order.status === "processing" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleStatusUpdate(order.id, "shipped")}
-                                disabled={updateOrderStatusMutation.isPending}
-                              >
-                                Mark as Shipped
-                              </Button>
-                            )}
-                            
-                            {order.status === "shipped" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleStatusUpdate(order.id, "delivered")}
-                                disabled={updateOrderStatusMutation.isPending}
-                              >
-                                Mark as Delivered
-                              </Button>
+                                <SelectTrigger className="w-[180px]">
+                                  <SelectValue placeholder="Update status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {getNextStatuses(order.status).map((status) => (
+                                    <SelectItem key={status} value={status}>
+                                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             )}
                           </div>
                         </div>
                       </div>
+                      
+                      {/* Order Status Stepper */}
+                      {order.status !== 'cancelled' && (
+                        <div className="mt-6 border-t pt-4">
+                          <h4 className="font-medium mb-2">Order Progress</h4>
+                          <div className="ml-2">
+                            <Stepper 
+                              steps={orderSteps} 
+                              currentStep={getCurrentStepIndex(order.status, true)} // Assuming payment is made for seller view
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {order.status === 'cancelled' && (
+                        <div className="mt-6 border-t pt-4">
+                          <div className="flex items-center p-4 bg-red-50 rounded-lg">
+                            <XCircle className="h-5 w-5 text-red-500 mr-2" />
+                            <p className="text-red-700">
+                              This order has been cancelled.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
