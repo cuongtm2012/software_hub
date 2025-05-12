@@ -85,6 +85,16 @@ export function Header() {
                   Popular
                 </a>
               </Link>
+              <Link to="/projects">
+                <a className={`${location.startsWith('/projects') ? 'border-primary-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  Projects
+                </a>
+              </Link>
+              <Link to="/marketplace">
+                <a className={`${location.startsWith('/marketplace') ? 'border-primary-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  Marketplace
+                </a>
+              </Link>
             </nav>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -139,6 +149,31 @@ export function Header() {
                       <DropdownMenuItem onClick={() => navigate("/profile/reviews")}>
                         Your Reviews
                       </DropdownMenuItem>
+                      {user.role === 'developer' && (
+                        <>
+                          <DropdownMenuItem onClick={() => navigate("/projects/developer")}>
+                            My Projects
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate("/portfolio")}>
+                            My Portfolio
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {user.role === 'client' && (
+                        <DropdownMenuItem onClick={() => navigate("/projects/client")}>
+                          My Projects
+                        </DropdownMenuItem>
+                      )}
+                      {user.role === 'seller' && (
+                        <DropdownMenuItem onClick={() => navigate("/marketplace/seller")}>
+                          My Store
+                        </DropdownMenuItem>
+                      )}
+                      {user.role === 'buyer' && (
+                        <DropdownMenuItem onClick={() => navigate("/marketplace/orders")}>
+                          My Orders
+                        </DropdownMenuItem>
+                      )}
                       {user.role === 'admin' && (
                         <DropdownMenuItem onClick={() => navigate("/admin")}>
                           Admin Dashboard
@@ -191,6 +226,16 @@ export function Header() {
             <Link to="/?view=popular" onClick={closeMobileMenu}>
               <a className={`${location === '/?view=popular' ? 'bg-primary-50 border-primary-500 text-primary-700' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
                 Popular
+              </a>
+            </Link>
+            <Link to="/projects" onClick={closeMobileMenu}>
+              <a className={`${location.startsWith('/projects') ? 'bg-primary-50 border-primary-500 text-primary-700' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                Projects
+              </a>
+            </Link>
+            <Link to="/marketplace" onClick={closeMobileMenu}>
+              <a className={`${location.startsWith('/marketplace') ? 'bg-primary-50 border-primary-500 text-primary-700' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                Marketplace
               </a>
             </Link>
           </div>
@@ -279,6 +324,66 @@ export function Header() {
                 >
                   Your Reviews
                 </Button>
+                {user.role === 'developer' && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        navigate("/projects/developer");
+                        closeMobileMenu();
+                      }}
+                      className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                    >
+                      My Projects
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        navigate("/portfolio");
+                        closeMobileMenu();
+                      }}
+                      className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                    >
+                      My Portfolio
+                    </Button>
+                  </>
+                )}
+                {user.role === 'client' && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/projects/client");
+                      closeMobileMenu();
+                    }}
+                    className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  >
+                    My Projects
+                  </Button>
+                )}
+                {user.role === 'seller' && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/marketplace/seller");
+                      closeMobileMenu();
+                    }}
+                    className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  >
+                    My Store
+                  </Button>
+                )}
+                {user.role === 'buyer' && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/marketplace/orders");
+                      closeMobileMenu();
+                    }}
+                    className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  >
+                    My Orders
+                  </Button>
+                )}
                 {user.role === 'admin' && (
                   <Button
                     variant="ghost"
