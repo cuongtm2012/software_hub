@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { EscrowPayment } from "@/components/escrow-payment";
 import { Order } from "@shared/schema";
 
 // Helper to format order status
@@ -80,14 +81,22 @@ export default function MarketplaceOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Fetch orders
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ["/api/orders"],
+  const { data: orders = [], isLoading, refetch } = useQuery({
+    queryKey: ["/api/orders/buyer"],
+  });
+
+  // Fetch payments for orders
+  const { data: paymentsData } = useQuery({
+    queryKey: ["/api/payments"],
+    enabled: orders.length > 0,
   });
 
   // Complete order mutation
   const completeOrderMutation = useMutation({
     mutationFn: async (orderId: number) => {
-      return apiRequest("PATCH", `/api/orders/${orderId}/complete`, {});
+      return apiRequest("PUT", `/api/orders/${orderId}/status`, {
+        status: "completed"
+      });
     },
     onSuccess: () => {
       toast({
@@ -95,7 +104,7 @@ export default function MarketplaceOrdersPage() {
         description: "The order has been marked as completed.",
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/orders"],
+        queryKey: ["/api/orders/buyer"],
       });
     },
     onError: (error: Error) => {
@@ -112,9 +121,11 @@ export default function MarketplaceOrdersPage() {
     mutationFn: async () => {
       if (!selectedOrder) return;
       
-      return apiRequest("POST", `/api/products/${selectedOrder.product_id}/reviews`, {
+      return apiRequest("POST", "/api/product-reviews", {
+        order_id: selectedOrder.id,
+        product_id: selectedOrder.product_id,
         rating,
-        content: reviewContent
+        comment: reviewContent
       });
     },
     onSuccess: () => {
@@ -127,7 +138,7 @@ export default function MarketplaceOrdersPage() {
       
       // Refresh orders
       queryClient.invalidateQueries({
-        queryKey: ["/api/orders"],
+        queryKey: ["/api/orders/buyer"],
       });
     },
     onError: (error: Error) => {
@@ -161,6 +172,15 @@ export default function MarketplaceOrdersPage() {
     }
     reviewProductMutation.mutate();
   };
+
+  // Add payments to orders
+  const ordersWithPayments = orders.map((order: Order) => {
+    const orderPayments = paymentsData?.filter((payment: any) => payment.order_id === order.id) || [];
+    return {
+      ...order,
+      payments: orderPayments
+    };
+  });
 
   return (
     <Layout>
@@ -214,133 +234,141 @@ export default function MarketplaceOrdersPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {orders.map((order: Order) => {
+          <div className="space-y-6">
+            {ordersWithPayments.map((order: Order) => {
               const statusDetails = getOrderStatusDetails(order.status);
               
               return (
-                <Card key={order.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg">Order #{order.id}</CardTitle>
-                        <Badge variant="outline" className={`${statusDetails.color} flex items-center gap-1`}>
-                          {statusDetails.icon}
-                          {statusDetails.label}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Ordered on {new Date(order.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col md:flex-row gap-4 mt-2">
-                      <div className="h-24 w-24 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
-                        {order.product_image ? (
-                          <img
-                            src={order.product_image}
-                            alt={order.product_name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <Package className="h-10 w-10 text-gray-400" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <Link href={`/marketplace/product/${order.product_id}`}>
-                          <h3 className="font-medium text-lg hover:text-primary">
-                            {order.product_name}
-                          </h3>
-                        </Link>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Quantity: {order.quantity}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Seller: {order.seller_name}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end justify-between">
-                        <div className="text-lg font-bold">${order.total_amount.toFixed(2)}</div>
-                        <div className="flex gap-2 mt-2">
-                          {(order.status === "delivered") && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleCompleteOrder(order.id)}
-                              disabled={completeOrderMutation.isPending}
-                            >
-                              <ThumbsUp className="h-4 w-4 mr-1" />
-                              Confirm Receipt
-                            </Button>
-                          )}
-
-                          {(order.status === "completed" && !order.has_review) && (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleOpenReview(order)}
-                                >
-                                  <Star className="h-4 w-4 mr-1" />
-                                  Write Review
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Review {order.product_name}</DialogTitle>
-                                </DialogHeader>
-                                <form onSubmit={handleSubmitReview}>
-                                  <div className="py-4">
-                                    <div className="mb-4">
-                                      <div className="flex items-center mb-2">
-                                        <span className="mr-2">Rating:</span>
-                                        <div className="flex">
-                                          {Array(5).fill(0).map((_, i) => (
-                                            <Star 
-                                              key={i}
-                                              className={`h-6 w-6 cursor-pointer ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
-                                              onClick={() => setRating(i + 1)}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="mb-4">
-                                      <Textarea
-                                        placeholder="Share your thoughts about this product..."
-                                        value={reviewContent}
-                                        onChange={(e) => setReviewContent(e.target.value)}
-                                        rows={5}
-                                        required
-                                      />
-                                    </div>
-                                  </div>
-                                  <DialogFooter>
-                                    <Button 
-                                      type="submit"
-                                      disabled={reviewProductMutation.isPending || !reviewContent.trim()}
-                                    >
-                                      {reviewProductMutation.isPending ? "Submitting..." : "Submit Review"}
-                                    </Button>
-                                  </DialogFooter>
-                                </form>
-                              </DialogContent>
-                            </Dialog>
-                          )}
-
-                          {order.has_review && (
-                            <Badge variant="outline" className="bg-green-100 text-green-800">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Reviewed
-                            </Badge>
-                          )}
+                <div key={order.id} className="space-y-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">Order #{order.id}</CardTitle>
+                          <Badge variant="outline" className={`${statusDetails.color} flex items-center gap-1`}>
+                            {statusDetails.icon}
+                            {statusDetails.label}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Ordered on {new Date(order.created_at).toLocaleDateString()}
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col md:flex-row gap-4 mt-2">
+                        <div className="h-24 w-24 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                          {order.product_image ? (
+                            <img
+                              src={order.product_image}
+                              alt={order.product_name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <Package className="h-10 w-10 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <Link href={`/marketplace/product/${order.product_id}`}>
+                            <h3 className="font-medium text-lg hover:text-primary">
+                              {order.product_name}
+                            </h3>
+                          </Link>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Quantity: {order.quantity}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Seller: {order.seller_name}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end justify-between">
+                          <div className="text-lg font-bold">${order.total_amount.toFixed(2)}</div>
+                          <div className="flex gap-2 mt-2">
+                            {(order.status === "delivered") && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCompleteOrder(order.id)}
+                                disabled={completeOrderMutation.isPending}
+                              >
+                                <ThumbsUp className="h-4 w-4 mr-1" />
+                                Confirm Receipt
+                              </Button>
+                            )}
+
+                            {(order.status === "completed" && !order.has_review) && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleOpenReview(order)}
+                                  >
+                                    <Star className="h-4 w-4 mr-1" />
+                                    Write Review
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Review {order.product_name}</DialogTitle>
+                                  </DialogHeader>
+                                  <form onSubmit={handleSubmitReview}>
+                                    <div className="py-4">
+                                      <div className="mb-4">
+                                        <div className="flex items-center mb-2">
+                                          <span className="mr-2">Rating:</span>
+                                          <div className="flex">
+                                            {Array(5).fill(0).map((_, i) => (
+                                              <Star 
+                                                key={i}
+                                                className={`h-6 w-6 cursor-pointer ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
+                                                onClick={() => setRating(i + 1)}
+                                              />
+                                            ))}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="mb-4">
+                                        <Textarea
+                                          placeholder="Share your thoughts about this product..."
+                                          value={reviewContent}
+                                          onChange={(e) => setReviewContent(e.target.value)}
+                                          rows={5}
+                                          required
+                                        />
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <Button 
+                                        type="submit"
+                                        disabled={reviewProductMutation.isPending || !reviewContent.trim()}
+                                      >
+                                        {reviewProductMutation.isPending ? "Submitting..." : "Submit Review"}
+                                      </Button>
+                                    </DialogFooter>
+                                  </form>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+
+                            {order.has_review && (
+                              <Badge variant="outline" className="bg-green-100 text-green-800">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Reviewed
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Payment and Escrow Section */}
+                  <EscrowPayment 
+                    order={order} 
+                    onPaymentComplete={() => refetch()}
+                  />
+                </div>
               );
             })}
           </div>
