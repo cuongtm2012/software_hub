@@ -731,6 +731,21 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(orders.id, id))
       .returning();
+    
+    // If the order is marked as completed, update any pending payments
+    if (status === 'completed') {
+      await db
+        .update(payments)
+        .set({ 
+          status: 'completed',
+          escrow_release: true 
+        })
+        .where(and(
+          eq(payments.order_id, id),
+          eq(payments.status, 'pending')
+        ));
+    }
+    
     return updatedOrder;
   }
 
@@ -766,16 +781,28 @@ export class DatabaseStorage implements IStorage {
     
     const order = await this.getOrderById(payment.order_id);
     
-    if (!order || order.buyer_id !== buyerId) {
+    // Check if the order belongs to this buyer and is in a state where escrow can be released
+    // Escrow can only be released if the order is in "delivered" or "completed" status
+    if (!order || 
+        order.buyer_id !== buyerId || 
+        (order.status !== 'delivered' && order.status !== 'completed')) {
       return undefined;
     }
     
     // Release the escrow
     const [updatedPayment] = await db
       .update(payments)
-      .set({ escrow_release: true })
+      .set({ 
+        escrow_release: true,
+        status: 'completed' 
+      })
       .where(eq(payments.id, id))
       .returning();
+    
+    // If the payment was successfully released, update the order to completed status
+    if (updatedPayment && order.status !== 'completed') {
+      await this.updateOrderStatus(order.id, 'completed');
+    }
     
     return updatedPayment;
   }

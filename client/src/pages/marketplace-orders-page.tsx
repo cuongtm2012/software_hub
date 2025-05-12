@@ -16,13 +16,15 @@ import {
   ShoppingBag,
   ThumbsUp,
   XCircle,
-  Star
+  Star,
+  CreditCard
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { EscrowPayment } from "@/components/escrow-payment";
+import { Stepper, Step } from "@/components/stepper";
 import { Order } from "@shared/schema";
 
 // Helper to format order status
@@ -70,6 +72,60 @@ const getOrderStatusDetails = (status: string) => {
         color: "bg-gray-100 text-gray-800",
         icon: <AlertCircle className="h-4 w-4" />
       };
+  }
+};
+
+// Order status steps for the stepper component
+const orderSteps = [
+  {
+    title: "Order Placed",
+    description: "Your order has been received",
+    icon: <ShoppingBag className="w-5 h-5" />
+  },
+  {
+    title: "Payment",
+    description: "Payment secured in escrow",
+    icon: <CreditCard className="w-5 h-5" />
+  },
+  {
+    title: "Processing",
+    description: "Seller is preparing your order",
+    icon: <Package className="w-5 h-5" />
+  },
+  {
+    title: "Shipped",
+    description: "Your order is on the way",
+    icon: <Truck className="w-5 h-5" />
+  },
+  {
+    title: "Delivered",
+    description: "Order has arrived",
+    icon: <Package className="w-5 h-5" />
+  },
+  {
+    title: "Completed",
+    description: "Payment released to seller",
+    icon: <CheckCircle className="w-5 h-5" />
+  }
+];
+
+// Helper to get current step index based on order status
+const getCurrentStepIndex = (status: string, hasPayment: boolean) => {
+  switch (status) {
+    case "pending":
+      return hasPayment ? 1 : 0;
+    case "processing":
+      return 2;
+    case "shipped":
+      return 3;
+    case "delivered":
+      return 4;
+    case "completed":
+      return 5;
+    case "cancelled":
+      return -1; // Special case for cancelled orders
+    default:
+      return 0;
   }
 };
 
@@ -360,6 +416,30 @@ export default function MarketplaceOrdersPage() {
                           </div>
                         </div>
                       </div>
+                      
+                      {/* Order Status Stepper */}
+                      {order.status !== 'cancelled' && (
+                        <div className="mt-6 border-t pt-4">
+                          <h4 className="font-medium mb-4">Order Status</h4>
+                          <div className="ml-4">
+                            <Stepper 
+                              steps={orderSteps} 
+                              currentStep={getCurrentStepIndex(order.status, !!order.payments?.length)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {order.status === 'cancelled' && (
+                        <div className="mt-6 border-t pt-4">
+                          <div className="flex items-center p-4 bg-red-50 rounded-lg">
+                            <XCircle className="h-5 w-5 text-red-500 mr-2" />
+                            <p className="text-red-700">
+                              This order has been cancelled. If you have any questions, please contact customer support.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 

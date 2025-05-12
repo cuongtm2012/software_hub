@@ -131,9 +131,20 @@ export function EscrowPayment({ order, onPaymentComplete }: EscrowPaymentProps) 
                     <span className="font-medium">Amount:</span>
                     <span className="font-bold">${order.total_amount.toFixed(2)}</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 p-4 bg-gray-50 rounded-lg">
-                    <Lock className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-gray-600">
+                  
+                  <div className="flex flex-col gap-3 p-4 bg-gray-50 rounded-lg mb-4">
+                    <h4 className="font-semibold text-sm">How Escrow Payments Work:</h4>
+                    <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-600">
+                      <li>Your payment is securely held in escrow, not released to the seller yet</li>
+                      <li>The seller prepares and ships your order</li>
+                      <li>Once you receive and approve the product, you release the payment</li>
+                      <li>If there are issues, our support team can help mediate</li>
+                    </ol>
+                  </div>
+                  
+                  <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <Lock className="h-5 w-5 text-blue-500" />
+                    <span className="text-sm text-blue-700">
                       Your payment is secure. Funds will only be released when you confirm receipt.
                     </span>
                   </div>
