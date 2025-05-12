@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { 
   ShoppingCart, 
   Tag, 
@@ -16,12 +21,32 @@ import {
   User, 
   CheckCircle,
   XCircle,
-  MessageSquare
+  MessageSquare,
+  Truck
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Product, ProductReview } from "@shared/schema";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogTrigger,
+  DialogClose
+} from "@/components/ui/dialog";
+
+// Define the shipping form schema
+const shippingFormSchema = z.object({
+  address: z.string().min(5, { message: "Address must be at least 5 characters" }),
+  city: z.string().min(2, { message: "City is required" }),
+  postal_code: z.string().min(2, { message: "Postal code is required" }),
+  country: z.string().min(2, { message: "Country is required" })
+});
+
+type ShippingFormValues = z.infer<typeof shippingFormSchema>;
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +56,18 @@ export default function ProductDetailPage() {
   const { toast } = useToast();
   const [reviewContent, setReviewContent] = useState("");
   const [rating, setRating] = useState(5);
+  const [showShippingDialog, setShowShippingDialog] = useState(false);
+  
+  // Initialize shipping form
+  const shippingForm = useForm<ShippingFormValues>({
+    resolver: zodResolver(shippingFormSchema),
+    defaultValues: {
+      address: "",
+      city: "",
+      postal_code: "",
+      country: ""
+    }
+  });
 
   // Fetch product details
   const { 
@@ -53,22 +90,35 @@ export default function ProductDetailPage() {
 
   // Create order mutation
   const createOrderMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (shippingData: ShippingFormValues) => {
+      if (!product) return;
+      
       return apiRequest("POST", "/api/orders", { 
-        productId, 
-        quantity: 1
+        order: {
+          total_amount: product.price,
+          shipping_info: shippingData
+        },
+        items: [
+          {
+            product_id: productId,
+            quantity: 1,
+            price: product.price
+          }
+        ]
       });
     },
     onSuccess: () => {
       toast({
-        title: "Product purchased",
-        description: "Your order has been placed successfully!",
+        title: "Order created",
+        description: "Your order has been placed successfully! Please proceed to payment.",
       });
+      setShowShippingDialog(false);
+      shippingForm.reset();
       navigate("/marketplace/orders");
     },
     onError: (error: Error) => {
       toast({
-        title: "Purchase failed",
+        title: "Order creation failed",
         description: error.message,
         variant: "destructive",
       });
@@ -126,7 +176,12 @@ export default function ProductDetailPage() {
       return;
     }
     
-    createOrderMutation.mutate();
+    // Open shipping form dialog
+    setShowShippingDialog(true);
+  };
+  
+  const handleShippingSubmit = (data: ShippingFormValues) => {
+    createOrderMutation.mutate(data);
   };
 
   const handleSubmitReview = (e: React.FormEvent) => {
@@ -249,6 +304,107 @@ export default function ProductDetailPage() {
                 </>
               )}
             </Button>
+            
+            {/* Shipping Info Dialog */}
+            <Dialog open={showShippingDialog} onOpenChange={setShowShippingDialog}>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Shipping Information</DialogTitle>
+                </DialogHeader>
+                
+                <Form {...shippingForm}>
+                  <form onSubmit={shippingForm.handleSubmit(handleShippingSubmit)} className="space-y-4 py-4">
+                    <FormField
+                      control={shippingForm.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Street Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="123 Main St" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={shippingForm.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input placeholder="New York" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={shippingForm.control}
+                        name="postal_code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Postal Code</FormLabel>
+                            <FormControl>
+                              <Input placeholder="10001" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={shippingForm.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <FormControl>
+                              <Input placeholder="United States" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center p-4 border rounded-lg bg-blue-50">
+                      <Truck className="h-5 w-5 mr-2 text-blue-500" />
+                      <p className="text-sm text-blue-700">
+                        Your order will be delivered within 3-5 business days
+                      </p>
+                    </div>
+                    
+                    <DialogFooter className="pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowShippingDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit"
+                        disabled={createOrderMutation.isPending}
+                      >
+                        {createOrderMutation.isPending ? (
+                          <>
+                            <Skeleton className="h-4 w-4 rounded-full animate-spin mr-2" />
+                            Processing...
+                          </>
+                        ) : (
+                          'Place Order'
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
