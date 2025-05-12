@@ -65,13 +65,13 @@ export function Header() {
               </Link>
             </div>
             <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
-              <Link to="/" className={`${location === '/' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
+              <Link to="/" className={`${location === '/' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2 whitespace-nowrap`}>
                 Home
               </Link>
-              <Link to="/projects" className={`${location.startsWith('/projects') ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
+              <Link to="/projects" className={`${location.startsWith('/projects') ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2 whitespace-nowrap`}>
                 IT services
               </Link>
-              <Link to="/marketplace" className={`${location.startsWith('/marketplace') ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
+              <Link to="/marketplace" className={`${location.startsWith('/marketplace') ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2 whitespace-nowrap`}>
                 Marketplace
               </Link>
             </nav>
@@ -187,13 +187,13 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="sm:hidden">
           <div className="pt-2 pb-3 space-y-1">
-            <Link to="/" onClick={closeMobileMenu} className={`${location === '/' ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+            <Link to="/" onClick={closeMobileMenu} className={`${location === '/' ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
               Home
             </Link>
-            <Link to="/projects" onClick={closeMobileMenu} className={`${location.startsWith('/projects') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+            <Link to="/projects" onClick={closeMobileMenu} className={`${location.startsWith('/projects') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
               IT services
             </Link>
-            <Link to="/marketplace" onClick={closeMobileMenu} className={`${location.startsWith('/marketplace') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+            <Link to="/marketplace" onClick={closeMobileMenu} className={`${location.startsWith('/marketplace') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
               Marketplace
             </Link>
           </div>
