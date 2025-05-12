@@ -19,12 +19,17 @@ import {
   Download, 
   Heart, 
   Star,
-  Monitor
+  Monitor,
+  LayoutGrid,
+  Users,
+  TrendingUp,
+  ArrowRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StarRating } from "@/components/ui/star-rating";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));

@@ -1,0 +1,51 @@
+Please refactor the current SoftwareHub homepage UI according to the following detailed design and UX requirements:
+1. General Design Style
+•	Adopt a modern, minimalist design with a clean and user-friendly interface.
+•	Use the primary color palette:
+•	Deep Blue (#004080) for navbar and primary buttons.
+•	Soft Yellow (#ffcc00) as accent/highlight color for active menu items and hover states.
+•	Light background (#f9f9f9 or white) for main content areas.
+•	Use easy-to-read sans-serif fonts such as "Segoe UI", "Roboto", or "Open Sans."
+•	Use simple, clear icons from libraries like FontAwesome or Material Icons.
+2. Header (Navigation Bar)
+•	Fixed top navbar with:
+•	Left-aligned logo (clickable, links to Home).
+•	Main menu with three items: Home | Projects | Marketplace.
+•	Right-aligned user icon with dropdown menu for account management (Profile, Logout).
+•	Navbar should have subtle scroll effects (background color change or shadow).
+3. Homepage Body Layout
+•	Divide the body into clear card sections with consistent padding and spacing:
+•	Categories: Display software categories with icons or representative images in a horizontal filter bar.
+•	Latest Software: Show newest software in a grid layout with cards (image, name, description, rating, version, and download button).
+•	Popular Software: Show most popular software similarly in a grid or list.
+•	Each card should have a white background, 8px rounded corners, subtle shadow, and clear typography hierarchy (title bold and larger than description).
+•	Include "View All" buttons below each section to navigate to full lists.
+Display 6 software cards per row horizontally (6 columns).
+•	Display 4 rows vertically on the page, making a total of 24 cards visible per page.
+•	Implement pagination controls below the card grid to navigate between pages of software listings.
+•	Pagination should be user-friendly with clear page numbers and next/previous buttons.
+•	The grid layout must be fully responsive:
+•	On smaller screens, reduce the number of columns appropriately (e.g., 2-3 columns on tablets, 1 column on mobile) while maintaining the 4-row vertical structure if possible.
+•	Cards should maintain consistent size and spacing to fill the row evenly.
+
+4. Filters & Search
+•	Provide filters for OS platforms (All, Windows, Mac, Linux, Android, iOS) above software listings.
+•	Include a search input with placeholder "Search software..." in the header.
+•	Provide toggle buttons to switch between grid and list views.
+5. Footer
+•	Dark blue background (#004080) with white text.
+•	Include site branding, navigation links (Home, Categories, Popular, Latest), and legal links (Privacy Policy, Terms of Service, Contact Us).
+•	Footer content arranged clearly and spaced evenly.
+6. UX Considerations
+•	Fast load times and prioritization of main content.
+•	Clear, unobtrusive notifications for actions like downloads or errors.
+•	Hover effects on buttons and interactive elements should be smooth and consistent.
+•	Accessibility: ensure sufficient color contrast and readable font sizes.
+7. Additional Notes
+•	Use consistent spacing and alignment throughout the page.
+•	Ensure all interactive elements are keyboard accessible.
+•	Implement appropriate alt text for images and icons.
+
+
+Additional Layout & Pagination Requirements
+

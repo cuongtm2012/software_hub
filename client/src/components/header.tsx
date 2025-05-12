@@ -53,25 +53,25 @@ export function Header() {
   };
 
   return (
-    <header className="bg-background shadow-sm border-b border-border">
+    <header className="bg-[#004080] text-white shadow-sm sticky top-0 z-50 transition-shadow duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/">
                 <span className="font-bold text-xl cursor-pointer">
-                  <span className="text-primary">Software</span><span className="text-accent">Hub</span>
+                  <span className="text-white">Software</span><span className="text-[#ffcc00]">Hub</span>
                 </span>
               </Link>
             </div>
             <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
-              <Link to="/" className={`${location === '/' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2 whitespace-nowrap`}>
+              <Link to="/" className={`${location === '/' ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
                 Home
               </Link>
-              <Link to="/projects" className={`${location.startsWith('/projects') ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2 whitespace-nowrap`}>
-                IT services
+              <Link to="/projects" className={`${location.startsWith('/projects') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
+                Projects
               </Link>
-              <Link to="/marketplace" className={`${location.startsWith('/marketplace') ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2 whitespace-nowrap`}>
+              <Link to="/marketplace" className={`${location.startsWith('/marketplace') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
                 Marketplace
               </Link>
             </nav>
@@ -79,15 +79,15 @@ export function Header() {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <form className="relative" onSubmit={handleSearch}>
               <Input
-                className="w-64 rounded-full bg-muted border-border py-2 pl-4 pr-10 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:bg-background focus-visible:outline-none"
+                className="w-64 rounded-md bg-white border-gray-300 py-2 pl-10 pr-4 placeholder:text-gray-500 text-gray-900 focus-visible:ring-2 focus-visible:ring-[#ffcc00] focus-visible:border-[#ffcc00] focus-visible:outline-none"
                 placeholder="Search software..."
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <button type="submit" className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <Search className="h-5 w-5 text-muted-foreground" />
-              </button>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" />
+              </div>
             </form>
             
             {!user ? (
