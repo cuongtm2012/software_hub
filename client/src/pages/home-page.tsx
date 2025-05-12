@@ -339,74 +339,107 @@ export default function HomePage() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
       
-      <main className="flex-grow">
-        {/* Software for All Operating Systems Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="border-b border-gray-200 pb-4">
-            <h1 className="text-xl font-bold text-gray-900">Software for All Operating Systems</h1>
-            <p className="text-sm text-gray-500 mt-1">Browse our collection of software, apps, and games</p>
-          </div>
-          
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center py-4 space-y-4 md:space-y-0">
-            {/* OS Filter Tabs */}
-            <Tabs 
-              value={currentTab} 
-              onValueChange={handleTabChange}
-              className="w-full md:w-auto"
-            >
-              <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                <TabsTrigger value="all" className="text-xs px-2">All</TabsTrigger>
-                <TabsTrigger value="windows" className="text-xs px-2">Windows</TabsTrigger>
-                <TabsTrigger value="mac" className="text-xs px-2">Mac</TabsTrigger>
-                <TabsTrigger value="linux" className="text-xs px-2">Linux</TabsTrigger>
-                <TabsTrigger value="android" className="text-xs px-2">Android</TabsTrigger>
-                <TabsTrigger value="ios" className="text-xs px-2">iOS</TabsTrigger>
-              </TabsList>
-            </Tabs>
+      <main className="flex-grow pt-16">
+        {/* Category filter bar */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-[#004080]">Categories</h2>
+              <Button variant="link" className="text-[#004080] font-medium text-sm flex items-center">
+                View All <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
             
-            {/* Filters & View Toggle */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1">
-                <Button variant="outline" size="sm" className="text-xs py-1 h-8">
-                  Filters
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-4">
+              {[
+                { icon: <LayoutGrid className="h-5 w-5" />, name: "All Software" },
+                { icon: <Monitor className="h-5 w-5" />, name: "Utilities" },
+                { icon: <Download className="h-5 w-5" />, name: "Media" },
+                { icon: <Users className="h-5 w-5" />, name: "Communication" },
+                { icon: <TrendingUp className="h-5 w-5" />, name: "Business" },
+                { icon: <Star className="h-5 w-5" />, name: "Games" },
+              ].map((category, index) => (
+                <Button 
+                  key={index} 
+                  variant="outline" 
+                  className={`flex items-center justify-center py-3 px-4 rounded-lg border border-gray-200 hover:border-[#ffcc00] hover:bg-white ${
+                    index === 0 ? 'bg-[#004080] text-white hover:bg-[#004080] hover:text-white' : 'bg-white text-gray-700'
+                  }`}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <span className="mb-1">{category.icon}</span>
+                    <span className="text-xs font-medium">{category.name}</span>
+                  </div>
                 </Button>
-                
-                <div className="flex border border-gray-200 rounded-md">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSoftwareView("grid")}
-                    className={`p-1 rounded-l-md h-8 ${
-                      softwareView === "grid" ? "bg-gray-100" : ""
-                    }`}
-                  >
-                    <Grid className="h-4 w-4" />
-                    <span className="sr-only">Grid view</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSoftwareView("list")}
-                    className={`p-1 rounded-r-md h-8 ${
-                      softwareView === "list" ? "bg-gray-100" : ""
-                    }`}
-                  >
-                    <List className="h-4 w-4" />
-                    <span className="sr-only">List view</span>
-                  </Button>
-                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* Main content area */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* OS Filter and view options */}
+          <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-bold text-gray-900 mr-4">Latest Software</h2>
+              
+              {/* OS Filter Tabs */}
+              <Tabs 
+                value={currentTab} 
+                onValueChange={handleTabChange}
+                className="flex-grow-0"
+              >
+                <TabsList className="bg-gray-100 p-1 rounded-md">
+                  <TabsTrigger value="all" className="text-xs px-3 py-1 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#004080] data-[state=active]:shadow-sm">All</TabsTrigger>
+                  <TabsTrigger value="windows" className="text-xs px-3 py-1 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#004080] data-[state=active]:shadow-sm">Windows</TabsTrigger>
+                  <TabsTrigger value="mac" className="text-xs px-3 py-1 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#004080] data-[state=active]:shadow-sm">Mac</TabsTrigger>
+                  <TabsTrigger value="linux" className="text-xs px-3 py-1 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#004080] data-[state=active]:shadow-sm">Linux</TabsTrigger>
+                  <TabsTrigger value="android" className="text-xs px-3 py-1 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#004080] data-[state=active]:shadow-sm">Android</TabsTrigger>
+                  <TabsTrigger value="ios" className="text-xs px-3 py-1 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#004080] data-[state=active]:shadow-sm">iOS</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            
+            {/* View toggle */}
+            <div className="flex items-center">
+              <div className="text-sm text-gray-500 mr-4">
+                View:
+              </div>
+              <div className="flex border border-gray-200 rounded-md">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSoftwareView("grid")}
+                  className={`p-2 rounded-l-md ${
+                    softwareView === "grid" ? "bg-[#004080] text-white" : "bg-white text-gray-700"
+                  }`}
+                >
+                  <Grid className="h-4 w-4" />
+                  <span className="sr-only">Grid view</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSoftwareView("list")}
+                  className={`p-2 rounded-r-md ${
+                    softwareView === "list" ? "bg-[#004080] text-white" : "bg-white text-gray-700"
+                  }`}
+                >
+                  <List className="h-4 w-4" />
+                  <span className="sr-only">List view</span>
+                </Button>
               </div>
             </div>
           </div>
           
           {/* Software Grid */}
-          <div className="mt-4">
+          <div>
             {isLoadingSoftware ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <Loader2 className="h-12 w-12 animate-spin text-[#004080]" />
               </div>
             ) : softwareError ? (
               <div className="text-center py-12">
@@ -419,17 +452,120 @@ export default function HomePage() {
                   Showing {softwareData?.softwares?.length || 0} of {softwareData?.total || 0} results
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Use real data when available, fallback to sample data */}
-                  {(softwareData?.softwares?.length > 0 
-                    ? softwareData.softwares 
-                    : sampleSoftware).map((software: any) => (
-                    <SoftwareCard
-                      key={software.id}
-                      software={software}
-                    />
-                  ))}
-                </div>
+                {softwareView === "grid" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    {/* Use real data when available, fallback to sample data */}
+                    {(softwareData?.softwares?.length > 0 
+                      ? softwareData.softwares 
+                      : sampleSoftware.concat(sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware)).slice(0, 24).map((software: any, index: number) => (
+                      <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
+                        <div className="relative pt-[60%] bg-gray-50">
+                          {software.imageUrl ? (
+                            <img 
+                              src={software.imageUrl}
+                              alt={`${software.name} screenshot`}
+                              className="absolute inset-0 h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                              <Monitor className="h-12 w-12 text-gray-300" />
+                            </div>
+                          )}
+                          <div className="absolute top-2 left-2">
+                            {software.isFree ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                                FREE
+                              </span>
+                            ) : software.trialVersion ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                                TRIAL
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        
+                        <div className="p-3 flex-grow flex flex-col">
+                          <div className="flex items-start justify-between mb-1">
+                            <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
+                            <div className="flex items-center">
+                              <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
+                              <span className="text-xs text-gray-600">{software.rating}</span>
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
+                          
+                          <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
+                            <span className="text-xs text-gray-500">v{software.version}</span>
+                            <Button 
+                              size="sm"
+                              className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Download
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(softwareData?.softwares?.length > 0 
+                      ? softwareData.softwares 
+                      : sampleSoftware.concat(sampleSoftware, sampleSoftware)).slice(0, 12).map((software: any, index: number) => (
+                      <div key={software.id + "-" + index} className="flex gap-4 p-3 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
+                        <div className="flex-shrink-0 w-20 h-20 relative bg-gray-50 rounded overflow-hidden">
+                          {software.imageUrl ? (
+                            <img 
+                              src={software.imageUrl}
+                              alt={`${software.name} screenshot`}
+                              className="absolute inset-0 h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                              <Monitor className="h-8 w-8 text-gray-300" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-grow min-w-0">
+                          <div className="flex items-start justify-between mb-1">
+                            <div>
+                              <h3 className="text-base font-semibold text-gray-900">{software.name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <div className="flex items-center">
+                                  <StarRating rating={software.rating} size="sm" />
+                                  <span className="ml-1 text-xs text-gray-600">{software.rating}</span>
+                                </div>
+                                {software.isFree ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                                    FREE
+                                  </span>
+                                ) : software.trialVersion ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                                    TRIAL
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500">v{software.version}</span>
+                          </div>
+                          <p className="text-sm text-gray-500 mb-2 line-clamp-2">{software.description}</p>
+                        </div>
+                        
+                        <div className="flex-shrink-0 self-center">
+                          <Button 
+                            className="px-4 py-2 bg-[#004080] hover:bg-[#003366] text-white rounded"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 
                 {/* Pagination */}
                 <Pagination
@@ -441,141 +577,144 @@ export default function HomePage() {
               </>
             )}
           </div>
-        </div>
-        
-        {/* Discover Top Software Section */}
-        <div className="bg-gray-900 text-white py-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold mb-8 text-center">Discover Top Software</h2>
-            <p className="text-center text-gray-400 mb-10 max-w-2xl mx-auto text-sm">
-              Find the latest updated software and most popular downloads in our curated collection
-            </p>
+          
+          {/* Popular Software Section */}
+          <div className="mt-16">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Popular Software</h2>
+              <Button variant="link" className="text-[#004080] font-medium text-sm flex items-center">
+                View All <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Recently Updated Section */}
-              <div className="bg-gray-800 rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <h3 className="font-semibold">Recently Updated</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {(popularSoftware?.softwares?.length > 0 
+                ? popularSoftware.softwares 
+                : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
+                <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
+                  <div className="relative pt-[60%] bg-gray-50">
+                    {software.imageUrl ? (
+                      <img 
+                        src={software.imageUrl}
+                        alt={`${software.name} screenshot`}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <Monitor className="h-12 w-12 text-gray-300" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2">
+                      {software.isFree ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                          FREE
+                        </span>
+                      ) : software.trialVersion ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                          TRIAL
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#004080] text-white flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </div>
                   </div>
-                  <Button variant="link" size="sm" className="text-gray-400 hover:text-white p-0">
-                    <span className="text-xs mr-1">Newest First</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="p-4 space-y-4">
-                  {/* Recently updated items */}
-                  {(recentSoftware?.softwares?.length > 0 
-                    ? recentSoftware.softwares 
-                    : sampleSoftware).slice(0, 3).map((software: any, index: number) => (
-                    <div key={software.id} className="flex items-start space-x-4 pb-4 border-b border-gray-700 last:border-0 last:pb-0">
-                      <div className="flex-shrink-0 w-10 h-10 rounded bg-gray-700 flex items-center justify-center">
-                        {software.imageUrl ? (
-                          <img 
-                            src={software.imageUrl}
-                            alt={software.name}
-                            className="w-10 h-10 rounded object-cover"
-                          />
-                        ) : (
-                          <Monitor className="h-6 w-6 text-gray-500" />
-                        )}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center text-xs text-gray-400 mb-1">
-                          <span className="bg-gray-700 px-1.5 py-0.5 rounded mr-2 text-[10px] uppercase font-medium">
-                            {software.isFree ? "Free" : "Trial version"}
-                          </span>
-                          <span>1 day ago</span>
-                        </div>
-                        
-                        <h4 className="text-sm font-medium text-white truncate">{software.name}</h4>
-                        <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">{software.description}</p>
-                      </div>
-                      
-                      <div className="flex-shrink-0">
-                        <Button variant="default" size="sm" className="h-7 px-3 text-xs">
-                          Download
-                        </Button>
+                  
+                  <div className="p-3 flex-grow flex flex-col">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
+                      <div className="flex items-center">
+                        <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
+                        <span className="text-xs text-gray-600">{software.rating}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-                
-                <div className="px-4 py-3 border-t border-gray-700">
-                  <Button variant="link" size="sm" className="text-gray-400 hover:text-white w-full justify-center">
-                    View All Recently Updated
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Top Downloads Section */}
-              <div className="bg-gray-800 rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-                  <div className="flex items-center">
-                    <Download className="h-4 w-4 mr-2" />
-                    <h3 className="font-semibold">Top Downloads</h3>
+                    
+                    <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
+                    
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">{software.downloads.toLocaleString()} downloads</span>
+                      <Button 
+                        size="sm"
+                        className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Download
+                      </Button>
+                    </div>
                   </div>
-                  <Button variant="link" size="sm" className="text-gray-400 hover:text-white p-0">
-                    <span className="text-xs mr-1">Most Downloads</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="p-4 space-y-4">
-                  {/* Top download items */}
-                  {(popularSoftware?.softwares?.length > 0 
-                    ? popularSoftware.softwares 
-                    : sampleSoftware).slice(0, 3).map((software: any, index: number) => (
-                    <div key={software.id} className="flex items-start space-x-4 pb-4 border-b border-gray-700 last:border-0 last:pb-0">
-                      <div className="flex-shrink-0 relative">
-                        <div className="w-10 h-10 rounded bg-gray-700 flex items-center justify-center">
-                          {software.imageUrl ? (
-                            <img 
-                              src={software.imageUrl}
-                              alt={software.name}
-                              className="w-10 h-10 rounded object-cover"
-                            />
-                          ) : (
-                            <Monitor className="h-6 w-6 text-gray-500" />
-                          )}
-                        </div>
-                        <div className="absolute -top-2 -right-2 bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">
-                          {index + 1}
-                        </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+          
+          {/* Recently Updated Section */}
+          <div className="mt-16">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Recently Updated</h2>
+              <Button variant="link" className="text-[#004080] font-medium text-sm flex items-center">
+                View All <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {(recentSoftware?.softwares?.length > 0 
+                ? recentSoftware.softwares 
+                : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
+                <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
+                  <div className="relative pt-[60%] bg-gray-50">
+                    {software.imageUrl ? (
+                      <img 
+                        src={software.imageUrl}
+                        alt={`${software.name} screenshot`}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <Monitor className="h-12 w-12 text-gray-300" />
                       </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center text-xs space-x-1 mb-1">
-                          <div className="flex items-center text-yellow-400">
-                            <StarRating rating={software.rating} size="xs" />
-                          </div>
-                          <span className="text-gray-400">({software.rating})</span>
-                        </div>
-                        
-                        <h4 className="text-sm font-medium text-white truncate">{software.name}</h4>
-                        <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">
-                          {software.downloads.toLocaleString()} downloads
-                        </p>
-                      </div>
-                      
-                      <div className="flex-shrink-0">
-                        <Button variant="default" size="sm" className="h-7 px-3 text-xs">
-                          Download
-                        </Button>
+                    )}
+                    <div className="absolute top-2 left-2">
+                      {software.isFree ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                          FREE
+                        </span>
+                      ) : software.trialVersion ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                          TRIAL
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="absolute top-2 right-2">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-orange-100 text-orange-800">
+                        Updated
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 flex-grow flex flex-col">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
+                      <div className="flex items-center">
+                        <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
+                        <span className="text-xs text-gray-600">{software.rating}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-                
-                <div className="px-4 py-3 border-t border-gray-700">
-                  <Button variant="link" size="sm" className="text-gray-400 hover:text-white w-full justify-center">
-                    View All Top Downloads
-                  </Button>
-                </div>
-              </div>
+                    
+                    <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
+                    
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">v{software.version}</span>
+                      <Button 
+                        size="sm"
+                        className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
