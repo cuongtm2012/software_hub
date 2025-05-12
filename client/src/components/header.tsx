@@ -68,17 +68,8 @@ export function Header() {
               <Link to="/" className={`${location === '/' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
                 Home
               </Link>
-              <Link to="/?view=categories" className={`${location === '/?view=categories' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
-                Categories
-              </Link>
-              <Link to="/?view=latest" className={`${location === '/?view=latest' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
-                Latest
-              </Link>
-              <Link to="/?view=popular" className={`${location === '/?view=popular' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
-                Popular
-              </Link>
               <Link to="/projects" className={`${location.startsWith('/projects') ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
-                Projects
+                IT services
               </Link>
               <Link to="/marketplace" className={`${location.startsWith('/marketplace') ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'} nav-item inline-flex items-center px-1 pt-1 border-b-2`}>
                 Marketplace
@@ -199,17 +190,8 @@ export function Header() {
             <Link to="/" onClick={closeMobileMenu} className={`${location === '/' ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
               Home
             </Link>
-            <Link to="/?view=categories" onClick={closeMobileMenu} className={`${location === '/?view=categories' ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-              Categories
-            </Link>
-            <Link to="/?view=latest" onClick={closeMobileMenu} className={`${location === '/?view=latest' ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-              Latest
-            </Link>
-            <Link to="/?view=popular" onClick={closeMobileMenu} className={`${location === '/?view=popular' ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-              Popular
-            </Link>
             <Link to="/projects" onClick={closeMobileMenu} className={`${location.startsWith('/projects') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-              Projects
+              IT services
             </Link>
             <Link to="/marketplace" onClick={closeMobileMenu} className={`${location.startsWith('/marketplace') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
               Marketplace
