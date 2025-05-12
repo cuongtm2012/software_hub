@@ -6,7 +6,7 @@ interface StarRatingProps {
   max?: number;
   onChange?: (rating: number) => void;
   interactive?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -21,6 +21,7 @@ export function StarRating({
   const [hoverRating, setHoverRating] = useState(0);
 
   const sizeClass = {
+    xs: "h-2.5 w-2.5",
     sm: "h-3.5 w-3.5",
     md: "h-5 w-5",
     lg: "h-6 w-6",
