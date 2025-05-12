@@ -464,7 +464,7 @@ export default function HomePage() {
                   {/* Recently updated items */}
                   {(recentSoftware?.softwares?.length > 0 
                     ? recentSoftware.softwares 
-                    : sampleSoftware).slice(0, 3).map((software: any, index) => (
+                    : sampleSoftware).slice(0, 3).map((software: any, index: number) => (
                     <div key={software.id} className="flex items-start space-x-4 pb-4 border-b border-gray-700 last:border-0 last:pb-0">
                       <div className="flex-shrink-0 w-10 h-10 rounded bg-gray-700 flex items-center justify-center">
                         {software.imageUrl ? (
@@ -523,7 +523,7 @@ export default function HomePage() {
                   {/* Top download items */}
                   {(popularSoftware?.softwares?.length > 0 
                     ? popularSoftware.softwares 
-                    : sampleSoftware).slice(0, 3).map((software: any, index) => (
+                    : sampleSoftware).slice(0, 3).map((software: any, index: number) => (
                     <div key={software.id} className="flex items-start space-x-4 pb-4 border-b border-gray-700 last:border-0 last:pb-0">
                       <div className="flex-shrink-0 relative">
                         <div className="w-10 h-10 rounded bg-gray-700 flex items-center justify-center">

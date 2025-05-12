@@ -93,7 +93,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
   };
 
   return (
-    <div className="flex justify-center mt-8">
+    <div className={cn("flex justify-center mt-8", className)}>
       <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
         <Button
           variant="outline"
