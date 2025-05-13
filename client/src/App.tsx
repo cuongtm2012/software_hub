@@ -29,6 +29,7 @@ import { Loader2, Code } from "lucide-react";
 import ProjectsPage from "@/pages/projects-page";
 import ProjectNewPage from "@/pages/project-new-page";
 import ProjectDetailPage from "@/pages/project-detail-page";
+import ProjectRequestPage from "@/pages/project-request-page";
 import PortfolioPage from "@/pages/portfolio-page";
 import PortfolioNewPage from "@/pages/portfolio-new-page";
 import PortfolioDetailPage from "@/pages/portfolio-detail-page";
@@ -47,6 +48,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/request-project" component={ProjectRequestPage} />
       
       {/* Phase 2: Code Service & Product Build Module */}
       <Route path="/projects" component={() => {
@@ -68,12 +70,21 @@ function Router() {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h2 className="text-lg font-medium text-[#004080] mb-2">For Clients</h2>
                       <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
-                      <Button 
-                        onClick={() => navigate('/auth')}
-                        className="bg-[#004080] hover:bg-[#003366] text-white"
-                      >
-                        Login to Post a Project
-                      </Button>
+                      <div className="flex gap-3 flex-wrap">
+                        <Button 
+                          onClick={() => navigate('/auth')}
+                          className="bg-[#004080] hover:bg-[#003366] text-white"
+                        >
+                          Login to Post a Project
+                        </Button>
+                        <Button 
+                          onClick={() => navigate('/request-project')}
+                          variant="outline"
+                          className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
+                        >
+                          Submit Request as Guest
+                        </Button>
+                      </div>
                     </div>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h2 className="text-lg font-medium text-[#004080] mb-2">For Developers</h2>
