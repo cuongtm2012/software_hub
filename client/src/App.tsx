@@ -169,15 +169,6 @@ function Router() {
                       </Card>
                     ))}
                   </div>
-
-                  <div className="mt-12 text-center">
-                    <Button
-                      className="bg-[#004080] hover:bg-[#003366] text-white"
-                      onClick={() => navigate('/portfolios/gallery')}
-                    >
-                      Browse All Developer Portfolios
-                    </Button>
-                  </div>
                 </div>
               </div>
               
