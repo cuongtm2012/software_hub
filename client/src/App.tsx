@@ -88,15 +88,6 @@ function Router() {
                     </div>
 
                   </div>
-                  <div className="mt-8">
-                    <Button
-                      variant="outline"
-                      onClick={() => navigate('/portfolios/gallery')}
-                      className="text-[#004080] border-[#004080]"
-                    >
-                      Browse Developer Portfolios
-                    </Button>
-                  </div>
                 </div>
               </main>
               
