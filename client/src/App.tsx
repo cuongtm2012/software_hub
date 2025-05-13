@@ -8,6 +8,16 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import { ProtectedRoute, AdminRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
+
+// Phase 2: Code Service & Product Build Module
+import ProjectsPage from "@/pages/projects-page";
+import ProjectNewPage from "@/pages/project-new-page";
+import ProjectDetailPage from "@/pages/project-detail-page";
+import PortfolioPage from "@/pages/portfolio-page";
+import PortfolioNewPage from "@/pages/portfolio-new-page";
+import PortfolioDetailPage from "@/pages/portfolio-detail-page";
+
+// Phase 3: Marketplace
 import MarketplacePage from "@/pages/marketplace-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
@@ -22,13 +32,13 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       
-      {/* Phase 2: Code Service & Product Build Module - Placeholder routes */}
-      <ProtectedRoute path="/projects" component={() => <div>Projects Page (Coming Soon)</div>} />
-      <ProtectedRoute path="/projects/client" roles={['client', 'admin']} component={() => <div>Client Projects Page (Coming Soon)</div>} />
-      <ProtectedRoute path="/projects/developer" roles={['developer', 'admin']} component={() => <div>Developer Projects Page (Coming Soon)</div>} />
-      <ProtectedRoute path="/projects/:id" component={() => <div>Project Details Page (Coming Soon)</div>} />
-      <ProtectedRoute path="/portfolio" roles={['developer', 'admin']} component={() => <div>Portfolio Page (Coming Soon)</div>} />
-      <Route path="/portfolio/:id" component={() => <div>Portfolio Details Page (Coming Soon)</div>} />
+      {/* Phase 2: Code Service & Product Build Module */}
+      <ProtectedRoute path="/projects" component={ProjectsPage} />
+      <ProtectedRoute path="/projects/new" roles={['client', 'admin']} component={ProjectNewPage} />
+      <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
+      <ProtectedRoute path="/portfolios" roles={['developer', 'admin']} component={PortfolioPage} />
+      <ProtectedRoute path="/portfolios/new" roles={['developer', 'admin']} component={PortfolioNewPage} />
+      <Route path="/portfolios/:id" component={PortfolioDetailPage} />
       
       {/* Phase 3: Marketplace */}
       <Route path="/marketplace" component={MarketplacePage} />
