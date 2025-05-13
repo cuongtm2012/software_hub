@@ -86,16 +86,7 @@ function Router() {
                         </Button>
                       </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h2 className="text-lg font-medium text-[#004080] mb-2">For Developers</h2>
-                      <p className="text-gray-600 mb-4">Find projects to work on, submit quotes, and grow your client base.</p>
-                      <Button 
-                        onClick={() => navigate('/auth')}
-                        className="bg-[#004080] hover:bg-[#003366] text-white"
-                      >
-                        Login to View Projects
-                      </Button>
-                    </div>
+
                   </div>
                   <div className="mt-8">
                     <Button
