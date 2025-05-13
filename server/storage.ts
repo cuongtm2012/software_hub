@@ -1,7 +1,7 @@
 import { 
   users, softwares, categories, reviews,
   projects, quotes, messages, portfolios, portfolioReviews,
-  products, orders, orderItems, payments, productReviews,
+  products, orders, orderItems, payments, productReviews, externalRequests,
   type User, type InsertUser, 
   type Software, type InsertSoftware,
   type Category, type InsertCategory,
@@ -15,7 +15,8 @@ import {
   type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem,
   type Payment, type InsertPayment,
-  type ProductReview, type InsertProductReview
+  type ProductReview, type InsertProductReview,
+  type ExternalRequest, type InsertExternalRequest
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
@@ -55,8 +56,15 @@ export interface IStorage {
   getReviewsBySoftwareId(softwareId: number): Promise<Review[]>;
   deleteReview(id: number, userId: number): Promise<boolean>;
   
+  // External Project Requests
+  createExternalRequest(request: InsertExternalRequest): Promise<ExternalRequest>;
+  getExternalRequests(status?: string, limit?: number, offset?: number): Promise<{ requests: ExternalRequest[], total: number }>;
+  getExternalRequestById(id: number): Promise<ExternalRequest | undefined>;
+  updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
+  convertExternalRequestToProject(id: number, project: InsertProject): Promise<Project>;
+  
   // Phase 2: Project Management
-  createProject(project: InsertProject, clientId: number): Promise<Project>;
+  createProject(project: InsertProject, clientId?: number): Promise<Project>; // clientId optional for external requests
   getProjectById(id: number): Promise<Project | undefined>;
   getProjectsByClientId(clientId: number): Promise<Project[]>;
   getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: Project[], total: number }>;
@@ -301,8 +309,81 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  // External Project Requests
+  async createExternalRequest(request: InsertExternalRequest): Promise<ExternalRequest> {
+    const [result] = await db
+      .insert(externalRequests)
+      .values(request)
+      .returning();
+      
+    return result;
+  }
+  
+  async getExternalRequests(status?: string, limit: number = 20, offset: number = 0): Promise<{ requests: ExternalRequest[], total: number }> {
+    let query = db.select().from(externalRequests);
+    
+    if (status) {
+      query = query.where(eq(externalRequests.status, status));
+    }
+    
+    const requests = await query
+      .orderBy(desc(externalRequests.created_at))
+      .limit(limit)
+      .offset(offset);
+    
+    const [{ count }] = await db
+      .select({ count: sql`count(*)`.mapWith(Number) })
+      .from(externalRequests)
+      .where(status ? eq(externalRequests.status, status) : sql`1=1`);
+    
+    return { requests, total: count };
+  }
+  
+  async getExternalRequestById(id: number): Promise<ExternalRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.id, id));
+      
+    return request;
+  }
+  
+  async updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined> {
+    const [request] = await db
+      .update(externalRequests)
+      .set({ status })
+      .where(eq(externalRequests.id, id))
+      .returning();
+      
+    return request;
+  }
+  
+  async convertExternalRequestToProject(id: number, project: InsertProject): Promise<Project> {
+    // Get the external request
+    const externalRequest = await this.getExternalRequestById(id);
+    if (!externalRequest) {
+      throw new Error("External request not found");
+    }
+    
+    // Create a project from the external request
+    const [result] = await db
+      .insert(projects)
+      .values({
+        ...project,
+        contact_email: externalRequest.email,
+        contact_phone: externalRequest.phone,
+        external_request_id: externalRequest.id,
+      })
+      .returning();
+    
+    // Update the external request status to 'converted'
+    await this.updateExternalRequestStatus(id, 'converted');
+    
+    return result;
+  }
+
   // Phase 2: Project Management
-  async createProject(project: InsertProject, clientId: number): Promise<Project> {
+  async createProject(project: InsertProject, clientId?: number): Promise<Project> {
     const [createdProject] = await db
       .insert(projects)
       .values({
