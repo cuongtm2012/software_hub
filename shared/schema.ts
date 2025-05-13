@@ -66,16 +66,30 @@ export const reviews = pgTable("reviews", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
+// External Requests Table
+export const externalRequests = pgTable("external_requests", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  project_description: text("project_description").notNull(),
+  status: text("status").default('new').notNull(), // 'new', 'contacted', 'converted', 'rejected'
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Phase 2: Project Management Tables
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
-  client_id: integer("client_id").references(() => users.id).notNull(),
+  client_id: integer("client_id").references(() => users.id),  // Nullable for external requests
   title: text("title").notNull(),
   description: text("description").notNull(),
   requirements: text("requirements"),
   budget: numeric("budget"),
   deadline: timestamp("deadline"),
   status: projectStatusEnum("status").default('pending').notNull(),
+  contact_email: text("contact_email"),  // For external requests
+  contact_phone: text("contact_phone"),  // For external requests
+  external_request_id: integer("external_request_id").references(() => externalRequests.id), // Link to external request if applicable
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -335,12 +349,20 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
 });
 
+// External request schema
+export const insertExternalRequestSchema = createInsertSchema(externalRequests).omit({
+  id: true,
+  created_at: true,
+  status: true,
+});
+
 // Phase 2 schemas
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   created_at: true,
   status: true,
   client_id: true,
+  external_request_id: true,
 });
 
 export const insertQuoteSchema = createInsertSchema(quotes).omit({
@@ -445,3 +467,6 @@ export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 
 export type ProductReview = typeof productReviews.$inferSelect;
 export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;
+
+export type ExternalRequest = typeof externalRequests.$inferSelect;
+export type InsertExternalRequest = z.infer<typeof insertExternalRequestSchema>;

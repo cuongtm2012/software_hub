@@ -1,0 +1,79 @@
+# PHASE 2: Code Service & Product Build Module Summary 
+## 1. Main Goals
+- Enable the Developer team to manage the full workflow from receiving client project requests, providing quotes, to delivering completed products and handling payments.
+- Support direct communication channels between clients and developers.
+- Manage secure payment processing with escrow functionality.
+- Showcase featured and sample portfolios/projects to build client trust and facilitate decision-making. 
+--- 
+## 2. Core Features
+ ### 2.1. Project Management
+- Clients can submit detailed project requests either by:
+  - Logging in and creating a request via the platform, **or**
+  - Sending a project inquiry with their requirements, email, and/or phone number without logging in.
+- Developer team reviews all incoming requests (both logged-in and external) and follows up via provided contact details to clarify requirements and provide quotations.
+- Developers submit quotes for projects.
+- Track project status, progress, and contracts through the platform.
+- Support milestone-based or full payment options.
+- Collect client feedback after project completion.
+ ### 2.2. Quote Management
+- Developers send quotes linked to each project request.
+- Clients can accept or reject quotes via the platform (if logged in).
+- For external inquiries, follow-up and acceptance happen via email or phone communication managed by the Developer team.
+ ### 2.3. Chat System
+- Real-time messaging available for logged-in clients and developers per project.
+- Notifications for new messages.
+- For external clients (non-logged-in), communication is handled externally via email or phone.
+ ### 2.4. Payment Management
+- Secure payments supported via Stripe, PayPal, and other gateways.
+- Payment status tracking and escrow release management.
+- Payment process initiated once client accepts a quote.
+ ### 2.5. Portfolio & Sample Projects Showcase
+- Display a curated list of fixed portfolios and sample projects completed by the Developer team.
+- Include project descriptions, technologies used, outcomes, and client testimonials.
+- Allow clients to view, rate, and comment on portfolios.
+- This feature builds credibility and helps clients make informed decisions.
+ ---
+ ## 3. Sample Projects (Examples to List in Portfolio Showcase)
+ | Project Name         | Description                                          	| Technologies Used   	| Outcome / Client Feedback                 	|
+|----------------------|----------------------------------------------------------|------------------------|-----------------------------------------------|
+| E-Commerce Platform  | Full-stack online store with payment integration      	| React, Node.js, Stripe | Increased client sales by 30% within 3 months |
+| Mobile Health App    | Cross-platform app for health tracking and reminders  	| Flutter, Firebase  	| Rated 4.8/5 by users for usability         	|
+| Custom CRM System    | Tailored CRM for small businesses with reporting features | Angular, .NET Core 	| Improved client workflow efficiency by 40%	|
+| SaaS Dashboard      | Real-time analytics dashboard for SaaS providers      	| Vue.js, Python, AWS	| Reduced data processing time by 50%        	|
+ ---
+ ## 4. API Design (RESTful)
+ 
+| Feature        	| Method      	| URL                           	| Description                   	| Access Control          	|
+|--------------------|-----------------|----------------------------------|---------------------------------|----------------------------|
+| Project Management  | POST/GET/PUT/DELETE | /api/projects, /api/projects/:id  | Create, view, update, cancel projects | Client, Developer, Admin   |
+| Quote Management    | POST/GET/PUT	| /api/projects/:id/quotes, /api/quotes/:quote_id | Send, view, update quotes     	| Developer, Client, Admin   |
+| Chat System         | POST/GET    	| /api/projects/:id/messages     	| Send, get messages           	| Client, Developer, Admin   |
+| Payment Management  | POST/GET/PUT	| /api/projects/:id/payments, /api/payments/:payment_id | Create, view, update payments	| Client, Developer, Admin   |
+| Portfolio           | POST/GET/PUT/DELETE | /api/portfolios, /api/portfolios/:id | Manage portfolios           	| Developer, Seller, Admin, Public |
+| Portfolio Reviews   | POST/GET    	| /api/portfolios/:id/reviews    	| Add, view portfolio reviews  	| User, Public           	|
+| Static Portfolios   | GET         	| /api/static-portfolios          	| Get fixed portfolios         	| Public                 	|
+| External Requests   | POST        	| /api/external-requests          	| Submit project requests without login | Public             	|
+ ---
+ ## 5. Main Database Model (PostgreSQL)
+ - `users`: id, username, email, password_hash, role (client/developer/admin), created_at
+- `projects`: id, client_id (nullable for external requests), title, description, requirements, budget, deadline, status, contact_email, contact_phone, created_at
+- `quotes`: id, project_id, developer_id, price, timeline, message, status, created_at
+- `messages`: id, project_id, sender_id, content, created_at
+- `payments`: id, project_id, payer_id, amount, payment_method, status, escrow_release, transaction_id, created_at
+- `portfolios`: id, developer_id, title, description, images, demo_link, technologies, created_at
+- `portfolio_reviews`: id, portfolio_id, user_id, rating, comment, created_at
+- `external_requests`: id, name, email, phone, project_description, status, created_at
+ Relationships: 
+`users` 1-N `projects` 
+`projects` 1-N `quotes`, `messages`, `payments` 
+`users` 1-N `portfolios` 
+`portfolios` 1-N `portfolio_reviews` 
+`external_requests` standalone with follow-up handled by Developer team
+ ---
+ ## 6. Authorization & Security
+ - Login required for all project, quote, chat, and payment actions on the platform.
+- External project requests accepted without login; Developer team manages follow-up communication.
+- Roles:
+Client: create projects, view quotes, chat, pay
+Team (Developer + Admin): full management of projects, quotes, payments, portfolios, users, chat
+User: can review portfolios
