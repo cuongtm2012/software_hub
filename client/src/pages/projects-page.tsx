@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PortfolioShowcase } from "@/components/portfolio-showcase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -300,6 +301,9 @@ export default function ProjectsPage() {
           )}
         </div>
       </main>
+      
+      {/* Phase 2: Code Service & Product Build Module - Portfolio Showcase */}
+      <PortfolioShowcase />
       
       <Footer />
     </div>
