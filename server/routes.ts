@@ -9,7 +9,7 @@ import {
   insertProjectSchema, insertQuoteSchema, insertMessageSchema, 
   insertPortfolioSchema, insertPortfolioReviewSchema,
   insertProductSchema, insertOrderSchema, insertOrderItemSchema,
-  insertPaymentSchema, insertProductReviewSchema
+  insertPaymentSchema, insertProductReviewSchema, insertExternalRequestSchema
 } from "@shared/schema";
 
 function isAdmin(req: Request, res: Response, next: NextFunction) {
@@ -962,6 +962,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Product review deleted successfully" });
     } catch (error) {
+      next(error);
+    }
+  });
+
+  // External Project Requests Routes
+  app.post("/api/external-requests", async (req, res, next) => {
+    try {
+      const requestData = insertExternalRequestSchema.parse(req.body);
+      
+      const request = await storage.createExternalRequest(requestData);
+      res.status(201).json(request);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      next(error);
+    }
+  });
+
+  app.get("/api/external-requests", isAdmin, async (req, res, next) => {
+    try {
+      const { status, page = "1", limit = "10" } = req.query;
+      
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const result = await storage.getExternalRequests(
+        status as string, 
+        limitNum,
+        offset
+      );
+      
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/external-requests/:id", isAdmin, async (req, res, next) => {
+    try {
+      const requestId = parseInt(req.params.id, 10);
+      const request = await storage.getExternalRequestById(requestId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "External request not found" });
+      }
+      
+      res.json(request);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/external-requests/:id/status", isAdmin, async (req, res, next) => {
+    try {
+      const requestId = parseInt(req.params.id, 10);
+      const { status } = req.body;
+      
+      if (!['pending', 'approved', 'rejected', 'converted'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be one of: pending, approved, rejected, converted" });
+      }
+      
+      const request = await storage.updateExternalRequestStatus(requestId, status);
+      
+      if (!request) {
+        return res.status(404).json({ message: "External request not found" });
+      }
+      
+      res.json(request);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/external-requests/:id/convert", isAdmin, async (req, res, next) => {
+    try {
+      const requestId = parseInt(req.params.id, 10);
+      const projectData = insertProjectSchema.parse(req.body);
+      
+      const project = await storage.convertExternalRequestToProject(requestId, projectData);
+      res.status(201).json(project);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
       next(error);
     }
   });
