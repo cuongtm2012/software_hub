@@ -69,7 +69,7 @@ export function Header() {
                 Home
               </Link>
               <Link to="/projects" className={`${location.startsWith('/projects') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
-                Projects
+                IT Services
               </Link>
               <Link to="/marketplace" className={`${location.startsWith('/marketplace') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
                 Marketplace
@@ -191,7 +191,7 @@ export function Header() {
               Home
             </Link>
             <Link to="/projects" onClick={closeMobileMenu} className={`${location.startsWith('/projects') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
-              IT services
+              IT Services
             </Link>
             <Link to="/marketplace" onClick={closeMobileMenu} className={`${location.startsWith('/marketplace') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
               Marketplace

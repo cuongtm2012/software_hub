@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer";
 import { SoftwareGrid } from "@/components/software-grid";
 import { SoftwareList } from "@/components/software-list";
 import { SoftwareDetailModal } from "@/components/software-detail-modal";
+import { PortfolioShowcase } from "@/components/portfolio-showcase";
 import { Pagination } from "@/components/pagination";
 import { Software, Category } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
@@ -820,6 +821,9 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+      
+      {/* Phase 2: Code Service & Product Build Module - Portfolio Showcase */}
+      <PortfolioShowcase />
       
       <Footer />
       
