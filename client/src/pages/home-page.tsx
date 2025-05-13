@@ -690,14 +690,14 @@ export default function HomePage() {
                   <div className="mt-8 flex flex-wrap gap-4">
                     <Button 
                       className="bg-[#ffcc00] hover:bg-[#e6b800] text-[#004080] font-medium py-2 px-6"
-                      onClick={() => navigate('/projects/new')}
+                      onClick={() => navigate('/projects')}
                     >
                       Post a Project
                     </Button>
                     <Button 
                       variant="outline" 
                       className="border-white text-white hover:bg-white/10"
-                      onClick={() => navigate('/portfolios')}
+                      onClick={() => navigate('/portfolios/gallery')}
                     >
                       Browse Developer Portfolios
                     </Button>
