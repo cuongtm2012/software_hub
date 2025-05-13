@@ -23,7 +23,11 @@ import {
   LayoutGrid,
   Users,
   TrendingUp,
-  ArrowRight
+  ArrowRight,
+  Briefcase,
+  Code,
+  MessageSquare,
+  Calendar
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -644,6 +648,103 @@ export default function HomePage() {
                   </div>
                 </Card>
               ))}
+            </div>
+          </div>
+          
+          {/* IT Services & Project Development Section */}
+          <div className="mt-16 mb-16">
+            <div className="bg-gradient-to-r from-[#004080] to-[#002b57] rounded-xl overflow-hidden">
+              <div className="px-6 py-10 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Need Custom Software Development?</h2>
+                  <p className="text-gray-200 mb-6">Connect with expert developers to build your custom software solution. Post your project, receive quotes, and collaborate directly through our secure platform.</p>
+                  <div className="space-y-4">
+                    <div className="flex items-start">
+                      <div className="bg-white/20 p-2 rounded-full mr-3">
+                        <Briefcase className="h-5 w-5 text-[#ffcc00]" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">Project Management</h3>
+                        <p className="text-sm text-gray-200">Submit detailed project requests and manage development milestones</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="bg-white/20 p-2 rounded-full mr-3">
+                        <Code className="h-5 w-5 text-[#ffcc00]" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">Custom Development</h3>
+                        <p className="text-sm text-gray-200">Get software built exactly to your requirements by skilled developers</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="bg-white/20 p-2 rounded-full mr-3">
+                        <Users className="h-5 w-5 text-[#ffcc00]" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">Secure Collaboration</h3>
+                        <p className="text-sm text-gray-200">Communicate directly through our platform with integrated payments</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-8 flex flex-wrap gap-4">
+                    <Button 
+                      className="bg-[#ffcc00] hover:bg-[#e6b800] text-[#004080] font-medium py-2 px-6"
+                      onClick={() => navigate('/projects/new')}
+                    >
+                      Post a Project
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-white text-white hover:bg-white/10"
+                      onClick={() => navigate('/portfolios')}
+                    >
+                      Browse Developer Portfolios
+                    </Button>
+                  </div>
+                </div>
+                <div className="hidden md:block">
+                  <div className="relative">
+                    <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#ffcc00]/20 rounded-full blur-3xl"></div>
+                    <div className="relative bg-white/10 backdrop-blur-sm rounded-lg p-6 shadow-lg">
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <h3 className="text-white font-medium">Project Request</h3>
+                          <p className="text-sm text-gray-200">Find the perfect developer</p>
+                        </div>
+                        <div className="flex space-x-1">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        </div>
+                      </div>
+                      <div className="bg-white/5 backdrop-blur-sm rounded-md p-4 mb-4">
+                        <h4 className="text-[#ffcc00] font-medium mb-2">E-commerce Website Development</h4>
+                        <p className="text-sm text-gray-200 mb-3">Need a modern e-commerce platform with payment processing and inventory management.</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-gray-300 mr-1" />
+                            <span className="text-xs text-gray-300">30 day deadline</span>
+                          </div>
+                          <div className="bg-[#004080] text-white text-xs px-2 py-1 rounded">
+                            3 Quotes Received
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button variant="outline" className="bg-white/10 text-white border-white/20 justify-start">
+                          <Monitor className="h-4 w-4 mr-2" />
+                          View Active Projects
+                        </Button>
+                        <Button variant="outline" className="bg-white/10 text-white border-white/20 justify-start">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Developer Messages
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           
