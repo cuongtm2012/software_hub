@@ -47,15 +47,8 @@ export function PortfolioShowcase() {
   return (
     <div className="bg-gradient-to-b from-[#f5f7fd] to-white py-16">
       <div className="container px-4 sm:px-6 mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#004080] mb-4">Collaborate on Your Project</h2>
-          <p className="text-gray-600 max-w-3xl mx-auto">
-            Connect with expert developers and bring your software ideas to life. 
-            Our platform helps you find the right talent, manage your project, and collaborate efficiently.
-          </p>
-        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
