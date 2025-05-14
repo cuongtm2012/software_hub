@@ -59,6 +59,183 @@ function Router() {
       <Route path="/request-project" component={ProjectRequestPage} />
       
       {/* Phase 2: Code Service & Product Build Module */}
+      <Route path="/it-services" component={() => {
+        const { user } = useAuth();
+        const [, navigate] = useLocation();
+        
+        return (
+          <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+            <Header />
+            <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+              <div className="bg-white shadow-sm rounded-lg p-8 text-center">
+                <h1 className="text-2xl font-bold text-gray-900 mb-4">IT Services & Solutions</h1>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  Connect with skilled developers for your custom software projects. Submit project requests, 
+                  receive quotes, and collaborate securely through our platform.
+                </p>
+                <div className="space-y-6 max-w-lg mx-auto">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h2 className="text-lg font-medium text-[#004080] mb-2">Ready to start your project?</h2>
+                    <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
+                    <div className="flex gap-3 flex-wrap justify-center">
+                      <Button 
+                        onClick={() => navigate('/auth')}
+                        className="bg-[#004080] hover:bg-[#003366] text-white"
+                      >
+                        Login to Post a Project
+                      </Button>
+                      <Button 
+                        onClick={() => navigate('/request-project')}
+                        variant="outline"
+                        className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
+                      >
+                        Submit Request as Guest
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </main>
+            
+            {/* Successful Projects Section */}
+            <div id="projects" className="py-16 bg-gray-50 scroll-mt-16">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold text-[#004080] mb-3">Successful Projects</h2>
+                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Browse our showcase of completed projects from top developers in our community
+                  </p>
+                </div>
+
+                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    {
+                      id: 1,
+                      name: "Corporate Pulse",
+                      description: "A modern responsive company introduction website with interactive elements and integrated CMS.",
+                      technologies: ["React", "TypeScript", "Tailwind CSS", "Strapi CMS"],
+                      outcome: "Increased client inquiries by 47% within 3 months of launch.",
+                      icon: Monitor
+                    },
+                    {
+                      id: 2,
+                      name: "PageTurner Plus",
+                      description: "Comprehensive bookstore management system with inventory tracking, sales analytics, and customer loyalty features.",
+                      technologies: ["Node.js", "Express", "PostgreSQL", "Redis"],
+                      outcome: "Reduced inventory management time by 65% for a chain with 12 locations.",
+                      icon: BookOpen
+                    },
+                    {
+                      id: 3,
+                      name: "StyleStock",
+                      description: "Clothing store management system with barcode integration, seasonal inventory planning, and staff scheduling.",
+                      technologies: ["React", "Django", "PostgreSQL", "Docker"],
+                      outcome: "Improved stock accuracy to 99.8% and reduced overstocking by 32%.",
+                      icon: ShoppingCart
+                    },
+                    {
+                      id: 4,
+                      name: "QuickBite",
+                      description: "Fast food delivery mobile app with real-time tracking, customizable orders, and loyalty program.",
+                      technologies: ["React Native", "Firebase", "Google Maps API", "Stripe"],
+                      outcome: "Processed over 15,000 orders in first month with 4.8/5 user rating.",
+                      icon: Smartphone
+                    },
+                    {
+                      id: 5,
+                      name: "TaleScape",
+                      description: "Interactive story reading mobile app with audio narration, animations, and parental controls.",
+                      technologies: ["Flutter", "Firebase", "AWS Polly", "SVG Animation"],
+                      outcome: "Featured in App Store's \"Apps We Love\" with 250,000+ downloads.",
+                      icon: BookOpen
+                    },
+                    {
+                      id: 6,
+                      name: "CineFlix+",
+                      description: "Online movie streaming platform with personalized recommendations and social sharing features.",
+                      technologies: ["Next.js", "GraphQL", "MongoDB", "AWS S3"],
+                      outcome: "Achieved 98.5% uptime with smooth playback for 50,000+ concurrent users.",
+                      icon: Monitor
+                    },
+                    {
+                      id: 7,
+                      name: "SportsPulse",
+                      description: "Real-time sports news and scores mobile app with personalized alerts and live commentary.",
+                      technologies: ["React Native", "Socket.io", "Node.js", "MongoDB"],
+                      outcome: "Retained 78% of users after 3 months with average 22 minutes daily use.",
+                      icon: Smartphone
+                    },
+                    {
+                      id: 8,
+                      name: "VistaTour",
+                      description: "Tourism marketplace connecting travelers with local guides and unique experiences.",
+                      technologies: ["Vue.js", "Laravel", "MySQL", "Mapbox"],
+                      outcome: "Facilitated 10,000+ bookings across 45 countries in first year.",
+                      icon: Monitor
+                    }
+                  ].map((project) => {
+                    const IconComponent = project.icon || Code;
+                    return (
+                      <Card key={project.id} className="bg-white hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+                        <div className="relative pt-[60%] bg-gray-50">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <IconComponent className="h-12 w-12 text-[#004080]/30" />
+                          </div>
+                          <div className="absolute top-2 right-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                              Completed
+                            </span>
+                          </div>
+                        </div>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg text-[#004080]">{project.name}</CardTitle>
+                          <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                        </CardHeader>
+                        <CardContent className="py-2 flex-grow">
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {project.technologies.map((tech, index) => (
+                              <span 
+                                key={index} 
+                                className="inline-block px-2 py-1 text-xs rounded-full bg-[#004080]/10 text-[#004080]"
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+                          <p className="text-sm text-gray-700 border-l-2 border-[#ffcc00] pl-3 italic">
+                            {project.outcome}
+                          </p>
+                        </CardContent>
+                        <CardFooter>
+                          <Button
+                            variant="link"
+                            className="text-[#004080] hover:text-[#003366] p-0 h-auto flex items-center gap-1"
+                            onClick={() => navigate('/request-project')}
+                          >
+                            Request Similar Project <ArrowRight className="ml-1 h-4 w-4" />
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
+                </div>
+                
+                <div className="flex justify-center mt-8">
+                  <Button 
+                    className="bg-[#004080] hover:bg-[#003366] text-white"
+                    onClick={() => navigate('/request-project')}
+                  >
+                    Request Custom Project <ArrowRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <Footer />
+          </div>
+        );
+      }} />
+      
       <Route path="/projects" component={() => {
         const { user } = useAuth();
         const [, navigate] = useLocation();

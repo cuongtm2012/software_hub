@@ -68,7 +68,7 @@ export function Header() {
               <Link to="/" className={`${location === '/' ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
                 Home
               </Link>
-              <Link to="/projects" className={`${location.startsWith('/projects') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
+              <Link to="/it-services#projects" className={`${location.startsWith('/projects') || location.startsWith('/it-services') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
                 IT Services
               </Link>
               <Link to="/marketplace" className={`${location.startsWith('/marketplace') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
@@ -133,8 +133,8 @@ export function Header() {
                           <DropdownMenuItem onClick={() => navigate("/projects/developer")} className="flex items-center gap-2 py-2 cursor-pointer">
                             <span className="flex-1">My Projects</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate("/portfolio")} className="flex items-center gap-2 py-2 cursor-pointer">
-                            <span className="flex-1">My Portfolio</span>
+                          <DropdownMenuItem onClick={() => navigate("/it-services#projects")} className="flex items-center gap-2 py-2 cursor-pointer">
+                            <span className="flex-1">Browse Portfolios</span>
                           </DropdownMenuItem>
                         </>
                       )}
@@ -190,7 +190,7 @@ export function Header() {
             <Link to="/" onClick={closeMobileMenu} className={`${location === '/' ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
               Home
             </Link>
-            <Link to="/projects" onClick={closeMobileMenu} className={`${location.startsWith('/projects') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
+            <Link to="/it-services#projects" onClick={closeMobileMenu} className={`${location.startsWith('/projects') || location.startsWith('/it-services') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
               IT Services
             </Link>
             <Link to="/marketplace" onClick={closeMobileMenu} className={`${location.startsWith('/marketplace') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
@@ -297,12 +297,12 @@ export function Header() {
                     <Button
                       variant="ghost"
                       onClick={() => {
-                        navigate("/portfolio");
+                        navigate("/it-services#projects");
                         closeMobileMenu();
                       }}
                       className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
                     >
-                      My Portfolio
+                      Browse Portfolios
                     </Button>
                   </>
                 )}

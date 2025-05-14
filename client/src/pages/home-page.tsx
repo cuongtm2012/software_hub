@@ -629,9 +629,9 @@ export default function HomePage() {
                     <Button 
                       variant="outline" 
                       className="border-[#004080] bg-white text-[#004080] hover:bg-blue-50"
-                      onClick={() => navigate('/portfolios/gallery')}
+                      onClick={() => navigate('/it-services#projects')}
                     >
-                      Browse Developer Portfolios
+                      Browse Portfolios
                     </Button>
                   </div>
                 </div>
