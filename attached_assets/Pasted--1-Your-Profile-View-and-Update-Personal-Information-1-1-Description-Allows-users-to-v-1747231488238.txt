@@ -1,0 +1,112 @@
+## 1. Your Profile: View and Update Personal Information
+
+### 1.1 Description  
+Allows users to view and update their personal profile information such as name, email, contact details, and preferences.
+
+### 1.2 API Endpoints
+
+| Endpoint           | Method | Description                     | Request Body                                 | Response                          |
+|--------------------|--------|---------------------------------|----------------------------------------------|----------------------------------|
+| /api/auth/profile  | GET    | Retrieve current user profile   | Auth token in header                          | `{ "user": { "user_id": "", "username": "", "email": "", "profile_data": {...} } }` |
+| /api/auth/profile  | PUT    | Update user profile             | Auth token + `{ "profileData": { "name": "", "email": "", "phone": "", ... } }` | `{ "user": { updated profile data } }` |
+
+### 1.3 Database Schema (Users Table excerpt)
+
+| Column        | Type      | Description                       |
+|---------------|-----------|---------------------------------|
+| user_id       | UUID (PK) | Unique user identifier           |
+| username      | VARCHAR   | Unique username                  |
+| email         | VARCHAR   | User email                      |
+| profile_data  | JSONB     | JSON object storing profile info (name, phone, address, preferences, etc.) |
+| updated_at    | TIMESTAMP | Last profile update timestamp   |
+
+### 1.4 Workflow
+
+1. User logs in and navigates to **Your Profile** page.
+2. Frontend sends GET request to `/api/auth/profile` with auth token.
+3. Server responds with user profile data.
+4. User edits fields in the UI and submits changes.
+5. Frontend sends PUT request to `/api/auth/profile` with updated profile data.
+6. Server validates, updates the database, and returns updated profile.
+7. UI refreshes to show updated profile information.
+
+---
+
+## 2. Downloaded Software: View List of Previously Downloaded Software
+
+### 2.1 Description  
+Displays a list of software that the user has downloaded previously, including download date and version.
+
+### 2.2 API Endpoints
+
+| Endpoint                 | Method | Description                         | Request Body             | Response                          |
+|--------------------------|--------|-----------------------------------|--------------------------|----------------------------------|
+| /api/user/downloads      | GET    | Retrieve list of user downloads   | Auth token in header     | `[ { "software_id": "", "name": "", "version": "", "downloaded_at": "" }, ... ]` |
+
+### 2.3 Database Schema (User Downloads Table)
+
+| Column          | Type      | Description                       |
+|-----------------|-----------|---------------------------------|
+| download_id     | UUID (PK) | Unique download record ID        |
+| user_id         | UUID (FK) | Reference to user                |
+| software_id     | UUID (FK) | Reference to software            |
+| version         | VARCHAR   | Software version downloaded      |
+| downloaded_at   | TIMESTAMP | Date and time of download        |
+
+### 2.4 Workflow
+
+1. User logs in and navigates to **Downloaded Software** page.
+2. Frontend sends GET request to `/api/user/downloads` with auth token.
+3. Server queries the downloads table filtering by user_id.
+4. Server returns list of software downloads with metadata.
+5. UI displays list showing software name, version, and download date.
+
+---
+
+## 3. Your Reviews: See and Manage Software Reviews Submitted
+
+### 3.1 Description  
+Allows users to view, edit, and delete reviews they have submitted for software on the platform.
+
+### 3.2 API Endpoints
+
+| Endpoint                   | Method | Description                         | Request Body                                   | Response                          |
+|----------------------------|--------|-----------------------------------|------------------------------------------------|----------------------------------|
+| /api/user/reviews          | GET    | Retrieve user’s submitted reviews | Auth token in header                           | `[ { "review_id": "", "software_id": "", "rating": 4, "comment": "", "created_at": "" }, ... ]` |
+| /api/user/reviews/{id}     | PUT    | Update a review                   | Auth token + `{ "rating": 5, "comment": "Updated comment" }` | Updated review object             |
+| /api/user/reviews/{id}     | DELETE | Delete a review                   | Auth token                                     | `{ "message": "Review deleted" }` |
+
+### 3.3 Database Schema (Reviews Table)
+
+| Column          | Type      | Description                       |
+|-----------------|-----------|---------------------------------|
+| review_id       | UUID (PK) | Unique review identifier         |
+| user_id         | UUID (FK) | Reference to user                |
+| software_id     | UUID (FK) | Reference to software            |
+| rating          | INTEGER   | Rating value (1 to 5)            |
+| comment         | TEXT      | Review text                     |
+| created_at      | TIMESTAMP | Review creation date             |
+| updated_at      | TIMESTAMP | Last update date                 |
+
+### 3.4 Workflow
+
+**Viewing Reviews:**
+1. User logs in and navigates to **Your Reviews** page.
+2. Frontend sends GET request to `/api/user/reviews` with auth token.
+3. Server returns list of reviews submitted by the user.
+4. UI displays reviews with software name, rating, comment, and date.
+
+**Editing a Review:**
+1. User selects a review to edit.
+2. UI allows editing rating and comment.
+3. Frontend sends PUT request to `/api/user/reviews/{id}` with updated data.
+4. Server validates and updates the review record.
+5. Server returns updated review data.
+6. UI refreshes review display.
+
+**Deleting a Review:**
+1. User clicks delete on a review.
+2. Frontend sends DELETE request to `/api/user/reviews/{id}`.
+3. Server deletes the review record.
+4. Server returns confirmation message.
+5. UI removes the review from the list.

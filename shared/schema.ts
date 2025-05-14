@@ -31,6 +31,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   role: roleEnum("role").default('user').notNull(),
+  profile_data: jsonb("profile_data"),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -175,6 +177,15 @@ export const payments = pgTable("payments", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
+// User Downloads table
+export const userDownloads = pgTable("user_downloads", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  software_id: integer("software_id").references(() => softwares.id).notNull(),
+  version: text("version").notNull(),
+  downloaded_at: timestamp("downloaded_at").defaultNow().notNull(),
+});
+
 export const productReviews = pgTable("product_reviews", {
   id: serial("id").primaryKey(),
   order_id: integer("order_id").references(() => orders.id).notNull(),
@@ -189,6 +200,7 @@ export const productReviews = pgTable("product_reviews", {
 export const usersRelations = relations(users, ({ many }) => ({
   softwares: many(softwares),
   reviews: many(reviews),
+  downloads: many(userDownloads),
   clientProjects: many(projects, { relationName: "clientProjects" }),
   developerQuotes: many(quotes, { relationName: "developerQuotes" }),
   messages: many(messages, { relationName: "senderMessages" }),
@@ -310,6 +322,17 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
+export const userDownloadsRelations = relations(userDownloads, ({ one }) => ({
+  user: one(users, {
+    fields: [userDownloads.user_id],
+    references: [users.id],
+  }),
+  software: one(softwares, {
+    fields: [userDownloads.software_id],
+    references: [softwares.id],
+  }),
+}));
+
 export const productReviewsRelations = relations(productReviews, ({ one }) => ({
   order: one(orders, {
     fields: [productReviews.order_id],
@@ -423,6 +446,12 @@ export const insertProductReviewSchema = createInsertSchema(productReviews).omit
   buyer_id: true,
 });
 
+export const insertUserDownloadSchema = createInsertSchema(userDownloads).omit({
+  id: true,
+  downloaded_at: true,
+  user_id: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -470,3 +499,6 @@ export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;
 
 export type ExternalRequest = typeof externalRequests.$inferSelect;
 export type InsertExternalRequest = z.infer<typeof insertExternalRequestSchema>;
+
+export type UserDownload = typeof userDownloads.$inferSelect;
+export type InsertUserDownload = z.infer<typeof insertUserDownloadSchema>;
