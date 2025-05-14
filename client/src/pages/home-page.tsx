@@ -583,75 +583,6 @@ export default function HomePage() {
             )}
           </div>
           
-          {/* Popular Software Section */}
-          <div className="mt-16">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Popular Software</h2>
-              <Button variant="link" className="text-[#004080] font-medium text-sm flex items-center">
-                View All <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {(popularSoftware?.softwares?.length > 0 
-                ? popularSoftware.softwares 
-                : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
-                <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
-                  <div className="relative pt-[60%] bg-gray-50">
-                    {software.imageUrl ? (
-                      <img 
-                        src={software.imageUrl}
-                        alt={`${software.name} screenshot`}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                        <Monitor className="h-12 w-12 text-gray-300" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 left-2">
-                      {software.isFree ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                          FREE
-                        </span>
-                      ) : software.trialVersion ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                          TRIAL
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#004080] text-white flex items-center justify-center text-xs font-bold">
-                      {index + 1}
-                    </div>
-                  </div>
-                  
-                  <div className="p-3 flex-grow flex flex-col">
-                    <div className="flex items-start justify-between mb-1">
-                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
-                      <div className="flex items-center">
-                        <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
-                        <span className="text-xs text-gray-600">{software.rating}</span>
-                      </div>
-                    </div>
-                    
-                    <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
-                    
-                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-                      <span className="text-xs text-gray-500">{software.downloads.toLocaleString()} downloads</span>
-                      <Button 
-                        size="sm"
-                        className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
-                      >
-                        <Download className="h-3 w-3 mr-1" />
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-          
           {/* IT Services & Project Development Section */}
           <div className="mt-16 mb-16">
             <div className="bg-gradient-to-r from-[#004080] to-[#002b57] rounded-xl overflow-hidden">
@@ -746,6 +677,75 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        
+          {/* Popular Software Section */}
+          <div className="mt-16">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Popular Software</h2>
+              <Button variant="link" className="text-[#004080] font-medium text-sm flex items-center">
+                View All <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {(popularSoftware?.softwares?.length > 0 
+                ? popularSoftware.softwares 
+                : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
+                <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
+                  <div className="relative pt-[60%] bg-gray-50">
+                    {software.imageUrl ? (
+                      <img 
+                        src={software.imageUrl}
+                        alt={`${software.name} screenshot`}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <Monitor className="h-12 w-12 text-gray-300" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2">
+                      {software.isFree ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                          FREE
+                        </span>
+                      ) : software.trialVersion ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                          TRIAL
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#004080] text-white flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 flex-grow flex flex-col">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
+                      <div className="flex items-center">
+                        <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
+                        <span className="text-xs text-gray-600">{software.rating}</span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
+                    
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">{software.downloads.toLocaleString()} downloads</span>
+                      <Button 
+                        size="sm"
+                        className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
           
