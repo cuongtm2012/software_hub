@@ -38,6 +38,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
 
+  // User Profile Management Routes
+  app.get("/api/auth/profile", isAuthenticated, async (req, res, next) => {
+    try {
+      const user = req.user!;
+      res.json({ user });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/auth/profile", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const profileData = req.body.profileData;
+      
+      // Use zod to validate the profile data
+      const profileSchema = z.object({
+        name: z.string().optional(),
+        phone: z.string().optional(),
+        address: z.string().optional(),
+        company: z.string().optional(),
+        bio: z.string().optional(),
+        preferences: z.record(z.any()).optional()
+      });
+      
+      const validatedData = profileSchema.parse(profileData);
+      const updatedUser = await storage.updateUserProfile(userId, validatedData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ user: updatedUser });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      next(error);
+    }
+  });
+
+  // User Downloads Routes
+  app.get("/api/user/downloads", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const downloads = await storage.getUserDownloads(userId);
+      res.json(downloads);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/user/downloads", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const data = insertUserDownloadSchema.parse(req.body);
+      const download = await storage.createUserDownload(userId, data.software_id, data.version);
+      res.status(201).json(download);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      next(error);
+    }
+  });
+
+  // User Reviews Routes
+  app.get("/api/user/reviews", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const reviews = await storage.getUserReviews(userId);
+      res.json(reviews);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/user/reviews/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const reviewId = parseInt(req.params.id, 10);
+      
+      // Only allow updating rating and comment
+      const updateSchema = z.object({
+        rating: z.number().min(1).max(5).optional(),
+        comment: z.string().optional()
+      });
+      
+      const validatedData = updateSchema.parse(req.body);
+      const updatedReview = await storage.updateReview(reviewId, userId, validatedData);
+      
+      if (!updatedReview) {
+        return res.status(404).json({ message: "Review not found or you don't have permission to update it" });
+      }
+      
+      res.json(updatedReview);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      next(error);
+    }
+  });
+
+  app.delete("/api/user/reviews/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const reviewId = parseInt(req.params.id, 10);
+      
+      const success = await storage.deleteReview(reviewId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Review not found or you don't have permission to delete it" });
+      }
+      
+      res.json({ message: "Review deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Categories Routes
   app.get("/api/categories", async (req, res, next) => {
     try {

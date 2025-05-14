@@ -1025,6 +1025,47 @@ export class DatabaseStorage implements IStorage {
     
     return updatedReview;
   }
+
+  async createUserDownload(userId: number, softwareId: number, version: string): Promise<UserDownload> {
+    const [download] = await db
+      .insert(userDownloads)
+      .values({
+        user_id: userId,
+        software_id: softwareId,
+        version,
+        downloaded_at: new Date()
+      })
+      .returning();
+    return download;
+  }
+
+  async getUserDownloads(userId: number): Promise<UserDownload[]> {
+    return await db
+      .select()
+      .from(userDownloads)
+      .where(eq(userDownloads.user_id, userId))
+      .orderBy(desc(userDownloads.downloaded_at));
+  }
+
+  async getUserReviews(userId: number): Promise<Review[]> {
+    return await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.user_id, userId))
+      .orderBy(desc(reviews.created_at));
+  }
+
+  async updateReview(id: number, userId: number, reviewData: Partial<InsertReview>): Promise<Review | undefined> {
+    const [review] = await db
+      .update(reviews)
+      .set(reviewData)
+      .where(and(
+        eq(reviews.id, id),
+        eq(reviews.user_id, userId)
+      ))
+      .returning();
+    return review || undefined;
+  }
 }
 
 export const storage = new DatabaseStorage();
