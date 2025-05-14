@@ -182,18 +182,6 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedUser;
   }
-  
-  async updateUserProfile(userId: number, profileData: any): Promise<User | undefined> {
-    const [updatedUser] = await db
-      .update(users)
-      .set({ 
-        profile_data: profileData,
-        updated_at: new Date()
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    return updatedUser;
-  }
 
   // Categories
   async createCategory(category: InsertCategory): Promise<Category> {
