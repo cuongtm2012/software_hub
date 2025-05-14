@@ -23,7 +23,15 @@ import {
 } from "@/components/ui/card";
 import { Pagination } from "@/components/pagination";
 import { StarRating } from "@/components/ui/star-rating";
-import { Loader2, Code } from "lucide-react";
+import { 
+  Loader2, 
+  Code, 
+  ArrowRight, 
+  Monitor, 
+  BookOpen, 
+  ShoppingCart, 
+  Smartphone 
+} from "lucide-react";
 
 // Phase 2: Code Service & Product Build Module
 import ProjectsPage from "@/pages/projects-page";
@@ -105,69 +113,90 @@ function Router() {
                     {[
                       {
                         id: 1,
-                        name: "E-Commerce Platform",
-                        description: "Full-stack online store with payment integration",
-                        technologies: ["React", "Node.js", "Stripe"],
-                        outcome: "Increased client sales by 30% within 3 months",
+                        name: "Corporate Pulse",
+                        description: "A modern responsive company introduction website with interactive elements and integrated CMS.",
+                        technologies: ["React", "TypeScript", "Tailwind CSS", "Strapi CMS"],
+                        outcome: "Increased client inquiries by 47% within 3 months of launch.",
+                        icon: Monitor
                       },
                       {
                         id: 2,
-                        name: "Mobile Health App",
-                        description: "Cross-platform app for health tracking and reminders",
-                        technologies: ["Flutter", "Firebase"],
-                        outcome: "Rated 4.8/5 by users for usability",
+                        name: "PageTurner Plus",
+                        description: "Comprehensive bookstore management system with inventory tracking, sales analytics, and customer loyalty features.",
+                        technologies: ["Node.js", "Express", "PostgreSQL", "Redis"],
+                        outcome: "Reduced inventory management time by 65% for a chain with 12 locations.",
+                        icon: BookOpen
                       },
                       {
                         id: 3,
-                        name: "Custom CRM System",
-                        description: "Tailored CRM for small businesses with reporting features",
-                        technologies: ["Angular", ".NET Core"],
-                        outcome: "Improved client workflow efficiency by 40%",
+                        name: "StyleStock",
+                        description: "Clothing store management system with barcode integration, seasonal inventory planning, and staff scheduling.",
+                        technologies: ["React", "Django", "PostgreSQL", "Docker"],
+                        outcome: "Improved stock accuracy to 99.8% and reduced overstocking by 32%.",
+                        icon: ShoppingCart
                       },
                       {
                         id: 4,
-                        name: "SaaS Dashboard",
-                        description: "Real-time analytics dashboard for SaaS providers",
-                        technologies: ["Vue.js", "Python", "AWS"],
-                        outcome: "Reduced data processing time by 50%",
-                      },
-                    ].map((project) => (
-                      <Card key={project.id} className="bg-white hover:shadow-lg transition-all duration-300 h-full flex flex-col">
-                        <div className="relative pt-[60%] bg-gray-100">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Code className="h-12 w-12 text-gray-300" />
-                          </div>
-                        </div>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg text-[#004080]">{project.name}</CardTitle>
-                          <p className="text-sm text-gray-500">{project.description}</p>
-                        </CardHeader>
-                        <CardContent className="py-2 flex-grow">
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {project.technologies.map((tech, index) => (
-                              <span 
-                                key={index} 
-                                className="inline-block px-2 py-1 text-xs rounded-full bg-[#004080]/10 text-[#004080]"
-                              >
-                                {tech}
+                        name: "QuickBite",
+                        description: "Fast food delivery mobile app with real-time tracking, customizable orders, and loyalty program.",
+                        technologies: ["React Native", "Firebase", "Google Maps API", "Stripe"],
+                        outcome: "Processed over 15,000 orders in first month with 4.8/5 user rating.",
+                        icon: Smartphone
+                      }
+                    ].map((project) => {
+                      const IconComponent = project.icon || Code;
+                      return (
+                        <Card key={project.id} className="bg-white hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+                          <div className="relative pt-[60%] bg-gray-50">
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <IconComponent className="h-12 w-12 text-[#004080]/30" />
+                            </div>
+                            <div className="absolute top-2 right-2">
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                                Completed
                               </span>
-                            ))}
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-700 border-l-2 border-[#ffcc00] pl-3 italic">
-                            {project.outcome}
-                          </p>
-                        </CardContent>
-                        <CardFooter>
-                          <Button
-                            variant="link"
-                            className="text-[#004080] hover:text-[#003366] p-0 h-auto flex items-center gap-1"
-                            onClick={() => navigate('/request-project')}
-                          >
-                            Request Similar Project
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg text-[#004080]">{project.name}</CardTitle>
+                            <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                          </CardHeader>
+                          <CardContent className="py-2 flex-grow">
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {project.technologies.map((tech, index) => (
+                                <span 
+                                  key={index} 
+                                  className="inline-block px-2 py-1 text-xs rounded-full bg-[#004080]/10 text-[#004080]"
+                                >
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+                            <p className="text-sm text-gray-700 border-l-2 border-[#ffcc00] pl-3 italic">
+                              {project.outcome}
+                            </p>
+                          </CardContent>
+                          <CardFooter>
+                            <Button
+                              variant="link"
+                              className="text-[#004080] hover:text-[#003366] p-0 h-auto flex items-center gap-1"
+                              onClick={() => navigate('/project-request')}
+                            >
+                              Request Similar Project <ArrowRight className="ml-1 h-4 w-4" />
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="flex justify-center mt-8">
+                    <Button 
+                      className="bg-[#004080] hover:bg-[#003366] text-white"
+                      onClick={() => navigate('/projects')}
+                    >
+                      View All Successful Projects <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
