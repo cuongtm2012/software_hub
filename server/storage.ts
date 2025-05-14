@@ -1,5 +1,5 @@
 import { 
-  users, softwares, categories, reviews,
+  users, softwares, categories, reviews, userDownloads,
   projects, quotes, messages, portfolios, portfolioReviews,
   products, orders, orderItems, payments, productReviews, externalRequests,
   type User, type InsertUser, 
@@ -16,7 +16,8 @@ import {
   type OrderItem, type InsertOrderItem,
   type Payment, type InsertPayment,
   type ProductReview, type InsertProductReview,
-  type ExternalRequest, type InsertExternalRequest
+  type ExternalRequest, type InsertExternalRequest,
+  type UserDownload, type InsertUserDownload
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
