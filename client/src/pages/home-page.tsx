@@ -622,7 +622,16 @@ export default function HomePage() {
                   <div className="mt-8 flex flex-wrap gap-4">
                     <Button 
                       className="bg-[#ffcc00] hover:bg-[#e6b800] text-[#004080] font-medium py-2 px-6"
-                      onClick={() => navigate('/projects')}
+                      onClick={() => {
+                        // Find the portfolio showcase section and scroll to it
+                        const portfolioSection = document.getElementById('collaborate-platform');
+                        if (portfolioSection) {
+                          portfolioSection.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                          // Fallback to projects page if section not found
+                          navigate('/projects');
+                        }
+                      }}
                     >
                       Post a Project
                     </Button>
@@ -823,7 +832,9 @@ export default function HomePage() {
       </main>
       
       {/* Phase 2: Code Service & Product Build Module - Portfolio Showcase */}
-      <PortfolioShowcase />
+      <section id="collaborate-platform">
+        <PortfolioShowcase />
+      </section>
       
       <Footer />
       
