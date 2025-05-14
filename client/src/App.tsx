@@ -212,7 +212,7 @@ function Router() {
                             <Button
                               variant="link"
                               className="text-[#004080] hover:text-[#003366] p-0 h-auto flex items-center gap-1"
-                              onClick={() => navigate('/project-request')}
+                              onClick={() => navigate('/request-project')}
                             >
                               Request Similar Project <ArrowRight className="ml-1 h-4 w-4" />
                             </Button>
@@ -225,7 +225,7 @@ function Router() {
                   <div className="flex justify-center mt-8">
                     <Button 
                       className="bg-[#004080] hover:bg-[#003366] text-white"
-                      onClick={() => navigate('/project-request')}
+                      onClick={() => navigate('/request-project')}
                     >
                       Request Custom Project <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
