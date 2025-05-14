@@ -189,35 +189,6 @@ export function PortfolioShowcase() {
             </div>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {sampleProjects.map((project) => (
-            <Card key={project.id} className="border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-[#004080]">{project.name}</CardTitle>
-                <CardDescription>{project.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {project.technologies.map((tech, i) => (
-                    <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  <strong>Outcome:</strong> {project.outcome}
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="ghost" className="text-[#004080] hover:bg-blue-50 w-full flex items-center justify-center">
-                  <span>View Similar Project</span>
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
       </div>
     </div>
   );
