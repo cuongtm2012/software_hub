@@ -132,58 +132,91 @@ export default function AuthPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex flex-col lg:flex-row rounded-lg overflow-hidden shadow-lg">
+      <main className="flex-grow bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="flex flex-col lg:flex-row rounded-xl overflow-hidden shadow-xl">
             {/* Hero section */}
-            <div className="bg-primary-600 text-white p-8 lg:p-12 lg:w-1/2">
-              <div className="h-full flex flex-col justify-center">
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">Welcome to SoftwareHub</h1>
-                <p className="text-lg text-primary-100 mb-6">
+            <div className="relative bg-gradient-to-br from-[#004080] to-[#002040] text-white p-8 lg:p-12 lg:w-1/2 overflow-hidden">
+              {/* Abstract shapes in background */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-10 left-10 w-40 h-40 rounded-full bg-[#ffcc00]"></div>
+                <div className="absolute bottom-10 right-10 w-60 h-60 rounded-full bg-[#ffcc00]"></div>
+                <div className="absolute top-1/2 left-1/3 w-20 h-20 rounded-full bg-white"></div>
+              </div>
+              
+              <div className="relative h-full flex flex-col justify-center">
+                <h1 className="text-3xl md:text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
+                  Welcome to SoftwareHub
+                </h1>
+                <p className="text-lg text-gray-100 mb-8 max-w-md">
                   Join our community to discover, download, and share free software with users from around the world.
                 </p>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Access thousands of free software applications</span>
+                    <div className="flex-shrink-0 p-1 bg-[#ffcc00]/20 rounded-full mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#ffcc00]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-100">Access thousands of free software applications</span>
                   </li>
                   <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Rate software and read honest user reviews</span>
+                    <div className="flex-shrink-0 p-1 bg-[#ffcc00]/20 rounded-full mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#ffcc00]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-100">Rate software and read honest user reviews</span>
                   </li>
                   <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Discover new tools for Windows, Mac, and Linux</span>
+                    <div className="flex-shrink-0 p-1 bg-[#ffcc00]/20 rounded-full mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#ffcc00]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-100">Discover new tools for Windows, Mac, and Linux</span>
                   </li>
                   <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Share your favorite software with the community</span>
+                    <div className="flex-shrink-0 p-1 bg-[#ffcc00]/20 rounded-full mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#ffcc00]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-100">Share your favorite software with the community</span>
                   </li>
                 </ul>
+                
+                <div className="mt-10 inline-block">
+                  <span className="px-4 py-1 bg-[#ffcc00]/20 rounded-full text-[#ffcc00] text-sm font-medium">
+                    Join 10,000+ developers and users
+                  </span>
+                </div>
               </div>
             </div>
             
             {/* Forms section */}
             <div className="bg-white p-8 lg:p-12 lg:w-1/2">
               <Tabs value={tabValue} onValueChange={handleTabChange} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-8">
-                  <TabsTrigger value="login">Login</TabsTrigger>
-                  <TabsTrigger value="register">Register</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 p-1 rounded-lg">
+                  <TabsTrigger 
+                    value="login"
+                    className="data-[state=active]:bg-white data-[state=active]:text-[#004080] data-[state=active]:shadow-sm font-medium"
+                  >
+                    Login
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="register"
+                    className="data-[state=active]:bg-white data-[state=active]:text-[#004080] data-[state=active]:shadow-sm font-medium"
+                  >
+                    Register
+                  </TabsTrigger>
                 </TabsList>
                 
                 {/* Login tab content */}
                 <TabsContent value="login">
-                  <Card>
-                    <CardHeader className="space-y-1">
-                      <CardTitle className="text-2xl font-bold">Login to your account</CardTitle>
+                  <Card className="border-0 shadow-sm">
+                    <CardHeader className="space-y-1 pb-2">
+                      <CardTitle className="text-2xl font-bold text-[#004080]">Login to your account</CardTitle>
                       <CardDescription>
                         Enter your email and password to access your account
                       </CardDescription>
@@ -196,11 +229,12 @@ export default function AuthPage() {
                             name="email"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel className="text-gray-700">Email</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="email" 
                                     placeholder="Enter your email" 
+                                    className="focus-visible:ring-[#004080]"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -214,11 +248,12 @@ export default function AuthPage() {
                             name="password"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Password</FormLabel>
+                                <FormLabel className="text-gray-700">Password</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="password" 
                                     placeholder="Enter your password" 
+                                    className="focus-visible:ring-[#004080]"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -237,20 +272,21 @@ export default function AuthPage() {
                                     <Checkbox
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
+                                      className="border-gray-300 data-[state=checked]:bg-[#004080] data-[state=checked]:border-[#004080]"
                                     />
                                   </FormControl>
-                                  <FormLabel className="text-sm font-normal">Remember me</FormLabel>
+                                  <FormLabel className="text-sm font-normal text-gray-600">Remember me</FormLabel>
                                 </FormItem>
                               )}
                             />
-                            <Button variant="link" className="p-0 h-auto text-primary-600">
+                            <Button variant="link" className="p-0 h-auto text-[#004080] hover:text-[#003366]">
                               Forgot password?
                             </Button>
                           </div>
                           
                           <Button 
                             type="submit" 
-                            className="w-full" 
+                            className="w-full bg-gradient-to-r from-[#004080] to-[#003366] hover:from-[#003366] hover:to-[#002040] text-white"
                             disabled={loginMutation.isPending}
                           >
                             {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -266,7 +302,7 @@ export default function AuthPage() {
                       <Button 
                         variant="outline" 
                         onClick={() => handleTabChange("register")}
-                        className="w-full"
+                        className="w-full border-[#004080] text-[#004080] hover:bg-[#004080]/5"
                       >
                         Create Account
                       </Button>
@@ -276,9 +312,9 @@ export default function AuthPage() {
                 
                 {/* Register tab content */}
                 <TabsContent value="register">
-                  <Card>
-                    <CardHeader className="space-y-1">
-                      <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+                  <Card className="border-0 shadow-sm">
+                    <CardHeader className="space-y-1 pb-2">
+                      <CardTitle className="text-2xl font-bold text-[#004080]">Create an account</CardTitle>
                       <CardDescription>
                         Fill out the form below to create your SoftwareHub account
                       </CardDescription>
@@ -291,10 +327,11 @@ export default function AuthPage() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Full Name</FormLabel>
+                                <FormLabel className="text-gray-700">Full Name</FormLabel>
                                 <FormControl>
                                   <Input 
                                     placeholder="Enter your full name" 
+                                    className="focus-visible:ring-[#004080]"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -308,11 +345,12 @@ export default function AuthPage() {
                             name="email"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel className="text-gray-700">Email</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="email" 
                                     placeholder="Enter your email" 
+                                    className="focus-visible:ring-[#004080]"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -326,11 +364,12 @@ export default function AuthPage() {
                             name="password"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Password</FormLabel>
+                                <FormLabel className="text-gray-700">Password</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="password" 
                                     placeholder="Create a password" 
+                                    className="focus-visible:ring-[#004080]"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -344,11 +383,12 @@ export default function AuthPage() {
                             name="confirmPassword"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Confirm Password</FormLabel>
+                                <FormLabel className="text-gray-700">Confirm Password</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="password" 
                                     placeholder="Confirm your password" 
+                                    className="focus-visible:ring-[#004080]"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -366,16 +406,17 @@ export default function AuthPage() {
                                   <Checkbox
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
+                                    className="border-gray-300 data-[state=checked]:bg-[#004080] data-[state=checked]:border-[#004080] mt-1"
                                   />
                                 </FormControl>
                                 <div className="space-y-1 leading-none">
-                                  <FormLabel className="text-sm font-normal">
+                                  <FormLabel className="text-sm font-normal text-gray-600">
                                     I agree to the{" "}
-                                    <Button variant="link" className="p-0 h-auto text-primary-600">
+                                    <Button variant="link" className="p-0 h-auto text-[#004080] hover:text-[#003366]">
                                       Terms of Service
                                     </Button>{" "}
                                     and{" "}
-                                    <Button variant="link" className="p-0 h-auto text-primary-600">
+                                    <Button variant="link" className="p-0 h-auto text-[#004080] hover:text-[#003366]">
                                       Privacy Policy
                                     </Button>
                                   </FormLabel>
@@ -387,7 +428,7 @@ export default function AuthPage() {
                           
                           <Button 
                             type="submit" 
-                            className="w-full" 
+                            className="w-full bg-gradient-to-r from-[#004080] to-[#003366] hover:from-[#003366] hover:to-[#002040] text-white"
                             disabled={registerMutation.isPending}
                           >
                             {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -403,7 +444,7 @@ export default function AuthPage() {
                       <Button 
                         variant="outline" 
                         onClick={() => handleTabChange("login")}
-                        className="w-full"
+                        className="w-full border-[#004080] text-[#004080] hover:bg-[#004080]/5"
                       >
                         Sign In
                       </Button>
