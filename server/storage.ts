@@ -32,6 +32,15 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserProfile(userId: number, profileData: any): Promise<User | undefined>;
+  
+  // User Downloads
+  createUserDownload(userId: number, softwareId: number, version: string): Promise<UserDownload>;
+  getUserDownloads(userId: number): Promise<UserDownload[]>;
+  
+  // User Reviews Management
+  getUserReviews(userId: number): Promise<Review[]>;
+  updateReview(id: number, userId: number, reviewData: Partial<InsertReview>): Promise<Review | undefined>;
   
   // Categories
   createCategory(category: InsertCategory): Promise<Category>;
@@ -940,6 +949,81 @@ export class DatabaseStorage implements IStorage {
       .returning({ id: productReviews.id });
     
     return result.length > 0;
+  }
+
+  // User Downloads functionality
+  async createUserDownload(userId: number, softwareId: number, version: string): Promise<UserDownload> {
+    const [download] = await db
+      .insert(userDownloads)
+      .values({
+        user_id: userId,
+        software_id: softwareId,
+        version
+      })
+      .returning();
+    return download;
+  }
+  
+  async getUserDownloads(userId: number): Promise<UserDownload[]> {
+    const downloadsWithSoftware = await db
+      .select({
+        download: userDownloads,
+        software: softwares
+      })
+      .from(userDownloads)
+      .innerJoin(softwares, eq(userDownloads.software_id, softwares.id))
+      .where(eq(userDownloads.user_id, userId))
+      .orderBy(desc(userDownloads.downloaded_at));
+    
+    return downloadsWithSoftware.map(item => ({
+      ...item.download,
+      softwareName: item.software.name,
+      softwareImageUrl: item.software.image_url
+    }));
+  }
+
+  // User Reviews management
+  async getUserReviews(userId: number): Promise<Review[]> {
+    const reviewsWithSoftware = await db
+      .select({
+        review: reviews,
+        software: softwares
+      })
+      .from(reviews)
+      .innerJoin(softwares, eq(reviews.target_id, softwares.id))
+      .where(
+        and(
+          eq(reviews.user_id, userId),
+          eq(reviews.target_type, 'software')
+        )
+      )
+      .orderBy(desc(reviews.created_at));
+    
+    return reviewsWithSoftware.map(item => ({
+      ...item.review,
+      softwareName: item.software.name,
+      softwareImageUrl: item.software.image_url
+    }));
+  }
+  
+  async updateReview(id: number, userId: number, reviewData: Partial<InsertReview>): Promise<Review | undefined> {
+    const [updatedReview] = await db
+      .update(reviews)
+      .set({
+        ...reviewData,
+        // Don't allow changing the target
+        target_type: undefined,
+        target_id: undefined
+      })
+      .where(
+        and(
+          eq(reviews.id, id),
+          eq(reviews.user_id, userId)
+        )
+      )
+      .returning();
+    
+    return updatedReview;
   }
 }
 

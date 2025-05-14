@@ -9,8 +9,10 @@ import {
   insertProjectSchema, insertQuoteSchema, insertMessageSchema, 
   insertPortfolioSchema, insertPortfolioReviewSchema,
   insertProductSchema, insertOrderSchema, insertOrderItemSchema,
-  insertPaymentSchema, insertProductReviewSchema, insertExternalRequestSchema
+  insertPaymentSchema, insertProductReviewSchema, insertExternalRequestSchema,
+  insertUserDownloadSchema
 } from "@shared/schema";
+import { z } from "zod";
 
 function isAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
