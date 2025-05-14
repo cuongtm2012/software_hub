@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer";
 import { SoftwareGrid } from "@/components/software-grid";
 import { SoftwareList } from "@/components/software-list";
 import { SoftwareDetailModal } from "@/components/software-detail-modal";
-import { PortfolioShowcase } from "@/components/portfolio-showcase";
+
 import { Pagination } from "@/components/pagination";
 import { Software, Category } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
@@ -622,16 +622,7 @@ export default function HomePage() {
                   <div className="mt-8 flex flex-wrap gap-4">
                     <Button 
                       className="bg-[#ffcc00] hover:bg-[#e6b800] text-[#004080] font-medium py-2 px-6"
-                      onClick={() => {
-                        // Find the portfolio showcase section and scroll to it
-                        const portfolioSection = document.getElementById('collaborate-platform');
-                        if (portfolioSection) {
-                          portfolioSection.scrollIntoView({ behavior: 'smooth' });
-                        } else {
-                          // Fallback to projects page if section not found
-                          navigate('/projects');
-                        }
-                      }}
+                      onClick={() => navigate('/request-project')}
                     >
                       Post a Project
                     </Button>
@@ -830,11 +821,6 @@ export default function HomePage() {
           </div>
         </div>
       </main>
-      
-      {/* Phase 2: Code Service & Product Build Module - Portfolio Showcase */}
-      <section id="collaborate-platform">
-        <PortfolioShowcase />
-      </section>
       
       <Footer />
       
