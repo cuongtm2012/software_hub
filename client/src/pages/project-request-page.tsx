@@ -150,7 +150,7 @@ export default function ProjectRequestPage() {
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
       <main className="flex-grow bg-gray-50">
-        <div className="container py-12">
+        <div className="container px-4 sm:px-6 py-12 max-w-6xl mx-auto">
           <div className="mb-8">
             <Button
               variant="outline"
@@ -161,12 +161,12 @@ export default function ProjectRequestPage() {
               Back to Home
             </Button>
           </div>
-          <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row gap-8">
               <div className="flex-1">
-                <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-10">
+                <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-gray-100 mb-6">
                   <h1 className="text-3xl font-bold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-[#004080] to-[#0066cc]">Request a Custom Project</h1>
-                  <p className="text-gray-600 mb-8 max-w-2xl">
+                  <p className="text-gray-600 mb-6">
                     Fill out the form below to request a custom software development project. Our team will review your requirements and contact you shortly.
                   </p>
                 
@@ -355,15 +355,15 @@ export default function ProjectRequestPage() {
                 </div>
               </div>
               
-              <div className="w-full md:w-80 lg:w-96 shrink-0">
+              <div className="w-full md:w-72 lg:w-80 shrink-0 mb-8 md:mb-0">
                 <div className="sticky top-20">
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     <Card className="bg-gradient-to-br from-[#f0f6ff] to-[#fafcff] border-[#e9ecef] shadow-sm">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-[#004080]">Why Choose Our Services?</CardTitle>
+                      <CardHeader className="pb-2 pt-4 px-4">
+                        <CardTitle className="text-[#004080] text-lg">Why Choose Our Services?</CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-4">
+                      <CardContent className="px-4 pb-4 pt-0">
+                        <ul className="space-y-3">
                           <li className="flex gap-3">
                             <div className="p-2 rounded-full bg-[#004080]/10 h-9 w-9 flex items-center justify-center">
                               <Code className="h-5 w-5 text-[#004080]" />
@@ -396,11 +396,11 @@ export default function ProjectRequestPage() {
                     </Card>
                     
                     <Card className="shadow-sm border-[#e9ecef]">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-[#004080]">Project Request Process</CardTitle>
+                      <CardHeader className="pb-2 pt-4 px-4">
+                        <CardTitle className="text-[#004080] text-lg">Project Request Process</CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <ol className="space-y-4 list-decimal pl-5">
+                      <CardContent className="px-4 pb-4 pt-0">
+                        <ol className="space-y-3 list-decimal pl-5">
                           <li className="text-sm">
                             <span className="font-medium text-gray-800">Submit your request</span>
                             <p className="text-gray-600">Fill out the form with your project details</p>
@@ -421,7 +421,7 @@ export default function ProjectRequestPage() {
                       </CardContent>
                     </Card>
                     
-                    <Alert className="bg-blue-50 border-blue-200 text-blue-800 shadow-sm">
+                    <Alert className="bg-blue-50 border-blue-200 text-blue-800 shadow-sm p-4">
                       <AlertCircle className="h-4 w-4 text-blue-600" />
                       <AlertTitle className="text-sm font-medium">Required fields are marked with *</AlertTitle>
                       <AlertDescription className="text-xs text-blue-700 mt-1">
