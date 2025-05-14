@@ -352,6 +352,8 @@ export const productReviewsRelations = relations(productReviews, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   created_at: true,
+  updated_at: true,
+  profile_data: true,
   role: true,
 });
 

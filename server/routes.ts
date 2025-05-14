@@ -55,7 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use zod to validate the profile data
       const profileSchema = z.object({
-        name: z.string().optional(),
+        name: z.string().min(2).optional(),
         phone: z.string().optional(),
         address: z.string().optional(),
         company: z.string().optional(),
@@ -64,6 +64,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const validatedData = profileSchema.parse(profileData);
+      
+      // Update user's name if provided
+      if (validatedData.name) {
+        await storage.updateUser(userId, { name: validatedData.name });
+        delete validatedData.name;
+      }
+      
+      // Update the profile data
       const updatedUser = await storage.updateUserProfile(userId, validatedData);
       
       if (!updatedUser) {
