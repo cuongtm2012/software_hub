@@ -149,12 +149,12 @@ export default function ProjectRequestPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
-      <main className="flex-grow">
-        <div className="container py-10">
-          <div className="mb-6">
+      <main className="flex-grow bg-gray-50">
+        <div className="container py-12">
+          <div className="mb-8">
             <Button
               variant="outline"
-              className="flex items-center text-[#004080]"
+              className="flex items-center text-[#004080] hover:bg-[#004080]/5 border-[#004080]/30 transition-all duration-200"
               onClick={() => navigate('/')}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -162,24 +162,102 @@ export default function ProjectRequestPage() {
             </Button>
           </div>
           <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex flex-col md:flex-row gap-10">
               <div className="flex-1">
-                <h1 className="text-3xl font-bold tracking-tight mb-3 text-[#004080]">Request a Custom Project</h1>
-                <p className="text-muted-foreground mb-6">
-                  Fill out the form below to request a custom software development project. Our team will review your requirements and contact you shortly.
-                </p>
+                <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-10">
+                  <h1 className="text-3xl font-bold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-[#004080] to-[#0066cc]">Request a Custom Project</h1>
+                  <p className="text-gray-600 mb-8 max-w-2xl">
+                    Fill out the form below to request a custom software development project. Our team will review your requirements and contact you shortly.
+                  </p>
                 
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-gray-700">Your Name <span className="text-red-500">*</span></FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Full name" 
+                                  className="border-gray-300 focus-visible:ring-[#004080]" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-gray-700">Email Address <span className="text-red-500">*</span></FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Your email" 
+                                  className="border-gray-300 focus-visible:ring-[#004080]" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-gray-700">Phone Number</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Your phone number" 
+                                  className="border-gray-300 focus-visible:ring-[#004080]" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="company"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-gray-700">Company Name</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Your company (optional)" 
+                                  className="border-gray-300 focus-visible:ring-[#004080]" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
                       <FormField
                         control={form.control}
-                        name="name"
+                        name="project_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Your Name *</FormLabel>
+                            <FormLabel className="text-gray-700">Project Name <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
-                              <Input placeholder="Full name" {...field} />
+                              <Input 
+                                placeholder="A brief name for your project" 
+                                className="border-gray-300 focus-visible:ring-[#004080]" 
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -188,12 +266,16 @@ export default function ProjectRequestPage() {
                       
                       <FormField
                         control={form.control}
-                        name="email"
+                        name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email Address *</FormLabel>
+                            <FormLabel className="text-gray-700">Project Description <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
-                              <Input placeholder="Your email" {...field} />
+                              <Textarea 
+                                placeholder="Describe your project in detail. What problem are you trying to solve?" 
+                                className="min-h-[120px] border-gray-300 focus-visible:ring-[#004080]" 
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -202,190 +284,144 @@ export default function ProjectRequestPage() {
                       
                       <FormField
                         control={form.control}
-                        name="phone"
+                        name="requirements"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
+                            <FormLabel className="text-gray-700">Technical Requirements <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
-                              <Input placeholder="Your phone number" {...field} />
+                              <Textarea 
+                                placeholder="List key features, technologies, or specific requirements" 
+                                className="min-h-[120px] border-gray-300 focus-visible:ring-[#004080]" 
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       
-                      <FormField
-                        control={form.control}
-                        name="company"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Company Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your company (optional)" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="project_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project Name *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="A brief name for your project" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project Description *</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Describe your project in detail. What problem are you trying to solve?" 
-                              className="min-h-[120px]" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="requirements"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Technical Requirements *</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="List key features, technologies, or specific requirements" 
-                              className="min-h-[120px]" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="budget"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Estimated Budget</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your budget range" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="budget"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-gray-700">Estimated Budget</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Your budget range" 
+                                  className="border-gray-300 focus-visible:ring-[#004080]" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="timeline"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-gray-700">Expected Timeline</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="When do you need this completed?" 
+                                  className="border-gray-300 focus-visible:ring-[#004080]" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       
-                      <FormField
-                        control={form.control}
-                        name="timeline"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Expected Timeline</FormLabel>
-                            <FormControl>
-                              <Input placeholder="When do you need this completed?" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="pt-4">
-                      <Button 
-                        type="submit" 
-                        className="w-full md:w-auto bg-[#004080] hover:bg-[#003366]"
-                        disabled={createExternalRequestMutation.isPending}
-                      >
-                        {createExternalRequestMutation.isPending && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        Submit Project Request
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
+                      <div className="pt-6">
+                        <Button 
+                          type="submit" 
+                          className="w-full md:w-auto bg-gradient-to-r from-[#004080] to-[#003366] hover:from-[#003366] hover:to-[#002040] text-white py-6 px-8"
+                          disabled={createExternalRequestMutation.isPending}
+                        >
+                          {createExternalRequestMutation.isPending && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          Submit Project Request
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </div>
               </div>
               
               <div className="w-full md:w-80 lg:w-96 shrink-0">
                 <div className="sticky top-20">
                   <div className="space-y-6">
-                    <Card className="bg-[#f8f9fa] border-[#e9ecef]">
+                    <Card className="bg-gradient-to-br from-[#f0f6ff] to-[#fafcff] border-[#e9ecef] shadow-sm">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-[#004080]">Why Choose Our Services?</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ul className="space-y-4">
                           <li className="flex gap-3">
-                            <Code className="h-5 w-5 text-[#ffcc00] shrink-0 mt-0.5" />
+                            <div className="p-2 rounded-full bg-[#004080]/10 h-9 w-9 flex items-center justify-center">
+                              <Code className="h-5 w-5 text-[#004080]" />
+                            </div>
                             <div>
-                              <p className="font-medium">Expert Development Team</p>
-                              <p className="text-sm text-muted-foreground">Our specialists have years of experience in diverse technologies</p>
+                              <p className="font-medium text-gray-800">Expert Development Team</p>
+                              <p className="text-sm text-gray-600">Our specialists have years of experience in diverse technologies</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <FileCog className="h-5 w-5 text-[#ffcc00] shrink-0 mt-0.5" />
+                            <div className="p-2 rounded-full bg-[#004080]/10 h-9 w-9 flex items-center justify-center">
+                              <FileCog className="h-5 w-5 text-[#004080]" />
+                            </div>
                             <div>
-                              <p className="font-medium">Custom Solutions</p>
-                              <p className="text-sm text-muted-foreground">Tailored development to match your specific requirements</p>
+                              <p className="font-medium text-gray-800">Custom Solutions</p>
+                              <p className="text-sm text-gray-600">Tailored development to match your specific requirements</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <FileCode className="h-5 w-5 text-[#ffcc00] shrink-0 mt-0.5" />
+                            <div className="p-2 rounded-full bg-[#004080]/10 h-9 w-9 flex items-center justify-center">
+                              <FileCode className="h-5 w-5 text-[#004080]" />
+                            </div>
                             <div>
-                              <p className="font-medium">End-to-End Service</p>
-                              <p className="text-sm text-muted-foreground">From planning to deployment and ongoing support</p>
+                              <p className="font-medium text-gray-800">End-to-End Service</p>
+                              <p className="text-sm text-gray-600">From planning to deployment and ongoing support</p>
                             </div>
                           </li>
                         </ul>
                       </CardContent>
                     </Card>
                     
-                    <Card>
+                    <Card className="shadow-sm border-[#e9ecef]">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-[#004080]">Project Request Process</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ol className="space-y-4 list-decimal pl-5">
                           <li className="text-sm">
-                            <span className="font-medium">Submit your request</span>
-                            <p className="text-muted-foreground">Fill out the form with your project details</p>
+                            <span className="font-medium text-gray-800">Submit your request</span>
+                            <p className="text-gray-600">Fill out the form with your project details</p>
                           </li>
                           <li className="text-sm">
-                            <span className="font-medium">Initial consultation</span>
-                            <p className="text-muted-foreground">Our team will contact you to discuss requirements</p>
+                            <span className="font-medium text-gray-800">Initial consultation</span>
+                            <p className="text-gray-600">Our team will contact you to discuss requirements</p>
                           </li>
                           <li className="text-sm">
-                            <span className="font-medium">Proposal and quote</span>
-                            <p className="text-muted-foreground">Receive a detailed proposal with timeline and costs</p>
+                            <span className="font-medium text-gray-800">Proposal and quote</span>
+                            <p className="text-gray-600">Receive a detailed proposal with timeline and costs</p>
                           </li>
                           <li className="text-sm">
-                            <span className="font-medium">Development begins</span>
-                            <p className="text-muted-foreground">Once approved, our team starts working on your project</p>
+                            <span className="font-medium text-gray-800">Development begins</span>
+                            <p className="text-gray-600">Once approved, our team starts working on your project</p>
                           </li>
                         </ol>
                       </CardContent>
                     </Card>
                     
-                    <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+                    <Alert className="bg-blue-50 border-blue-200 text-blue-800 shadow-sm">
                       <AlertCircle className="h-4 w-4 text-blue-600" />
                       <AlertTitle className="text-sm font-medium">Required fields are marked with *</AlertTitle>
                       <AlertDescription className="text-xs text-blue-700 mt-1">
