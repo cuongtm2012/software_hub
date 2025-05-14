@@ -122,10 +122,10 @@ export function Header() {
                       <DropdownMenuItem onClick={() => navigate("/profile")} className="flex items-center gap-2 py-2 cursor-pointer">
                         <span className="flex-1">Your Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate("/profile/downloads")} className="flex items-center gap-2 py-2 cursor-pointer">
+                      <DropdownMenuItem onClick={() => navigate("/profile?tab=downloads")} className="flex items-center gap-2 py-2 cursor-pointer">
                         <span className="flex-1">Downloaded Software</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate("/profile/reviews")} className="flex items-center gap-2 py-2 cursor-pointer">
+                      <DropdownMenuItem onClick={() => navigate("/profile?tab=reviews")} className="flex items-center gap-2 py-2 cursor-pointer">
                         <span className="flex-1">Your Reviews</span>
                       </DropdownMenuItem>
                       {user.role === 'developer' && (

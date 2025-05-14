@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, type ProfileData } from "@/hooks/use-profile";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import {
@@ -56,6 +57,7 @@ const profileSchema = z.object({
 
 export default function UserProfilePage() {
   const { user } = useAuth();
+  const [location] = useLocation();
   const {
     profile,
     isProfileLoading,
@@ -68,7 +70,17 @@ export default function UserProfilePage() {
     deleteReviewMutation,
   } = useProfile();
   
-  const [activeTab, setActiveTab] = useState("profile");
+  // Get tab from URL query parameters
+  const getTabFromUrl = () => {
+    const searchParams = new URLSearchParams(location.split('?')[1] || '');
+    const tab = searchParams.get('tab');
+    if (tab === 'downloads' || tab === 'reviews') {
+      return tab;
+    }
+    return 'profile';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromUrl());
 
   // Form setup for profile
   const form = useForm<ProfileData>({
@@ -82,8 +94,8 @@ export default function UserProfilePage() {
     },
   });
   
-  // Update form values when profile data is loaded
-  useState(() => {
+  // Update form values when profile data is loaded and handle URL parameters
+  useEffect(() => {
     if (user && user.profile_data) {
       form.reset({
         name: user.name,
@@ -93,7 +105,24 @@ export default function UserProfilePage() {
         bio: user.profile_data.bio || "",
       });
     }
-  });
+    
+    // Set active tab based on URL parameter
+    setActiveTab(getTabFromUrl());
+  }, [user, location]);
+  
+  // Update URL when tab changes
+  useEffect(() => {
+    const currentParams = new URLSearchParams(location.split('?')[1] || '');
+    if (activeTab !== 'profile') {
+      currentParams.set('tab', activeTab);
+      const newUrl = `/profile?${currentParams.toString()}`;
+      window.history.replaceState(null, '', newUrl);
+    } else if (currentParams.has('tab')) {
+      currentParams.delete('tab');
+      const newUrl = currentParams.toString() ? `/profile?${currentParams.toString()}` : '/profile';
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, [activeTab]);
 
   // Handle profile form submission
   const onSubmit = (data: ProfileData) => {

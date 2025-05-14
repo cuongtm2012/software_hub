@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
+import UserProfilePage from "@/pages/user-profile-page";
 import { ProtectedRoute, AdminRoute } from "@/lib/protected-route";
 import { useAuth, AuthProvider } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/request-project" component={ProjectRequestPage} />
+      <ProtectedRoute path="/profile" component={UserProfilePage} />
       
       {/* Phase 2: Code Service & Product Build Module */}
       <Route path="/it-services" component={() => {

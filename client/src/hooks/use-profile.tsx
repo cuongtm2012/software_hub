@@ -1,10 +1,12 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
-import { useAuth } from "./use-auth";
-import { UserDownload } from "@shared/schema";
+import { 
+  User as SelectUser, 
+  UserDownload as SelectUserDownload,
+  Review as SelectReview 
+} from "@shared/schema";
 
-// ProfileData type matches the schema on the server
 export type ProfileData = {
   name?: string;
   phone?: string;
@@ -15,144 +17,115 @@ export type ProfileData = {
 };
 
 export function useProfile() {
-  const { user } = useAuth();
   const { toast } = useToast();
   
-  // Get user profile
+  // Query for user profile
   const {
     data: profile,
     isLoading: isProfileLoading,
-    error: profileError,
-  } = useQuery({
-    queryKey: ["/api/auth/profile"],
-    queryFn: getQueryFn(),
-    enabled: !!user, // Only run if user is logged in
+    error: profileError
+  } = useQuery<SelectUser | undefined>({
+    queryKey: ["/api/user"],
+    enabled: true,
+    staleTime: 1000 * 60 * 5 // 5 minutes
   });
-
-  // Update user profile
-  const updateProfileMutation = useMutation({
-    mutationFn: async (profileData: ProfileData) => {
-      const res = await apiRequest("PUT", "/api/auth/profile", { profileData });
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["/api/auth/profile"], data);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Update failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Get user downloads
+  
+  // Query for user downloads
   const {
     data: downloads,
     isLoading: isDownloadsLoading,
-    error: downloadsError,
-  } = useQuery<UserDownload[]>({
+    error: downloadsError
+  } = useQuery<SelectUserDownload[]>({
     queryKey: ["/api/user/downloads"],
-    queryFn: getQueryFn(),
-    enabled: !!user, // Only run if user is logged in
+    enabled: true,
+    staleTime: 1000 * 60 * 5 // 5 minutes
   });
-
-  // Track a new download
-  const trackDownloadMutation = useMutation({
-    mutationFn: async (data: { software_id: number; version: string }) => {
-      const res = await apiRequest("POST", "/api/user/downloads", data);
-      return await res.json();
+  
+  // Query for user reviews
+  const {
+    data: reviews,
+    isLoading: isReviewsLoading,
+    error: reviewsError
+  } = useQuery<SelectReview[]>({
+    queryKey: ["/api/user/reviews"],
+    enabled: true,
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  });
+  
+  // Mutation to update profile
+  const updateProfileMutation = useMutation({
+    mutationFn: async (profileData: ProfileData) => {
+      const response = await apiRequest("PATCH", "/api/user/profile", profileData);
+      return await response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/downloads"] });
+    onSuccess: (data: SelectUser) => {
+      queryClient.setQueryData(["/api/user"], data);
       toast({
-        title: "Download tracked",
-        description: "Your download has been recorded.",
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Tracking failed",
+        title: "Failed to update profile",
         description: error.message,
         variant: "destructive",
       });
     },
   });
-
-  // Get user reviews
-  const {
-    data: reviews,
-    isLoading: isReviewsLoading,
-    error: reviewsError,
-  } = useQuery({
-    queryKey: ["/api/user/reviews"],
-    queryFn: getQueryFn(),
-    enabled: !!user, // Only run if user is logged in
-  });
-
-  // Update a review
+  
+  // Mutation to update review
   const updateReviewMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: { rating?: number; comment?: string } }) => {
-      const res = await apiRequest("PUT", `/api/user/reviews/${id}`, data);
-      return await res.json();
+    mutationFn: async ({ id, reviewData }: { id: number; reviewData: Partial<SelectReview> }) => {
+      const response = await apiRequest("PATCH", `/api/reviews/${id}`, reviewData);
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/reviews"] });
       toast({
         title: "Review updated",
-        description: "Your review has been successfully updated.",
+        description: "Your review has been updated successfully.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Update failed",
+        title: "Failed to update review",
         description: error.message,
         variant: "destructive",
       });
     },
   });
-
-  // Delete a review
+  
+  // Mutation to delete review
   const deleteReviewMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/user/reviews/${id}`);
+      await apiRequest("DELETE", `/api/reviews/${id}`);
+      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/reviews"] });
       toast({
         title: "Review deleted",
-        description: "Your review has been successfully deleted.",
+        description: "Your review has been deleted successfully.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Deletion failed",
+        title: "Failed to delete review",
         description: error.message,
         variant: "destructive",
       });
     },
   });
-
+  
   return {
-    // Profile data and operations
     profile,
     isProfileLoading,
     profileError,
     updateProfileMutation,
-    
-    // Downloads data and operations
     downloads,
     isDownloadsLoading,
     downloadsError,
-    trackDownloadMutation,
-    
-    // Reviews data and operations
     reviews,
     isReviewsLoading,
     reviewsError,
