@@ -55,7 +55,7 @@ export function useProfile() {
   // Mutation to update profile
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: ProfileData) => {
-      const response = await apiRequest("PATCH", "/api/user/profile", profileData);
+      const response = await apiRequest("PUT", "/api/auth/profile", { profileData });
       return await response.json();
     },
     onSuccess: (data: SelectUser) => {
@@ -77,7 +77,7 @@ export function useProfile() {
   // Mutation to update review
   const updateReviewMutation = useMutation({
     mutationFn: async ({ id, reviewData }: { id: number; reviewData: Partial<SelectReview> }) => {
-      const response = await apiRequest("PATCH", `/api/reviews/${id}`, reviewData);
+      const response = await apiRequest("PUT", `/api/user/reviews/${id}`, reviewData);
       return await response.json();
     },
     onSuccess: () => {
@@ -99,7 +99,7 @@ export function useProfile() {
   // Mutation to delete review
   const deleteReviewMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/reviews/${id}`);
+      await apiRequest("DELETE", `/api/user/reviews/${id}`);
       return id;
     },
     onSuccess: () => {
