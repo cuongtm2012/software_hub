@@ -30,7 +30,7 @@ import {
   Monitor, 
   BookOpen, 
   ShoppingCart, 
-  Smartphone 
+  Smartphone
 } from "lucide-react";
 
 // Phase 2: Code Service & Product Build Module
@@ -142,6 +142,38 @@ function Router() {
                         technologies: ["React Native", "Firebase", "Google Maps API", "Stripe"],
                         outcome: "Processed over 15,000 orders in first month with 4.8/5 user rating.",
                         icon: Smartphone
+                      },
+                      {
+                        id: 5,
+                        name: "TaleScape",
+                        description: "Interactive story reading mobile app with audio narration, animations, and parental controls.",
+                        technologies: ["Flutter", "Firebase", "AWS Polly", "SVG Animation"],
+                        outcome: "Featured in App Store's \"Apps We Love\" with 250,000+ downloads.",
+                        icon: BookOpen
+                      },
+                      {
+                        id: 6,
+                        name: "CineFlix+",
+                        description: "Online movie streaming platform with personalized recommendations and social sharing features.",
+                        technologies: ["Next.js", "GraphQL", "MongoDB", "AWS S3"],
+                        outcome: "Achieved 98.5% uptime with smooth playback for 50,000+ concurrent users.",
+                        icon: Monitor
+                      },
+                      {
+                        id: 7,
+                        name: "SportsPulse",
+                        description: "Real-time sports news and scores mobile app with personalized alerts and live commentary.",
+                        technologies: ["React Native", "Socket.io", "Node.js", "MongoDB"],
+                        outcome: "Retained 78% of users after 3 months with average 22 minutes daily use.",
+                        icon: Smartphone
+                      },
+                      {
+                        id: 8,
+                        name: "VistaTour",
+                        description: "Tourism marketplace connecting travelers with local guides and unique experiences.",
+                        technologies: ["Vue.js", "Laravel", "MySQL", "Mapbox"],
+                        outcome: "Facilitated 10,000+ bookings across 45 countries in first year.",
+                        icon: Monitor
                       }
                     ].map((project) => {
                       const IconComponent = project.icon || Code;
@@ -193,9 +225,9 @@ function Router() {
                   <div className="flex justify-center mt-8">
                     <Button 
                       className="bg-[#004080] hover:bg-[#003366] text-white"
-                      onClick={() => navigate('/projects')}
+                      onClick={() => navigate('/project-request')}
                     >
-                      View All Successful Projects <ArrowRight className="ml-1 h-4 w-4" />
+                      Request Custom Project <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
