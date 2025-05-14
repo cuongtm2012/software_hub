@@ -135,60 +135,6 @@ export function PortfolioShowcase() {
             </CardFooter>
           </Card>
         </div>
-        
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8">
-          <div className="flex flex-col lg:flex-row gap-8 items-center">
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-[#004080] mb-4">Ready to Start Your Project?</h3>
-              <p className="text-gray-600 mb-6">
-                Whether you need a mobile app, web platform, or custom software solution, our network of expert developers is ready to help. Post your project today and receive quotes from qualified professionals.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link href="/request-project">
-                  <Button className="bg-gradient-to-r from-[#004080] to-[#0066cc] hover:from-[#003366] hover:to-[#0055b3] text-white">
-                    Request a Project
-                  </Button>
-                </Link>
-                <Link href="/it-services">
-                  <Button variant="outline" className="border-[#004080] text-[#004080] hover:bg-blue-50">
-                    Learn About Our Services
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="lg:w-1/3">
-              <div className="rounded-lg border border-gray-200 p-4 bg-gray-50">
-                <h4 className="font-medium text-[#004080] mb-3">Why Choose Our Platform?</h4>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <svg className="h-5 w-5 text-green-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span className="text-sm text-gray-600">Vetted, skilled developers</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="h-5 w-5 text-green-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span className="text-sm text-gray-600">Secure project management</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="h-5 w-5 text-green-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span className="text-sm text-gray-600">Protected payments system</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="h-5 w-5 text-green-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span className="text-sm text-gray-600">Milestone-based delivery</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
