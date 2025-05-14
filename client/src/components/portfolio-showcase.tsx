@@ -44,7 +44,181 @@ const sampleProjects: SampleProject[] = [
 ];
 
 export function PortfolioShowcase() {
-  // Component intentionally left empty as the showcase is now 
-  // directly embedded in the IT services page
-  return null;
+  return (
+    <div className="bg-gradient-to-b from-[#f5f7fd] to-white py-16">
+      <div className="container px-4 sm:px-6 mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#004080] mb-4">Collaborate on Your Project</h2>
+          <p className="text-gray-600 max-w-3xl mx-auto">
+            Connect with expert developers and bring your software ideas to life. 
+            Our platform helps you find the right talent, manage your project, and collaborate efficiently.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                <Code className="w-6 h-6 text-[#004080]" />
+              </div>
+              <CardTitle className="text-[#004080]">Post Your Project</CardTitle>
+              <CardDescription>Describe your software needs and requirements</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 text-sm">
+                Define your project scope, timeline, and budget. Our detailed request form helps you provide all the information developers need to understand your requirements.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/request-project">
+                <Button variant="outline" className="text-[#004080] border-[#004080]/30 hover:bg-blue-50 w-full">
+                  Create Project Request
+                  <MoveRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+          
+          <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-[#004080]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <CardTitle className="text-[#004080]">Find Developers</CardTitle>
+              <CardDescription>Connect with skilled professionals</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 text-sm">
+                Browse developer portfolios, review their skills and past projects. Choose the right talent for your project based on experience and expertise.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/portfolios/gallery">
+                <Button variant="outline" className="text-[#004080] border-[#004080]/30 hover:bg-blue-50 w-full">
+                  Browse Portfolios
+                  <MoveRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+          
+          <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-[#004080]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="18" x="3" y="3" rx="2" />
+                  <path d="M7 7h10" />
+                  <path d="M7 12h10" />
+                  <path d="M7 17h10" />
+                </svg>
+              </div>
+              <CardTitle className="text-[#004080]">Manage Projects</CardTitle>
+              <CardDescription>Track progress and collaborate effectively</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 text-sm">
+                Manage milestones, communicate with developers, and track progress all in one place. Our platform provides tools for seamless collaboration.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/projects">
+                <Button variant="outline" className="text-[#004080] border-[#004080]/30 hover:bg-blue-50 w-full">
+                  View Projects
+                  <MoveRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+        </div>
+        
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8">
+          <div className="flex flex-col lg:flex-row gap-8 items-center">
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-[#004080] mb-4">Ready to Start Your Project?</h3>
+              <p className="text-gray-600 mb-6">
+                Whether you need a mobile app, web platform, or custom software solution, our network of expert developers is ready to help. Post your project today and receive quotes from qualified professionals.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Link href="/request-project">
+                  <Button className="bg-gradient-to-r from-[#004080] to-[#0066cc] hover:from-[#003366] hover:to-[#0055b3] text-white">
+                    Request a Project
+                  </Button>
+                </Link>
+                <Link href="/it-services">
+                  <Button variant="outline" className="border-[#004080] text-[#004080] hover:bg-blue-50">
+                    Learn About Our Services
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="lg:w-1/3">
+              <div className="rounded-lg border border-gray-200 p-4 bg-gray-50">
+                <h4 className="font-medium text-[#004080] mb-3">Why Choose Our Platform?</h4>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span className="text-sm text-gray-600">Vetted, skilled developers</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span className="text-sm text-gray-600">Secure project management</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span className="text-sm text-gray-600">Protected payments system</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span className="text-sm text-gray-600">Milestone-based delivery</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {sampleProjects.map((project) => (
+            <Card key={project.id} className="border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-[#004080]">{project.name}</CardTitle>
+                <CardDescription>{project.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {project.technologies.map((tech, i) => (
+                    <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  <strong>Outcome:</strong> {project.outcome}
+                </p>
+              </CardContent>
+              <CardFooter>
+                <Button variant="ghost" className="text-[#004080] hover:bg-blue-50 w-full flex items-center justify-center">
+                  <span>View Similar Project</span>
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
