@@ -312,7 +312,7 @@ export default function HomePage() {
             
             {showDetails && (
               <div className="flex items-center mt-1">
-                <StarRating rating={software.rating} size="sm" />
+                <StarRating value={software.rating} size="sm" />
                 <span className="ml-1 text-xs text-gray-600">{software.rating}</span>
               </div>
             )}

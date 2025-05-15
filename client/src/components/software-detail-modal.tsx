@@ -142,7 +142,7 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
               <div className="flex justify-between items-start">
                 <h3 className="text-2xl font-bold text-gray-900">{software.name}</h3>
                 <div className="flex items-center">
-                  <StarRating rating={averageRating || 0} size="lg" />
+                  <StarRating value={averageRating || 0} size="lg" />
                   <span className="ml-1 font-medium text-gray-700">{averageRating ? averageRating.toFixed(1) : "No ratings"}</span>
                 </div>
               </div>
@@ -184,9 +184,9 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
                     <div className="flex items-center mb-2">
                       <span className="text-sm text-gray-600 mr-2">Your rating:</span>
                       <StarRating 
-                        rating={userRating} 
+                        value={userRating} 
                         onChange={setUserRating} 
-                        interactive={true} 
+                        readonly={false}
                       />
                     </div>
                     <div>
