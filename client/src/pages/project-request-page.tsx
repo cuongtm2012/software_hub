@@ -67,13 +67,16 @@ export default function ProjectRequestPage() {
         name: data.name,
         email: data.email,
         phone: data.phone || "",
-        company: data.company || "",
-        project_name: data.project_name,
-        description: data.description,
-        requirements: data.requirements,
-        budget: data.budget || "",
-        timeline: data.timeline || "",
-        status: "pending",
+        // Combine all project details into the project_description field
+        project_description: `
+Project Name: ${data.project_name}
+Company: ${data.company || 'N/A'}
+Description: ${data.description}
+Requirements: ${data.requirements}
+Budget: ${data.budget || 'N/A'}
+Timeline: ${data.timeline || 'N/A'}
+        `.trim(),
+        status: "new",
       });
       
       return await response.json();
