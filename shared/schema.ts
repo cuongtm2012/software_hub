@@ -79,6 +79,10 @@ export const externalRequests = pgTable("external_requests", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Types
+export type ExternalRequest = typeof externalRequests.$inferSelect;
+export type InsertExternalRequest = z.infer<typeof insertExternalRequestSchema>;
+
 // Phase 2: Project Management Tables
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
