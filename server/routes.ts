@@ -63,6 +63,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // Get user's downloaded software
+  app.get("/api/user/downloads", isAuthenticated, async (req, res, next) => {
+    try {
+      const downloads = await storage.getUserDownloads(req.user!.id);
+      res.json(downloads);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Get user's reviews
+  app.get("/api/user/reviews", isAuthenticated, async (req, res, next) => {
+    try {
+      const reviews = await storage.getUserReviews(req.user!.id);
+      res.json(reviews);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   app.put("/api/auth/profile", isAuthenticated, async (req, res, next) => {
     try {
