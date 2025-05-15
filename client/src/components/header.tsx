@@ -128,6 +128,12 @@ export function Header() {
                       <DropdownMenuItem onClick={() => navigate("/profile?tab=reviews")} className="flex items-center gap-2 py-2 cursor-pointer">
                         <span className="flex-1">Your Reviews</span>
                       </DropdownMenuItem>
+                      {/* Common user dashboard for all users */}
+                      <DropdownMenuItem onClick={() => navigate("/dashboard")} className="flex items-center gap-2 py-2 cursor-pointer">
+                        <span className="flex-1">User Dashboard</span>
+                      </DropdownMenuItem>
+
+                      {/* Developer specific options */}
                       {user.role === 'developer' && (
                         <>
                           <DropdownMenuItem onClick={() => navigate("/projects/developer")} className="flex items-center gap-2 py-2 cursor-pointer">
@@ -138,21 +144,8 @@ export function Header() {
                           </DropdownMenuItem>
                         </>
                       )}
-                      {user.role === 'client' && (
-                        <DropdownMenuItem onClick={() => navigate("/projects/client")} className="flex items-center gap-2 py-2 cursor-pointer">
-                          <span className="flex-1">My Projects</span>
-                        </DropdownMenuItem>
-                      )}
-                      {user.role === 'seller' && (
-                        <DropdownMenuItem onClick={() => navigate("/marketplace/seller")} className="flex items-center gap-2 py-2 cursor-pointer">
-                          <span className="flex-1">My Store</span>
-                        </DropdownMenuItem>
-                      )}
-                      {user.role === 'buyer' && (
-                        <DropdownMenuItem onClick={() => navigate("/marketplace/orders")} className="flex items-center gap-2 py-2 cursor-pointer">
-                          <span className="flex-1">My Orders</span>
-                        </DropdownMenuItem>
-                      )}
+                      
+                      {/* Admin-specific access */}
                       {user.role === 'admin' && (
                         <DropdownMenuItem onClick={() => navigate("/admin")} className="flex items-center gap-2 py-2 cursor-pointer">
                           <span className="flex-1">Admin Dashboard</span>
