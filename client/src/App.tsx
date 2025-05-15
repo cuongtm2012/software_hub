@@ -59,10 +59,16 @@ import DashboardPage from "@/pages/dashboard-page";
 function Router() {
   return (
     <Switch>
+      {/* Public Routes - Available to all users */}
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/request-project" component={ProjectRequestPage} />
+      
+      {/* Protected Routes - Available to logged-in users */}
       <ProtectedRoute path="/profile" component={UserProfilePage} />
+      <ProtectedRoute path="/dashboard" component={DashboardPage} />
+      
+      {/* Admin Routes - Only accessible to admin users */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
       
       {/* Phase 2: Code Service & Product Build Module */}
@@ -592,7 +598,7 @@ function Router() {
       <ProtectedRoute path="/marketplace/orders" roles={['buyer', 'admin']} component={MarketplaceOrdersPage} />
       
       {/* Admin routes */}
-      <AdminRoute path="/admin" component={() => <div>Admin Dashboard (Coming Soon)</div>} />
+      <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
       
       <Route component={NotFound} />
     </Switch>

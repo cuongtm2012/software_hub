@@ -34,6 +34,20 @@ function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+function hasRole(roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    if (!roles.includes(req.user?.role as string)) {
+      return res.status(403).json({ message: `Forbidden: Required role not assigned` });
+    }
+    
+    next();
+  };
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);

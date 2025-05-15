@@ -93,11 +93,12 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email is already registered" });
       }
 
-      // Create the user with hashed password
+      // Create the user with hashed password and default 'user' role
       const user = await storage.createUser({
         name,
         email,
         password: await hashPassword(password),
+        role: 'user', // Default role for new registrations
       });
 
       // Remove password from response
