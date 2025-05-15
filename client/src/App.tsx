@@ -51,6 +51,7 @@ import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
 import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
+import DashboardPage from "@/pages/dashboard-page";
 
 function Router() {
   return (
@@ -96,11 +97,11 @@ function Router() {
                           Create New Project
                         </Button>
                         <Button 
-                          onClick={() => navigate('/projects')}
+                          onClick={() => navigate('/dashboard')}
                           variant="outline"
                           className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
                         >
-                          View My Projects
+                          My Dashboard
                         </Button>
                       </div>
                     </div>
@@ -454,6 +455,7 @@ function Router() {
         }
         return <ProjectsPage />;
       }} />
+      <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/projects/new" roles={['client', 'admin']} component={ProjectNewPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/portfolios" roles={['developer', 'admin']} component={PortfolioPage} />

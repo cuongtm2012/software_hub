@@ -1,0 +1,126 @@
+# A. Project Overview & Quotes UI Workflow
+
+### Workflow Steps:
+
+1. User Login  
+   - User enters credentials and logs into the dashboard.
+
+2. Dashboard Load  
+   - Frontend calls API to fetch:  
+     - List of projects with status  
+     - Notifications  
+     - Related quotes (pending, accepted, rejected)
+
+3. View Projects and Quotes  
+   - User sees project list with key info (name, status, deadline).  
+   - User sees quotes associated with projects, including status and amount.
+
+4. Accept or Reject Quote  
+   - User clicks on a pending quote → opens quote detail modal/page.  
+   - User selects Accept or Reject button.  
+   - Confirmation popup appears → user confirms action.  
+   - Frontend sends API request to update quote status.  
+   - Backend creates payment transaction if quote is accepted.
+
+---
+
+### Wireframe Description:
+
+Dashboard Main Screen
+
+```
++---------------------------------------------------+
+| Header: Logo | Menu: Dashboard | Projects | Quotes | Payments | Messages | Profile |
++---------------------------------------------------+
+
+| Projects Section                                  |
+|-------------------------------------------------|
+| Project Name | Status | Deadline | Actions      |
+|-------------|--------|----------|--------------|
+| Project A   | Active | 2025-06-30 | [View Quotes] |
+| Project B   | Pending| 2025-07-15 | [View Quotes] |
+
+| Quotes Section (Pending)                          |
+|-------------------------------------------------|
+| Project | Contractor | Amount | Status  | Action |
+|---------|------------|--------|---------|--------|
+| Project A | Contractor X | $500 | Pending | [Accept] [Reject] |
++-------------------------------------------------+
+```
+
+Quote Detail Modal/Page
+
+```
++---------------------------------------------+
+| Quote for Project A                          |
+| Contractor: Contractor X                     |
+| Amount: $500                                |
+| Description: Detailed quote description...  |
+|                                             |
+| [Accept]  [Reject]  [Cancel]                 |
++---------------------------------------------+
+```
+
+---
+
+# B. Payment UI Workflow
+
+### Workflow Steps:
+
+1. Select Accepted Quote for Payment  
+   - User navigates to Payments tab or clicks "Pay" button on accepted quote.
+
+2. Create Payment Transaction  
+   - Frontend calls API to create payment order for the selected quote.
+
+3. Redirect to Payment Gateway  
+   - User is redirected to external payment gateway (Momo wallet, internet banking).
+
+4. Complete Payment  
+   - User enters payment details and completes transaction.
+
+5. Payment Gateway Callback  
+   - Gateway sends callback/webhook to backend with payment result.
+
+6. Update Payment Status & Notify User  
+   - Backend updates payment status in database.  
+   - Backend sends notification to user (email, dashboard alert).
+
+7. User Views Payment History  
+   - User can view payment history and status in Payments tab.
+
+---
+
+### Wireframe Description:
+
+Payments List Screen
+
+```
++---------------------------------------------------+
+| Payments                                         |
++---------------------------------------------------+
+
+| Date       | Project    | Amount | Status   | Action |
+|------------|------------|--------|----------|---------|
+| 2025-05-10 | Project A  | $500   | Success  | [View]  |
+| 2025-05-12 | Project B  | $300   | Pending  | [Pay]   |
++---------------------------------------------------+
+```
+
+Payment Detail / Create Payment Screen
+
+```
++---------------------------------------------------+
+| Payment for Project A                             |
++---------------------------------------------------+
+
+| Quote Amount: $500                                |
+| Select Payment Method: [Dropdown]                 |
+| Amount to Pay: $500                               |
+
+| [Pay Now]                                         |
+
+| Payment Status: Pending / Success / Failed       |
++---------------------------------------------------+
+```
+
