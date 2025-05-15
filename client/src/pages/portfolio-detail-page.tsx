@@ -420,9 +420,9 @@ export default function PortfolioDetailPage() {
                                 <FormControl>
                                   <div className="flex items-center">
                                     <StarRating 
-                                      rating={rating} 
+                                      value={rating} 
                                       size="md" 
-                                      editable 
+                                      readonly={false} 
                                       onChange={setRating} 
                                     />
                                     <span className="ml-2 text-gray-500">{rating} of 5 stars</span>
@@ -501,7 +501,7 @@ export default function PortfolioDetailPage() {
                                 {user?.id === review.user_id && <span className="ml-2 text-xs text-gray-500">(You)</span>}
                               </div>
                               <div className="flex items-center mt-1">
-                                <StarRating rating={review.rating} size="sm" />
+                                <StarRating value={review.rating} size="sm" />
                                 <span className="ml-2 text-sm text-gray-500">{formatDate(review.created_at)}</span>
                               </div>
                             </div>

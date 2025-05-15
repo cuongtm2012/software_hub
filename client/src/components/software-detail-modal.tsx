@@ -239,7 +239,7 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
                             <span className="ml-2 font-medium text-gray-900">{review.user_name || "User"}</span>
                           </div>
                           <div className="flex items-center">
-                            <StarRating rating={review.rating} size="sm" />
+                            <StarRating value={review.rating} size="sm" />
                             <span className="ml-2 text-sm text-gray-500">
                               {format(new Date(review.created_at), "MMM d, yyyy")}
                             </span>
