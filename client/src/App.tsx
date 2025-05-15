@@ -90,7 +90,7 @@ function Router() {
                       </p>
                       <div className="flex gap-3 flex-wrap justify-center">
                         <Button 
-                          onClick={() => navigate('/project-new-page')}
+                          onClick={() => navigate('/request-project')}
                           className="bg-[#004080] hover:bg-[#003366] text-white"
                         >
                           Create New Project
