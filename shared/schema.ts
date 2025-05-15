@@ -354,7 +354,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
   created_at: true,
   updated_at: true,
   profile_data: true,
-  role: true,
 });
 
 export const insertSoftwareSchema = createInsertSchema(softwares).omit({
