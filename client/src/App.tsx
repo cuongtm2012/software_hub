@@ -62,7 +62,7 @@ function Router() {
       
       {/* Phase 2: Code Service & Product Build Module */}
       <Route path="/it-services" component={() => {
-        const { user } = useAuth();
+        const { user, isLoading } = useAuth();
         const [, navigate] = useLocation();
         
         return (
@@ -75,27 +75,59 @@ function Router() {
                   Connect with skilled developers for your custom software projects. Submit project requests, 
                   receive quotes, and collaborate securely through our platform.
                 </p>
-                <div className="space-y-6 max-w-lg mx-auto">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h2 className="text-lg font-medium text-[#004080] mb-2">Ready to start your project?</h2>
-                    <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
-                    <div className="flex gap-3 flex-wrap justify-center">
-                      <Button 
-                        onClick={() => navigate('/auth')}
-                        className="bg-[#004080] hover:bg-[#003366] text-white"
-                      >
-                        Login to Post a Project
-                      </Button>
-                      <Button 
-                        onClick={() => navigate('/request-project')}
-                        variant="outline"
-                        className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
-                      >
-                        Submit Request as Guest
-                      </Button>
+                
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
+                  </div>
+                ) : user ? (
+                  <div className="space-y-6 max-w-lg mx-auto">
+                    <div className="bg-[#f0f7ff] p-6 rounded-lg border border-[#004080]/20">
+                      <h2 className="text-lg font-medium text-[#004080] mb-2">Welcome, {user.name}!</h2>
+                      <p className="text-gray-600 mb-4">
+                        You're logged in and ready to create a new project request. Our platform connects you 
+                        with skilled developers who can bring your ideas to life.
+                      </p>
+                      <div className="flex gap-3 flex-wrap justify-center">
+                        <Button 
+                          onClick={() => navigate('/project-new-page')}
+                          className="bg-[#004080] hover:bg-[#003366] text-white"
+                        >
+                          Create New Project
+                        </Button>
+                        <Button 
+                          onClick={() => navigate('/projects')}
+                          variant="outline"
+                          className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
+                        >
+                          View My Projects
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-6 max-w-lg mx-auto">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h2 className="text-lg font-medium text-[#004080] mb-2">Ready to start your project?</h2>
+                      <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
+                      <div className="flex gap-3 flex-wrap justify-center">
+                        <Button 
+                          onClick={() => navigate('/auth')}
+                          className="bg-[#004080] hover:bg-[#003366] text-white"
+                        >
+                          Login to Post a Project
+                        </Button>
+                        <Button 
+                          onClick={() => navigate('/request-project')}
+                          variant="outline"
+                          className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
+                        >
+                          Submit Request as Guest
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </main>
             
@@ -239,8 +271,20 @@ function Router() {
       }} />
       
       <Route path="/projects" component={() => {
-        const { user } = useAuth();
+        const { user, isLoading } = useAuth();
         const [, navigate] = useLocation();
+        
+        if (isLoading) {
+          return (
+            <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+              <Header />
+              <main className="flex-grow container flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
+              </main>
+              <Footer />
+            </div>
+          );
+        }
         
         if (!user) {
           return (
@@ -257,7 +301,7 @@ function Router() {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h2 className="text-lg font-medium text-[#004080] mb-2">For Clients</h2>
                       <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
-                      <div className="flex gap-3 flex-wrap">
+                      <div className="flex gap-3 flex-wrap justify-center">
                         <Button 
                           onClick={() => navigate('/auth')}
                           className="bg-[#004080] hover:bg-[#003366] text-white"
@@ -273,7 +317,6 @@ function Router() {
                         </Button>
                       </div>
                     </div>
-
                   </div>
                 </div>
               </main>
@@ -479,11 +522,13 @@ function Router() {
                         <CardHeader className="pb-2">
                           <CardTitle className="text-lg">{portfolio.title}</CardTitle>
                           <div className="flex items-center mt-1">
-                            <StarRating rating={
-                              portfolio.reviews?.length 
+                            <StarRating 
+                              value={portfolio.reviews?.length 
                                 ? portfolio.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / portfolio.reviews.length 
                                 : 0
-                            } size="sm" />
+                              } 
+                              size="sm" 
+                            />
                             <span className="text-sm text-gray-500 ml-2">
                               ({portfolio.reviews?.length || 0} reviews)
                             </span>
