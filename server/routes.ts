@@ -47,6 +47,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // Update user profile
+  app.patch("/api/user/profile", isAuthenticated, async (req, res, next) => {
+    try {
+      const profileData = req.body;
+      const updatedUser = await storage.updateUserProfile(req.user!.id, profileData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   app.put("/api/auth/profile", isAuthenticated, async (req, res, next) => {
     try {

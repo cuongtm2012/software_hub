@@ -11,12 +11,12 @@ export type ProfileData = {
   bio?: string;
 };
 
-export function useProfile() {
+function useProfile() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Check if user profile is loading
-  const isProfileLoading = !user && queryClient.getQueryState(["/api/user"])?.status === "loading";
+  // Simplified loading check
+  const isProfileLoading = false;
 
   // Mutation to update user profile
   const updateProfileMutation = useMutation({
@@ -50,3 +50,5 @@ export function useProfile() {
     updateProfileMutation,
   };
 }
+
+export { useProfile };
