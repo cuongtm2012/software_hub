@@ -1,18 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, type ProfileData } from "@/hooks/use-profile";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import {
   Form,
   FormControl,
@@ -46,20 +39,9 @@ const profileSchema = z.object({
   bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
 });
 
-type ProfileDataType = {
-  phone?: string;
-  address?: string;
-  company?: string;
-  bio?: string;
-};
-
 export default function UserProfilePage() {
   const { user } = useAuth();
-  const [location] = useLocation();
-  const {
-    isProfileLoading,
-    updateProfileMutation,
-  } = useProfile();
+  const { isProfileLoading, updateProfileMutation } = useProfile();
   
   // Form setup for profile
   const form = useForm<ProfileData>({
@@ -75,14 +57,14 @@ export default function UserProfilePage() {
   
   // Update form values when profile data is loaded
   useEffect(() => {
-    if (user && user.profile_data) {
-      const profileData = user.profile_data as ProfileDataType;
+    if (user) {
+      const profileData = user.profile_data || {};
       form.reset({
         name: user.name,
-        phone: profileData?.phone || "",
-        address: profileData?.address || "",
-        company: profileData?.company || "",
-        bio: profileData?.bio || "",
+        phone: typeof profileData === 'object' && profileData !== null ? (profileData as any).phone || "" : "",
+        address: typeof profileData === 'object' && profileData !== null ? (profileData as any).address || "" : "",
+        company: typeof profileData === 'object' && profileData !== null ? (profileData as any).company || "" : "",
+        bio: typeof profileData === 'object' && profileData !== null ? (profileData as any).bio || "" : "",
       });
     }
   }, [user, form]);
@@ -111,6 +93,8 @@ export default function UserProfilePage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8 text-[#004080]">Profile Settings</h1>
+        
         <div className="flex flex-col md:flex-row gap-6">
           {/* Profile Header */}
           <div className="w-full md:w-1/3">
@@ -125,7 +109,7 @@ export default function UserProfilePage() {
                 <div className="flex flex-col items-center space-y-4 py-4">
                   <div className="relative h-24 w-24 rounded-full bg-[#004080]/10 flex items-center justify-center">
                     <span className="text-3xl font-semibold text-[#004080]">
-                      {user?.name?.charAt(0).toUpperCase() || "U"}
+                      {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                     </span>
                   </div>
                   <div className="text-center">
