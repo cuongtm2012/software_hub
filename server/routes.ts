@@ -14,18 +14,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
-function isAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  
-  if (req.user?.role !== 'admin') {
-    return res.status(403).json({ message: "Forbidden: Admin access required" });
-  }
-  
-  next();
-}
-
+// Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -34,6 +23,7 @@ function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Role-based access control middleware
 function hasRole(roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.isAuthenticated()) {
@@ -48,16 +38,16 @@ function hasRole(roles: string[]) {
   };
 }
 
-// Short-hand middleware for admin role
-const isAdminOrDeveloper = hasRole(['admin', 'developer']);
-const isAnyRegisteredUser = isAuthenticated;
+// Short-hand middleware for common role combinations
+const adminMiddleware = hasRole(['admin']);
+const adminOrDeveloperMiddleware = hasRole(['admin', 'developer']);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
   
   // Admin routes
-  app.get("/api/admin/users", isAdmin, async (req, res, next) => {
+  app.get("/api/admin/users", adminMiddleware, async (req, res, next) => {
     try {
       // Get all users (in a real app, you would add pagination)
       const users = await storage.getAllUsers();
@@ -67,7 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.patch("/api/admin/users/:id/role", isAdmin, async (req, res, next) => {
+  app.patch("/api/admin/users/:id/role", adminMiddleware, async (req, res, next) => {
     try {
       const { id } = req.params;
       const { role } = req.body;
@@ -90,169 +80,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Profile Management Routes
   app.get("/api/auth/profile", isAuthenticated, async (req, res, next) => {
     try {
-      const user = req.user!;
-      res.json({ user });
+      const user = await storage.getUser(req.user?.id as number);
+      res.json({ profile: user?.profile || {} });
     } catch (error) {
       next(error);
     }
   });
   
-  // Update user profile
-  app.patch("/api/user/profile", isAuthenticated, async (req, res, next) => {
-    try {
-      const profileData = req.body;
-      const updatedUser = await storage.updateUserProfile(req.user!.id, profileData);
-      
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      res.json(updatedUser);
-    } catch (error) {
-      next(error);
-    }
-  });
-  
-  // Get user's downloaded software
-  app.get("/api/user/downloads", isAuthenticated, async (req, res, next) => {
-    try {
-      const downloads = await storage.getUserDownloads(req.user!.id);
-      res.json(downloads);
-    } catch (error) {
-      next(error);
-    }
-  });
-  
-  // Get user's reviews
-  app.get("/api/user/reviews", isAuthenticated, async (req, res, next) => {
-    try {
-      const reviews = await storage.getUserReviews(req.user!.id);
-      res.json(reviews);
-    } catch (error) {
-      next(error);
-    }
-  });
-
   app.put("/api/auth/profile", isAuthenticated, async (req, res, next) => {
     try {
-      const userId = req.user!.id;
-      const profileData = req.body.profileData;
-      
-      // Use zod to validate the profile data
-      const profileSchema = z.object({
-        name: z.string().min(2).optional(),
-        phone: z.string().optional(),
-        address: z.string().optional(),
-        company: z.string().optional(),
-        bio: z.string().optional(),
-        preferences: z.record(z.any()).optional()
-      });
-      
-      const validatedData = profileSchema.parse(profileData);
-      
-      // Update user's name if provided
-      if (validatedData.name) {
-        await storage.updateUser(userId, { name: validatedData.name });
-        delete validatedData.name;
-      }
-      
-      // Update the profile data
-      const updatedUser = await storage.updateUserProfile(userId, validatedData);
-      
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      res.json({ user: updatedUser });
+      const { profile } = req.body;
+      const updatedUser = await storage.updateUserProfile(req.user?.id as number, profile);
+      res.json({ profile: updatedUser?.profile || {} });
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
       next(error);
     }
   });
-
-  // User Downloads Routes
+  
+  // User Downloads Management
   app.get("/api/user/downloads", isAuthenticated, async (req, res, next) => {
     try {
-      const userId = req.user!.id;
-      const downloads = await storage.getUserDownloads(userId);
-      res.json(downloads);
+      const downloads = await storage.getUserDownloads(req.user?.id as number);
+      res.json({ downloads });
     } catch (error) {
       next(error);
     }
   });
-
+  
   app.post("/api/user/downloads", isAuthenticated, async (req, res, next) => {
     try {
-      const userId = req.user!.id;
-      const data = insertUserDownloadSchema.parse(req.body);
-      const download = await storage.createUserDownload(userId, data.software_id, data.version);
-      res.status(201).json(download);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+      const { softwareId, version } = req.body;
+      
+      if (!softwareId || !version) {
+        return res.status(400).json({ message: "Software ID and version are required" });
       }
+      
+      const download = await storage.createUserDownload(
+        req.user?.id as number, 
+        parseInt(softwareId), 
+        version
+      );
+      
+      res.status(201).json({ download });
+    } catch (error) {
       next(error);
     }
   });
-
-  // User Reviews Routes
+  
+  // User Reviews Management
   app.get("/api/user/reviews", isAuthenticated, async (req, res, next) => {
     try {
-      const userId = req.user!.id;
-      const reviews = await storage.getUserReviews(userId);
-      res.json(reviews);
+      const reviews = await storage.getUserReviews(req.user?.id as number);
+      res.json({ reviews });
     } catch (error) {
       next(error);
     }
   });
-
+  
   app.put("/api/user/reviews/:id", isAuthenticated, async (req, res, next) => {
     try {
-      const userId = req.user!.id;
-      const reviewId = parseInt(req.params.id, 10);
+      const { id } = req.params;
+      const reviewData = req.body;
       
-      // Only allow updating rating and comment
-      const updateSchema = z.object({
-        rating: z.number().min(1).max(5).optional(),
-        comment: z.string().optional()
-      });
+      const review = await storage.updateReview(
+        parseInt(id),
+        req.user?.id as number,
+        reviewData
+      );
       
-      const validatedData = updateSchema.parse(req.body);
-      const updatedReview = await storage.updateReview(reviewId, userId, validatedData);
-      
-      if (!updatedReview) {
-        return res.status(404).json({ message: "Review not found or you don't have permission to update it" });
+      if (!review) {
+        return res.status(404).json({ message: "Review not found or not owned by user" });
       }
       
-      res.json(updatedReview);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
-      next(error);
-    }
-  });
-
-  app.delete("/api/user/reviews/:id", isAuthenticated, async (req, res, next) => {
-    try {
-      const userId = req.user!.id;
-      const reviewId = parseInt(req.params.id, 10);
-      
-      const success = await storage.deleteReview(reviewId, userId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Review not found or you don't have permission to delete it" });
-      }
-      
-      res.json({ message: "Review deleted successfully" });
+      res.json({ review });
     } catch (error) {
       next(error);
     }
   });
-
-  // Categories Routes
+  
+  // Categories Management
   app.get("/api/categories", async (req, res, next) => {
     try {
       const categories = await storage.getCategories();
@@ -261,84 +167,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
-
-  app.post("/api/categories", isAdmin, async (req, res, next) => {
+  
+  app.post("/api/categories", adminMiddleware, async (req, res, next) => {
     try {
-      const categoryData = insertCategorySchema.parse(req.body);
-      const category = await storage.createCategory(categoryData);
+      const insertData = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(insertData);
       res.status(201).json(category);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
+    }
+  });
+  
+  app.get("/api/categories/:id", async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const category = await storage.getCategoryById(parseInt(id));
+      
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      
+      res.json(category);
+    } catch (error) {
       next(error);
     }
   });
-
-  // Software Routes
+  
+  // Softwares Management
   app.get("/api/softwares", async (req, res, next) => {
     try {
-      const { category, platform, search, page = "1", limit = "12" } = req.query;
+      const { 
+        page = "1", 
+        limit = "10", 
+        category, 
+        search,
+        platform,
+        sort = "newest"
+      } = req.query;
       
-      const pageNum = parseInt(page as string, 10);
-      const limitNum = parseInt(limit as string, 10);
-      const offset = (pageNum - 1) * limitNum;
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
       
-      const result = await storage.getSoftwareList({
-        category: category ? parseInt(category as string, 10) : undefined,
-        platform: platform as string | undefined,
-        search: search as string | undefined,
+      const { softwares, total } = await storage.getSoftwares({
+        page: pageNum,
         limit: limitNum,
-        offset
+        categoryId: category ? parseInt(category as string) : undefined,
+        search: search as string,
+        platform: platform as string,
+        sort: sort as string
       });
       
-      res.json(result);
+      res.json({
+        softwares,
+        total
+      });
     } catch (error) {
       next(error);
     }
   });
-
-  app.get("/api/softwares/:id", async (req, res, next) => {
-    try {
-      const softwareId = parseInt(req.params.id, 10);
-      const software = await storage.getSoftwareById(softwareId);
-      
-      if (!software) {
-        return res.status(404).json({ message: "Software not found" });
-      }
-      
-      res.json(software);
-    } catch (error) {
-      next(error);
-    }
-  });
-
+  
   app.post("/api/softwares", isAuthenticated, async (req, res, next) => {
     try {
-      const softwareData = insertSoftwareSchema.parse(req.body);
-      const userId = req.user!.id;
+      const insertData = insertSoftwareSchema.parse({
+        ...req.body,
+        author_id: req.user?.id
+      });
       
-      const software = await storage.createSoftware(softwareData, userId);
+      const software = await storage.createSoftware(insertData);
       res.status(201).json(software);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
-      next(error);
     }
   });
-
-  // Admin route to approve/reject software
-  app.put("/api/softwares/:id/status", isAdmin, async (req, res, next) => {
+  
+  app.get("/api/softwares/:id", async (req, res, next) => {
     try {
-      const softwareId = parseInt(req.params.id, 10);
-      const { status } = req.body;
-      
-      if (status !== 'approved' && status !== 'rejected') {
-        return res.status(400).json({ message: "Status must be 'approved' or 'rejected'" });
-      }
-      
-      const software = await storage.updateSoftwareStatus(softwareId, status);
+      const { id } = req.params;
+      const software = await storage.getSoftwareById(parseInt(id));
       
       if (!software) {
         return res.status(404).json({ message: "Software not found" });
@@ -349,136 +264,221 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
-
-  // Reviews Routes
-  app.get("/api/reviews/:software_id", async (req, res, next) => {
+  
+  app.put("/api/softwares/:id", isAuthenticated, async (req, res, next) => {
     try {
-      const softwareId = parseInt(req.params.software_id, 10);
-      const reviews = await storage.getReviewsBySoftwareId(softwareId);
+      const { id } = req.params;
+      const software = await storage.getSoftwareById(parseInt(id));
+      
+      if (!software) {
+        return res.status(404).json({ message: "Software not found" });
+      }
+      
+      if (software.author_id !== req.user?.id && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "You do not have permission to update this software" });
+      }
+      
+      const updatedSoftware = await storage.updateSoftware(parseInt(id), req.body);
+      res.json(updatedSoftware);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.put("/api/softwares/:id/status", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      const software = await storage.updateSoftwareStatus(parseInt(id), status);
+      
+      if (!software) {
+        return res.status(404).json({ message: "Software not found" });
+      }
+      
+      res.json(software);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.delete("/api/softwares/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const software = await storage.getSoftwareById(parseInt(id));
+      
+      if (!software) {
+        return res.status(404).json({ message: "Software not found" });
+      }
+      
+      if (software.author_id !== req.user?.id && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "You do not have permission to delete this software" });
+      }
+      
+      await storage.deleteSoftware(parseInt(id));
+      res.status(204).end();
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Reviews Management
+  app.get("/api/softwares/:id/reviews", async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const reviews = await storage.getSoftwareReviews(parseInt(id));
       res.json(reviews);
     } catch (error) {
       next(error);
     }
   });
-
-  app.post("/api/reviews", isAuthenticated, async (req, res, next) => {
+  
+  app.post("/api/softwares/:id/reviews", isAuthenticated, async (req, res, next) => {
     try {
-      const reviewData = insertReviewSchema.parse(req.body);
-      const userId = req.user!.id;
+      const { id } = req.params;
       
-      const review = await storage.createReview(reviewData, userId);
+      // Check if user has already reviewed this software
+      const existingReview = await storage.getUserReviewForSoftware(
+        req.user?.id as number,
+        parseInt(id)
+      );
+      
+      if (existingReview) {
+        return res.status(400).json({ message: "You have already reviewed this software" });
+      }
+      
+      const insertData = insertReviewSchema.parse({
+        ...req.body,
+        software_id: parseInt(id),
+        user_id: req.user?.id
+      });
+      
+      const review = await storage.createReview(insertData);
       res.status(201).json(review);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
+    }
+  });
+  
+  app.put("/api/reviews/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const review = await storage.getReviewById(parseInt(id));
+      
+      if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+      }
+      
+      if (review.user_id !== req.user?.id && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "You do not have permission to update this review" });
+      }
+      
+      const updatedReview = await storage.updateReview(
+        parseInt(id),
+        req.user?.id as number,
+        req.body
+      );
+      
+      res.json(updatedReview);
+    } catch (error) {
       next(error);
     }
   });
-
+  
   app.delete("/api/reviews/:id", isAuthenticated, async (req, res, next) => {
     try {
-      const reviewId = parseInt(req.params.id, 10);
-      const userId = req.user!.id;
+      const { id } = req.params;
+      const review = await storage.getReviewById(parseInt(id));
       
-      const success = await storage.deleteReview(reviewId, userId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Review not found or you don't have permission to delete it" });
+      if (!review) {
+        return res.status(404).json({ message: "Review not found" });
       }
       
-      res.json({ message: "Review deleted successfully" });
+      if (review.user_id !== req.user?.id && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "You do not have permission to delete this review" });
+      }
+      
+      await storage.deleteReview(parseInt(id));
+      res.status(204).end();
     } catch (error) {
       next(error);
     }
   });
 
-  // Phase 2: Projects Routes
-  function isDeveloper(req: Request, res: Response, next: NextFunction) {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    if (req.user?.role !== 'developer') {
-      return res.status(403).json({ message: "Forbidden: Developer access required" });
-    }
-    
-    next();
-  }
-
-  function isClient(req: Request, res: Response, next: NextFunction) {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    if (req.user?.role !== 'client') {
-      return res.status(403).json({ message: "Forbidden: Client access required" });
-    }
-    
-    next();
-  }
-
-  // Project Routes
-  app.post("/api/projects", isClient, async (req, res, next) => {
+  // Project Management for Freelancers
+  app.get("/api/projects", isAuthenticated, async (req, res, next) => {
     try {
-      const projectData = insertProjectSchema.parse(req.body);
-      const clientId = req.user!.id;
+      let projects;
+      const { status, role } = req.query;
       
-      const project = await storage.createProject(projectData, clientId);
+      if (req.user?.role === 'admin') {
+        projects = await storage.getAllProjects(status as string);
+      } else if (req.user?.role === 'client') {
+        projects = await storage.getClientProjects(req.user.id, status as string);
+      } else if (req.user?.role === 'developer') {
+        projects = await storage.getDeveloperProjects(req.user.id, status as string);
+      } else {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+      
+      const projectsCount = await storage.getProjectsCount(status as string);
+      
+      res.json({ projects, count: projectsCount.count });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/projects", isAuthenticated, async (req, res, next) => {
+    try {
+      // Only clients can create projects
+      if (req.user?.role !== 'client' && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only clients can create projects" });
+      }
+      
+      const insertData = insertProjectSchema.parse({
+        ...req.body,
+        client_id: req.user?.id,
+        status: "pending"
+      });
+      
+      const project = await storage.createProject(insertData);
       res.status(201).json(project);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
-      next(error);
     }
   });
-
-  app.get("/api/projects/client", isClient, async (req, res, next) => {
-    try {
-      const clientId = req.user!.id;
-      const projects = await storage.getProjectsByClientId(clientId);
-      res.json(projects);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.get("/api/projects/available", isDeveloper, async (req, res, next) => {
-    try {
-      const { status, page = "1", limit = "10" } = req.query;
-      
-      const pageNum = parseInt(page as string, 10);
-      const limitNum = parseInt(limit as string, 10);
-      const offset = (pageNum - 1) * limitNum;
-      
-      const result = await storage.getProjectsForDevelopers(
-        status as string, 
-        limitNum,
-        offset
-      );
-      
-      res.json(result);
-    } catch (error) {
-      next(error);
-    }
-  });
-
+  
   app.get("/api/projects/:id", isAuthenticated, async (req, res, next) => {
     try {
-      const projectId = parseInt(req.params.id, 10);
-      const project = await storage.getProjectById(projectId);
+      const { id } = req.params;
+      const project = await storage.getProjectById(parseInt(id));
       
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
       
-      // Check if user is the client who owns the project or a developer
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
-      
-      if (project.client_id !== userId && userRole !== 'developer' && userRole !== 'admin') {
-        return res.status(403).json({ message: "Forbidden: You don't have access to this project" });
+      // Check permissions
+      if (
+        req.user?.role !== 'admin' && 
+        project.client_id !== req.user?.id && 
+        project.developer_id !== req.user?.id
+      ) {
+        return res.status(403).json({ message: "You do not have permission to view this project" });
       }
       
       res.json(project);
@@ -486,120 +486,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
-
+  
   app.put("/api/projects/:id/status", isAuthenticated, async (req, res, next) => {
     try {
-      const projectId = parseInt(req.params.id, 10);
+      const { id } = req.params;
       const { status } = req.body;
       
-      if (!['pending', 'in_progress', 'completed', 'cancelled'].includes(status)) {
-        return res.status(400).json({ message: "Invalid status. Must be one of: pending, in_progress, completed, cancelled" });
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
       }
       
-      const project = await storage.getProjectById(projectId);
+      const project = await storage.getProjectById(parseInt(id));
       
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
       
-      // Check if user is the client who owns the project or admin
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
-      
-      if (project.client_id !== userId && userRole !== 'admin') {
-        return res.status(403).json({ message: "Forbidden: You don't have permission to update this project" });
+      // Check permissions
+      if (
+        req.user?.role !== 'admin' && 
+        project.client_id !== req.user?.id && 
+        project.developer_id !== req.user?.id
+      ) {
+        return res.status(403).json({ message: "You do not have permission to update this project" });
       }
       
-      const updatedProject = await storage.updateProjectStatus(projectId, status);
+      const updatedProject = await storage.updateProjectStatus(parseInt(id), status);
       res.json(updatedProject);
     } catch (error) {
       next(error);
     }
   });
-
-  // Quotes Routes
-  app.post("/api/quotes", isDeveloper, async (req, res, next) => {
+  
+  // Quotes Management
+  app.get("/api/projects/:id/quotes", isAuthenticated, async (req, res, next) => {
     try {
-      const quoteData = insertQuoteSchema.parse(req.body);
-      const developerId = req.user!.id;
+      const { id } = req.params;
+      const project = await storage.getProjectById(parseInt(id));
       
-      // Verify that the project exists
-      const project = await storage.getProjectById(quoteData.project_id);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
       
-      const quote = await storage.createQuote(quoteData, developerId);
+      // Check permissions
+      if (
+        req.user?.role !== 'admin' && 
+        project.client_id !== req.user?.id && 
+        project.developer_id !== req.user?.id
+      ) {
+        return res.status(403).json({ message: "You do not have permission to view quotes for this project" });
+      }
+      
+      const quotes = await storage.getProjectQuotes(parseInt(id));
+      res.json(quotes);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/projects/:id/quotes", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      
+      // Only developers can submit quotes
+      if (req.user?.role !== 'developer' && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only developers can submit quotes" });
+      }
+      
+      const project = await storage.getProjectById(parseInt(id));
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check if developer has already submitted a quote for this project
+      const existingQuote = await storage.getDeveloperQuoteForProject(
+        req.user?.id as number,
+        parseInt(id)
+      );
+      
+      if (existingQuote) {
+        return res.status(400).json({ message: "You have already submitted a quote for this project" });
+      }
+      
+      const insertData = insertQuoteSchema.parse({
+        ...req.body,
+        project_id: parseInt(id),
+        developer_id: req.user?.id,
+        status: "pending"
+      });
+      
+      const quote = await storage.createQuote(insertData);
       res.status(201).json(quote);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
-      next(error);
     }
   });
-
-  app.get("/api/quotes/project/:project_id", isAuthenticated, async (req, res, next) => {
+  
+  app.put("/api/quotes/:id/status", isAuthenticated, async (req, res, next) => {
     try {
-      const projectId = parseInt(req.params.project_id, 10);
-      
-      // Verify that the project exists
-      const project = await storage.getProjectById(projectId);
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-      
-      // Check if user is the client who owns the project, the developer who submitted a quote, or admin
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
-      
-      if (project.client_id !== userId && userRole !== 'developer' && userRole !== 'admin') {
-        return res.status(403).json({ message: "Forbidden: You don't have access to quotes for this project" });
-      }
-      
-      const quotes = await storage.getQuotesByProjectId(projectId);
-      res.json(quotes);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.get("/api/quotes/developer", isDeveloper, async (req, res, next) => {
-    try {
-      const developerId = req.user!.id;
-      const quotes = await storage.getQuotesByDeveloperId(developerId);
-      res.json(quotes);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.put("/api/quotes/:id/status", isClient, async (req, res, next) => {
-    try {
-      const quoteId = parseInt(req.params.id, 10);
+      const { id } = req.params;
       const { status } = req.body;
       
-      if (!['pending', 'accepted', 'rejected'].includes(status)) {
-        return res.status(400).json({ message: "Invalid status. Must be one of: pending, accepted, rejected" });
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
       }
       
-      // Get the quote
-      const quote = await storage.getQuotesByProjectId(quoteId);
-      if (!quote || quote.length === 0) {
+      const quote = await storage.getQuoteById(parseInt(id));
+      
+      if (!quote) {
         return res.status(404).json({ message: "Quote not found" });
       }
       
-      // Verify that the client owns the project
-      const project = await storage.getProjectById(quote[0].project_id);
-      if (!project || project.client_id !== req.user!.id) {
-        return res.status(403).json({ message: "Forbidden: You don't have permission to update this quote" });
+      const project = await storage.getProjectById(quote.project_id);
+      
+      // Only the client who created the project can accept/reject quotes
+      if (req.user?.role !== 'admin' && project?.client_id !== req.user?.id) {
+        return res.status(403).json({ message: "Only the project owner can update quote status" });
       }
       
-      const updatedQuote = await storage.updateQuoteStatus(quoteId, status);
+      const updatedQuote = await storage.updateQuoteStatus(parseInt(id), status);
       
-      // If accepting a quote, update the project status to in_progress
+      // If quote is accepted, update the project with the developer
       if (status === 'accepted') {
-        await storage.updateProjectStatus(project.id, 'in_progress');
+        await storage.updateProject(quote.project_id, { 
+          developer_id: quote.developer_id,
+          status: 'in_progress'
+        });
+        
+        // Reject all other quotes for this project
+        await storage.rejectOtherQuotes(quote.project_id, parseInt(id));
       }
       
       res.json(updatedQuote);
@@ -607,107 +628,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
-
-  // Messages Routes
-  app.post("/api/messages", isAuthenticated, async (req, res, next) => {
+  
+  // Messages Management
+  app.get("/api/projects/:id/messages", isAuthenticated, async (req, res, next) => {
     try {
-      const messageData = insertMessageSchema.parse(req.body);
-      const senderId = req.user!.id;
+      const { id } = req.params;
+      const project = await storage.getProjectById(parseInt(id));
       
-      // Verify that the project exists
-      const project = await storage.getProjectById(messageData.project_id);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
       
-      // Check if user is the client who owns the project, a developer with an accepted quote, or admin
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
-      
-      if (project.client_id !== userId && userRole !== 'developer' && userRole !== 'admin') {
-        return res.status(403).json({ message: "Forbidden: You don't have permission to send messages to this project" });
+      // Check permissions
+      if (
+        req.user?.role !== 'admin' && 
+        project.client_id !== req.user?.id && 
+        project.developer_id !== req.user?.id
+      ) {
+        return res.status(403).json({ message: "You do not have permission to view messages for this project" });
       }
       
-      const message = await storage.sendMessage(messageData, senderId);
-      res.status(201).json(message);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
-      next(error);
-    }
-  });
-
-  app.get("/api/messages/project/:project_id", isAuthenticated, async (req, res, next) => {
-    try {
-      const projectId = parseInt(req.params.project_id, 10);
-      
-      // Verify that the project exists
-      const project = await storage.getProjectById(projectId);
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-      
-      // Check if user is the client who owns the project, a developer with an accepted quote, or admin
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
-      
-      if (project.client_id !== userId && userRole !== 'developer' && userRole !== 'admin') {
-        return res.status(403).json({ message: "Forbidden: You don't have access to messages for this project" });
-      }
-      
-      const messages = await storage.getMessagesByProjectId(projectId);
+      const messages = await storage.getProjectMessages(parseInt(id));
       res.json(messages);
     } catch (error) {
       next(error);
     }
   });
-
-  // Portfolios Routes
-  app.post("/api/portfolios", isDeveloper, async (req, res, next) => {
+  
+  app.post("/api/projects/:id/messages", isAuthenticated, async (req, res, next) => {
     try {
-      const portfolioData = insertPortfolioSchema.parse(req.body);
-      const developerId = req.user!.id;
+      const { id } = req.params;
+      const project = await storage.getProjectById(parseInt(id));
       
-      const portfolio = await storage.createPortfolio(portfolioData, developerId);
-      res.status(201).json(portfolio);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check permissions
+      if (
+        req.user?.role !== 'admin' && 
+        project.client_id !== req.user?.id && 
+        project.developer_id !== req.user?.id
+      ) {
+        return res.status(403).json({ message: "You do not have permission to send messages for this project" });
+      }
+      
+      const insertData = insertMessageSchema.parse({
+        ...req.body,
+        project_id: parseInt(id),
+        sender_id: req.user?.id
+      });
+      
+      const message = await storage.createMessage(insertData);
+      res.status(201).json(message);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
-      next(error);
     }
   });
-
-  app.get("/api/portfolios", async (req, res, next) => {
+  
+  // Portfolios Management
+  app.get("/api/developer/:id/portfolio", async (req, res, next) => {
     try {
-      const { page = "1", limit = "12" } = req.query;
-      
-      const pageNum = parseInt(page as string, 10);
-      const limitNum = parseInt(limit as string, 10);
-      const offset = (pageNum - 1) * limitNum;
-      
-      const result = await storage.getAllPortfolios(limitNum, offset);
-      res.json(result);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.get("/api/portfolios/developer/:developer_id", async (req, res, next) => {
-    try {
-      const developerId = parseInt(req.params.developer_id, 10);
-      const portfolios = await storage.getPortfoliosByDeveloperId(developerId);
-      res.json(portfolios);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.get("/api/portfolios/:id", async (req, res, next) => {
-    try {
-      const portfolioId = parseInt(req.params.id, 10);
-      const portfolio = await storage.getPortfolioById(portfolioId);
+      const { id } = req.params;
+      const portfolio = await storage.getDeveloperPortfolio(parseInt(id));
       
       if (!portfolio) {
         return res.status(404).json({ message: "Portfolio not found" });
@@ -718,175 +706,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
-
-  app.put("/api/portfolios/:id", isDeveloper, async (req, res, next) => {
+  
+  app.post("/api/portfolio", isAuthenticated, async (req, res, next) => {
     try {
-      const portfolioId = parseInt(req.params.id, 10);
-      const portfolioData = insertPortfolioSchema.partial().parse(req.body);
-      const developerId = req.user!.id;
-      
-      // Verify that the developer owns the portfolio
-      const portfolio = await storage.getPortfolioById(portfolioId);
-      if (!portfolio || portfolio.developer_id !== developerId) {
-        return res.status(403).json({ message: "Forbidden: You don't have permission to update this portfolio" });
+      // Only developers can create portfolios
+      if (req.user?.role !== 'developer' && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only developers can create portfolios" });
       }
       
-      const updatedPortfolio = await storage.updatePortfolio(portfolioId, portfolioData);
-      res.json(updatedPortfolio);
+      // Check if developer already has a portfolio
+      const existingPortfolio = await storage.getDeveloperPortfolio(req.user?.id as number);
+      
+      if (existingPortfolio) {
+        return res.status(400).json({ message: "You already have a portfolio" });
+      }
+      
+      const insertData = insertPortfolioSchema.parse({
+        ...req.body,
+        developer_id: req.user?.id
+      });
+      
+      const portfolio = await storage.createPortfolio(insertData);
+      res.status(201).json(portfolio);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
-      next(error);
     }
   });
-
-  app.delete("/api/portfolios/:id", isDeveloper, async (req, res, next) => {
+  
+  app.put("/api/portfolio", isAuthenticated, async (req, res, next) => {
     try {
-      const portfolioId = parseInt(req.params.id, 10);
-      const developerId = req.user!.id;
-      
-      const success = await storage.deletePortfolio(portfolioId, developerId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Portfolio not found or you don't have permission to delete it" });
+      // Only developers can update their portfolios
+      if (req.user?.role !== 'developer' && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only developers can update portfolios" });
       }
       
-      res.json({ message: "Portfolio deleted successfully" });
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Portfolio Reviews Routes
-  app.post("/api/portfolio-reviews", isAuthenticated, async (req, res, next) => {
-    try {
-      const reviewData = insertPortfolioReviewSchema.parse(req.body);
-      const userId = req.user!.id;
+      const portfolio = await storage.getDeveloperPortfolio(req.user?.id as number);
       
-      // Verify that the portfolio exists
-      const portfolio = await storage.getPortfolioById(reviewData.portfolio_id);
       if (!portfolio) {
         return res.status(404).json({ message: "Portfolio not found" });
       }
       
-      const review = await storage.createPortfolioReview(reviewData, userId);
-      res.status(201).json(review);
+      const updatedPortfolio = await storage.updatePortfolio(portfolio.id, req.body);
+      res.json(updatedPortfolio);
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
       next(error);
     }
   });
-
-  app.get("/api/portfolio-reviews/:portfolio_id", async (req, res, next) => {
+  
+  // Portfolio Reviews Management
+  app.get("/api/portfolio/:id/reviews", async (req, res, next) => {
     try {
-      const portfolioId = parseInt(req.params.portfolio_id, 10);
-      const reviews = await storage.getPortfolioReviewsByPortfolioId(portfolioId);
+      const { id } = req.params;
+      const reviews = await storage.getPortfolioReviews(parseInt(id));
       res.json(reviews);
     } catch (error) {
       next(error);
     }
   });
-
-  app.delete("/api/portfolio-reviews/:id", isAuthenticated, async (req, res, next) => {
+  
+  app.post("/api/portfolio/:id/reviews", isAuthenticated, async (req, res, next) => {
     try {
-      const reviewId = parseInt(req.params.id, 10);
-      const userId = req.user!.id;
+      const { id } = req.params;
       
-      const success = await storage.deletePortfolioReview(reviewId, userId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Review not found or you don't have permission to delete it" });
+      // Only clients can review portfolios
+      if (req.user?.role !== 'client' && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only clients can review portfolios" });
       }
       
-      res.json({ message: "Portfolio review deleted successfully" });
+      // Check if portfolio exists
+      const portfolio = await storage.getPortfolioById(parseInt(id));
+      
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+      
+      // Check if client has already reviewed this portfolio
+      const existingReview = await storage.getClientReviewForPortfolio(
+        req.user?.id as number,
+        parseInt(id)
+      );
+      
+      if (existingReview) {
+        return res.status(400).json({ message: "You have already reviewed this portfolio" });
+      }
+      
+      const insertData = insertPortfolioReviewSchema.parse({
+        ...req.body,
+        portfolio_id: parseInt(id),
+        client_id: req.user?.id
+      });
+      
+      const review = await storage.createPortfolioReview(insertData);
+      res.status(201).json(review);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+  
+  // Products Management
+  app.get("/api/products", async (req, res, next) => {
+    try {
+      const { 
+        page = "1", 
+        limit = "10", 
+        category, 
+        search,
+        sort = "newest"
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      
+      const { products, total } = await storage.getProducts({
+        page: pageNum,
+        limit: limitNum,
+        categoryId: category ? parseInt(category as string) : undefined,
+        search: search as string,
+        sort: sort as string
+      });
+      
+      res.json({
+        products,
+        total
+      });
     } catch (error) {
       next(error);
     }
   });
-
-  // Phase 3: Marketplace Routes
-  function isSeller(req: Request, res: Response, next: NextFunction) {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    if (req.user?.role !== 'seller') {
-      return res.status(403).json({ message: "Forbidden: Seller access required" });
-    }
-    
-    next();
-  }
-
-  function isBuyer(req: Request, res: Response, next: NextFunction) {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    if (req.user?.role !== 'buyer') {
-      return res.status(403).json({ message: "Forbidden: Buyer access required" });
-    }
-    
-    next();
-  }
-
-  // Products Routes
-  app.post("/api/products", isSeller, async (req, res, next) => {
+  
+  app.post("/api/products", isAuthenticated, async (req, res, next) => {
     try {
-      const productData = insertProductSchema.parse(req.body);
-      const sellerId = req.user!.id;
+      // Only sellers can create products
+      if (req.user?.role !== 'seller' && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only sellers can create products" });
+      }
       
-      const product = await storage.createProduct(productData, sellerId);
+      const insertData = insertProductSchema.parse({
+        ...req.body,
+        seller_id: req.user?.id
+      });
+      
+      const product = await storage.createProduct(insertData);
       res.status(201).json(product);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
-      next(error);
-    }
-  });
-
-  app.get("/api/products", async (req, res, next) => {
-    try {
-      const { category, search, page = "1", limit = "12" } = req.query;
-      
-      const pageNum = parseInt(page as string, 10);
-      const limitNum = parseInt(limit as string, 10);
-      const offset = (pageNum - 1) * limitNum;
-      
-      let result;
-      
-      if (search) {
-        result = await storage.searchProducts(search as string, limitNum, offset);
-      } else if (category) {
-        result = await storage.getProductsByCategory(category as string, limitNum, offset);
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
       } else {
-        // Default to getting all products with pagination
-        result = await storage.searchProducts("", limitNum, offset);
+        next(error);
       }
-      
-      res.json(result);
-    } catch (error) {
-      next(error);
     }
   });
-
-  app.get("/api/products/seller", isSeller, async (req, res, next) => {
-    try {
-      const sellerId = req.user!.id;
-      const products = await storage.getProductsBySellerId(sellerId);
-      res.json(products);
-    } catch (error) {
-      next(error);
-    }
-  });
-
+  
   app.get("/api/products/:id", async (req, res, next) => {
     try {
-      const productId = parseInt(req.params.id, 10);
-      const product = await storage.getProductById(productId);
+      const { id } = req.params;
+      const product = await storage.getProductById(parseInt(id));
       
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -897,100 +882,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
-
-  app.put("/api/products/:id", isSeller, async (req, res, next) => {
+  
+  app.put("/api/products/:id", isAuthenticated, async (req, res, next) => {
     try {
-      const productId = parseInt(req.params.id, 10);
-      const productData = insertProductSchema.partial().parse(req.body);
-      const sellerId = req.user!.id;
+      const { id } = req.params;
+      const product = await storage.getProductById(parseInt(id));
       
-      const updatedProduct = await storage.updateProduct(productId, productData, sellerId);
-      
-      if (!updatedProduct) {
-        return res.status(404).json({ message: "Product not found or you don't have permission to update it" });
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
       }
       
+      // Check permissions
+      if (product.seller_id !== req.user?.id && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "You do not have permission to update this product" });
+      }
+      
+      const updatedProduct = await storage.updateProduct(parseInt(id), req.body);
       res.json(updatedProduct);
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
       next(error);
     }
   });
-
-  app.delete("/api/products/:id", isSeller, async (req, res, next) => {
+  
+  app.delete("/api/products/:id", isAuthenticated, async (req, res, next) => {
     try {
-      const productId = parseInt(req.params.id, 10);
-      const sellerId = req.user!.id;
+      const { id } = req.params;
+      const product = await storage.getProductById(parseInt(id));
       
-      const success = await storage.deleteProduct(productId, sellerId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Product not found or you don't have permission to delete it" });
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
       }
       
-      res.json({ message: "Product deleted successfully" });
+      // Check permissions
+      if (product.seller_id !== req.user?.id && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "You do not have permission to delete this product" });
+      }
+      
+      await storage.deleteProduct(parseInt(id));
+      res.status(204).end();
     } catch (error) {
       next(error);
     }
   });
-
-  // Orders Routes
-  app.post("/api/orders", isBuyer, async (req, res, next) => {
+  
+  // Product Reviews Management
+  app.get("/api/products/:id/reviews", async (req, res, next) => {
     try {
-      const { order, items } = req.body;
-      
-      const orderData = insertOrderSchema.parse(order);
-      const orderItems = items.map((item: any) => insertOrderItemSchema.parse(item));
-      
-      const buyerId = req.user!.id;
-      
-      const createdOrder = await storage.createOrder(orderData, orderItems, buyerId);
-      res.status(201).json(createdOrder);
+      const { id } = req.params;
+      const reviews = await storage.getProductReviews(parseInt(id));
+      res.json(reviews);
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
       next(error);
     }
   });
-
-  app.get("/api/orders/buyer", isBuyer, async (req, res, next) => {
+  
+  app.post("/api/products/:id/reviews", isAuthenticated, async (req, res, next) => {
     try {
-      const buyerId = req.user!.id;
-      const orders = await storage.getOrdersByBuyerId(buyerId);
+      const { id } = req.params;
+      
+      // Check if product exists
+      const product = await storage.getProductById(parseInt(id));
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Check if user has already reviewed this product
+      const existingReview = await storage.getUserReviewForProduct(
+        req.user?.id as number,
+        parseInt(id)
+      );
+      
+      if (existingReview) {
+        return res.status(400).json({ message: "You have already reviewed this product" });
+      }
+      
+      const insertData = insertProductReviewSchema.parse({
+        ...req.body,
+        product_id: parseInt(id),
+        user_id: req.user?.id
+      });
+      
+      const review = await storage.createProductReview(insertData);
+      res.status(201).json(review);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+  
+  // Orders Management
+  app.get("/api/orders", isAuthenticated, async (req, res, next) => {
+    try {
+      let orders;
+      
+      if (req.user?.role === 'admin') {
+        orders = await storage.getAllOrders();
+      } else if (req.user?.role === 'seller') {
+        orders = await storage.getSellerOrders(req.user.id);
+      } else if (req.user?.role === 'buyer') {
+        orders = await storage.getBuyerOrders(req.user.id);
+      } else {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+      
       res.json(orders);
     } catch (error) {
       next(error);
     }
   });
-
-  app.get("/api/orders/seller", isSeller, async (req, res, next) => {
+  
+  app.post("/api/orders", isAuthenticated, async (req, res, next) => {
     try {
-      const sellerId = req.user!.id;
-      const orders = await storage.getOrdersBySellerId(sellerId);
-      res.json(orders);
+      // Only buyers can create orders
+      if (req.user?.role !== 'buyer' && req.user?.role !== 'admin') {
+        return res.status(403).json({ message: "Only buyers can create orders" });
+      }
+      
+      const { items } = req.body;
+      
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "Order must contain at least one item" });
+      }
+      
+      // Calculate order total
+      let totalAmount = 0;
+      const orderItems = [];
+      
+      for (const item of items) {
+        const product = await storage.getProductById(item.product_id);
+        
+        if (!product) {
+          return res.status(400).json({ message: `Product with ID ${item.product_id} not found` });
+        }
+        
+        const quantity = item.quantity || 1;
+        const itemTotal = product.price * quantity;
+        totalAmount += itemTotal;
+        
+        orderItems.push({
+          product_id: product.id,
+          quantity,
+          price: product.price,
+          seller_id: product.seller_id
+        });
+      }
+      
+      const insertData = insertOrderSchema.parse({
+        buyer_id: req.user?.id,
+        total_amount: totalAmount,
+        status: "pending"
+      });
+      
+      const order = await storage.createOrder(insertData, orderItems);
+      res.status(201).json(order);
     } catch (error) {
-      next(error);
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
     }
   });
-
+  
   app.get("/api/orders/:id", isAuthenticated, async (req, res, next) => {
     try {
-      const orderId = parseInt(req.params.id, 10);
-      const order = await storage.getOrderById(orderId);
+      const { id } = req.params;
+      const order = await storage.getOrderById(parseInt(id));
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
       
-      // Check if the user is the buyer, seller, or admin
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
+      // Check permissions
+      const isSellerOfAnyItem = order.items.some(item => item.seller_id === req.user?.id);
       
-      if (order.buyer_id !== userId && userRole !== 'seller' && userRole !== 'admin') {
-        return res.status(403).json({ message: "Forbidden: You don't have access to this order" });
+      if (
+        req.user?.role !== 'admin' && 
+        order.buyer_id !== req.user?.id && 
+        !isSellerOfAnyItem
+      ) {
+        return res.status(403).json({ message: "You do not have permission to view this order" });
       }
       
       res.json(order);
@@ -998,276 +1075,245 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
-
+  
   app.put("/api/orders/:id/status", isAuthenticated, async (req, res, next) => {
     try {
-      const orderId = parseInt(req.params.id, 10);
+      const { id } = req.params;
       const { status } = req.body;
       
-      if (!['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'].includes(status)) {
-        return res.status(400).json({ 
-          message: "Invalid status. Must be one of: pending, processing, shipped, delivered, completed, cancelled" 
-        });
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
       }
       
-      const order = await storage.getOrderById(orderId);
+      const order = await storage.getOrderById(parseInt(id));
       
-      if (!order) {
-        return res.status(404).json({ message: "Order not found" });
-      }
-      
-      // Check permissions based on status change
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
-      
-      // Buyers can only cancel an order or mark it as received
-      if (userRole === 'buyer') {
-        if (status !== 'cancelled' && status !== 'delivered') {
-          return res.status(403).json({ 
-            message: "Forbidden: Buyers can only cancel orders or mark them as delivered" 
-          });
-        }
-        
-        // Buyer must be the owner of the order
-        if (order.buyer_id !== userId) {
-          return res.status(403).json({ 
-            message: "Forbidden: You don't have permission to update this order" 
-          });
-        }
-      } 
-      // Sellers can update to processing, shipped 
-      else if (userRole === 'seller') {
-        if (status !== 'processing' && status !== 'shipped') {
-          return res.status(403).json({ 
-            message: "Forbidden: Sellers can only update orders to processing or shipped" 
-          });
-        }
-      }
-      // Admin can update to any status
-      else if (userRole !== 'admin') {
-        return res.status(403).json({ 
-          message: "Forbidden: You don't have permission to update this order" 
-        });
-      }
-      
-      const updatedOrder = await storage.updateOrderStatus(orderId, status);
-      res.json(updatedOrder);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Payments Routes
-  app.post("/api/payments", isAuthenticated, async (req, res, next) => {
-    try {
-      const paymentData = insertPaymentSchema.parse(req.body);
-      
-      // Check if the order exists
-      const order = await storage.getOrderById(paymentData.order_id);
-      if (!order) {
-        return res.status(404).json({ message: "Order not found" });
-      }
-      
-      // For security, validate that the buyer is making the payment
-      if (req.user!.role === 'buyer' && order.buyer_id !== req.user!.id) {
-        return res.status(403).json({ 
-          message: "Forbidden: You don't have permission to make a payment for this order" 
-        });
-      }
-      
-      const payment = await storage.createPayment(paymentData);
-      res.status(201).json(payment);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
-      next(error);
-    }
-  });
-
-  app.get("/api/payments/order/:order_id", isAuthenticated, async (req, res, next) => {
-    try {
-      const orderId = parseInt(req.params.order_id, 10);
-      
-      // Check if the order exists
-      const order = await storage.getOrderById(orderId);
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
       
       // Check permissions
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
+      const isSellerOfAnyItem = order.items.some(item => item.seller_id === req.user?.id);
       
-      if (order.buyer_id !== userId && userRole !== 'seller' && userRole !== 'admin') {
-        return res.status(403).json({ 
-          message: "Forbidden: You don't have access to payments for this order" 
-        });
+      if (req.user?.role !== 'admin' && !isSellerOfAnyItem) {
+        return res.status(403).json({ message: "Only sellers or admins can update order status" });
       }
       
-      const payments = await storage.getPaymentsByOrderId(orderId);
+      const updatedOrder = await storage.updateOrderStatus(parseInt(id), status);
+      res.json(updatedOrder);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Payments Management
+  app.get("/api/payments", isAuthenticated, async (req, res, next) => {
+    try {
+      let payments;
+      
+      if (req.user?.role === 'admin') {
+        payments = await storage.getAllPayments();
+      } else if (req.user?.role === 'client') {
+        payments = await storage.getClientPayments(req.user.id);
+      } else if (req.user?.role === 'developer') {
+        payments = await storage.getDeveloperPayments(req.user.id);
+      } else if (req.user?.role === 'buyer') {
+        payments = await storage.getBuyerPayments(req.user.id);
+      } else if (req.user?.role === 'seller') {
+        payments = await storage.getSellerPayments(req.user.id);
+      } else {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+      
       res.json(payments);
     } catch (error) {
       next(error);
     }
   });
-
-  app.post("/api/payments/:id/release-escrow", isBuyer, async (req, res, next) => {
+  
+  app.post("/api/payments", isAuthenticated, async (req, res, next) => {
     try {
-      const paymentId = parseInt(req.params.id, 10);
-      const buyerId = req.user!.id;
+      const { project_id, order_id, amount } = req.body;
       
-      const payment = await storage.releaseEscrow(paymentId, buyerId);
+      if ((!project_id && !order_id) || !amount) {
+        return res.status(400).json({ message: "Project ID or Order ID and amount are required" });
+      }
       
-      if (!payment) {
-        return res.status(404).json({ 
-          message: "Payment not found or you don't have permission to release this escrow" 
+      if (project_id) {
+        // Project payment
+        const project = await storage.getProjectById(parseInt(project_id));
+        
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+        
+        // Only the client who created the project can make payments
+        if (req.user?.role !== 'admin' && project.client_id !== req.user?.id) {
+          return res.status(403).json({ message: "Only the project owner can make payments" });
+        }
+        
+        const insertData = insertPaymentSchema.parse({
+          project_id: parseInt(project_id),
+          amount: parseFloat(amount),
+          status: "pending",
+          payer_id: req.user?.id,
+          payee_id: project.developer_id
         });
+        
+        const payment = await storage.createPayment(insertData);
+        res.status(201).json(payment);
+      } else {
+        // Order payment
+        const order = await storage.getOrderById(parseInt(order_id));
+        
+        if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+        
+        // Only the buyer who created the order can make payments
+        if (req.user?.role !== 'admin' && order.buyer_id !== req.user?.id) {
+          return res.status(403).json({ message: "Only the order owner can make payments" });
+        }
+        
+        const insertData = insertPaymentSchema.parse({
+          order_id: parseInt(order_id),
+          amount: parseFloat(amount),
+          status: "pending",
+          payer_id: req.user?.id
+        });
+        
+        const payment = await storage.createPayment(insertData);
+        res.status(201).json(payment);
       }
-      
-      res.json(payment);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Product Reviews Routes
-  app.post("/api/product-reviews", isBuyer, async (req, res, next) => {
-    try {
-      const reviewData = insertProductReviewSchema.parse(req.body);
-      const buyerId = req.user!.id;
-      
-      // Verify that the product exists
-      const product = await storage.getProductById(reviewData.product_id);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      
-      const review = await storage.createProductReview(reviewData, buyerId);
-      res.status(201).json(review);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
-      next(error);
     }
   });
-
-  app.get("/api/product-reviews/:product_id", async (req, res, next) => {
+  
+  app.put("/api/payments/:id/status", adminMiddleware, async (req, res, next) => {
     try {
-      const productId = parseInt(req.params.product_id, 10);
-      const reviews = await storage.getProductReviewsByProductId(productId);
-      res.json(reviews);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.delete("/api/product-reviews/:id", isBuyer, async (req, res, next) => {
-    try {
-      const reviewId = parseInt(req.params.id, 10);
-      const buyerId = req.user!.id;
-      
-      const success = await storage.deleteProductReview(reviewId, buyerId);
-      
-      if (!success) {
-        return res.status(404).json({ 
-          message: "Review not found or you don't have permission to delete it" 
-        });
-      }
-      
-      res.json({ message: "Product review deleted successfully" });
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // External Project Requests Routes
-  app.post("/api/external-requests", async (req, res, next) => {
-    try {
-      const requestData = insertExternalRequestSchema.parse(req.body);
-      
-      const request = await storage.createExternalRequest(requestData);
-      res.status(201).json(request);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
-      }
-      next(error);
-    }
-  });
-
-  app.get("/api/external-requests", isAdmin, async (req, res, next) => {
-    try {
-      const { status, page = "1", limit = "10" } = req.query;
-      
-      const pageNum = parseInt(page as string, 10);
-      const limitNum = parseInt(limit as string, 10);
-      const offset = (pageNum - 1) * limitNum;
-      
-      const result = await storage.getExternalRequests(
-        status as string, 
-        limitNum,
-        offset
-      );
-      
-      res.json(result);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.get("/api/external-requests/:id", isAdmin, async (req, res, next) => {
-    try {
-      const requestId = parseInt(req.params.id, 10);
-      const request = await storage.getExternalRequestById(requestId);
-      
-      if (!request) {
-        return res.status(404).json({ message: "External request not found" });
-      }
-      
-      res.json(request);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.put("/api/external-requests/:id/status", isAdmin, async (req, res, next) => {
-    try {
-      const requestId = parseInt(req.params.id, 10);
+      const { id } = req.params;
       const { status } = req.body;
       
-      if (!['pending', 'approved', 'rejected', 'converted'].includes(status)) {
-        return res.status(400).json({ message: "Invalid status. Must be one of: pending, approved, rejected, converted" });
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
       }
       
-      const request = await storage.updateExternalRequestStatus(requestId, status);
+      const payment = await storage.getPaymentById(parseInt(id));
       
-      if (!request) {
-        return res.status(404).json({ message: "External request not found" });
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
       }
       
-      res.json(request);
+      const updatedPayment = await storage.updatePaymentStatus(parseInt(id), status);
+      
+      // If payment is completed, update the related project or order
+      if (status === 'completed') {
+        if (payment.project_id) {
+          await storage.updateProjectStatus(payment.project_id, "completed");
+        } else if (payment.order_id) {
+          await storage.updateOrderStatus(payment.order_id, "completed");
+        }
+      }
+      
+      res.json(updatedPayment);
     } catch (error) {
       next(error);
     }
   });
-
-  app.post("/api/external-requests/:id/convert", isAdmin, async (req, res, next) => {
+  
+  // External Requests Management
+  app.post("/api/external-requests", async (req, res, next) => {
     try {
-      const requestId = parseInt(req.params.id, 10);
-      const projectData = insertProjectSchema.parse(req.body);
+      // Allow anonymous users to submit external requests
+      const insertData = insertExternalRequestSchema.parse({
+        ...req.body,
+        status: "pending"
+      });
       
-      const project = await storage.convertExternalRequestToProject(requestId, projectData);
-      res.status(201).json(project);
+      const externalRequest = await storage.createExternalRequest(insertData);
+      res.status(201).json(externalRequest);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: fromZodError(error).message });
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
       }
+    }
+  });
+  
+  app.get("/api/external-requests", adminMiddleware, async (req, res, next) => {
+    try {
+      const externalRequests = await storage.getAllExternalRequests();
+      res.json(externalRequests);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.get("/api/external-requests/:id", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const externalRequest = await storage.getExternalRequestById(parseInt(id));
+      
+      if (!externalRequest) {
+        return res.status(404).json({ message: "External request not found" });
+      }
+      
+      res.json(externalRequest);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.put("/api/external-requests/:id/status", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      const externalRequest = await storage.updateExternalRequestStatus(parseInt(id), status);
+      
+      if (!externalRequest) {
+        return res.status(404).json({ message: "External request not found" });
+      }
+      
+      res.json(externalRequest);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/external-requests/:id/convert", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const externalRequest = await storage.getExternalRequestById(parseInt(id));
+      
+      if (!externalRequest) {
+        return res.status(404).json({ message: "External request not found" });
+      }
+      
+      // Convert external request to project
+      const project = await storage.convertExternalRequestToProject(parseInt(id));
+      
+      // Update external request status
+      await storage.updateExternalRequestStatus(parseInt(id), "approved");
+      
+      res.json(project);
+    } catch (error) {
       next(error);
     }
   });
 
   const httpServer = createServer(app);
+
   return httpServer;
 }

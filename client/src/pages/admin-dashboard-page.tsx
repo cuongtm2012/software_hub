@@ -345,7 +345,14 @@ export default function AdminDashboardPage() {
                 <div className="text-center py-8">
                   <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium mb-2">User Management</h3>
-                  <p className="text-muted-foreground">This feature is coming soon.</p>
+                  <p className="text-muted-foreground mb-6">View and manage all users in the system.</p>
+                  <Button 
+                    variant="default" 
+                    className="mt-2"
+                    onClick={() => navigate('/admin/users')}
+                  >
+                    Go to User Management
+                  </Button>
                 </div>
               </CardContent>
             </Card>
