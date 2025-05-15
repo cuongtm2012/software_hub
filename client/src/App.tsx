@@ -254,14 +254,7 @@ function Router() {
                   })}
                 </div>
                 
-                <div className="flex justify-center mt-8">
-                  <Button 
-                    className="bg-[#004080] hover:bg-[#003366] text-white"
-                    onClick={() => navigate('/request-project')}
-                  >
-                    Request Custom Project <ArrowRight className="ml-1 h-4 w-4" />
-                  </Button>
-                </div>
+
               </div>
             </div>
             
