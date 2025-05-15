@@ -430,7 +430,14 @@ export default function DashboardPage() {
       <Header />
       <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {user?.role === 'admin' ? 'User Dashboard' : 'Dashboard'}
+            {user?.role === 'admin' && (
+              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Admin Access
+              </span>
+            )}
+          </h1>
           <div className="ml-auto flex gap-2">
             <Button 
               onClick={() => navigate('/request-project')}
@@ -438,6 +445,14 @@ export default function DashboardPage() {
             >
               New Project
             </Button>
+            {user?.role === 'admin' && (
+              <Button 
+                onClick={() => navigate('/admin')}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                Go to Admin Panel
+              </Button>
+            )}
           </div>
         </div>
 

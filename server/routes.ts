@@ -48,9 +48,44 @@ function hasRole(roles: string[]) {
   };
 }
 
+// Short-hand middleware for admin role
+const isAdminOrDeveloper = hasRole(['admin', 'developer']);
+const isAnyRegisteredUser = isAuthenticated;
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+  
+  // Admin routes
+  app.get("/api/admin/users", isAdmin, async (req, res, next) => {
+    try {
+      // Get all users (in a real app, you would add pagination)
+      const users = await storage.getAllUsers();
+      res.json({ users });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.patch("/api/admin/users/:id/role", isAdmin, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+      
+      if (!role) {
+        return res.status(400).json({ message: "Role is required" });
+      }
+      
+      const user = await storage.updateUser(parseInt(id), { role });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ user });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   // User Profile Management Routes
   app.get("/api/auth/profile", isAuthenticated, async (req, res, next) => {
