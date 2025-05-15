@@ -540,7 +540,7 @@ export default function HomePage() {
                               <h3 className="text-base font-semibold text-gray-900">{software.name}</h3>
                               <div className="flex items-center gap-2 mt-1">
                                 <div className="flex items-center">
-                                  <StarRating rating={software.rating} size="sm" />
+                                  <StarRating value={software.rating} size="sm" />
                                   <span className="ml-1 text-xs text-gray-600">{software.rating}</span>
                                 </div>
                                 {software.isFree ? (
