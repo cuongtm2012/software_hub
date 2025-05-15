@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { ExternalRequest, InsertExternalRequest, insertExternalRequestSchema } from "@shared/schema";
 
 import { Button } from "@/components/ui/button";
 import {
