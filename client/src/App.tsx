@@ -48,6 +48,9 @@ import MarketplacePage from "@/pages/marketplace-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
+
+// Admin
+import AdminDashboardPage from "@/pages/admin-dashboard-page";
 import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
@@ -60,6 +63,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/request-project" component={ProjectRequestPage} />
       <ProtectedRoute path="/profile" component={UserProfilePage} />
+      <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
       
       {/* Phase 2: Code Service & Product Build Module */}
       <Route path="/it-services" component={() => {
