@@ -75,13 +75,21 @@ function SoftwareListComponent() {
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">Software List</h3>
         </div>
-        <div className="space-y-2">
+        <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center space-x-4 p-4 border rounded">
-              <Skeleton className="h-12 w-12 rounded" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="flex items-center space-x-4">
+                <Skeleton className="h-14 w-14 rounded-lg" />
+                <div className="space-y-3 flex-1">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-3 w-[200px]" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-16 rounded-md" />
+                    <Skeleton className="h-6 w-16 rounded-md" />
+                    <Skeleton className="h-6 w-16 rounded-md" />
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-20 rounded-md" />
               </div>
             </div>
           ))}
@@ -91,75 +99,115 @@ function SoftwareListComponent() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Software List ({softwareData?.total || 0})</h3>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center pb-2">
+        <div>
+          <h3 className="text-xl font-semibold text-gray-900">Software Overview</h3>
+          <p className="text-sm text-gray-500 mt-1">{softwareData?.total || 0} total software entries</p>
+        </div>
         <Button 
           variant="default" 
-          className="bg-[#004080] hover:bg-[#003366]"
+          className="bg-gradient-to-r from-[#004080] to-[#0066cc] hover:from-[#003366] hover:to-[#004080] text-white shadow-lg"
           onClick={() => navigate('/admin/software')}
         >
-          Manage All Software
+          <Package className="h-4 w-4 mr-2" />
+          Manage All
         </Button>
       </div>
       
       {softwareData?.softwares && softwareData.softwares.length > 0 ? (
-        <div className="space-y-2">
+        <div className="grid gap-4">
           {softwareData.softwares.slice(0, 5).map((software) => (
-            <div key={software.id} className="flex items-center space-x-4 p-4 border rounded hover:bg-gray-50">
-              {software.image_url ? (
-                <img 
-                  src={software.image_url} 
-                  alt={software.name}
-                  className="h-12 w-12 rounded object-cover"
-                />
-              ) : (
-                <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center">
-                  <Package className="h-6 w-6 text-gray-500" />
+            <div key={software.id} className="group relative bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+              <div className="flex items-start space-x-4">
+                {software.image_url ? (
+                  <div className="relative">
+                    <img 
+                      src={software.image_url} 
+                      alt={software.name}
+                      className="h-14 w-14 rounded-lg object-cover border border-gray-200 shadow-sm"
+                    />
+                    <div className="absolute -top-1 -right-1">
+                      <Badge variant={
+                        software.status === 'approved' ? 'default' :
+                        software.status === 'pending' ? 'secondary' : 'destructive'
+                      } className="text-xs px-1.5 py-0.5 shadow-sm">
+                        {software.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative h-14 w-14 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center border border-gray-200">
+                    <Package className="h-7 w-7 text-blue-600" />
+                    <div className="absolute -top-1 -right-1">
+                      <Badge variant={
+                        software.status === 'approved' ? 'default' :
+                        software.status === 'pending' ? 'secondary' : 'destructive'
+                      } className="text-xs px-1.5 py-0.5 shadow-sm">
+                        {software.status}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-gray-900 truncate text-base">{software.name}</h4>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{software.description}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center flex-wrap gap-3 mt-3">
+                    <div className="flex items-center text-xs text-gray-500">
+                      <span className="font-medium">Category:</span>
+                      <span className="ml-1 px-2 py-1 bg-gray-100 rounded-md">{getCategoryName(software.category_id)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {software.platform.slice(0, 3).map((platform) => (
+                        <span key={platform} className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-md border border-blue-200">
+                          {platform}
+                        </span>
+                      ))}
+                      {software.platform.length > 3 && (
+                        <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-md">
+                          +{software.platform.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium truncate">{software.name}</h4>
-                  <Badge variant={
-                    software.status === 'approved' ? 'default' :
-                    software.status === 'pending' ? 'secondary' : 'destructive'
-                  }>
-                    {software.status}
-                  </Badge>
-                </div>
-                <p className="text-sm text-gray-600 truncate">{software.description}</p>
-                <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
-                  <span>Category: {getCategoryName(software.category_id)}</span>
-                  <span>Platforms: {software.platform.slice(0, 2).join(', ')}</span>
-                  {software.platform.length > 2 && <span>+{software.platform.length - 2} more</span>}
+                
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" size="sm" asChild className="shadow-sm hover:shadow-md transition-shadow">
+                    <a href={software.download_link} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      Download
+                    </a>
+                  </Button>
                 </div>
               </div>
-              
-              <Button variant="outline" size="sm" asChild>
-                <a href={software.download_link} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
             </div>
           ))}
           
           {softwareData.softwares.length > 5 && (
-            <div className="text-center pt-2">
-              <Button variant="outline" onClick={() => navigate('/admin/software')}>
-                View All {softwareData.total} Software
+            <div className="text-center pt-4">
+              <Button variant="outline" onClick={() => navigate('/admin/software')} className="shadow-sm hover:shadow-md">
+                View All {softwareData.total} Software Entries
               </Button>
             </div>
           )}
         </div>
       ) : (
-        <div className="text-center py-8">
-          <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium mb-2">No Software Found</h3>
-          <p className="text-gray-600 mb-4">Get started by adding your first software listing.</p>
-          <Button onClick={() => navigate('/admin/software')}>
-            Add Software
+        <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+          <div className="mx-auto h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+            <Package className="h-8 w-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Software Found</h3>
+          <p className="text-gray-500 mb-6 max-w-sm mx-auto">Get started by adding your first software listing to the platform.</p>
+          <Button onClick={() => navigate('/admin/software')} className="bg-gradient-to-r from-[#004080] to-[#0066cc] hover:from-[#003366] hover:to-[#004080] text-white shadow-lg">
+            <Package className="h-4 w-4 mr-2" />
+            Add First Software
           </Button>
         </div>
       )}
@@ -181,13 +229,20 @@ function UserListComponent() {
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">User List</h3>
         </div>
-        <div className="space-y-2">
+        <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center space-x-4 p-4 border rounded">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-[200px]" />
-                <Skeleton className="h-4 w-[150px]" />
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-3 flex-1">
+                  <Skeleton className="h-4 w-[200px]" />
+                  <Skeleton className="h-3 w-[150px]" />
+                  <div className="flex gap-4">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-24 rounded-md" />
               </div>
             </div>
           ))}
@@ -197,63 +252,90 @@ function UserListComponent() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">User List ({usersData?.total || 0})</h3>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center pb-2">
+        <div>
+          <h3 className="text-xl font-semibold text-gray-900">User Management</h3>
+          <p className="text-sm text-gray-500 mt-1">{usersData?.total || 0} registered users</p>
+        </div>
         <Button 
           variant="default" 
           onClick={() => navigate('/admin/users')}
+          className="bg-gradient-to-r from-[#004080] to-[#0066cc] hover:from-[#003366] hover:to-[#004080] text-white shadow-lg"
         >
-          Manage All Users
+          <AlertCircle className="h-4 w-4 mr-2" />
+          Manage All
         </Button>
       </div>
       
       {usersData?.users && usersData.users.length > 0 ? (
-        <div className="space-y-2">
+        <div className="grid gap-4">
           {usersData.users.slice(0, 5).map((user) => (
-            <div key={user.id} className="flex items-center space-x-4 p-4 border rounded hover:bg-gray-50">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-sm font-medium text-blue-600">
-                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                </span>
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium truncate">{user.name || 'Unknown User'}</h4>
-                  <Badge variant={
-                    user.role === 'admin' ? 'default' :
-                    user.role === 'developer' ? 'secondary' : 'outline'
-                  }>
-                    {user.role || 'user'}
-                  </Badge>
+            <div key={user.id} className="group relative bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm">
+                    <span className="text-lg font-semibold text-white">
+                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1">
+                    <Badge variant={
+                      user.role === 'admin' ? 'default' :
+                      user.role === 'developer' ? 'secondary' : 'outline'
+                    } className="text-xs px-1.5 py-0.5 shadow-sm">
+                      {user.role || 'user'}
+                    </Badge>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 truncate">{user.email}</p>
-                <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
-                  <span>Joined: {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</span>
-                  {user.last_login && <span>Last login: {new Date(user.last_login).toLocaleDateString()}</span>}
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-gray-900 truncate text-base">{user.name || 'Unknown User'}</h4>
+                      <p className="text-sm text-gray-600 truncate mt-1">{user.email}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 mt-3 text-xs">
+                    <div className="flex items-center text-gray-500">
+                      <Clock className="h-3 w-3 mr-1" />
+                      <span>Joined {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</span>
+                    </div>
+                    {user.last_login && (
+                      <div className="flex items-center text-gray-500">
+                        <CheckCircle2 className="h-3 w-3 mr-1 text-green-500" />
+                        <span>Last login {new Date(user.last_login).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-shadow">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    View Profile
+                  </Button>
                 </div>
               </div>
-              
-              <Button variant="outline" size="sm">
-                View Profile
-              </Button>
             </div>
           ))}
           
           {usersData.users.length > 5 && (
-            <div className="text-center pt-2">
-              <Button variant="outline" onClick={() => navigate('/admin/users')}>
+            <div className="text-center pt-4">
+              <Button variant="outline" onClick={() => navigate('/admin/users')} className="shadow-sm hover:shadow-md">
                 View All {usersData.total} Users
               </Button>
             </div>
           )}
         </div>
       ) : (
-        <div className="text-center py-8">
-          <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium mb-2">No Users Found</h3>
-          <p className="text-gray-600 mb-4">There are no users in the system yet.</p>
+        <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+          <div className="mx-auto h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+            <AlertCircle className="h-8 w-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
+          <p className="text-gray-500 mb-6 max-w-sm mx-auto">There are no registered users in the system yet.</p>
         </div>
       )}
     </div>
