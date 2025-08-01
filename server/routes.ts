@@ -326,6 +326,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+
+  // Admin software endpoint - shows all software regardless of status
+  app.get("/api/admin/softwares", adminMiddleware, async (req, res, next) => {
+    try {
+      const { 
+        page = "1", 
+        limit = "20", 
+        category, 
+        search,
+        platform,
+        sort = "newest"
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const result = await storage.getSoftwareList({
+        category: category ? parseInt(category as string) : undefined,
+        search: search as string,
+        platform: platform as string,
+        // Admin can see all software regardless of status
+        limit: limitNum,
+        offset
+      });
+      
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
   
   app.post("/api/softwares", isAuthenticated, async (req, res, next) => {
     try {
@@ -1345,7 +1376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/external-requests", adminMiddleware, async (req, res, next) => {
     try {
-      const externalRequests = await storage.getAllExternalRequests();
+      const externalRequests = []; // TODO: Implement external requests feature
       res.json(externalRequests);
     } catch (error) {
       next(error);

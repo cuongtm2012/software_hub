@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare, RefreshCw, ExternalLink, Loader2, Package } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Define types for the admin dashboard
@@ -38,6 +38,131 @@ interface ProjectData {
   requirements: string;
   budget: number;
   deadline: string;
+}
+
+interface Software {
+  id: number;
+  name: string;
+  description: string;
+  category_id: number;
+  platform: string[];
+  download_link: string;
+  image_url?: string;
+  status: string;
+  created_at: string;
+  created_by: number;
+}
+
+// Simple Software List Component
+function SoftwareListComponent() {
+  const { data: softwareData, isLoading } = useQuery<{ softwares: Software[], total: number }>({
+    queryKey: ['/api/admin/softwares'],
+  });
+
+  const { data: categories } = useQuery<{ id: number; name: string; }[]>({
+    queryKey: ['/api/categories'],
+  });
+
+  const getCategoryName = (categoryId: number) => {
+    return categories?.find(cat => cat.id === categoryId)?.name || "Unknown";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium">Software List</h3>
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center space-x-4 p-4 border rounded">
+              <Skeleton className="h-12 w-12 rounded" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Software List ({softwareData?.total || 0})</h3>
+        <Button 
+          variant="default" 
+          className="bg-[#004080] hover:bg-[#003366]"
+          onClick={() => navigate('/admin/software')}
+        >
+          Manage All Software
+        </Button>
+      </div>
+      
+      {softwareData?.softwares && softwareData.softwares.length > 0 ? (
+        <div className="space-y-2">
+          {softwareData.softwares.slice(0, 5).map((software) => (
+            <div key={software.id} className="flex items-center space-x-4 p-4 border rounded hover:bg-gray-50">
+              {software.image_url ? (
+                <img 
+                  src={software.image_url} 
+                  alt={software.name}
+                  className="h-12 w-12 rounded object-cover"
+                />
+              ) : (
+                <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center">
+                  <Package className="h-6 w-6 text-gray-500" />
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium truncate">{software.name}</h4>
+                  <Badge variant={
+                    software.status === 'approved' ? 'default' :
+                    software.status === 'pending' ? 'secondary' : 'destructive'
+                  }>
+                    {software.status}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 truncate">{software.description}</p>
+                <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                  <span>Category: {getCategoryName(software.category_id)}</span>
+                  <span>Platforms: {software.platform.slice(0, 2).join(', ')}</span>
+                  {software.platform.length > 2 && <span>+{software.platform.length - 2} more</span>}
+                </div>
+              </div>
+              
+              <Button variant="outline" size="sm" asChild>
+                <a href={software.download_link} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+          ))}
+          
+          {softwareData.softwares.length > 5 && (
+            <div className="text-center pt-2">
+              <Button variant="outline" onClick={() => navigate('/admin/software')}>
+                View All {softwareData.total} Software
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Software Found</h3>
+          <p className="text-gray-600 mb-4">Get started by adding your first software listing.</p>
+          <Button onClick={() => navigate('/admin/software')}>
+            Add Software
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AdminDashboardPage() {
@@ -324,18 +449,7 @@ export default function AdminDashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Software Management</h3>
-                  <p className="text-muted-foreground mb-6">Manage all software listings and add new software entries.</p>
-                  <Button 
-                    variant="default" 
-                    className="mt-2 bg-[#004080] hover:bg-[#003366]"
-                    onClick={() => navigate('/admin/software')}
-                  >
-                    Go to Software Management
-                  </Button>
-                </div>
+                <SoftwareListComponent />
               </CardContent>
             </Card>
           </TabsContent>
