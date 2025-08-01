@@ -56,6 +56,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+
+  // Admin Software Management Routes
+  app.get("/api/admin/software", adminMiddleware, async (req, res, next) => {
+    try {
+      const { limit = 50, offset = 0, status } = req.query;
+      const result = await storage.getSoftwareList({
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+        status: status as 'pending' | 'approved' | 'rejected' | undefined
+      });
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/admin/software", adminMiddleware, async (req, res, next) => {
+    try {
+      const validatedData = insertSoftwareSchema.parse(req.body);
+      const software = await storage.createSoftware(validatedData, req.user?.id as number);
+      
+      // Auto-approve software added by admin
+      const approvedSoftware = await storage.updateSoftwareStatus(software.id, 'approved');
+      
+      res.status(201).json({ software: approvedSoftware });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: fromZodError(error).details 
+        });
+      }
+      next(error);
+    }
+  });
+
+  app.put("/api/admin/software/:id", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const softwareId = parseInt(id);
+      
+      // Get existing software to update it
+      const existingSoftware = await storage.getSoftwareById(softwareId);
+      if (!existingSoftware) {
+        return res.status(404).json({ message: "Software not found" });
+      }
+
+      // Validate the update data (partial schema)
+      const updateData = req.body;
+      if (updateData.category_id) {
+        updateData.category_id = parseInt(updateData.category_id);
+      }
+
+      // Update the software in storage (you'll need to implement this method)
+      const updatedSoftware = await storage.updateSoftware(softwareId, updateData);
+      
+      res.json({ software: updatedSoftware });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/admin/software/:id", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const softwareId = parseInt(id);
+      
+      const success = await storage.deleteSoftware(softwareId);
+      if (!success) {
+        return res.status(404).json({ message: "Software not found" });
+      }
+      
+      res.json({ message: "Software deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/admin/software/:id/status", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const softwareId = parseInt(id);
+      
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      
+      const updatedSoftware = await storage.updateSoftwareStatus(softwareId, status);
+      if (!updatedSoftware) {
+        return res.status(404).json({ message: "Software not found" });
+      }
+      
+      res.json({ software: updatedSoftware });
+    } catch (error) {
+      next(error);
+    }
+  });
   
   app.patch("/api/admin/users/:id/role", adminMiddleware, async (req, res, next) => {
     try {
@@ -212,16 +310,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
       
-      // Temporary fix - return empty softwares array and 0 total
-      // TODO: Implement getSoftwares in the storage class
-      const softwares = [];
-      const total = 0;
-      
-      res.json({
-        softwares,
-        total
+      const result = await storage.getSoftwareList({
+        category: category ? parseInt(category as string) : undefined,
+        search: search as string,
+        platform: platform as string,
+        status: 'approved', // Only show approved software to public
+        limit: limitNum,
+        offset
       });
+      
+      res.json(result);
     } catch (error) {
       next(error);
     }

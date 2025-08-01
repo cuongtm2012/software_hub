@@ -54,6 +54,8 @@ export interface IStorage {
   // Software
   createSoftware(software: InsertSoftware, userId: number): Promise<Software>;
   getSoftwareById(id: number): Promise<Software | undefined>;
+  updateSoftware(id: number, software: Partial<InsertSoftware>): Promise<Software | undefined>;
+  deleteSoftware(id: number): Promise<boolean>;
   updateSoftwareStatus(id: number, status: 'approved' | 'rejected'): Promise<Software | undefined>;
   getSoftwareList(params: {
     category?: number;
@@ -298,6 +300,24 @@ export class DatabaseStorage implements IStorage {
       softwares: softwareList,
       total
     };
+  }
+
+  async updateSoftware(id: number, updateData: Partial<InsertSoftware>): Promise<Software | undefined> {
+    const [updatedSoftware] = await db
+      .update(softwares)
+      .set(updateData)
+      .where(eq(softwares.id, id))
+      .returning();
+    return updatedSoftware;
+  }
+
+  async deleteSoftware(id: number): Promise<boolean> {
+    const result = await db
+      .delete(softwares)
+      .where(eq(softwares.id, id))
+      .returning({ id: softwares.id });
+    
+    return result.length > 0;
   }
 
   // Reviews

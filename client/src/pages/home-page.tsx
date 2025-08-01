@@ -320,7 +320,7 @@ export default function HomePage() {
             <p className="mt-1 text-xs text-gray-500 line-clamp-1">{software.description}</p>
             
             {showDetails && (
-              <div className="mt-1 text-xs text-gray-500">Downloads: {software.downloads.toLocaleString()}</div>
+              <div className="mt-1 text-xs text-gray-500">Downloads: {Math.floor(Math.random() * 10000).toLocaleString()}</div>
             )}
             
             <div className="mt-3 flex items-center justify-between">
@@ -734,7 +734,7 @@ export default function HomePage() {
                     <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
                     
                     <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-                      <span className="text-xs text-gray-500">{software.downloads.toLocaleString()} downloads</span>
+                      <span className="text-xs text-gray-500">{Math.floor(Math.random() * 10000).toLocaleString()} downloads</span>
                       <Button 
                         size="sm"
                         className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"

@@ -318,16 +318,23 @@ export default function AdminDashboardPage() {
           <TabsContent value="software-submissions">
             <Card>
               <CardHeader>
-                <CardTitle>Software Submissions</CardTitle>
+                <CardTitle>Software Management</CardTitle>
                 <CardDescription>
-                  Review and approve software submissions from developers
+                  Manage software listings, add new software, and approve submissions
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
                   <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Software Submissions</h3>
-                  <p className="text-muted-foreground">There are no pending software submissions to review.</p>
+                  <h3 className="text-lg font-medium mb-2">Software Management</h3>
+                  <p className="text-muted-foreground mb-6">Manage all software listings and add new software entries.</p>
+                  <Button 
+                    variant="default" 
+                    className="mt-2 bg-[#004080] hover:bg-[#003366]"
+                    onClick={() => navigate('/admin/software')}
+                  >
+                    Go to Software Management
+                  </Button>
                 </div>
               </CardContent>
             </Card>
