@@ -123,14 +123,14 @@ export default function HomePage() {
     }
   });
   
-  // Fetch categories
+  // Fetch categories from GitHub service
   const {
     data: categories,
     isLoading: isLoadingCategories
   } = useQuery({
-    queryKey: ["/api/categories"],
+    queryKey: ["/api/github/categories"],
     queryFn: async () => {
-      const response = await fetch("/api/categories");
+      const response = await fetch("/api/github/categories");
       if (!response.ok) {
         throw new Error("Failed to fetch categories");
       }
@@ -145,7 +145,7 @@ export default function HomePage() {
   } = useQuery({
     queryKey: ["/api/softwares/recent"],
     queryFn: async () => {
-      const response = await fetch("/api/softwares?limit=3&sort=updated_at");
+      const response = await fetch("/api/softwares/recent?limit=6");
       if (!response.ok) {
         throw new Error("Failed to fetch recent software");
       }
@@ -160,9 +160,24 @@ export default function HomePage() {
   } = useQuery({
     queryKey: ["/api/softwares/popular"],
     queryFn: async () => {
-      const response = await fetch("/api/softwares?limit=3&sort=downloads");
+      const response = await fetch("/api/softwares/popular?limit=6");
       if (!response.ok) {
         throw new Error("Failed to fetch popular software");
+      }
+      return response.json();
+    }
+  });
+
+  // Fetch trending software
+  const {
+    data: trendingSoftware,
+    isLoading: isLoadingTrending
+  } = useQuery({
+    queryKey: ["/api/softwares/trending"],
+    queryFn: async () => {
+      const response = await fetch("/api/softwares/trending?limit=6");
+      if (!response.ok) {
+        throw new Error("Failed to fetch trending software");
       }
       return response.json();
     }
@@ -201,46 +216,31 @@ export default function HomePage() {
   const totalItems = softwareData?.total || 0;
   const itemsPerPage = 9;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  
-  // Sample software data for display (this should be replaced with real data from API)
-  const sampleSoftware = [
-    {
-      id: 1,
-      name: "Microsoft Excel",
-      description: "Spreadsheet software for Windows",
-      version: "2019",
-      downloads: 25000,
-      rating: 4.5,
-      imageUrl: "https://placehold.co/250x150",
-      platform: ["windows"],
-      isFree: false,
-      trialVersion: true
-    },
-    {
-      id: 2,
-      name: "VLC Media Player",
-      description: "Free and open source cross-platform multimedia player",
-      version: "3.0.18",
-      downloads: 37500,
-      rating: 4.8,
-      imageUrl: "https://placehold.co/250x150",
-      platform: ["windows", "mac", "linux"],
-      isFree: true
-    },
-    {
-      id: 3,
-      name: "WinRAR",
-      description: "File archiver utility for Windows",
-      version: "6.11",
-      downloads: 42000,
-      rating: 4.6,
-      imageUrl: "https://placehold.co/250x150",
-      platform: ["windows"],
-      isFree: false,
-      trialVersion: true
+
+  // Category filter handler
+  const handleCategoryFilter = (categoryName: string) => {
+    setCurrentTab("all");
+    setPage(1);
+    
+    // Update URL with category filter
+    const newParams = new URLSearchParams(searchParams);
+    if (categoryName === "All Software") {
+      newParams.delete("category");
+    } else {
+      newParams.set("category", categoryName);
     }
-  ];
+    newParams.delete("page");
+    navigate(`/?${newParams.toString()}`);
+  };
   
+  // Download handler for GitHub repositories
+  const handleDownload = (software: any) => {
+    if (software.downloadUrl) {
+      // Open download URL in new tab
+      window.open(software.downloadUrl, '_blank');
+    }
+  };
+
   // Software card component
   const SoftwareCard = ({ 
     software, 
@@ -251,6 +251,8 @@ export default function HomePage() {
     showDetails?: boolean,
     ranking?: number | undefined 
   }) => {
+    const ratingValue = software.stars ? Math.min(software.stars / 1000, 5) : 0; // Convert stars to 5-star rating
+    
     return (
       <Card className="overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
         <div className="relative group">
@@ -259,31 +261,34 @@ export default function HomePage() {
             {software.imageUrl ? (
               <img 
                 src={software.imageUrl}
-                alt={`${software.name} screenshot`}
+                alt={`${software.name} avatar`}
                 className="absolute h-full w-full object-cover"
               />
             ) : (
               <div className="absolute h-full w-full flex items-center justify-center bg-gray-100">
-                <Monitor className="h-12 w-12 text-gray-400" />
+                <Code className="h-12 w-12 text-gray-400" />
               </div>
             )}
             
             {/* Badge */}
             <div className="absolute top-0 left-0 mt-2 ml-2">
-              {software.isFree ? (
+              {software.isFree && (
                 <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-800">
                   FREE
                 </span>
-              ) : software.trialVersion ? (
-                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
-                  TRIAL VERSION
-                </span>
-              ) : null}
+              )}
+            </div>
+            
+            {/* Category badge */}
+            <div className="absolute top-0 right-0 mt-2 mr-2">
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                {software.category}
+              </span>
             </div>
             
             {/* Ranking badge */}
             {ranking !== undefined && (
-              <div className="absolute top-0 right-0 mt-2 mr-2 bg-gray-900/70 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute bottom-0 right-0 mb-2 mr-2 bg-gray-900/70 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
                 {ranking}
               </div>
             )}
@@ -291,7 +296,12 @@ export default function HomePage() {
             {/* Quick actions */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
               <div className="flex space-x-2">
-                <Button variant="default" size="sm" className="bg-white text-black hover:bg-gray-100">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="bg-white text-black hover:bg-gray-100"
+                  onClick={() => window.open(software.projectUrl, '_blank')}
+                >
                   View Details
                 </Button>
               </div>
@@ -300,27 +310,22 @@ export default function HomePage() {
           
           {/* Content */}
           <div className="p-3">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between mb-1">
               <h3 className="text-base font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
-              {!showDetails && (
-                <div className="flex items-center">
-                  <Star className="h-3 w-3 text-yellow-500 mr-1" />
-                  <span className="text-xs text-gray-600">{software.rating}</span>
-                </div>
-              )}
+              <div className="flex items-center ml-2">
+                <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                <span className="text-xs text-gray-600">{software.stars.toLocaleString()}</span>
+              </div>
             </div>
             
+            <p className="mt-1 text-xs text-gray-500 line-clamp-2">{software.description}</p>
+            
             {showDetails && (
-              <div className="flex items-center mt-1">
-                <StarRating value={software.rating} size="sm" />
-                <span className="ml-1 text-xs text-gray-600">{software.rating}</span>
+              <div className="mt-1 space-y-1">
+                <div className="text-xs text-gray-500">Downloads: {software.downloads.toLocaleString()}</div>
+                <div className="text-xs text-gray-500">Language: {software.language}</div>
+                <div className="text-xs text-gray-500">License: {software.license}</div>
               </div>
-            )}
-            
-            <p className="mt-1 text-xs text-gray-500 line-clamp-1">{software.description}</p>
-            
-            {showDetails && (
-              <div className="mt-1 text-xs text-gray-500">Downloads: {software.downloads.toLocaleString()}</div>
             )}
             
             <div className="mt-3 flex items-center justify-between">
@@ -331,7 +336,8 @@ export default function HomePage() {
               <Button 
                 size="sm" 
                 variant="default"
-                className="bg-primary hover:bg-primary/90 text-white rounded-md text-xs px-3 py-1 h-auto"
+                className="bg-[#004080] hover:bg-[#003366] text-white rounded-md text-xs px-3 py-1 h-auto"
+                onClick={() => handleDownload(software)}
               >
                 <Download className="h-3 w-3 mr-1" />
                 Download
@@ -361,25 +367,36 @@ export default function HomePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-4">
               {[
                 { icon: <LayoutGrid className="h-5 w-5" />, name: "All Software" },
-                { icon: <Monitor className="h-5 w-5" />, name: "Utilities" },
-                { icon: <Download className="h-5 w-5" />, name: "Media" },
-                { icon: <Users className="h-5 w-5" />, name: "Communication" },
-                { icon: <TrendingUp className="h-5 w-5" />, name: "Business" },
-                { icon: <Star className="h-5 w-5" />, name: "Games" },
-              ].map((category, index) => (
-                <Button 
-                  key={index} 
-                  variant="outline" 
-                  className={`flex items-center justify-center py-3 px-4 rounded-lg border border-gray-200 hover:border-[#ffcc00] hover:bg-white ${
-                    index === 0 ? 'bg-[#004080] text-white hover:bg-[#004080] hover:text-white' : 'bg-white text-gray-700'
-                  }`}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <span className="mb-1">{category.icon}</span>
-                    <span className="text-xs font-medium">{category.name}</span>
-                  </div>
-                </Button>
-              ))}
+                ...(categories || []).map((categoryName: string) => ({
+                  icon: categoryName === "Utilities" ? <Monitor className="h-5 w-5" /> :
+                        categoryName === "Media" ? <Download className="h-5 w-5" /> :
+                        categoryName === "Communication" ? <MessageSquare className="h-5 w-5" /> :
+                        categoryName === "Business" ? <Briefcase className="h-5 w-5" /> :
+                        categoryName === "Games" ? <Star className="h-5 w-5" /> :
+                        categoryName === "Development" ? <Code className="h-5 w-5" /> :
+                        <Monitor className="h-5 w-5" />,
+                  name: categoryName
+                }))
+              ].map((category, index) => {
+                const currentCategory = searchParams.get("category");
+                const isSelected = (index === 0 && !currentCategory) || category.name === currentCategory;
+                
+                return (
+                  <Button 
+                    key={index}
+                    variant="outline" 
+                    className={`flex items-center justify-center py-3 px-4 rounded-lg border border-gray-200 hover:border-[#ffcc00] hover:bg-white ${
+                      isSelected ? 'bg-[#004080] text-white hover:bg-[#004080] hover:text-white' : 'bg-white text-gray-700'
+                    }`}
+                    onClick={() => handleCategoryFilter(category.name)}
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <span className="mb-1">{category.icon}</span>
+                      <span className="text-xs font-medium">{category.name}</span>
+                    </div>
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -459,10 +476,7 @@ export default function HomePage() {
                 
                 {softwareView === "grid" ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                    {/* Use real data when available, fallback to sample data */}
-                    {(softwareData?.softwares?.length > 0 
-                      ? softwareData.softwares 
-                      : sampleSoftware.concat(sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware)).slice(0, 24).map((software: any, index: number) => (
+                    {(softwareData?.softwares || []).map((software: any, index: number) => (
                       <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
                         <div className="relative pt-[60%] bg-gray-50">
                           {software.imageUrl ? (
@@ -494,7 +508,7 @@ export default function HomePage() {
                             <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
                             <div className="flex items-center">
                               <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
-                              <span className="text-xs text-gray-600">{software.rating}</span>
+                              <span className="text-xs text-gray-600">{software.stars?.toLocaleString() || 0}</span>
                             </div>
                           </div>
                           
@@ -505,6 +519,7 @@ export default function HomePage() {
                             <Button 
                               size="sm"
                               className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
+                              onClick={() => handleDownload(software)}
                             >
                               <Download className="h-3 w-3 mr-1" />
                               Download
@@ -516,9 +531,7 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(softwareData?.softwares?.length > 0 
-                      ? softwareData.softwares 
-                      : sampleSoftware.concat(sampleSoftware, sampleSoftware)).slice(0, 12).map((software: any, index: number) => (
+                    {(softwareData?.softwares || []).map((software: any, index: number) => (
                       <div key={software.id + "-" + index} className="flex gap-4 p-3 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
                         <div className="flex-shrink-0 w-20 h-20 relative bg-gray-50 rounded overflow-hidden">
                           {software.imageUrl ? (
@@ -540,8 +553,8 @@ export default function HomePage() {
                               <h3 className="text-base font-semibold text-gray-900">{software.name}</h3>
                               <div className="flex items-center gap-2 mt-1">
                                 <div className="flex items-center">
-                                  <StarRating value={software.rating} size="sm" />
-                                  <span className="ml-1 text-xs text-gray-600">{software.rating}</span>
+                                  <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                                  <span className="ml-1 text-xs text-gray-600">{software.stars?.toLocaleString() || 0}</span>
                                 </div>
                                 {software.isFree ? (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800">
@@ -562,6 +575,7 @@ export default function HomePage() {
                         <div className="flex-shrink-0 self-center">
                           <Button 
                             className="px-4 py-2 bg-[#004080] hover:bg-[#003366] text-white rounded"
+                            onClick={() => handleDownload(software)}
                           >
                             <Download className="h-4 w-4 mr-2" />
                             Download
@@ -690,9 +704,7 @@ export default function HomePage() {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {(popularSoftware?.softwares?.length > 0 
-                ? popularSoftware.softwares 
-                : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
+              {(popularSoftware?.softwares || []).slice(0, 6).map((software: any, index: number) => (
                 <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
                   <div className="relative pt-[60%] bg-gray-50">
                     {software.imageUrl ? (
@@ -727,14 +739,14 @@ export default function HomePage() {
                       <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
                       <div className="flex items-center">
                         <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
-                        <span className="text-xs text-gray-600">{software.rating}</span>
+                        <span className="text-xs text-gray-600">{software.stars?.toLocaleString() || 0}</span>
                       </div>
                     </div>
                     
                     <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
                     
                     <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-                      <span className="text-xs text-gray-500">{software.downloads.toLocaleString()} downloads</span>
+                      <span className="text-xs text-gray-500">{software.downloads?.toLocaleString() || 0} downloads</span>
                       <Button 
                         size="sm"
                         className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
@@ -759,9 +771,7 @@ export default function HomePage() {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {(recentSoftware?.softwares?.length > 0 
-                ? recentSoftware.softwares 
-                : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
+              {(recentSoftware?.softwares || []).slice(0, 6).map((software: any, index: number) => (
                 <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
                   <div className="relative pt-[60%] bg-gray-50">
                     {software.imageUrl ? (
@@ -798,7 +808,7 @@ export default function HomePage() {
                       <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
                       <div className="flex items-center">
                         <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
-                        <span className="text-xs text-gray-600">{software.rating}</span>
+                        <span className="text-xs text-gray-600">{software.stars?.toLocaleString() || 0}</span>
                       </div>
                     </div>
                     

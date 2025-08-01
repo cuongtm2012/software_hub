@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { githubService } from "./github-service";
 import { 
   insertSoftwareSchema, insertReviewSchema, insertCategorySchema,
   insertProjectSchema, insertQuoteSchema, insertMessageSchema, 
@@ -198,35 +199,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Softwares Management
+  // GitHub Software API endpoints
+  app.get("/api/github/categories", async (req, res, next) => {
+    try {
+      const categories = githubService.getAvailableCategories();
+      res.json(categories);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/softwares", async (req, res, next) => {
     try {
       const { 
         page = "1", 
-        limit = "10", 
+        limit = "9", 
         category, 
-        search,
+        search = "popular",
         platform,
-        sort = "newest"
+        sort = "stars"
       } = req.query;
       
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
       
-      // Temporary fix - return empty softwares array and 0 total
-      // TODO: Implement getSoftwares in the storage class
-      const softwares = [];
-      const total = 0;
+      let result;
+      
+      if (search && search !== "popular") {
+        // Custom search query
+        result = await githubService.searchRepositories(
+          search as string, 
+          category as string, 
+          pageNum, 
+          limitNum
+        );
+      } else {
+        // Default to popular repositories
+        result = await githubService.getPopularRepositories(
+          category as string, 
+          pageNum, 
+          limitNum
+        );
+      }
       
       res.json({
-        softwares,
-        total
+        softwares: result.items,
+        total: result.total
       });
     } catch (error) {
-      next(error);
+      console.error("Error fetching software:", error);
+      // Fallback to empty data on error
+      res.json({
+        softwares: [],
+        total: 0
+      });
     }
   });
   
+  // Additional GitHub API endpoints
+  app.get("/api/softwares/popular", async (req, res, next) => {
+    try {
+      const { 
+        limit = "6", 
+        category 
+      } = req.query;
+      
+      const limitNum = parseInt(limit as string);
+      
+      const result = await githubService.getPopularRepositories(
+        category as string, 
+        1, 
+        limitNum
+      );
+      
+      res.json({
+        softwares: result.items,
+        total: result.total
+      });
+    } catch (error) {
+      console.error("Error fetching popular software:", error);
+      res.json({
+        softwares: [],
+        total: 0
+      });
+    }
+  });
+
+  app.get("/api/softwares/recent", async (req, res, next) => {
+    try {
+      const { 
+        limit = "6", 
+        category 
+      } = req.query;
+      
+      const limitNum = parseInt(limit as string);
+      
+      const result = await githubService.getRecentlyUpdatedRepositories(
+        category as string, 
+        1, 
+        limitNum
+      );
+      
+      res.json({
+        softwares: result.items,
+        total: result.total
+      });
+    } catch (error) {
+      console.error("Error fetching recent software:", error);
+      res.json({
+        softwares: [],
+        total: 0
+      });
+    }
+  });
+
+  app.get("/api/softwares/trending", async (req, res, next) => {
+    try {
+      const { 
+        limit = "6", 
+        category 
+      } = req.query;
+      
+      const limitNum = parseInt(limit as string);
+      
+      const result = await githubService.getTrendingRepositories(
+        category as string, 
+        1, 
+        limitNum
+      );
+      
+      res.json({
+        softwares: result.items,
+        total: result.total
+      });
+    } catch (error) {
+      console.error("Error fetching trending software:", error);
+      res.json({
+        softwares: [],
+        total: 0
+      });
+    }
+  });
+
   app.post("/api/softwares", isAuthenticated, async (req, res, next) => {
     try {
       const insertData = insertSoftwareSchema.parse({
