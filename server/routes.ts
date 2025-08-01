@@ -357,6 +357,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+
+  // Admin users endpoint
+  app.get("/api/admin/users", adminMiddleware, async (req, res, next) => {
+    try {
+      const { 
+        page = "1", 
+        limit = "20", 
+        role,
+        search
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const result = await storage.getAllUsers({
+        role: role as string,
+        search: search as string,
+        limit: limitNum,
+        offset
+      });
+      
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
   
   app.post("/api/softwares", isAuthenticated, async (req, res, next) => {
     try {

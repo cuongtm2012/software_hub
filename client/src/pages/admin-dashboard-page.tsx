@@ -55,6 +55,8 @@ interface Software {
 
 // Simple Software List Component
 function SoftwareListComponent() {
+  const [, navigate] = useLocation();
+  
   const { data: softwareData, isLoading } = useQuery<{ softwares: Software[], total: number }>({
     queryKey: ['/api/admin/softwares'],
   });
@@ -159,6 +161,99 @@ function SoftwareListComponent() {
           <Button onClick={() => navigate('/admin/software')}>
             Add Software
           </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Simple User List Component
+function UserListComponent() {
+  const [, navigate] = useLocation();
+  
+  const { data: usersData, isLoading } = useQuery<{ users: any[], total: number }>({
+    queryKey: ['/api/admin/users'],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium">User List</h3>
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center space-x-4 p-4 border rounded">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-[200px]" />
+                <Skeleton className="h-4 w-[150px]" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">User List ({usersData?.total || 0})</h3>
+        <Button 
+          variant="default" 
+          onClick={() => navigate('/admin/users')}
+        >
+          Manage All Users
+        </Button>
+      </div>
+      
+      {usersData?.users && usersData.users.length > 0 ? (
+        <div className="space-y-2">
+          {usersData.users.slice(0, 5).map((user) => (
+            <div key={user.id} className="flex items-center space-x-4 p-4 border rounded hover:bg-gray-50">
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <span className="text-sm font-medium text-blue-600">
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </span>
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium truncate">{user.name || 'Unknown User'}</h4>
+                  <Badge variant={
+                    user.role === 'admin' ? 'default' :
+                    user.role === 'developer' ? 'secondary' : 'outline'
+                  }>
+                    {user.role || 'user'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                  <span>Joined: {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</span>
+                  {user.last_login && <span>Last login: {new Date(user.last_login).toLocaleDateString()}</span>}
+                </div>
+              </div>
+              
+              <Button variant="outline" size="sm">
+                View Profile
+              </Button>
+            </div>
+          ))}
+          
+          {usersData.users.length > 5 && (
+            <div className="text-center pt-2">
+              <Button variant="outline" onClick={() => navigate('/admin/users')}>
+                View All {usersData.total} Users
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Users Found</h3>
+          <p className="text-gray-600 mb-4">There are no users in the system yet.</p>
         </div>
       )}
     </div>
@@ -463,18 +558,7 @@ export default function AdminDashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">User Management</h3>
-                  <p className="text-muted-foreground mb-6">View and manage all users in the system.</p>
-                  <Button 
-                    variant="default" 
-                    className="mt-2"
-                    onClick={() => navigate('/admin/users')}
-                  >
-                    Go to User Management
-                  </Button>
-                </div>
+                <UserListComponent />
               </CardContent>
             </Card>
           </TabsContent>
