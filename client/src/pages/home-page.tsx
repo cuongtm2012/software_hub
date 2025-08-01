@@ -467,7 +467,7 @@ export default function HomePage() {
                         <div className="relative pt-[60%] bg-gray-50">
                           {software.imageUrl ? (
                             <img 
-                              src={software.imageUrl}
+                              src={software.image_url}
                               alt={`${software.name} screenshot`}
                               className="absolute inset-0 h-full w-full object-cover"
                             />
@@ -477,15 +477,9 @@ export default function HomePage() {
                             </div>
                           )}
                           <div className="absolute top-2 left-2">
-                            {software.isFree ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                                FREE
-                              </span>
-                            ) : software.trialVersion ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                                TRIAL
-                              </span>
-                            ) : null}
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                              FREE
+                            </span>
                           </div>
                         </div>
                         
@@ -494,20 +488,23 @@ export default function HomePage() {
                             <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
                             <div className="flex items-center">
                               <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
-                              <span className="text-xs text-gray-600">{software.rating}</span>
+                              <span className="text-xs text-gray-600">4.5</span>
                             </div>
                           </div>
                           
                           <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
                           
                           <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-                            <span className="text-xs text-gray-500">v{software.version}</span>
+                            <span className="text-xs text-gray-500">Latest</span>
                             <Button 
                               size="sm"
                               className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
+                              asChild
                             >
-                              <Download className="h-3 w-3 mr-1" />
-                              Download
+                              <a href={software.download_link} target="_blank" rel="noopener noreferrer">
+                                <Download className="h-3 w-3 mr-1" />
+                                Download
+                              </a>
                             </Button>
                           </div>
                         </div>
@@ -556,9 +553,12 @@ export default function HomePage() {
                         <div className="flex-shrink-0 self-center">
                           <Button 
                             className="px-4 py-2 bg-[#004080] hover:bg-[#003366] text-white rounded"
+                            asChild
                           >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
+                            <a href={software.download_link} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </a>
                           </Button>
                         </div>
                       </div>
@@ -726,9 +726,12 @@ export default function HomePage() {
                       <Button 
                         size="sm"
                         className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
+                        asChild
                       >
-                        <Download className="h-3 w-3 mr-1" />
-                        Download
+                        <a href={software.download_link} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3 w-3 mr-1" />
+                          Download
+                        </a>
                       </Button>
                     </div>
                   </div>
@@ -791,9 +794,12 @@ export default function HomePage() {
                       <Button 
                         size="sm"
                         className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
+                        asChild
                       >
-                        <Download className="h-3 w-3 mr-1" />
-                        Download
+                        <a href={software.download_link} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3 w-3 mr-1" />
+                          Download
+                        </a>
                       </Button>
                     </div>
                   </div>
