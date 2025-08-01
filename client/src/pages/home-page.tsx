@@ -521,9 +521,9 @@ export default function HomePage() {
                       : sampleSoftware.concat(sampleSoftware, sampleSoftware)).slice(0, 12).map((software: any, index: number) => (
                       <div key={software.id + "-" + index} className="flex gap-4 p-3 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
                         <div className="flex-shrink-0 w-20 h-20 relative bg-gray-50 rounded overflow-hidden">
-                          {software.imageUrl ? (
+                          {software.image_url ? (
                             <img 
-                              src={software.imageUrl}
+                              src={software.image_url}
                               alt={`${software.name} screenshot`}
                               className="absolute inset-0 h-full w-full object-cover"
                             />
@@ -540,21 +540,15 @@ export default function HomePage() {
                               <h3 className="text-base font-semibold text-gray-900">{software.name}</h3>
                               <div className="flex items-center gap-2 mt-1">
                                 <div className="flex items-center">
-                                  <StarRating value={software.rating} size="sm" />
-                                  <span className="ml-1 text-xs text-gray-600">{software.rating}</span>
+                                  <StarRating value={4.5} size="sm" />
+                                  <span className="ml-1 text-xs text-gray-600">4.5</span>
                                 </div>
-                                {software.isFree ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                                    FREE
-                                  </span>
-                                ) : software.trialVersion ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                                    TRIAL
-                                  </span>
-                                ) : null}
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                                  FREE
+                                </span>
                               </div>
                             </div>
-                            <span className="text-xs text-gray-500">v{software.version}</span>
+                            <span className="text-xs text-gray-500">Latest</span>
                           </div>
                           <p className="text-sm text-gray-500 mb-2 line-clamp-2">{software.description}</p>
                         </div>
@@ -695,9 +689,9 @@ export default function HomePage() {
                 : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
                 <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
                   <div className="relative pt-[60%] bg-gray-50">
-                    {software.imageUrl ? (
+                    {software.image_url ? (
                       <img 
-                        src={software.imageUrl}
+                        src={software.image_url}
                         alt={`${software.name} screenshot`}
                         className="absolute inset-0 h-full w-full object-cover"
                       />
@@ -707,15 +701,9 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="absolute top-2 left-2">
-                      {software.isFree ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                          FREE
-                        </span>
-                      ) : software.trialVersion ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                          TRIAL
-                        </span>
-                      ) : null}
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                        FREE
+                      </span>
                     </div>
                     <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#004080] text-white flex items-center justify-center text-xs font-bold">
                       {index + 1}
@@ -727,7 +715,7 @@ export default function HomePage() {
                       <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
                       <div className="flex items-center">
                         <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
-                        <span className="text-xs text-gray-600">{software.rating}</span>
+                        <span className="text-xs text-gray-600">4.5</span>
                       </div>
                     </div>
                     
@@ -764,9 +752,9 @@ export default function HomePage() {
                 : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
                 <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
                   <div className="relative pt-[60%] bg-gray-50">
-                    {software.imageUrl ? (
+                    {software.image_url ? (
                       <img 
-                        src={software.imageUrl}
+                        src={software.image_url}
                         alt={`${software.name} screenshot`}
                         className="absolute inset-0 h-full w-full object-cover"
                       />
@@ -776,15 +764,9 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="absolute top-2 left-2">
-                      {software.isFree ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                          FREE
-                        </span>
-                      ) : software.trialVersion ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                          TRIAL
-                        </span>
-                      ) : null}
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                        FREE
+                      </span>
                     </div>
                     <div className="absolute top-2 right-2">
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-orange-100 text-orange-800">
@@ -798,14 +780,14 @@ export default function HomePage() {
                       <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{software.name}</h3>
                       <div className="flex items-center">
                         <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
-                        <span className="text-xs text-gray-600">{software.rating}</span>
+                        <span className="text-xs text-gray-600">4.5</span>
                       </div>
                     </div>
                     
                     <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
                     
                     <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-                      <span className="text-xs text-gray-500">v{software.version}</span>
+                      <span className="text-xs text-gray-500">Latest</span>
                       <Button 
                         size="sm"
                         className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
