@@ -40,8 +40,11 @@ export const users = pgTable("users", {
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
-  parent_id: integer("parent_id").references(() => categories.id),
+  parent_id: integer("parent_id"),
 });
+
+// Add self-reference after table definition
+categories.parent_id = integer("parent_id").references(() => categories.id);
 
 // Software table
 export const softwares = pgTable("softwares", {
@@ -500,3 +503,6 @@ export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;
 
 export type UserDownload = typeof userDownloads.$inferSelect;
 export type InsertUserDownload = z.infer<typeof insertUserDownloadSchema>;
+
+export type ExternalRequest = typeof externalRequests.$inferSelect;
+export type InsertExternalRequest = z.infer<typeof insertExternalRequestSchema>;

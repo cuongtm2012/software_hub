@@ -473,7 +473,7 @@ export class DatabaseStorage implements IStorage {
   async updateProjectStatus(id: number, status: string): Promise<Project | undefined> {
     const [updatedProject] = await db
       .update(projects)
-      .set({ status })
+      .set({ status: status as any })
       .where(eq(projects.id, id))
       .returning();
     return updatedProject;
@@ -510,7 +510,7 @@ export class DatabaseStorage implements IStorage {
   async updateQuoteStatus(id: number, status: string): Promise<Quote | undefined> {
     const [updatedQuote] = await db
       .update(quotes)
-      .set({ status })
+      .set({ status: status as any })
       .where(eq(quotes.id, id))
       .returning();
     return updatedQuote;

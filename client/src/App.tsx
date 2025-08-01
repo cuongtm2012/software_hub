@@ -508,10 +508,10 @@ function Router() {
                 <div className="flex justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
                 </div>
-              ) : portfolios?.portfolios?.length > 0 ? (
+              ) : portfolios?.portfolios && Array.isArray(portfolios.portfolios) && portfolios.portfolios.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {portfolios.portfolios.map((portfolio: any) => (
+                    {(portfolios.portfolios as any[]).map((portfolio: any) => (
                       <Card key={portfolio.id} className="bg-white hover:shadow-md transition-shadow">
                         <div className="relative pt-[60%] bg-gray-100">
                           {portfolio.images && portfolio.images[0] ? (
@@ -558,10 +558,10 @@ function Router() {
                     ))}
                   </div>
                   
-                  {portfolios.total > limit && (
+                  {(portfolios as any).total > limit && (
                     <Pagination
                       currentPage={page}
-                      totalPages={Math.ceil(portfolios.total / limit)}
+                      totalPages={Math.ceil((portfolios as any).total / limit)}
                       onPageChange={handlePageChange}
                       className="mt-8"
                     />
