@@ -28,13 +28,16 @@ import {
   Briefcase,
   Code,
   MessageSquare,
-  Calendar
+  Calendar,
+  Eye,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StarRating } from "@/components/ui/star-rating";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function HomePage() {
   const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
@@ -44,7 +47,19 @@ export default function HomePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [location, navigate] = useLocation();
+  const [hoveredSoftware, setHoveredSoftware] = useState<any>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   
+  // Handle mouse movement for hover popup positioning
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   // Parse URL parameters
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -195,6 +210,15 @@ export default function HomePage() {
   const handleSoftwareClick = (software: Software) => {
     setSelectedSoftware(software);
     setModalOpen(true);
+  };
+
+  // Handle image hover for popup preview
+  const handleImageHover = (software: any, event: React.MouseEvent) => {
+    setHoveredSoftware(software);
+  };
+
+  const handleImageLeave = () => {
+    setHoveredSoftware(null);
   };
   
   // Calculate total pages
@@ -464,18 +488,29 @@ export default function HomePage() {
                       ? softwareData.softwares 
                       : sampleSoftware.concat(sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware, sampleSoftware)).slice(0, 24).map((software: any, index: number) => (
                       <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
-                        <div className="relative pt-[60%] bg-gray-50">
-                          {software.imageUrl ? (
+                        <div 
+                          className="relative pt-[60%] bg-gray-50 cursor-pointer group overflow-hidden rounded-t-lg"
+                          onClick={() => handleSoftwareClick(software)}
+                          onMouseEnter={(e) => handleImageHover(software, e)}
+                          onMouseLeave={handleImageLeave}
+                        >
+                          {software.image_url ? (
                             <img 
                               src={software.image_url}
                               alt={`${software.name} screenshot`}
-                              className="absolute inset-0 h-full w-full object-cover"
+                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                             />
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                              <Monitor className="h-12 w-12 text-gray-300" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 transition-colors group-hover:bg-gray-200">
+                              <Monitor className="h-12 w-12 text-gray-300 transition-colors group-hover:text-gray-400" />
                             </div>
                           )}
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-full p-2">
+                              <Eye className="h-5 w-5 text-gray-700" />
+                            </div>
+                          </div>
                           <div className="absolute top-2 left-2">
                             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
                               FREE
@@ -517,18 +552,29 @@ export default function HomePage() {
                       ? softwareData.softwares 
                       : sampleSoftware.concat(sampleSoftware, sampleSoftware)).slice(0, 12).map((software: any, index: number) => (
                       <div key={software.id + "-" + index} className="flex gap-4 p-3 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
-                        <div className="flex-shrink-0 w-20 h-20 relative bg-gray-50 rounded overflow-hidden">
+                        <div 
+                          className="flex-shrink-0 w-20 h-20 relative bg-gray-50 rounded overflow-hidden cursor-pointer group"
+                          onClick={() => handleSoftwareClick(software)}
+                          onMouseEnter={(e) => handleImageHover(software, e)}
+                          onMouseLeave={handleImageLeave}
+                        >
                           {software.image_url ? (
                             <img 
                               src={software.image_url}
                               alt={`${software.name} screenshot`}
-                              className="absolute inset-0 h-full w-full object-cover"
+                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                             />
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                              <Monitor className="h-8 w-8 text-gray-300" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 transition-colors group-hover:bg-gray-200">
+                              <Monitor className="h-8 w-8 text-gray-300 transition-colors group-hover:text-gray-400" />
                             </div>
                           )}
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-full p-1">
+                              <Eye className="h-3 w-3 text-gray-700" />
+                            </div>
+                          </div>
                         </div>
                         
                         <div className="flex-grow min-w-0">
@@ -688,18 +734,29 @@ export default function HomePage() {
                 ? popularSoftware.softwares 
                 : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
                 <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
-                  <div className="relative pt-[60%] bg-gray-50">
+                  <div 
+                    className="relative pt-[60%] bg-gray-50 cursor-pointer group overflow-hidden rounded-t-lg"
+                    onClick={() => handleSoftwareClick(software)}
+                    onMouseEnter={(e) => handleImageHover(software, e)}
+                    onMouseLeave={handleImageLeave}
+                  >
                     {software.image_url ? (
                       <img 
                         src={software.image_url}
                         alt={`${software.name} screenshot`}
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                        <Monitor className="h-12 w-12 text-gray-300" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 transition-colors group-hover:bg-gray-200">
+                        <Monitor className="h-12 w-12 text-gray-300 transition-colors group-hover:text-gray-400" />
                       </div>
                     )}
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-full p-2">
+                        <Eye className="h-5 w-5 text-gray-700" />
+                      </div>
+                    </div>
                     <div className="absolute top-2 left-2">
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
                         FREE
@@ -754,18 +811,29 @@ export default function HomePage() {
                 ? recentSoftware.softwares 
                 : sampleSoftware.concat(sampleSoftware)).slice(0, 6).map((software: any, index: number) => (
                 <Card key={software.id + "-" + index} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex flex-col h-full">
-                  <div className="relative pt-[60%] bg-gray-50">
+                  <div 
+                    className="relative pt-[60%] bg-gray-50 cursor-pointer group overflow-hidden rounded-t-lg"
+                    onClick={() => handleSoftwareClick(software)}
+                    onMouseEnter={(e) => handleImageHover(software, e)}
+                    onMouseLeave={handleImageLeave}
+                  >
                     {software.image_url ? (
                       <img 
                         src={software.image_url}
                         alt={`${software.name} screenshot`}
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                        <Monitor className="h-12 w-12 text-gray-300" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 transition-colors group-hover:bg-gray-200">
+                        <Monitor className="h-12 w-12 text-gray-300 transition-colors group-hover:text-gray-400" />
                       </div>
                     )}
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-full p-2">
+                        <Eye className="h-5 w-5 text-gray-700" />
+                      </div>
+                    </div>
                     <div className="absolute top-2 left-2">
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
                         FREE
@@ -818,6 +886,55 @@ export default function HomePage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
       />
+
+      {/* Hover Preview Popup */}
+      <AnimatePresence>
+        {hoveredSoftware && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            className="fixed z-50 pointer-events-none"
+            style={{
+              left: mousePosition.x + 20,
+              top: mousePosition.y - 150,
+            }}
+          >
+            <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-4 max-w-sm">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-16 h-16 bg-gray-50 rounded overflow-hidden">
+                  {hoveredSoftware.image_url ? (
+                    <img 
+                      src={hoveredSoftware.image_url}
+                      alt={`${hoveredSoftware.name} screenshot`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Monitor className="h-6 w-6 text-gray-300" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-grow min-w-0">
+                  <h3 className="font-semibold text-gray-900 text-sm truncate">{hoveredSoftware.name}</h3>
+                  <div className="flex items-center gap-1 mt-1">
+                    <StarRating value={4.5} size="sm" />
+                    <span className="text-xs text-gray-600">4.5</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">{hoveredSoftware.description}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                      FREE
+                    </span>
+                    <span className="text-xs text-gray-500">Click to view</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
