@@ -17,9 +17,13 @@ import { z } from "zod";
 
 // Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated()) {
+  // Check if user exists in session
+  if (!req.session.userId || !req.session.user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
+  
+  // Add user to request object for easy access
+  req.user = req.session.user;
   
   next();
 }
@@ -27,9 +31,11 @@ function isAuthenticated(req: Request, res: Response, next: NextFunction) {
 // Role-based access control middleware
 function hasRole(roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.isAuthenticated()) {
+    if (!req.session.userId || !req.session.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+    
+    req.user = req.session.user;
     
     if (!roles.includes(req.user?.role as string)) {
       return res.status(403).json({ message: `Forbidden: Required role not assigned` });
@@ -1265,14 +1271,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
-      // Create order with items array to match existing method signature
+      // Create order with order items
       const orderItems = [{
+        order_id: 0, // Will be set by the createOrder method
         product_id: parseInt(id),
         quantity,
         price: unitPrice.toString()
       }];
       
-      const order = await storage.createOrder(orderData, orderItems, req.user!.id);
+      const order = await storage.createOrder({
+        buyer_id: req.user!.id,
+        seller_id: product.seller_id,
+        total_amount: totalAmount.toString(),
+        commission_amount: commissionAmount.toString(),
+        payment_method,
+        status: 'completed' as const,
+        buyer_info: {
+          buyer_name: req.user!.name,
+          buyer_email: req.user!.email
+        }
+      }, orderItems, req.user!.id);
       
       // Update product stock (admin access for purchase)
       await storage.updateProduct(parseInt(id), {
