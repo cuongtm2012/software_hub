@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { useState, lazy } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
@@ -598,7 +598,14 @@ function Router() {
       <Route path="/software" component={SoftwareListPage} />
       
       {/* Phase 3: Marketplace */}
-      <Route path="/marketplace" component={MarketplacePage} />
+      <Route path="/marketplace" component={() => {
+        const MarketplacePageNew = lazy(() => import("@/pages/marketplace-page-new"));
+        return (
+          <Suspense fallback={<div>Loading...</div>}>
+            <MarketplacePageNew />
+          </Suspense>
+        );
+      }} />
       
       {/* Seller Registration & Management */}
       <Route path="/seller/register" component={() => {
