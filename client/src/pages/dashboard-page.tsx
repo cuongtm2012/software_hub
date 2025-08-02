@@ -74,24 +74,24 @@ export default function DashboardPage() {
   });
 
   // Fetch seller profile and data
-  const { data: sellerData, isLoading: sellerLoading } = useQuery({
+  const { data: sellerData, isLoading: sellerLoading } = useQuery<any>({
     queryKey: ["/api/seller/profile"],
     enabled: !!user,
   });
 
-  const { data: sellerProductsData, isLoading: sellerProductsLoading } = useQuery({
+  const { data: sellerProductsData, isLoading: sellerProductsLoading } = useQuery<any>({
     queryKey: ["/api/seller/products"],
     enabled: !!user && sellerData?.seller_profile?.verification_status === "verified",
   });
 
-  const { data: sellerOrdersData, isLoading: sellerOrdersLoading } = useQuery({
+  const { data: sellerOrdersData, isLoading: sellerOrdersLoading } = useQuery<any>({
     queryKey: ["/api/seller/orders"],
     enabled: !!user && sellerData?.seller_profile?.verification_status === "verified",
   });
 
   const deleteProductMutation = useMutation({
     mutationFn: async (productId: number) => {
-      return apiRequest(`/api/seller/products/${productId}`, {
+      return await apiRequest(`/api/seller/products/${productId}`, {
         method: "DELETE",
       });
     },
@@ -673,131 +673,237 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
-      <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {user?.role === 'admin' ? 'User Dashboard' : 'Dashboard'}
-              {user?.role === 'admin' && (
-                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Admin Access
-                </span>
-              )}
-            </h1>
-            {sellerProfile && (
-              <div className="flex items-center gap-2 mt-2">
-                <p className="text-gray-600">Welcome back, {sellerProfile.business_name || user?.name}</p>
-                {getStatusBadge(sellerProfile.verification_status)}
+      <main className="pt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Enhanced Header Section */}
+          <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    {user?.role === 'admin' ? 'Admin Dashboard' : 'Dashboard'}
+                  </h1>
+                  {user?.role === 'admin' && (
+                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                      <Users className="h-3 w-3 mr-1" />
+                      Admin Access
+                    </Badge>
+                  )}
+                </div>
+                
+                {sellerProfile ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <p className="text-gray-600">
+                      Welcome back, <span className="font-medium">{sellerProfile.business_name || user?.name}</span>
+                    </p>
+                    {getStatusBadge(sellerProfile.verification_status)}
+                    {sellerProfile.verification_status === "verified" && (
+                      <Badge variant="outline" className="text-green-600 border-green-200">
+                        <Star className="h-3 w-3 mr-1" />
+                        {Number(sellerProfile.rating || 0).toFixed(1)} Rating
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-600">Welcome back, <span className="font-medium">{user?.name}</span></p>
+                )}
               </div>
-            )}
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  onClick={() => navigate('/request-project')}
+                  className="bg-[#004080] hover:bg-[#003366] text-white shadow-sm"
+                  size="default"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  New Project
+                </Button>
+                
+                {sellerProfile?.verification_status === "verified" && (
+                  <Button 
+                    onClick={() => navigate("/seller/products/new")} 
+                    className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                    size="default"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Product
+                  </Button>
+                )}
+                
+                {user?.role === 'admin' && (
+                  <Button 
+                    onClick={() => navigate('/admin')}
+                    className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+                    size="default"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Admin Panel
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="ml-auto flex gap-2">
-            <Button 
-              onClick={() => navigate('/request-project')}
-              className="bg-[#004080] hover:bg-[#003366] text-white"
-            >
-              New Project
-            </Button>
-            {sellerProfile?.verification_status === "verified" && (
-              <Button onClick={() => navigate("/seller/products/new")} className="bg-green-600 hover:bg-green-700 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
-            )}
-            {user?.role === 'admin' && (
-              <Button 
-                onClick={() => navigate('/admin')}
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                Go to Admin Panel
-              </Button>
-            )}
+
+          {/* Enhanced Seller verification alerts */}
+          {sellerProfile?.verification_status === "pending" && (
+            <Alert className="mb-6 border-yellow-200 bg-yellow-50">
+              <Clock className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                <strong>Account Under Review:</strong> Your seller account is being reviewed. This typically takes 1-2 business days. 
+                You'll be able to list products once verified.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {sellerProfile?.verification_status === "rejected" && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Registration Rejected:</strong> Your seller registration was rejected. Please contact support for more information and to resubmit your application.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Stats Overview for Sellers */}
+          {sellerProfile?.verification_status === "verified" && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-700">Total Revenue</p>
+                      <p className="text-2xl font-bold text-blue-900">${Number(sellerProfile?.total_sales || 0).toFixed(2)}</p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-700">Products</p>
+                      <p className="text-2xl font-bold text-green-900">{sellerProducts.length}</p>
+                    </div>
+                    <Package className="h-8 w-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-purple-700">Rating</p>
+                      <p className="text-2xl font-bold text-purple-900">{Number(sellerProfile?.rating || 0).toFixed(1)}</p>
+                    </div>
+                    <Star className="h-8 w-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-orange-700">Orders</p>
+                      <p className="text-2xl font-bold text-orange-900">{sellerOrders.length}</p>
+                    </div>
+                    <ShoppingCart className="h-8 w-8 text-orange-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Enhanced Tabs */}
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <Tabs defaultValue="projects" className="w-full">
+              <div className="border-b bg-gray-50 px-6 py-3">
+                <TabsList className={`grid ${sellerProfile ? 'grid-cols-6' : 'grid-cols-3'} w-full bg-transparent gap-1`}>
+                  <TabsTrigger 
+                    value="projects" 
+                    className="data-[state=active]:bg-[#004080] data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="hidden sm:inline">Projects</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="quotes" 
+                    className="data-[state=active]:bg-[#004080] data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
+                  >
+                    <MessagesSquare className="h-4 w-4" />
+                    <span className="hidden sm:inline">Quotes</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="payments" 
+                    className="data-[state=active]:bg-[#004080] data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
+                  >
+                    <DollarSign className="h-4 w-4" />
+                    <span className="hidden sm:inline">Payments</span>
+                  </TabsTrigger>
+                  {sellerProfile && (
+                    <>
+                      <TabsTrigger 
+                        value="seller" 
+                        className="data-[state=active]:bg-[#004080] data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
+                      >
+                        <Store className="h-4 w-4" />
+                        <span className="hidden sm:inline">Overview</span>
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="products" 
+                        className="data-[state=active]:bg-[#004080] data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
+                      >
+                        <Package className="h-4 w-4" />
+                        <span className="hidden sm:inline">Products</span>
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="orders" 
+                        className="data-[state=active]:bg-[#004080] data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        <span className="hidden sm:inline">Orders</span>
+                      </TabsTrigger>
+                    </>
+                  )}
+                </TabsList>
+              </div>
+              
+              <div className="p-6">
+                <TabsContent value="projects" className="space-y-4 mt-0">
+                  {renderProjects()}
+                </TabsContent>
+                
+                <TabsContent value="quotes" className="space-y-4 mt-0">
+                  {renderQuotes()}
+                </TabsContent>
+                
+                <TabsContent value="payments" className="space-y-4 mt-0">
+                  {renderPayments()}
+                </TabsContent>
+
+                {sellerProfile && (
+                  <>
+                    <TabsContent value="seller" className="space-y-4 mt-0">
+                      {renderSellerOverview()}
+                    </TabsContent>
+
+                    <TabsContent value="products" className="space-y-4 mt-0">
+                      {renderSellerProducts()}
+                    </TabsContent>
+
+                    <TabsContent value="orders" className="space-y-4 mt-0">
+                      {renderSellerOrders()}
+                    </TabsContent>
+                  </>
+                )}
+              </div>
+            </Tabs>
           </div>
-        </div>
-
-        {/* Seller verification alerts */}
-        {sellerProfile?.verification_status === "pending" && (
-          <Alert className="mb-6">
-            <Clock className="h-4 w-4" />
-            <AlertDescription>
-              Your seller account is being reviewed. This typically takes 1-2 business days. 
-              You'll be able to list products once verified.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {sellerProfile?.verification_status === "rejected" && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Your seller registration was rejected. Please contact support for more information and to resubmit your application.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid grid-cols-1 gap-6">
-          <Tabs defaultValue="projects" className="w-full">
-            <TabsList className={`grid w-full max-w-none mb-4 ${sellerProfile ? 'grid-cols-6' : 'grid-cols-3'}`}>
-              <TabsTrigger value="projects" className="data-[state=active]:bg-[#004080] data-[state=active]:text-white">
-                <FileText className="h-4 w-4 mr-2" />
-                Projects
-              </TabsTrigger>
-              <TabsTrigger value="quotes" className="data-[state=active]:bg-[#004080] data-[state=active]:text-white">
-                <MessagesSquare className="h-4 w-4 mr-2" />
-                Quotes
-              </TabsTrigger>
-              <TabsTrigger value="payments" className="data-[state=active]:bg-[#004080] data-[state=active]:text-white">
-                <DollarSign className="h-4 w-4 mr-2" />
-                Payments
-              </TabsTrigger>
-              {sellerProfile && (
-                <>
-                  <TabsTrigger value="seller" className="data-[state=active]:bg-[#004080] data-[state=active]:text-white">
-                    <Store className="h-4 w-4 mr-2" />
-                    Seller Overview
-                  </TabsTrigger>
-                  <TabsTrigger value="products" className="data-[state=active]:bg-[#004080] data-[state=active]:text-white">
-                    <Package className="h-4 w-4 mr-2" />
-                    My Products
-                  </TabsTrigger>
-                  <TabsTrigger value="orders" className="data-[state=active]:bg-[#004080] data-[state=active]:text-white">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Orders
-                  </TabsTrigger>
-                </>
-              )}
-            </TabsList>
-            
-            <TabsContent value="projects" className="space-y-4">
-              {renderProjects()}
-            </TabsContent>
-            
-            <TabsContent value="quotes" className="space-y-4">
-              {renderQuotes()}
-            </TabsContent>
-            
-            <TabsContent value="payments" className="space-y-4">
-              {renderPayments()}
-            </TabsContent>
-
-            {sellerProfile && (
-              <>
-                <TabsContent value="seller" className="space-y-4">
-                  {renderSellerOverview()}
-                </TabsContent>
-
-                <TabsContent value="products" className="space-y-4">
-                  {renderSellerProducts()}
-                </TabsContent>
-
-                <TabsContent value="orders" className="space-y-4">
-                  {renderSellerOrders()}
-                </TabsContent>
-              </>
-            )}
-          </Tabs>
         </div>
       </main>
       <Footer />

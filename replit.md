@@ -65,6 +65,12 @@ The application uses a comprehensive PostgreSQL schema with the following main e
 - Maintain separation between client and server code
 
 ## Recent Changes
+- **2025-08-02**: Successfully merged seller dashboard with main dashboard for unified user experience
+- **2025-08-02**: Enhanced dashboard UI/UX with improved layout, gradient backgrounds, and better visual hierarchy
+- **2025-08-02**: Added seller-specific stats overview cards for verified sellers (revenue, products, rating, orders)
+- **2025-08-02**: Fixed "Add Product" button navigation to correct route (/seller/products/new)
+- **2025-08-02**: Implemented responsive tabs with icons and improved mobile experience
+- **2025-08-02**: Added role-based dashboard features - sellers see additional marketplace tabs
 - **2025-08-02**: Fixed authentication system with working login functionality
 - **2025-08-02**: Created test accounts: seller@test.com, buyer@test.com, admin@gmail.com
 - **2025-08-02**: Implemented simple session-based authentication bypassing passport conflicts
