@@ -43,7 +43,8 @@ export function Header() {
     setMobileMenuOpen(false);
   };
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined) => {
+    if (!name) return 'U'; // Default to 'U' for User if name is undefined
     return name
       .split(' ')
       .map(part => part[0])
@@ -114,7 +115,7 @@ export function Header() {
                       <Avatar className="h-8 w-8 rounded-full border border-border">
                         <AvatarFallback className="bg-primary/10 text-primary font-semibold">{getInitials(user.name)}</AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium text-foreground">{user.name}</span>
+                      <span className="text-sm font-medium text-foreground">{user.name || 'User'}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
