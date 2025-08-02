@@ -43,8 +43,9 @@ import PortfolioPage from "@/pages/portfolio-page";
 import PortfolioNewPage from "@/pages/portfolio-new-page";
 import PortfolioDetailPage from "@/pages/portfolio-detail-page";
 
-// Phase 3: Marketplace
+// Phase 3: Marketplace & Software
 import MarketplacePage from "@/pages/marketplace-page";
+import SoftwareListPage from "@/pages/software-list-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
@@ -593,8 +594,11 @@ function Router() {
       }} />
       <Route path="/portfolios/:id" component={PortfolioDetailPage} />
       
+      {/* Software List */}
+      <Route path="/software" component={SoftwareListPage} />
+      
       {/* Phase 3: Marketplace */}
-      <Route path="/marketplace" component={SoftwareCatalogPage} />
+      <Route path="/marketplace" component={MarketplacePage} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />

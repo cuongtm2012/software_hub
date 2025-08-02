@@ -13,51 +13,97 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function MarketplacePage() {
   const { user } = useAuth();
-  const [page, setPage] = useState(1);
-  const [category, setCategory] = useState<string | null>(null);
-  const itemsPerPage = 12;
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const {
-    data: productData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["/api/products", category, page],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (category) params.append("category", category);
-      params.append("limit", itemsPerPage.toString());
-      params.append("offset", ((page - 1) * itemsPerPage).toString());
-      
-      const response = await fetch(`/api/products?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch products");
-      }
-      return response.json();
+  // Sample marketplace store data for online shopping stores
+  const marketplaceStores = [
+    {
+      id: 1,
+      name: "Premium Gmail Accounts",
+      description: "Verified Gmail accounts with phone verification and recovery options",
+      image: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png",
+      price: "$5.99",
+      rating: 4.8,
+      seller: "DigitalStore Pro",
+      category: "accounts",
+      inStock: 150
     },
-  });
+    {
+      id: 2,
+      name: "Microsoft Office 365 License",
+      description: "Lifetime Microsoft Office 365 activation key for all applications",
+      image: "https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE4DtQa",
+      price: "$29.99",
+      rating: 4.9,
+      seller: "SoftwarePlus",
+      category: "software",
+      inStock: 89
+    },
+    {
+      id: 3,
+      name: "Adobe Creative Cloud",
+      description: "Full Adobe Creative Suite with Photoshop, Illustrator, Premiere Pro",
+      image: "https://www.adobe.com/content/dam/cc/icons/Creative_Cloud.svg",
+      price: "$39.99",
+      rating: 4.7,
+      seller: "CreativeHub",
+      category: "software",
+      inStock: 67
+    },
+    {
+      id: 4,
+      name: "Spotify Premium Account",
+      description: "1-year Spotify Premium subscription with no ads and offline downloads",
+      image: "https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_CMYK_Green.png",
+      price: "$12.99",
+      rating: 4.6,
+      seller: "StreamingDeals",
+      category: "subscriptions",
+      inStock: 234
+    },
+    {
+      id: 5,
+      name: "Windows 11 Pro License",
+      description: "Genuine Windows 11 Professional activation key with lifetime support",
+      image: "https://logos-world.net/wp-content/uploads/2021/08/Windows-11-Logo.png",
+      price: "$19.99",
+      rating: 4.8,
+      seller: "TechLicenses",
+      category: "software",
+      inStock: 156
+    },
+    {
+      id: 6,
+      name: "Netflix Premium Accounts",
+      description: "Shared Netflix premium accounts with 4K streaming and multiple screens",
+      image: "https://assets.nflxext.com/ffe/siteui/common/icons/nficon2016.png",
+      price: "$8.99",
+      rating: 4.4,
+      seller: "StreamShare",
+      category: "subscriptions",
+      inStock: 78
+    }
+  ];
 
-  const {
-    data: categories,
-    isLoading: categoriesLoading,
-  } = useQuery({
-    queryKey: ["/api/categories"],
-  });
+  const categories = [
+    { id: "all", name: "All Categories", count: marketplaceStores.length },
+    { id: "accounts", name: "Email Accounts", count: marketplaceStores.filter(s => s.category === "accounts").length },
+    { id: "software", name: "Software Licenses", count: marketplaceStores.filter(s => s.category === "software").length },
+    { id: "subscriptions", name: "Subscriptions", count: marketplaceStores.filter(s => s.category === "subscriptions").length }
+  ];
 
-  const products = productData?.products || [];
-  const totalProducts = productData?.total || 0;
-  const totalPages = Math.ceil(totalProducts / itemsPerPage);
-
-  const handleCategoryChange = (categoryName: string | null) => {
-    setCategory(categoryName);
-    setPage(1);
-  };
+  const filteredStores = selectedCategory === "all" 
+    ? marketplaceStores 
+    : marketplaceStores.filter(store => store.category === selectedCategory);
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Marketplace</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Online Marketplace</h1>
+            <p className="text-gray-600 mt-2">Premium accounts, software licenses, and digital subscriptions</p>
+          </div>
           {user?.role === "seller" && (
             <Link to="/marketplace/seller">
               <Button>Manage My Store</Button>
@@ -69,132 +115,76 @@ export default function MarketplacePage() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-3">Categories</h2>
           <div className="flex flex-wrap gap-2">
-            <Badge 
-              variant={category === null ? "default" : "outline"}
-              className="cursor-pointer px-3 py-1 text-sm"
-              onClick={() => handleCategoryChange(null)}
-            >
-              All
-            </Badge>
-            
-            {categoriesLoading ? (
-              Array(5).fill(0).map((_, i) => (
-                <Skeleton key={i} className="h-7 w-16 rounded-full" />
-              ))
-            ) : (
-              categories?.map((cat) => (
-                <Badge 
-                  key={cat.id}
-                  variant={category === cat.name ? "default" : "outline"}
-                  className="cursor-pointer px-3 py-1 text-sm"
-                  onClick={() => handleCategoryChange(cat.name)}
-                >
-                  {cat.name}
-                </Badge>
-              ))
-            )}
+            {categories.map((cat) => (
+              <Badge 
+                key={cat.id}
+                variant={selectedCategory === cat.id ? "default" : "outline"}
+                className="cursor-pointer px-3 py-1 text-sm"
+                onClick={() => setSelectedCategory(cat.id)}
+              >
+                {cat.name} ({cat.count})
+              </Badge>
+            ))}
           </div>
         </div>
 
-        {/* Products Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array(8).fill(0).map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <Skeleton className="h-40 w-full" />
-                <CardHeader className="p-4 pb-0">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent className="p-4">
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3" />
-                </CardContent>
-                <CardFooter className="p-4 pt-0 flex justify-between">
-                  <Skeleton className="h-8 w-20" />
-                  <Skeleton className="h-8 w-20" />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-10">
-            <p className="text-red-500">Error loading products: {(error as Error).message}</p>
-            <Button
-              variant="outline"
-              onClick={() => window.location.reload()}
-              className="mt-4"
-            >
-              Try Again
-            </Button>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-10">
-            <Box className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-lg font-medium">No products found</h3>
-            <p className="mt-1 text-gray-500">
-              {category 
-                ? `No products available in the "${category}" category.` 
-                : "There are no products available in the marketplace yet."}
-            </p>
-            {user?.role === "seller" && (
-              <Link to="/marketplace/seller/new">
-                <Button className="mt-6">Add Your First Product</Button>
-              </Link>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product: Product) => (
-                <Link key={product.id} href={`/marketplace/product/${product.id}`}>
-                  <Card className="overflow-hidden h-full cursor-pointer hover:shadow-md transition-shadow">
-                    <div className="h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
-                      {product.image_url ? (
-                        <img
-                          src={product.image_url}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Box className="h-16 w-16 text-gray-400" />
-                      )}
-                    </div>
-                    <CardHeader className="p-4 pb-0">
-                      <CardTitle className="text-lg">{product.name}</CardTitle>
-                      <div className="flex items-center mt-1">
-                        <Tag className="h-4 w-4 mr-1 text-gray-500" />
-                        <span className="text-sm text-gray-500">{product.category}</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                      <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0 flex justify-between items-center">
-                      <div className="text-lg font-bold">${product.price.toFixed(2)}</div>
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 mr-1 text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm">
-                          {product.avg_rating ? product.avg_rating.toFixed(1) : "New"}
-                        </span>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-8 flex justify-center">
-                <Pagination
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={setPage}
+        {/* Store Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredStores.map((store) => (
+            <Card key={store.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="relative h-48 bg-gray-100">
+                <img
+                  src={store.image}
+                  alt={store.name}
+                  className="w-full h-full object-contain p-4"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://via.placeholder.com/200x150?text=No+Image";
+                  }}
                 />
+                <div className="absolute top-2 right-2">
+                  <Badge className="bg-green-100 text-green-800">
+                    {store.inStock} in stock
+                  </Badge>
+                </div>
               </div>
-            )}
-          </>
+              
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-lg">{store.name}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center">
+                    <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                    <span className="text-sm text-gray-600">{store.rating}</span>
+                  </div>
+                  <span className="text-xs text-gray-500">by {store.seller}</span>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="p-4 pt-0">
+                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{store.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xl font-bold text-[#004080]">{store.price}</span>
+                  <Badge variant="outline" className="text-xs">
+                    {store.category}
+                  </Badge>
+                </div>
+              </CardContent>
+              
+              <CardFooter className="p-4 pt-0">
+                <Button className="w-full bg-[#004080] hover:bg-[#003366] text-white">
+                  <Box className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+
+        {filteredStores.length === 0 && (
+          <div className="text-center py-10">
+            <Box className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
+            <p className="text-gray-500">No items available in this category.</p>
+          </div>
         )}
       </div>
     </Layout>

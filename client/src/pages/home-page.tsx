@@ -380,7 +380,7 @@ export default function HomePage() {
               <Button 
                 variant="link" 
                 className="text-[#004080] font-medium text-sm flex items-center"
-                onClick={() => navigate('/marketplace')}
+                onClick={() => navigate('/software')}
               >
                 View All <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -402,7 +402,7 @@ export default function HomePage() {
                     if (category.value === "all") {
                       navigate('/');
                     } else {
-                      navigate(`/marketplace?category=${category.value}`);
+                      navigate(`/software?category=${category.value}`);
                     }
                   }}
                   className={`flex items-center justify-center py-3 px-4 rounded-lg border border-gray-200 hover:border-[#ffcc00] hover:bg-white ${
@@ -738,7 +738,7 @@ export default function HomePage() {
               <Button 
                 variant="link" 
                 className="text-[#004080] font-medium text-sm flex items-center"
-                onClick={() => navigate('/marketplace?sort=popular')}
+                onClick={() => navigate('/software?sort=popular')}
               >
                 View All <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -819,7 +819,7 @@ export default function HomePage() {
               <Button 
                 variant="link" 
                 className="text-[#004080] font-medium text-sm flex items-center"
-                onClick={() => navigate('/marketplace?sort=recent')}
+                onClick={() => navigate('/software?sort=recent')}
               >
                 View All <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
