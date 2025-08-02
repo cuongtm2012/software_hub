@@ -630,6 +630,16 @@ function Router() {
       {/* Admin routes */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
       
+      {/* Test Login */}
+      <Route path="/test-login" component={() => {
+        const TestLoginPage = lazy(() => import("@/pages/test-login-page"));
+        return (
+          <Suspense fallback={<div>Loading...</div>}>
+            <TestLoginPage />
+          </Suspense>
+        );
+      }} />
+      
       <Route component={NotFound} />
     </Switch>
   );
