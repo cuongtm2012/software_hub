@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -44,11 +44,11 @@ export function Header() {
   };
 
   const getInitials = (name: string | undefined) => {
-    if (!name) return 'U'; // Default to 'U' for User if name is undefined
+    if (!name) return "U"; // Default to 'U' for User if name is undefined
     return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   };
@@ -61,18 +61,28 @@ export function Header() {
             <div className="flex-shrink-0 flex items-center">
               <Link to="/">
                 <span className="font-bold text-xl cursor-pointer">
-                  <span className="text-white">Software</span><span className="text-[#ffcc00]">Hub</span>
+                  <span className="text-white">Software</span>
+                  <span className="text-[#ffcc00]">Hub</span>
                 </span>
               </Link>
             </div>
             <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
-              <Link to="/" className={`${location === '/' ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
+              <Link
+                to="/"
+                className={`${location === "/" ? "text-[#ffcc00]" : "text-white hover:text-[#ffcc00]"} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}
+              >
                 Home
               </Link>
-              <Link to="/it-services#projects" className={`${location.startsWith('/projects') || location.startsWith('/it-services') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
+              <Link
+                to="/it-services#projects"
+                className={`${location.startsWith("/projects") || location.startsWith("/it-services") ? "text-[#ffcc00]" : "text-white hover:text-[#ffcc00]"} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}
+              >
                 IT Services
               </Link>
-              <Link to="/marketplace" className={`${location.startsWith('/marketplace') ? 'text-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}>
+              <Link
+                to="/marketplace"
+                className={`${location.startsWith("/marketplace") ? "text-[#ffcc00]" : "text-white hover:text-[#ffcc00]"} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}
+              >
                 Marketplace
               </Link>
             </nav>
@@ -90,7 +100,7 @@ export function Header() {
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
             </form>
-            
+
             {!user ? (
               <div className="flex space-x-3 ml-4">
                 <Button
@@ -111,50 +121,69 @@ export function Header() {
               <div className="ml-4 flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative rounded-full flex items-center space-x-3 max-w-xs bg-background hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                    <Button
+                      variant="ghost"
+                      className="relative rounded-full flex items-center space-x-3 max-w-xs bg-background hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                    >
                       <Avatar className="h-8 w-8 rounded-full border border-border">
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">{getInitials(user.name)}</AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                          {getInitials(user.name)}
+                        </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium text-foreground">{user.name || 'User'}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {user.name || "User"}
+                      </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuGroup>
-                      <DropdownMenuItem onClick={() => navigate("/profile")} className="flex items-center gap-2 py-2 cursor-pointer">
+                      <DropdownMenuItem
+                        onClick={() => navigate("/profile")}
+                        className="flex items-center gap-2 py-2 cursor-pointer"
+                      >
                         <span className="flex-1">Your Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate("/profile?tab=downloads")} className="flex items-center gap-2 py-2 cursor-pointer">
-                        <span className="flex-1">Downloaded Software</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate("/profile?tab=reviews")} className="flex items-center gap-2 py-2 cursor-pointer">
-                        <span className="flex-1">Your Reviews</span>
-                      </DropdownMenuItem>
                       {/* Common user dashboard for all users */}
-                      <DropdownMenuItem onClick={() => navigate("/dashboard")} className="flex items-center gap-2 py-2 cursor-pointer">
+                      <DropdownMenuItem
+                        onClick={() => navigate("/dashboard")}
+                        className="flex items-center gap-2 py-2 cursor-pointer"
+                      >
                         <span className="flex-1">User Dashboard</span>
                       </DropdownMenuItem>
 
                       {/* Developer specific options */}
-                      {user.role === 'developer' && (
+                      {user.role === "developer" && (
                         <>
-                          <DropdownMenuItem onClick={() => navigate("/projects/developer")} className="flex items-center gap-2 py-2 cursor-pointer">
+                          <DropdownMenuItem
+                            onClick={() => navigate("/projects/developer")}
+                            className="flex items-center gap-2 py-2 cursor-pointer"
+                          >
                             <span className="flex-1">My Projects</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate("/it-services#projects")} className="flex items-center gap-2 py-2 cursor-pointer">
+                          <DropdownMenuItem
+                            onClick={() => navigate("/it-services#projects")}
+                            className="flex items-center gap-2 py-2 cursor-pointer"
+                          >
                             <span className="flex-1">Browse Portfolios</span>
                           </DropdownMenuItem>
                         </>
                       )}
-                      
+
                       {/* Admin-specific access */}
-                      {user.role === 'admin' && (
-                        <DropdownMenuItem onClick={() => navigate("/admin")} className="flex items-center gap-2 py-2 cursor-pointer">
+                      {user.role === "admin" && (
+                        <DropdownMenuItem
+                          onClick={() => navigate("/admin")}
+                          className="flex items-center gap-2 py-2 cursor-pointer"
+                        >
                           <span className="flex-1">Admin Dashboard</span>
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 py-2 cursor-pointer text-destructive">
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 py-2 cursor-pointer text-destructive"
+                    >
                       <span className="flex-1">Sign out</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -162,36 +191,52 @@ export function Header() {
               </div>
             )}
           </div>
-          
+
           <div className="-mr-2 flex items-center sm:hidden">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={toggleMobileMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
             >
               <span className="sr-only">Open main menu</span>
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </Button>
           </div>
         </div>
       </div>
-      
+
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="sm:hidden">
           <div className="pt-2 pb-3 space-y-1">
-            <Link to="/" onClick={closeMobileMenu} className={`${location === '/' ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
+            <Link
+              to="/"
+              onClick={closeMobileMenu}
+              className={`${location === "/" ? "bg-primary/10 border-primary text-primary" : "border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground"} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}
+            >
               Home
             </Link>
-            <Link to="/it-services#projects" onClick={closeMobileMenu} className={`${location.startsWith('/projects') || location.startsWith('/it-services') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
+            <Link
+              to="/it-services#projects"
+              onClick={closeMobileMenu}
+              className={`${location.startsWith("/projects") || location.startsWith("/it-services") ? "bg-primary/10 border-primary text-primary" : "border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground"} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}
+            >
               IT Services
             </Link>
-            <Link to="/marketplace" onClick={closeMobileMenu} className={`${location.startsWith('/marketplace') ? 'bg-primary/10 border-primary text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}>
+            <Link
+              to="/marketplace"
+              onClick={closeMobileMenu}
+              className={`${location.startsWith("/marketplace") ? "bg-primary/10 border-primary text-primary" : "border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground"} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}
+            >
               Marketplace
             </Link>
           </div>
-          
+
           <div className="pt-2 pb-3 px-4">
             <form className="relative" onSubmit={handleSearch}>
               <Input
@@ -201,12 +246,15 @@ export function Header() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <button type="submit" className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              <button
+                type="submit"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
                 <Search className="h-5 w-5 text-muted-foreground" />
               </button>
             </form>
           </div>
-          
+
           {!user ? (
             <div className="pt-4 pb-3 border-t border-gray-200">
               <div className="space-y-1 px-4">
@@ -241,8 +289,12 @@ export function Header() {
                   </Avatar>
                 </div>
                 <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800">{user.name}</div>
-                  <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                  <div className="text-base font-medium text-gray-800">
+                    {user.name}
+                  </div>
+                  <div className="text-sm font-medium text-gray-500">
+                    {user.email}
+                  </div>
                 </div>
               </div>
               <div className="mt-3 space-y-1 px-4">
@@ -276,7 +328,7 @@ export function Header() {
                 >
                   Your Reviews
                 </Button>
-                {user.role === 'developer' && (
+                {user.role === "developer" && (
                   <>
                     <Button
                       variant="ghost"
@@ -300,7 +352,7 @@ export function Header() {
                     </Button>
                   </>
                 )}
-                {user.role === 'client' && (
+                {user.role === "client" && (
                   <Button
                     variant="ghost"
                     onClick={() => {
@@ -312,7 +364,7 @@ export function Header() {
                     My Projects
                   </Button>
                 )}
-                {user.role === 'seller' && (
+                {user.role === "seller" && (
                   <Button
                     variant="ghost"
                     onClick={() => {
@@ -324,7 +376,7 @@ export function Header() {
                     My Store
                   </Button>
                 )}
-                {user.role === 'buyer' && (
+                {user.role === "buyer" && (
                   <Button
                     variant="ghost"
                     onClick={() => {
@@ -336,7 +388,7 @@ export function Header() {
                     My Orders
                   </Button>
                 )}
-                {user.role === 'admin' && (
+                {user.role === "admin" && (
                   <Button
                     variant="ghost"
                     onClick={() => {

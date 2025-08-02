@@ -1821,8 +1821,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/marketplace/products", async (req, res, next) => {
     try {
       // Get all approved products for marketplace
-      const products = await db.select().from(products).where(eq(products.status, 'approved'));
-      res.json({ products });
+      const allProducts = await db.select().from(products).where(eq(products.status, 'approved'));
+      res.json({ products: allProducts });
     } catch (error) {
       next(error);
     }
