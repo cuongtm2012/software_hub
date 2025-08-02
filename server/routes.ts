@@ -1218,6 +1218,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Purchase endpoint for buying products
+  app.post("/api/products/:id/purchase", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { quantity = 1, payment_method = "credit_card" } = req.body;
+      
+      // Get product details
+      const product = await storage.getProductById(parseInt(id));
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Check if product is available
+      if (product.status !== 'approved') {
+        return res.status(400).json({ message: "Product is not available for purchase" });
+      }
+      
+      // Check stock
+      if (product.stock_quantity < quantity) {
+        return res.status(400).json({ message: "Insufficient stock" });
+      }
+      
+      // Prevent self-purchase
+      if (product.seller_id === req.user?.id) {
+        return res.status(400).json({ message: "Cannot purchase your own product" });
+      }
+      
+      // Calculate total amount
+      const unitPrice = parseFloat(product.price.toString());
+      const totalAmount = unitPrice * quantity;
+      const commissionRate = 0.05; // 5% commission
+      const commissionAmount = totalAmount * commissionRate;
+      
+      // Create order
+      const orderData = {
+        buyer_id: req.user!.id,
+        seller_id: product.seller_id,
+        total_amount: totalAmount.toString(),
+        commission_amount: commissionAmount.toString(),
+        payment_method,
+        status: 'completed' as const, // For simplicity, we're making it complete immediately
+        buyer_info: {
+          buyer_name: req.user!.name,
+          buyer_email: req.user!.email
+        }
+      };
+      
+      // Create order with items array to match existing method signature
+      const orderItems = [{
+        product_id: parseInt(id),
+        quantity,
+        price: unitPrice.toString()
+      }];
+      
+      const order = await storage.createOrder(orderData, orderItems, req.user!.id);
+      
+      // Update product stock (admin access for purchase)
+      await storage.updateProduct(parseInt(id), {
+        stock_quantity: product.stock_quantity - quantity,
+        total_sales: product.total_sales + quantity
+      });
+      
+      // Create payment record
+      const paymentData = {
+        order_id: order.id,
+        amount: totalAmount.toString(),
+        payment_method,
+        status: 'completed' as const,
+        transaction_id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
+      
+      await storage.createPayment(paymentData);
+      
+      res.status(201).json({ 
+        message: "Purchase successful", 
+        order,
+        total_amount: totalAmount,
+        download_available: true 
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/orders", isAuthenticated, async (req, res, next) => {
     try {
       // Only buyers can create orders

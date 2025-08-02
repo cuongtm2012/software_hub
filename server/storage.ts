@@ -792,16 +792,21 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async updateProduct(id: number, product: Partial<InsertProduct>, sellerId: number): Promise<Product | undefined> {
+  async updateProduct(id: number, product: Partial<InsertProduct>, sellerId?: number): Promise<Product | undefined> {
+    let whereCondition = eq(products.id, id);
+    
+    // If sellerId is provided, add seller check for permission control
+    if (sellerId !== undefined) {
+      whereCondition = and(
+        eq(products.id, id),
+        eq(products.seller_id, sellerId)
+      );
+    }
+    
     const [updatedProduct] = await db
       .update(products)
       .set(product)
-      .where(
-        and(
-          eq(products.id, id),
-          eq(products.seller_id, sellerId)
-        )
-      )
+      .where(whereCondition)
       .returning();
     return updatedProduct;
   }
@@ -905,6 +910,14 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedOrder;
+  }
+
+  async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
+    const [createdOrderItem] = await db
+      .insert(orderItems)
+      .values(orderItem)
+      .returning();
+    return createdOrderItem;
   }
 
   // Payments

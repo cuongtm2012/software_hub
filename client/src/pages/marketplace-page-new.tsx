@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   ShoppingCart, 
   Search, 
@@ -26,12 +29,55 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("popular");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch products from API
   const { data: productsData, isLoading } = useQuery({
     queryKey: ["/api/marketplace/products", selectedCategory, searchQuery, sortBy],
     select: (data) => data?.products || [],
   });
+
+  // Purchase mutation
+  const purchaseMutation = useMutation({
+    mutationFn: async ({ productId, quantity = 1 }: { productId: number; quantity?: number }) => {
+      return await apiRequest(`/api/products/${productId}/purchase`, {
+        method: "POST",
+        body: JSON.stringify({ quantity, payment_method: "credit_card" }),
+        headers: { "Content-Type": "application/json" }
+      });
+    },
+    onSuccess: (response) => {
+      toast({
+        title: "Purchase Successful!",
+        description: `Your order has been completed. Total: ${formatPrice(response.total_amount)}`,
+      });
+      // Refresh products to update stock
+      queryClient.invalidateQueries({ queryKey: ["/api/marketplace/products"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Purchase Failed",
+        description: error.message || "Failed to complete purchase. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBuyNow = (productId: number) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to purchase products.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    purchaseMutation.mutate({ productId });
+  };
 
   // Mock marketplace data for demonstration with Vietnamese pricing
   const products = productsData || [
@@ -409,9 +455,14 @@ export default function MarketplacePage() {
                         </div>
 
                         {/* Buy Button */}
-                        <Button className="w-full bg-[#004080] hover:bg-[#003366] text-white">
+                        <Button 
+                          className="w-full bg-[#004080] hover:bg-[#003366] text-white"
+                          onClick={() => handleBuyNow(product.id)}
+                          disabled={purchaseMutation.isPending || product.stock === 0}
+                        >
                           <ShoppingCart className="h-4 w-4 mr-2" />
-                          Buy Now
+                          {purchaseMutation.isPending ? "Processing..." : 
+                           product.stock === 0 ? "Out of Stock" : "Buy Now"}
                         </Button>
                       </div>
                     </CardContent>
