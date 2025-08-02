@@ -45,6 +45,7 @@ import PortfolioDetailPage from "@/pages/portfolio-detail-page";
 
 // Phase 3: Marketplace
 import MarketplacePage from "@/pages/marketplace-page";
+import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
@@ -593,7 +594,7 @@ function Router() {
       <Route path="/portfolios/:id" component={PortfolioDetailPage} />
       
       {/* Phase 3: Marketplace */}
-      <Route path="/marketplace" component={MarketplacePage} />
+      <Route path="/marketplace" component={SoftwareCatalogPage} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
