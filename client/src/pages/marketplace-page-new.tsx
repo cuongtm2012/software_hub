@@ -43,11 +43,11 @@ export default function MarketplacePage() {
   // Purchase mutation
   const purchaseMutation = useMutation({
     mutationFn: async ({ productId, quantity = 1 }: { productId: number; quantity?: number }) => {
-      return await apiRequest(`/api/products/${productId}/purchase`, {
-        method: "POST",
-        body: JSON.stringify({ quantity, payment_method: "credit_card" }),
-        headers: { "Content-Type": "application/json" }
+      const response = await apiRequest("POST", `/api/products/${productId}/purchase`, {
+        quantity, 
+        payment_method: "credit_card"
       });
+      return await response.json();
     },
     onSuccess: (response) => {
       toast({
