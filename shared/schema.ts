@@ -24,6 +24,12 @@ export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed
 // Order status enum for marketplace orders
 export const orderStatusEnum = pgEnum('order_status', ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled']);
 
+// Product status enum for marketplace products
+export const productStatusEnum = pgEnum('product_status', ['pending', 'approved', 'rejected', 'draft']);
+
+// Seller verification status enum
+export const verificationStatusEnum = pgEnum('verification_status', ['pending', 'verified', 'rejected']);
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -32,8 +38,30 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: roleEnum("role").default('user').notNull(),
   profile_data: jsonb("profile_data"),
+  phone: text("phone"),
+  email_verified: boolean("email_verified").default(false).notNull(),
+  phone_verified: boolean("phone_verified").default(false).notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Seller profiles table for marketplace verification
+export const sellerProfiles = pgTable("seller_profiles", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id).notNull().unique(),
+  business_name: text("business_name"),
+  business_type: text("business_type"), // 'individual', 'company'
+  tax_id: text("tax_id"),
+  business_address: text("business_address"),
+  bank_account: text("bank_account"),
+  verification_status: verificationStatusEnum("verification_status").default('pending').notNull(),
+  verification_documents: text("verification_documents").array(),
+  commission_rate: numeric("commission_rate").default('0.10').notNull(), // Default 10%
+  total_sales: numeric("total_sales").default('0').notNull(),
+  rating: numeric("rating", { precision: 3, scale: 2 }),
+  total_reviews: integer("total_reviews").default(0).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Categories table
@@ -143,9 +171,19 @@ export const products = pgTable("products", {
   seller_id: integer("seller_id").references(() => users.id).notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  price: numeric("price").notNull(),
-  images: text("images").array(),
   category: text("category").notNull(),
+  price: numeric("price").notNull(),
+  price_type: text("price_type").default('fixed').notNull(), // 'fixed', 'range', 'auction'
+  stock_quantity: integer("stock_quantity").default(1).notNull(),
+  download_link: text("download_link"),
+  product_files: text("product_files").array(),
+  images: text("images").array(),
+  tags: text("tags").array(),
+  license_info: text("license_info"),
+  status: productStatusEnum("status").default('draft').notNull(),
+  featured: boolean("featured").default(false).notNull(),
+  total_sales: integer("total_sales").default(0).notNull(),
+  avg_rating: numeric("avg_rating", { precision: 3, scale: 2 }),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -153,9 +191,13 @@ export const products = pgTable("products", {
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   buyer_id: integer("buyer_id").references(() => users.id).notNull(),
+  seller_id: integer("seller_id").references(() => users.id).notNull(),
   status: orderStatusEnum("status").default('pending').notNull(),
   total_amount: numeric("total_amount").notNull(),
-  shipping_info: jsonb("shipping_info"),
+  commission_amount: numeric("commission_amount").notNull(),
+  payment_method: text("payment_method").notNull(),
+  download_links: text("download_links").array(),
+  buyer_info: jsonb("buyer_info"),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -194,13 +236,50 @@ export const productReviews = pgTable("product_reviews", {
   order_id: integer("order_id").references(() => orders.id).notNull(),
   product_id: integer("product_id").references(() => products.id).notNull(),
   buyer_id: integer("buyer_id").references(() => users.id).notNull(),
+  seller_id: integer("seller_id").references(() => users.id).notNull(),
   rating: integer("rating").notNull(),
   comment: text("comment"),
+  helpful_votes: integer("helpful_votes").default(0).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Cart table for shopping cart functionality
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  product_id: integer("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Support tickets for post-purchase support
+export const supportTickets = pgTable("support_tickets", {
+  id: serial("id").primaryKey(),
+  order_id: integer("order_id").references(() => orders.id),
+  buyer_id: integer("buyer_id").references(() => users.id).notNull(),
+  seller_id: integer("seller_id").references(() => users.id),
+  subject: text("subject").notNull(),
+  description: text("description").notNull(),
+  status: text("status").default('open').notNull(), // 'open', 'in_progress', 'resolved', 'closed'
+  priority: text("priority").default('medium').notNull(), // 'low', 'medium', 'high', 'urgent'
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Sales analytics for sellers
+export const salesAnalytics = pgTable("sales_analytics", {
+  id: serial("id").primaryKey(),
+  seller_id: integer("seller_id").references(() => users.id).notNull(),
+  product_id: integer("product_id").references(() => products.id),
+  date: timestamp("date").notNull(),
+  revenue: numeric("revenue").notNull(),
+  units_sold: integer("units_sold").notNull(),
+  commission_paid: numeric("commission_paid").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Define relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   softwares: many(softwares),
   reviews: many(reviews),
   downloads: many(userDownloads),
@@ -211,7 +290,20 @@ export const usersRelations = relations(users, ({ many }) => ({
   portfolioReviews: many(portfolioReviews),
   products: many(products, { relationName: "sellerProducts" }),
   buyerOrders: many(orders, { relationName: "buyerOrders" }),
+  sellerOrders: many(orders, { relationName: "sellerOrders" }),
   productReviews: many(productReviews),
+  cartItems: many(cartItems),
+  supportTickets: many(supportTickets, { relationName: "buyerTickets" }),
+  sellerTickets: many(supportTickets, { relationName: "sellerTickets" }),
+  sellerProfile: one(sellerProfiles),
+  salesAnalytics: many(salesAnalytics),
+}));
+
+export const sellerProfilesRelations = relations(sellerProfiles, ({ one }) => ({
+  user: one(users, {
+    fields: [sellerProfiles.user_id],
+    references: [users.id],
+  }),
 }));
 
 export const softwaresRelations = relations(softwares, ({ one, many }) => ({
@@ -297,10 +389,17 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   buyer: one(users, {
     fields: [orders.buyer_id],
     references: [users.id],
+    relationName: "buyerOrders",
+  }),
+  seller: one(users, {
+    fields: [orders.seller_id],
+    references: [users.id],
+    relationName: "sellerOrders",
   }),
   orderItems: many(orderItems),
   payment: many(payments),
   reviews: many(productReviews),
+  supportTickets: many(supportTickets),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -348,6 +447,49 @@ export const productReviewsRelations = relations(productReviews, ({ one }) => ({
   buyer: one(users, {
     fields: [productReviews.buyer_id],
     references: [users.id],
+  }),
+  seller: one(users, {
+    fields: [productReviews.seller_id],
+    references: [users.id],
+  }),
+}));
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  user: one(users, {
+    fields: [cartItems.user_id],
+    references: [users.id],
+  }),
+  product: one(products, {
+    fields: [cartItems.product_id],
+    references: [products.id],
+  }),
+}));
+
+export const supportTicketsRelations = relations(supportTickets, ({ one }) => ({
+  order: one(orders, {
+    fields: [supportTickets.order_id],
+    references: [orders.id],
+  }),
+  buyer: one(users, {
+    fields: [supportTickets.buyer_id],
+    references: [users.id],
+    relationName: "buyerTickets",
+  }),
+  seller: one(users, {
+    fields: [supportTickets.seller_id],
+    references: [users.id],
+    relationName: "sellerTickets",
+  }),
+}));
+
+export const salesAnalyticsRelations = relations(salesAnalytics, ({ one }) => ({
+  seller: one(users, {
+    fields: [salesAnalytics.seller_id],
+    references: [users.id],
+  }),
+  product: one(products, {
+    fields: [salesAnalytics.product_id],
+    references: [products.id],
   }),
 }));
 
@@ -456,6 +598,36 @@ export const insertUserDownloadSchema = createInsertSchema(userDownloads).omit({
   user_id: true,
 });
 
+// New marketplace schemas
+export const insertSellerProfileSchema = createInsertSchema(sellerProfiles).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  user_id: true,
+  verification_status: true,
+  total_sales: true,
+  rating: true,
+  total_reviews: true,
+});
+
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({
+  id: true,
+  created_at: true,
+  user_id: true,
+});
+
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  buyer_id: true,
+});
+
+export const insertSalesAnalyticsSchema = createInsertSchema(salesAnalytics).omit({
+  id: true,
+  created_at: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -506,3 +678,16 @@ export type InsertUserDownload = z.infer<typeof insertUserDownloadSchema>;
 
 export type ExternalRequest = typeof externalRequests.$inferSelect;
 export type InsertExternalRequest = z.infer<typeof insertExternalRequestSchema>;
+
+// New marketplace types
+export type SellerProfile = typeof sellerProfiles.$inferSelect;
+export type InsertSellerProfile = z.infer<typeof insertSellerProfileSchema>;
+
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+
+export type SalesAnalytics = typeof salesAnalytics.$inferSelect;
+export type InsertSalesAnalytics = z.infer<typeof insertSalesAnalyticsSchema>;

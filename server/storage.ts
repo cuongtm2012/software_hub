@@ -2,6 +2,7 @@ import {
   users, softwares, categories, reviews, userDownloads,
   projects, quotes, messages, portfolios, portfolioReviews,
   products, orders, orderItems, payments, productReviews, externalRequests,
+  sellerProfiles, cartItems, supportTickets, salesAnalytics,
   type User, type InsertUser, 
   type Software, type InsertSoftware,
   type Category, type InsertCategory,
@@ -17,7 +18,11 @@ import {
   type Payment, type InsertPayment,
   type ProductReview, type InsertProductReview,
   type ExternalRequest, type InsertExternalRequest,
-  type UserDownload, type InsertUserDownload
+  type UserDownload, type InsertUserDownload,
+  type SellerProfile, type InsertSellerProfile,
+  type CartItem, type InsertCartItem,
+  type SupportTicket, type InsertSupportTicket,
+  type SalesAnalytics, type InsertSalesAnalytics
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
@@ -136,6 +141,28 @@ export interface IStorage {
   getProductReviewsByProductId(productId: number): Promise<ProductReview[]>;
   getProductReviewsByBuyerId(buyerId: number): Promise<ProductReview[]>;
   deleteProductReview(id: number, buyerId: number): Promise<boolean>;
+  
+  // Seller Profile Management
+  createSellerProfile(profile: InsertSellerProfile, userId: number): Promise<SellerProfile>;
+  getSellerProfile(userId: number): Promise<SellerProfile | undefined>;
+  updateSellerProfile(userId: number, profile: Partial<InsertSellerProfile>): Promise<SellerProfile | undefined>;
+  updateSellerVerificationStatus(userId: number, status: 'pending' | 'verified' | 'rejected'): Promise<SellerProfile | undefined>;
+  getAllSellersForVerification(): Promise<SellerProfile[]>;
+  
+  // Cart Management
+  addToCart(item: InsertCartItem, userId: number): Promise<CartItem>;
+  getCartItems(userId: number): Promise<CartItem[]>;
+  removeFromCart(itemId: number, userId: number): Promise<boolean>;
+  clearCart(userId: number): Promise<boolean>;
+  
+  // Support Tickets
+  createSupportTicket(ticket: InsertSupportTicket, buyerId: number): Promise<SupportTicket>;
+  getSupportTickets(userId: number): Promise<SupportTicket[]>;
+  updateSupportTicket(id: number, updates: Partial<SupportTicket>): Promise<SupportTicket | undefined>;
+  
+  // Sales Analytics
+  createSalesAnalytics(analytics: InsertSalesAnalytics): Promise<SalesAnalytics>;
+  getSalesAnalytics(sellerId: number, filters?: { startDate?: Date; endDate?: Date; }): Promise<SalesAnalytics[]>;
   
   // Session store
   sessionStore: any;
@@ -1094,6 +1121,170 @@ export class DatabaseStorage implements IStorage {
       ))
       .returning();
     return review || undefined;
+  }
+
+  // Seller Profile Management
+  async createSellerProfile(profile: InsertSellerProfile, userId: number): Promise<SellerProfile> {
+    const [createdProfile] = await db
+      .insert(sellerProfiles)
+      .values({
+        ...profile,
+        user_id: userId
+      })
+      .returning();
+    return createdProfile;
+  }
+
+  async getSellerProfile(userId: number): Promise<SellerProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(sellerProfiles)
+      .where(eq(sellerProfiles.user_id, userId));
+    return profile;
+  }
+
+  async updateSellerProfile(userId: number, profile: Partial<InsertSellerProfile>): Promise<SellerProfile | undefined> {
+    const [updatedProfile] = await db
+      .update(sellerProfiles)
+      .set({
+        ...profile,
+        updated_at: new Date()
+      })
+      .where(eq(sellerProfiles.user_id, userId))
+      .returning();
+    return updatedProfile;
+  }
+
+  async updateSellerVerificationStatus(userId: number, status: 'pending' | 'verified' | 'rejected'): Promise<SellerProfile | undefined> {
+    const [updatedProfile] = await db
+      .update(sellerProfiles)
+      .set({
+        verification_status: status,
+        updated_at: new Date()
+      })
+      .where(eq(sellerProfiles.user_id, userId))
+      .returning();
+    return updatedProfile;
+  }
+
+  async getAllSellersForVerification(): Promise<SellerProfile[]> {
+    return db
+      .select()
+      .from(sellerProfiles)
+      .where(eq(sellerProfiles.verification_status, 'pending'))
+      .orderBy(sellerProfiles.created_at);
+  }
+
+  // Cart Management
+  async addToCart(item: InsertCartItem, userId: number): Promise<CartItem> {
+    const [cartItem] = await db
+      .insert(cartItems)
+      .values({
+        ...item,
+        user_id: userId
+      })
+      .returning();
+    return cartItem;
+  }
+
+  async getCartItems(userId: number): Promise<CartItem[]> {
+    return db
+      .select()
+      .from(cartItems)
+      .where(eq(cartItems.user_id, userId))
+      .orderBy(cartItems.created_at);
+  }
+
+  async removeFromCart(itemId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(cartItems)
+      .where(
+        and(
+          eq(cartItems.id, itemId),
+          eq(cartItems.user_id, userId)
+        )
+      )
+      .returning({ id: cartItems.id });
+    
+    return result.length > 0;
+  }
+
+  async clearCart(userId: number): Promise<boolean> {
+    const result = await db
+      .delete(cartItems)
+      .where(eq(cartItems.user_id, userId))
+      .returning({ id: cartItems.id });
+    
+    return result.length > 0;
+  }
+
+  // Support Tickets
+  async createSupportTicket(ticket: InsertSupportTicket, buyerId: number): Promise<SupportTicket> {
+    const [createdTicket] = await db
+      .insert(supportTickets)
+      .values({
+        ...ticket,
+        buyer_id: buyerId
+      })
+      .returning();
+    return createdTicket;
+  }
+
+  async getSupportTickets(userId: number): Promise<SupportTicket[]> {
+    return db
+      .select()
+      .from(supportTickets)
+      .where(
+        or(
+          eq(supportTickets.buyer_id, userId),
+          eq(supportTickets.seller_id, userId)
+        )
+      )
+      .orderBy(desc(supportTickets.created_at));
+  }
+
+  async updateSupportTicket(id: number, updates: Partial<SupportTicket>): Promise<SupportTicket | undefined> {
+    const [updatedTicket] = await db
+      .update(supportTickets)
+      .set({
+        ...updates,
+        updated_at: new Date()
+      })
+      .where(eq(supportTickets.id, id))
+      .returning();
+    return updatedTicket;
+  }
+
+  // Sales Analytics
+  async createSalesAnalytics(analytics: InsertSalesAnalytics): Promise<SalesAnalytics> {
+    const [createdAnalytics] = await db
+      .insert(salesAnalytics)
+      .values(analytics)
+      .returning();
+    return createdAnalytics;
+  }
+
+  async getSalesAnalytics(sellerId: number, filters?: { startDate?: Date; endDate?: Date; }): Promise<SalesAnalytics[]> {
+    let query = db
+      .select()
+      .from(salesAnalytics)
+      .where(eq(salesAnalytics.seller_id, sellerId));
+
+    if (filters?.startDate) {
+      query = query.where(and(
+        eq(salesAnalytics.seller_id, sellerId),
+        sql`${salesAnalytics.date} >= ${filters.startDate}`
+      ));
+    }
+
+    if (filters?.endDate) {
+      query = query.where(and(
+        eq(salesAnalytics.seller_id, sellerId),
+        sql`${salesAnalytics.date} <= ${filters.endDate}`
+      ));
+    }
+
+    return query.orderBy(desc(salesAnalytics.date));
   }
 }
 

@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { useState } from "react";
+import { useState, lazy } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
@@ -599,6 +599,20 @@ function Router() {
       
       {/* Phase 3: Marketplace */}
       <Route path="/marketplace" component={MarketplacePage} />
+      
+      {/* Seller Registration & Management */}
+      <Route path="/seller/register" component={() => {
+        const SellerRegistrationPage = lazy(() => import("@/pages/seller-registration-page"));
+        return <SellerRegistrationPage />;
+      }} />
+      <ProtectedRoute path="/seller/dashboard" component={() => {
+        const SellerDashboardPage = lazy(() => import("@/pages/seller-dashboard-page"));
+        return <SellerDashboardPage />;
+      }} />
+      <ProtectedRoute path="/seller/products/new" component={() => {
+        const SellerProductNewPage = lazy(() => import("@/pages/seller-product-new-page"));
+        return <SellerProductNewPage />;
+      }} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />

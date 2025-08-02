@@ -10,7 +10,8 @@ import {
   insertPortfolioSchema, insertPortfolioReviewSchema,
   insertProductSchema, insertOrderSchema, insertOrderItemSchema,
   insertPaymentSchema, insertProductReviewSchema, insertExternalRequestSchema,
-  insertUserDownloadSchema
+  insertUserDownloadSchema, insertSellerProfileSchema, insertCartItemSchema,
+  insertSupportTicketSchema, insertSalesAnalyticsSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1462,6 +1463,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateExternalRequestStatus(parseInt(id), "approved");
       
       res.json(project);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Seller Registration & Management Routes
+  app.post("/api/seller/register", isAuthenticated, async (req, res, next) => {
+    try {
+      const insertData = insertSellerProfileSchema.parse({
+        ...req.body,
+        verification_status: "pending"
+      });
+      
+      const sellerProfile = await storage.createSellerProfile(insertData, req.user!.id);
+      res.status(201).json({ seller_profile: sellerProfile });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.get("/api/seller/profile", isAuthenticated, async (req, res, next) => {
+    try {
+      const sellerProfile = await storage.getSellerProfile(req.user!.id);
+      res.json({ seller_profile: sellerProfile });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/seller/profile", isAuthenticated, async (req, res, next) => {
+    try {
+      const updateData = insertSellerProfileSchema.partial().parse(req.body);
+      const sellerProfile = await storage.updateSellerProfile(req.user!.id, updateData);
+      
+      if (!sellerProfile) {
+        return res.status(404).json({ message: "Seller profile not found" });
+      }
+      
+      res.json({ seller_profile: sellerProfile });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  // Seller Product Management
+  app.post("/api/seller/products", isAuthenticated, async (req, res, next) => {
+    try {
+      // Check if user is a verified seller
+      const sellerProfile = await storage.getSellerProfile(req.user!.id);
+      if (!sellerProfile || sellerProfile.verification_status !== 'verified') {
+        return res.status(403).json({ message: "Only verified sellers can add products" });
+      }
+
+      const insertData = insertProductSchema.parse({
+        ...req.body,
+        status: "pending" // Products need approval by default
+      });
+      
+      const product = await storage.createProduct(insertData, req.user!.id);
+      res.status(201).json({ product });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.get("/api/seller/products", isAuthenticated, async (req, res, next) => {
+    try {
+      const products = await storage.getProductsBySellerId(req.user!.id);
+      res.json({ products });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/seller/products/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const updateData = insertProductSchema.partial().parse(req.body);
+      
+      const product = await storage.updateProduct(parseInt(id), updateData, req.user!.id);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found or unauthorized" });
+      }
+      
+      res.json({ product });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.delete("/api/seller/products/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteProduct(parseInt(id), req.user!.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Product not found or unauthorized" });
+      }
+      
+      res.json({ message: "Product deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Seller Orders & Analytics
+  app.get("/api/seller/orders", isAuthenticated, async (req, res, next) => {
+    try {
+      const orders = await storage.getOrdersBySellerId(req.user!.id);
+      res.json({ orders });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/seller/analytics", isAuthenticated, async (req, res, next) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const filters: { startDate?: Date; endDate?: Date } = {};
+      
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+      
+      const analytics = await storage.getSalesAnalytics(req.user!.id, filters);
+      res.json({ analytics });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Admin Seller Verification Routes
+  app.get("/api/admin/sellers/verification", adminMiddleware, async (req, res, next) => {
+    try {
+      const sellers = await storage.getAllSellersForVerification();
+      res.json({ sellers });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/admin/sellers/:userId/verification", adminMiddleware, async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const { status } = req.body;
+      
+      if (!['pending', 'verified', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid verification status" });
+      }
+      
+      const sellerProfile = await storage.updateSellerVerificationStatus(parseInt(userId), status);
+      
+      if (!sellerProfile) {
+        return res.status(404).json({ message: "Seller profile not found" });
+      }
+      
+      res.json({ seller_profile: sellerProfile });
     } catch (error) {
       next(error);
     }

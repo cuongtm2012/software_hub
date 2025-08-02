@@ -1,0 +1,48 @@
+1. Seller Registration & Onboarding
+Seller creates an account and completes verification (email, phone).
+Seller profile created with verification badge/status.
+Seller gets access to seller dashboard.
+2. Seller Adds Product (Listing)
+Seller logs into dashboard.
+Seller fills in product details:
+Product name, category, description.
+Upload product files or provide download link.
+Set pricing (fixed price, price range, or auction).
+Specify stock/quantity available.
+Upload product images or icons.
+Add tags or filters (to help buyers find product).
+Seller submits product for review (optional moderation step).
+Product goes live on marketplace once approved or immediately if auto-approved.
+3. Product Display & Browsing (Buyer Side)
+Buyer visits marketplace homepage or product category pages.
+Buyer can:
+Search products by keywords.
+Filter products by category, price, seller rating, etc.
+Sort products (popular, price ascending/descending, newest).
+Product cards display key info: name, price, stock, seller rating, short description.
+4. Buyer Views Product Details
+Buyer clicks product card to see detailed page:
+Full product description.
+Seller info and ratings.
+Reviews from other buyers.
+Terms of use or license info.
+Purchase button with price and stock availability.
+5. Buyer Purchases Product
+Buyer clicks "Buy Now" or "Add to Cart".
+Buyer proceeds to checkout:
+Confirms order details.
+Chooses payment method (bank transfer).
+Payment processed securely.
+Upon successful payment:
+Buyer receives download link or access to digital product.
+Seller is notified of the sale.
+Marketplace records transaction for accounting and commission.
+6. Post-Purchase & Support
+Buyer can download product anytime from their account.
+Buyer can leave a review and rating.
+Buyer can request support or refund if applicable.
+Seller can manage orders and provide support via dashboard.
+7. Seller Receives Payment & Analytics
+Marketplace deducts commission/fees.
+Seller receives payout (immediate or scheduled).
+Seller views sales analytics (number sold, revenue, feedback).
