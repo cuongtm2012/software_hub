@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 import { 
   ShoppingCart, 
   Search, 
@@ -21,7 +22,8 @@ import {
   DollarSign,
   Shield,
   Eye,
-  Users
+  Users,
+  Loader2
 } from "lucide-react";
 
 export default function MarketplacePage() {
@@ -397,9 +399,11 @@ export default function MarketplacePage() {
                 {sortedProducts.map((product) => (
                   <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
                     <div className="relative">
-                      <div className="w-full h-48 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-t-lg flex items-center justify-center">
-                        <Package className="h-16 w-16 text-blue-400" />
-                      </div>
+                      <Link href={`/marketplace/product/${product.id}`}>
+                        <div className="w-full h-48 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-t-lg flex items-center justify-center cursor-pointer hover:from-blue-100 hover:to-indigo-200 transition-colors">
+                          <Package className="h-16 w-16 text-blue-400" />
+                        </div>
+                      </Link>
                       
                       <div className="absolute top-3 right-3 flex gap-1">
                         <div className="bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs flex items-center gap-1">
@@ -418,9 +422,11 @@ export default function MarketplacePage() {
                     <CardContent className="p-4">
                       <div className="space-y-3">
                         {/* Product Name */}
-                        <h3 className="font-semibold text-base text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                          {product.name}
-                        </h3>
+                        <Link href={`/marketplace/product/${product.id}`}>
+                          <h3 className="font-semibold text-base text-gray-900 hover:text-blue-600 transition-colors line-clamp-2 cursor-pointer">
+                            {product.name}
+                          </h3>
+                        </Link>
                         
                         {/* Seller Info */}
                         <div className="flex items-center gap-2">
@@ -478,38 +484,26 @@ export default function MarketplacePage() {
                           )}
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => window.open(`/marketplace/product/${product.id}`, '_blank')}
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </Button>
-                          <Button 
-                            size="sm"
-                            className="flex-1 bg-[#004080] hover:bg-[#003366] text-white"
-                            onClick={() => handleBuyNow(product.id)}
-                            disabled={product.stock === 0 || purchaseMutation.isPending}
-                          >
-                            {purchaseMutation.isPending ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Processing...
-                              </>
-                            ) : product.stock === 0 ? (
-                              "Out of Stock"
-                            ) : (
-                              <>
-                                <ShoppingCart className="mr-2 h-4 w-4" />
-                                Buy Now
-                              </>
-                            )}
-                          </Button>
-                        </div>
+                        {/* Buy Button */}
+                        <Button 
+                          className="w-full bg-[#004080] hover:bg-[#003366] text-white"
+                          onClick={() => handleBuyNow(product.id)}
+                          disabled={product.stock === 0 || purchaseMutation.isPending}
+                        >
+                          {purchaseMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : product.stock === 0 ? (
+                            "Out of Stock"
+                          ) : (
+                            <>
+                              <ShoppingCart className="mr-2 h-4 w-4" />
+                              Buy Now
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
