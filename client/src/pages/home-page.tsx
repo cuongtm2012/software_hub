@@ -377,23 +377,34 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-[#004080]">Categories</h2>
-              <Button variant="link" className="text-[#004080] font-medium text-sm flex items-center">
+              <Button 
+                variant="link" 
+                className="text-[#004080] font-medium text-sm flex items-center"
+                onClick={() => navigate('/marketplace')}
+              >
                 View All <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-4">
               {[
-                { icon: <LayoutGrid className="h-5 w-5" />, name: "All Software" },
-                { icon: <Monitor className="h-5 w-5" />, name: "Utilities" },
-                { icon: <Download className="h-5 w-5" />, name: "Media" },
-                { icon: <Users className="h-5 w-5" />, name: "Communication" },
-                { icon: <TrendingUp className="h-5 w-5" />, name: "Business" },
-                { icon: <Star className="h-5 w-5" />, name: "Games" },
+                { icon: <LayoutGrid className="h-5 w-5" />, name: "All Software", value: "all" },
+                { icon: <Monitor className="h-5 w-5" />, name: "Utilities", value: "utilities" },
+                { icon: <Download className="h-5 w-5" />, name: "Media", value: "media" },
+                { icon: <Users className="h-5 w-5" />, name: "Communication", value: "communication" },
+                { icon: <TrendingUp className="h-5 w-5" />, name: "Business", value: "business" },
+                { icon: <Star className="h-5 w-5" />, name: "Games", value: "games" },
               ].map((category, index) => (
                 <Button 
                   key={index} 
                   variant="outline" 
+                  onClick={() => {
+                    if (category.value === "all") {
+                      navigate('/');
+                    } else {
+                      navigate(`/marketplace?category=${category.value}`);
+                    }
+                  }}
                   className={`flex items-center justify-center py-3 px-4 rounded-lg border border-gray-200 hover:border-[#ffcc00] hover:bg-white ${
                     index === 0 ? 'bg-[#004080] text-white hover:bg-[#004080] hover:text-white' : 'bg-white text-gray-700'
                   }`}
@@ -724,7 +735,11 @@ export default function HomePage() {
           <div className="mt-16">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">Popular Software</h2>
-              <Button variant="link" className="text-[#004080] font-medium text-sm flex items-center">
+              <Button 
+                variant="link" 
+                className="text-[#004080] font-medium text-sm flex items-center"
+                onClick={() => navigate('/marketplace?sort=popular')}
+              >
                 View All <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
@@ -801,7 +816,11 @@ export default function HomePage() {
           <div className="mt-16">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recently Updated</h2>
-              <Button variant="link" className="text-[#004080] font-medium text-sm flex items-center">
+              <Button 
+                variant="link" 
+                className="text-[#004080] font-medium text-sm flex items-center"
+                onClick={() => navigate('/marketplace?sort=recent')}
+              >
                 View All <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
