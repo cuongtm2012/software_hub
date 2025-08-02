@@ -1,0 +1,51 @@
+---------------------------------------------------------------------------------
+| Left Column (40%)                               | Right Column (60%)                    |
+|------------------------------------------------|-------------------------------------|
+| [Large Product Image with Zoom & Carousel]     | Product Title (Large, Bold)          |
+|                                                 | Gmail US live trâu, hàng đã ngâm,    |
+|                                                 | gmail us new                        |
+|                                                 |                                     |
+|                                                 | ★★★★☆ 4.9 (494 Reviews) [Link to Reviews] |
+|                                                 | Sold: 179,058 units                 |
+|                                                 | Seller: varmy1234 [Verified Badge]  |
+|                                                 | Status: Online 2 hours ago          |
+|                                                 |                                     |
+|                                                 | Price: 10,000 VND (Prominent)       |
+|                                                 | Stock: 3469 units (Real-time update)|
+|                                                 |                                     |
+|                                                 | [Add to Cart Button - Primary CTA]  |
+|                                                 | [Buy Now Button - Secondary CTA]    |
+|                                                 |                                     |
+|                                                 | [Login / Register prompt if guest]  |
+|                                                 |                                     |
+|                                                 | ----------------------------------  |
+|                                                 | Product Tags:                      |
+|                                                 | Gmail | Password | Email recovery   |
+|                                                 | 2FA | Country (if any)              |
+|                                                 |                                     |
+|                                                 | ----------------------------------  |
+|                                                 | Warranty & Support Info (icon + text) |
+|                                                 | First login warranty: 3 days        |
+|                                                 | Contact shop for support            |
+|                                                 |                                     |
+---------------------------------------------------------------------------------
+
+| Below Main Content: Tabbed Interface (Full Width)                                   |
+|-----------------------------------------------------------------------------------|
+| [Description] [Reviews (494)] [API Documentation]                                |
+|                                                                                   |
+| -- Description Tab --                                                              |
+| Gmail random ip và gmail us new, hàng chuẩn đã ngâm nên live cực trâu             |
+| - Login instructions with clear bullet points and clickable links (e.g., 2fa.live)|
+| - Easy-to-follow steps with icons for each step                                  |
+|                                                                                   |
+| -- Reviews Tab --                                                                  |
+| User reviews with star ratings, comments, and sorting/filtering options           |
+|                                                                                   |
+| -- API Documentation Tab --                                                       |
+| Technical details for developers (if applicable)                                 |
+|                                                                                   |
+-----------------------------------------------------------------------------------
+
+| Related Products Carousel (Full Width, Horizontal Scroll)                         |
+| [Thumbnail + Product Name + Price]   [Thumbnail + Product Name + Price] ...       |

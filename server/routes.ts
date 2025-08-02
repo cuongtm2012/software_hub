@@ -11,8 +11,11 @@ import {
   insertProductSchema, insertOrderSchema, insertOrderItemSchema,
   insertPaymentSchema, insertProductReviewSchema, insertExternalRequestSchema,
   insertUserDownloadSchema, insertSellerProfileSchema, insertCartItemSchema,
-  insertSupportTicketSchema, insertSalesAnalyticsSchema
+  insertSupportTicketSchema, insertSalesAnalyticsSchema,
+  products
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 // Authentication middleware
@@ -1814,7 +1817,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public Marketplace Routes
+  app.get("/api/marketplace/products", async (req, res, next) => {
+    try {
+      // Get all approved products for marketplace
+      const products = await db.select().from(products).where(eq(products.status, 'approved'));
+      res.json({ products });
+    } catch (error) {
+      next(error);
+    }
+  });
 
+  app.get("/api/marketplace/products/:id", async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const [product] = await db.select().from(products).where(eq(products.id, parseInt(id)));
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   const httpServer = createServer(app);
 

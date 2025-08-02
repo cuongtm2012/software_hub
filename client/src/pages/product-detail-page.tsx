@@ -1,222 +1,123 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { 
-  ShoppingCart, 
-  Tag, 
-  Star, 
-  Calendar, 
-  User, 
-  CheckCircle,
-  XCircle,
-  MessageSquare,
-  Truck
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowLeft,
+  Star,
+  Shield,
+  Clock,
+  Users,
+  ShoppingCart,
+  CreditCard,
+  Eye,
+  Tag,
+  Download,
+  Heart
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Product, ProductReview } from "@shared/schema";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter,
-  DialogTrigger,
-  DialogClose
-} from "@/components/ui/dialog";
-
-// Define the shipping form schema
-const shippingFormSchema = z.object({
-  address: z.string().min(5, { message: "Address must be at least 5 characters" }),
-  city: z.string().min(2, { message: "City is required" }),
-  postal_code: z.string().min(2, { message: "Postal code is required" }),
-  country: z.string().min(2, { message: "Country is required" })
-});
-
-type ShippingFormValues = z.infer<typeof shippingFormSchema>;
 
 export default function ProductDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const productId = parseInt(id);
-  const [, navigate] = useLocation();
+  const { id } = useParams();
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [reviewContent, setReviewContent] = useState("");
-  const [rating, setRating] = useState(5);
-  const [showShippingDialog, setShowShippingDialog] = useState(false);
+  const queryClient = useQueryClient();
   
-  // Initialize shipping form
-  const shippingForm = useForm<ShippingFormValues>({
-    resolver: zodResolver(shippingFormSchema),
-    defaultValues: {
-      address: "",
-      city: "",
-      postal_code: "",
-      country: ""
-    }
-  });
+  const [quantity, setQuantity] = useState(1);
+  const [selectedTab, setSelectedTab] = useState("description");
 
   // Fetch product details
-  const { 
-    data: product, 
-    isLoading: productLoading, 
-    error: productError 
-  } = useQuery({
-    queryKey: [`/api/products/${productId}`],
-    enabled: !isNaN(productId),
+  const { data: product, isLoading } = useQuery({
+    queryKey: [`/api/marketplace/products/${id}`],
+    enabled: !!id,
   });
 
-  // Fetch product reviews
-  const { 
-    data: reviews = [], 
-    isLoading: reviewsLoading 
-  } = useQuery({
-    queryKey: [`/api/products/${productId}/reviews`],
-    enabled: !isNaN(productId),
-  });
-
-  // Create order mutation
-  const createOrderMutation = useMutation({
-    mutationFn: async (shippingData: ShippingFormValues) => {
-      if (!product) return;
-      
-      return apiRequest("POST", "/api/orders", { 
-        order: {
-          total_amount: product.price,
-          shipping_info: shippingData
-        },
-        items: [
-          {
-            product_id: productId,
-            quantity: 1,
-            price: product.price
-          }
-        ]
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Order created",
-        description: "Your order has been placed successfully! Please proceed to payment.",
-      });
-      setShowShippingDialog(false);
-      shippingForm.reset();
-      navigate("/marketplace/orders");
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Order creation failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Submit review mutation
-  const submitReviewMutation = useMutation({
+  // Purchase mutation
+  const purchaseMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("POST", `/api/products/${productId}/reviews`, {
-        rating,
-        content: reviewContent
+      const response = await apiRequest("POST", `/api/products/${id}/purchase`, {
+        quantity, 
+        payment_method: "credit_card"
       });
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast({
-        title: "Review submitted",
-        description: "Thank you for your feedback!",
+        title: "Purchase Successful!",
+        description: `Your order has been completed. Total: ${formatPrice(response.total_amount)}`,
       });
-      setReviewContent("");
-      // Refresh reviews
-      queryClient.invalidateQueries({
-        queryKey: [`/api/products/${productId}/reviews`],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [`/api/products/${productId}`],
-      });
+      queryClient.invalidateQueries({ queryKey: [`/api/marketplace/products/${id}`] });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
-        title: "Failed to submit review",
-        description: error.message,
+        title: "Purchase Failed",
+        description: error.message || "Failed to complete purchase. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handlePurchase = () => {
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price);
+  };
+
+  const handleBuyNow = () => {
     if (!user) {
       toast({
-        title: "Authentication required",
-        description: "Please log in to purchase this product",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-    
-    if (user.role !== "buyer") {
-      toast({
-        title: "Role required",
-        description: "You need to have a buyer role to purchase products",
+        title: "Login Required",
+        description: "Please log in to purchase products.",
         variant: "destructive",
       });
       return;
     }
     
-    // Open shipping form dialog
-    setShowShippingDialog(true);
-  };
-  
-  const handleShippingSubmit = (data: ShippingFormValues) => {
-    createOrderMutation.mutate(data);
+    purchaseMutation.mutate();
   };
 
-  const handleSubmitReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reviewContent.trim()) {
+  const handleAddToCart = () => {
+    if (!user) {
       toast({
-        title: "Review required",
-        description: "Please enter a review",
+        title: "Login Required",
+        description: "Please log in to add items to cart.",
         variant: "destructive",
       });
       return;
     }
-    submitReviewMutation.mutate();
+    
+    toast({
+      title: "Added to Cart",
+      description: `${product?.title} has been added to your cart.`,
+    });
   };
 
-  if (productLoading) {
+  if (isLoading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <Skeleton className="h-64 w-full rounded-lg" />
-              <div className="flex gap-2 mt-4">
-                <Skeleton className="h-20 w-20 rounded-md" />
-                <Skeleton className="h-20 w-20 rounded-md" />
-                <Skeleton className="h-20 w-20 rounded-md" />
+        <div className="container mx-auto px-4 py-6">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded mb-4 w-32"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+              <div className="lg:col-span-2">
+                <div className="aspect-square bg-gray-200 rounded-lg"></div>
               </div>
-            </div>
-            <div>
-              <Skeleton className="h-10 w-3/4 mb-4" />
-              <Skeleton className="h-6 w-1/3 mb-2" />
-              <Skeleton className="h-4 w-1/4 mb-6" />
-              <Skeleton className="h-24 w-full mb-6" />
-              <Skeleton className="h-10 w-1/2 mb-4" />
-              <Skeleton className="h-12 w-40" />
+              <div className="lg:col-span-3 space-y-4">
+                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -224,309 +125,263 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (productError || !product) {
+  if (!product) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Product</h1>
-          <p className="mb-6">
-            {productError ? (productError as Error).message : "Product not found"}
-          </p>
-          <Button onClick={() => navigate("/marketplace")}>
-            Return to Marketplace
-          </Button>
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
+            <p className="text-gray-600 mb-6">The product you're looking for doesn't exist.</p>
+            <Button onClick={() => setLocation("/marketplace")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Marketplace
+            </Button>
+          </div>
         </div>
       </Layout>
     );
   }
-
-  const { name, description, price, category, seller_name, image_url } = product as Product;
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Product Image */}
-          <div>
-            <div className="bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden h-64 mb-4">
-              {image_url ? (
-                <img
-                  src={image_url}
-                  alt={name}
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full w-full">
-                  <ShoppingCart className="h-16 w-16 text-gray-400" />
-                  <p className="text-gray-500 mt-2">No image available</p>
+      <div className="container mx-auto px-4 py-6">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => setLocation("/marketplace")}
+          className="mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Marketplace
+        </Button>
+
+        {/* Main Product Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
+          {/* Left Column - Product Image (40%) */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardContent className="p-0">
+                <div className="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <Download className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+                    <p className="text-lg font-semibold text-gray-700">{product.title}</p>
+                    <p className="text-sm text-gray-500">Digital Product</p>
+                  </div>
                 </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Product Details */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{name}</h1>
-            <div className="flex items-center mb-2">
-              <Tag className="h-4 w-4 mr-1 text-gray-500" />
-              <Badge variant="outline">{category}</Badge>
+          {/* Right Column - Product Info (60%) */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Product Title & Rating */}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      className={`w-5 h-5 ${i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                    />
+                  ))}
+                  <span className="ml-2 text-sm text-gray-600">4.9 (494 Reviews)</span>
+                </div>
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center text-sm text-gray-600">
+                  <Users className="w-4 h-4 mr-1" />
+                  Sold: {product.total_sales || 0} units
+                </div>
+              </div>
+
+              {/* Seller Info */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm text-gray-600">Seller:</span>
+                <Badge variant="outline" className="text-blue-600">
+                  <Shield className="w-3 h-3 mr-1" />
+                  Verified Seller
+                </Badge>
+                <span className="text-sm text-gray-500">
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  Online 2 hours ago
+                </span>
+              </div>
             </div>
-            <div className="flex items-center mb-6">
-              <Star className="h-4 w-4 mr-1 text-yellow-500 fill-yellow-500" />
-              <span>
-                {product.avg_rating ? (
-                  <span>{product.avg_rating.toFixed(1)} ({product.review_count} reviews)</span>
-                ) : (
-                  <span>No reviews yet</span>
-                )}
-              </span>
+
+            {/* Price & Stock */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-3xl font-bold text-blue-600 mb-2">
+                {formatPrice(parseInt(product.price))}
+              </div>
+              <div className="text-sm text-gray-600">
+                Stock: <span className="font-medium text-green-600">{product.stock_quantity || 1} units</span>
+              </div>
             </div>
-            <p className="text-gray-700 mb-6">{description}</p>
-            <div className="flex items-center mb-6">
-              <User className="h-4 w-4 mr-2 text-gray-500" />
-              <span>Seller: {seller_name}</span>
-            </div>
-            <div className="text-2xl font-bold mb-6">${price.toFixed(2)}</div>
-            <Button 
-              size="lg" 
-              onClick={handlePurchase}
-              disabled={createOrderMutation.isPending}
-            >
-              {createOrderMutation.isPending ? (
-                <>
-                  <span className="mr-2">Processing</span>
-                  <Skeleton className="h-4 w-4 rounded-full animate-spin" />
-                </>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              {!user ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800 mb-2">Please log in to purchase this product</p>
+                  <Button onClick={() => setLocation("/test-login")} className="w-full">
+                    Login / Register
+                  </Button>
+                </div>
               ) : (
                 <>
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Purchase Now
+                  <Button 
+                    onClick={handleAddToCart}
+                    variant="outline" 
+                    className="w-full"
+                    size="lg"
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Add to Cart
+                  </Button>
+                  <Button 
+                    onClick={handleBuyNow}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                    disabled={purchaseMutation.isPending}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    {purchaseMutation.isPending ? "Processing..." : "Buy Now"}
+                  </Button>
                 </>
               )}
-            </Button>
-            
-            {/* Shipping Info Dialog */}
-            <Dialog open={showShippingDialog} onOpenChange={setShowShippingDialog}>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Shipping Information</DialogTitle>
-                </DialogHeader>
-                
-                <Form {...shippingForm}>
-                  <form onSubmit={shippingForm.handleSubmit(handleShippingSubmit)} className="space-y-4 py-4">
-                    <FormField
-                      control={shippingForm.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Street Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123 Main St" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={shippingForm.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="New York" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={shippingForm.control}
-                        name="postal_code"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Postal Code</FormLabel>
-                            <FormControl>
-                              <Input placeholder="10001" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={shippingForm.control}
-                        name="country"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Country</FormLabel>
-                            <FormControl>
-                              <Input placeholder="United States" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center p-4 border rounded-lg bg-blue-50">
-                      <Truck className="h-5 w-5 mr-2 text-blue-500" />
-                      <p className="text-sm text-blue-700">
-                        Your order will be delivered within 3-5 business days
-                      </p>
-                    </div>
-                    
-                    <DialogFooter className="pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowShippingDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit"
-                        disabled={createOrderMutation.isPending}
-                      >
-                        {createOrderMutation.isPending ? (
-                          <>
-                            <Skeleton className="h-4 w-4 rounded-full animate-spin mr-2" />
-                            Processing...
-                          </>
-                        ) : (
-                          'Place Order'
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+            </div>
+
+            {/* Product Tags */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">Product Tags:</h3>
+              <div className="flex flex-wrap gap-2">
+                {['Digital Product', 'Instant Download', 'Software'].map((tag) => (
+                  <Badge key={tag} variant="secondary">
+                    <Tag className="w-3 h-3 mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Warranty & Support */}
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Warranty & Support
+                </h3>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• First login warranty: 3 days</li>
+                  <li>• 24/7 customer support</li>
+                  <li>• Money-back guarantee</li>
+                  <li>• Contact shop for support</li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {/* Reviews Section */}
-        <div className="mt-12">
-          <Tabs defaultValue="reviews">
-            <TabsList>
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
-              <TabsTrigger value="write-review" disabled={!user || user.role !== "buyer"}>
-                Write a Review
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="reviews" className="mt-6">
-              {reviewsLoading ? (
-                <div className="space-y-4">
-                  {Array(3).fill(0).map((_, i) => (
-                    <div key={i} className="border rounded-lg p-4">
-                      <div className="flex justify-between mb-2">
-                        <Skeleton className="h-6 w-32" />
-                        <Skeleton className="h-6 w-24" />
-                      </div>
-                      <Skeleton className="h-4 w-full mb-2" />
-                      <Skeleton className="h-4 w-3/4" />
-                    </div>
-                  ))}
+        {/* Tabbed Content */}
+        <Card>
+          <CardHeader>
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="description">Description</TabsTrigger>
+                <TabsTrigger value="reviews">Reviews (494)</TabsTrigger>
+                <TabsTrigger value="documentation">Documentation</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+              <TabsContent value="description" className="mt-0">
+                <div className="prose max-w-none">
+                  <p className="text-gray-700 leading-relaxed mb-4">
+                    {product.description || "High-quality digital product with instant download availability."}
+                  </p>
+                  <h4 className="font-semibold mb-2">Product Features:</h4>
+                  <ul className="list-disc pl-6 space-y-1 text-gray-600">
+                    <li>High-quality digital content</li>
+                    <li>Instant download after purchase</li>
+                    <li>24/7 customer support</li>
+                    <li>Regular updates included</li>
+                    <li>Money-back guarantee</li>
+                  </ul>
                 </div>
-              ) : reviews.length === 0 ? (
-                <div className="text-center py-10 border rounded-lg">
-                  <MessageSquare className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-lg font-medium">No reviews yet</h3>
-                  <p className="mt-1 text-gray-500">Be the first to review this product</p>
-                </div>
-              ) : (
+              </TabsContent>
+              
+              <TabsContent value="reviews" className="mt-0">
                 <div className="space-y-4">
-                  {reviews.map((review: ProductReview) => (
-                    <Card key={review.id}>
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-center">
-                          <CardTitle className="text-md font-medium">{review.buyer_name}</CardTitle>
-                          <div className="flex items-center">
-                            {Array(5).fill(0).map((_, i) => (
-                              <Star 
-                                key={i}
-                                className={`h-4 w-4 ${i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
-                              />
-                            ))}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Customer Reviews</h3>
+                    <Button variant="outline" size="sm">Write a Review</Button>
+                  </div>
+                  
+                  {/* Sample Reviews */}
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-medium text-blue-600">U{i}</span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">User {i}</span>
+                            <div className="flex">
+                              {[...Array(5)].map((_, j) => (
+                                <Star key={j} className="w-4 h-4 text-yellow-400 fill-current" />
+                              ))}
+                            </div>
                           </div>
+                          <p className="text-sm text-gray-600">Great product! Works exactly as described. Highly recommended.</p>
+                          <span className="text-xs text-gray-400">2 days ago</span>
                         </div>
-                        <div className="text-sm text-gray-500 flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {new Date(review.created_at).toLocaleDateString()}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-gray-700">{review.content}</p>
-                      </CardContent>
+                      </div>
                     </Card>
                   ))}
                 </div>
-              )}
-            </TabsContent>
-            <TabsContent value="write-review" className="mt-6">
-              {!user ? (
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <p className="mb-4">Please log in to write a review</p>
-                      <Button onClick={() => navigate("/auth")}>Log In</Button>
+              </TabsContent>
+              
+              <TabsContent value="documentation" className="mt-0">
+                <div className="prose max-w-none">
+                  <h3 className="text-lg font-semibold mb-4">Product Documentation</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Installation Instructions:</h4>
+                    <ol className="list-decimal pl-6 space-y-2 text-sm text-gray-600">
+                      <li>Download the product files after purchase</li>
+                      <li>Extract the files to your desired location</li>
+                      <li>Follow the included setup guide</li>
+                      <li>Contact support if you need assistance</li>
+                    </ol>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Related Products */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Related Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="cursor-pointer hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                      <Download className="w-8 h-8 text-gray-400" />
                     </div>
+                    <h4 className="font-medium text-sm mb-1">Related Product {i}</h4>
+                    <p className="text-blue-600 font-medium">{formatPrice(50000 * i)}</p>
                   </CardContent>
                 </Card>
-              ) : user.role !== "buyer" ? (
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <p className="mb-4">Only buyers can write reviews</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Write Your Review</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleSubmitReview}>
-                      <div className="mb-4">
-                        <div className="flex items-center mb-2">
-                          <span className="mr-2">Rating:</span>
-                          <div className="flex">
-                            {Array(5).fill(0).map((_, i) => (
-                              <Star 
-                                key={i}
-                                className={`h-6 w-6 cursor-pointer ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
-                                onClick={() => setRating(i + 1)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <Textarea
-                          placeholder="Share your thoughts about this product..."
-                          value={reviewContent}
-                          onChange={(e) => setReviewContent(e.target.value)}
-                          rows={5}
-                          required
-                        />
-                      </div>
-                      <Button 
-                        type="submit"
-                        disabled={submitReviewMutation.isPending || !reviewContent.trim()}
-                      >
-                        {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
