@@ -71,8 +71,15 @@ export const categories = pgTable("categories", {
   parent_id: integer("parent_id"),
 });
 
-// Add self-reference after table definition
-categories.parent_id = integer("parent_id").references(() => categories.id);
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  parent: one(categories, {
+    fields: [categories.parent_id],
+    references: [categories.id],
+    relationName: "parentCategory",
+  }),
+  children: many(categories, { relationName: "parentCategory" }),
+  softwares: many(softwares),
+}));
 
 // Software table
 export const softwares = pgTable("softwares", {

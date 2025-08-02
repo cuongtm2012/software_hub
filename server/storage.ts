@@ -272,22 +272,18 @@ export class DatabaseStorage implements IStorage {
     limit?: number;
     offset?: number;
   }): Promise<{ softwares: Software[], total: number }> {
-    let query = db.select().from(softwares);
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(softwares);
+    // Start with base query
+    let baseQuery = db.select().from(softwares);
     
-    // Build conditions
-    const conditions = [];
+    // By default, only show approved software unless specified
+    baseQuery = baseQuery.where(eq(softwares.status, params.status || 'approved'));
     
     if (params.category) {
-      conditions.push(eq(softwares.category_id, params.category));
-    }
-    
-    if (params.platform) {
-      conditions.push(sql`${params.platform} = ANY(${softwares.platform})`);
+      baseQuery = baseQuery.where(eq(softwares.category_id, params.category));
     }
     
     if (params.search) {
-      conditions.push(
+      baseQuery = baseQuery.where(
         or(
           ilike(softwares.name, `%${params.search}%`),
           ilike(softwares.description, `%${params.search}%`)
@@ -295,37 +291,26 @@ export class DatabaseStorage implements IStorage {
       );
     }
     
-    // By default, only show approved software unless specified
-    conditions.push(eq(softwares.status, params.status || 'approved'));
+    // Get total count first
+    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(softwares);
+    const total = totalResult[0]?.count || 0;
     
-    // Apply conditions
-    if (conditions.length > 0) {
-      const whereCondition = conditions.reduce((acc, condition) => and(acc, condition));
-      query = query.where(whereCondition);
-      countQuery = countQuery.where(whereCondition);
-    }
+    // Apply ordering and pagination
+    baseQuery = baseQuery.orderBy(desc(softwares.created_at));
     
-    // Get total count
-    const [countResult] = await countQuery;
-    const total = countResult?.count || 0;
-    
-    // Apply pagination
     if (params.limit) {
-      query = query.limit(params.limit);
-      
-      if (params.offset) {
-        query = query.offset(params.offset);
-      }
+      baseQuery = baseQuery.limit(params.limit);
     }
     
-    // Order by creation date, newest first
-    query = query.orderBy(desc(softwares.created_at));
+    if (params.offset) {
+      baseQuery = baseQuery.offset(params.offset);
+    }
     
-    const softwareList = await query;
+    const softwareList = await baseQuery;
     
     return {
       softwares: softwareList,
-      total
+      total: Number(total)
     };
   }
 
@@ -486,28 +471,25 @@ export class DatabaseStorage implements IStorage {
 
   async getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: Project[], total: number }> {
     let query = db.select().from(projects);
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(projects);
     
     if (status) {
-      query = query.where(eq(projects.status, status));
-      countQuery = countQuery.where(eq(projects.status, status));
+      query = query.where(eq(projects.status, status as any));
     }
     
     // Get total count
-    const [countResult] = await countQuery;
-    const total = countResult?.count || 0;
+    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(projects);
+    const total = totalResult[0]?.count || 0;
     
-    // Apply pagination
+    // Apply ordering and pagination
+    query = query.orderBy(desc(projects.created_at));
+    
     if (limit) {
       query = query.limit(limit);
-      
-      if (offset) {
-        query = query.offset(offset);
-      }
     }
     
-    // Order by creation date, newest first
-    query = query.orderBy(desc(projects.created_at));
+    if (offset) {
+      query = query.offset(offset);
+    }
     
     const projectsList = await query;
     
