@@ -113,6 +113,35 @@ export default function DashboardPage() {
 
   const isLoading = isLoadingProjects || isLoadingQuotes || isLoadingPayments || sellerLoading;
 
+  // Helper functions
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending Review</Badge>;
+      case 'verified':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Verified Seller</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
+  const getProductStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'draft':
+        return <Badge variant="outline" className="text-gray-600">Draft</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending Review</Badge>;
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Live</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
   // Helper functions for seller functionality
   const sellerProfile = sellerData?.seller_profile;
   const sellerProducts = sellerProductsData?.products || [];
@@ -285,33 +314,7 @@ export default function DashboardPage() {
     );
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "verified":
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle2 className="h-3 w-3 mr-1" />Verified</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
-      case "rejected":
-        return <Badge className="bg-red-100 text-red-800"><AlertCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
 
-  const getProductStatusBadge = (status: string) => {
-    switch (status) {
-      case "approved":
-        return <Badge className="bg-green-100 text-green-800">Live</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Review</Badge>;
-      case "rejected":
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-      case "draft":
-        return <Badge variant="outline">Draft</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
 
   const renderProjects = () => {
     if (isLoadingProjects) {
