@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, startTransition } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
@@ -618,11 +618,19 @@ function Router() {
       }} />
       <ProtectedRoute path="/seller/products/new" component={() => {
         const SellerProductNewPage = lazy(() => import("@/pages/seller-product-new-page"));
-        return <SellerProductNewPage />;
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <SellerProductNewPage />
+          </Suspense>
+        );
       }} />
       <ProtectedRoute path="/seller/products/:id/edit" component={() => {
         const MarketplaceSellerEditPage = lazy(() => import("@/pages/marketplace-seller-edit-page"));
-        return <MarketplaceSellerEditPage />;
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <MarketplaceSellerEditPage />
+          </Suspense>
+        );
       }} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
