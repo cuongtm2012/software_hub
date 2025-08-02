@@ -266,7 +266,7 @@ export default function DashboardPage() {
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => navigate(`/seller/products/edit/${product.id}`)}
+                    onClick={() => navigate(`/seller/products/${product.id}/edit`)}
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit

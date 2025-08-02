@@ -620,6 +620,10 @@ function Router() {
         const SellerProductNewPage = lazy(() => import("@/pages/seller-product-new-page"));
         return <SellerProductNewPage />;
       }} />
+      <ProtectedRoute path="/seller/products/:id/edit" component={() => {
+        const MarketplaceSellerEditPage = lazy(() => import("@/pages/marketplace-seller-edit-page"));
+        return <MarketplaceSellerEditPage />;
+      }} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
