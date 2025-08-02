@@ -16,7 +16,7 @@ export default function TestLoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
-      return apiRequest("/api/auth/login", {
+      return apiRequest("/api/login", {
         method: "POST",
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" }

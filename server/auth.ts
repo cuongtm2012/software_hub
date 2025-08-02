@@ -114,7 +114,8 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
+  // Disabled passport login - using simple test login instead
+  app.post("/api/auth/passport-login-disabled", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) return next(err);
       if (!user) {

@@ -6,6 +6,21 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Session configuration for test login
+import session from 'express-session';
+import { randomBytes } from 'crypto';
+
+const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
+app.use(session({
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    httpOnly: true
+  }
+}));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
