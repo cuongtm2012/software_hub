@@ -635,6 +635,7 @@ function Router() {
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
+      <ProtectedRoute path="/seller/products" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/marketplace/seller/new" roles={['seller', 'admin']} component={MarketplaceSellerNewPage} />
       <ProtectedRoute path="/marketplace/seller/edit/:id" roles={['seller', 'admin']} component={MarketplaceSellerEditPage} />
       <ProtectedRoute path="/marketplace/orders" roles={['buyer', 'admin']} component={MarketplaceOrdersPage} />
