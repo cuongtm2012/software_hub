@@ -180,7 +180,7 @@ export default function DashboardPage() {
                   <div className="flex justify-start">
                     <Button
                       onClick={() => navigate('/seller/products/new')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                       size="default"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -355,7 +355,7 @@ export default function DashboardPage() {
                 <div className="flex justify-start">
                   <Button
                     onClick={() => navigate('/projects/new')}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
                     size="default"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -366,37 +366,37 @@ export default function DashboardPage() {
                 {/* Project Statistics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
                   <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                    <CardContent className="p-4">
+                    <CardContent className="p-2 sm:p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-green-600">Total Projects</p>
-                          <p className="text-2xl font-bold text-green-900">{projectStats.total}</p>
+                          <p className="text-xs sm:text-sm font-medium text-green-600">Total Projects</p>
+                          <p className="text-lg sm:text-2xl font-bold text-green-900">{projectStats.total}</p>
                         </div>
-                        <Briefcase className="h-8 w-8 text-green-600" />
+                        <Briefcase className="h-5 w-5 sm:h-8 sm:w-8 text-green-600" />
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                    <CardContent className="p-4">
+                    <CardContent className="p-2 sm:p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-blue-600">Active Projects</p>
-                          <p className="text-2xl font-bold text-blue-900">{projectStats.active}</p>
+                          <p className="text-xs sm:text-sm font-medium text-blue-600">Active Projects</p>
+                          <p className="text-lg sm:text-2xl font-bold text-blue-900">{projectStats.active}</p>
                         </div>
-                        <Clock className="h-8 w-8 text-blue-600" />
+                        <Clock className="h-5 w-5 sm:h-8 sm:w-8 text-blue-600" />
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-                    <CardContent className="p-4">
+                    <CardContent className="p-2 sm:p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-yellow-600">Total Quotes</p>
-                          <p className="text-2xl font-bold text-yellow-900">{projectStats.quotes}</p>
+                          <p className="text-xs sm:text-sm font-medium text-yellow-600">Total Quotes</p>
+                          <p className="text-lg sm:text-2xl font-bold text-yellow-900">{projectStats.quotes}</p>
                         </div>
-                        <FileText className="h-8 w-8 text-yellow-600" />
+                        <FileText className="h-5 w-5 sm:h-8 sm:w-8 text-yellow-600" />
                       </div>
                     </CardContent>
                   </Card>
@@ -433,11 +433,11 @@ export default function DashboardPage() {
                     ) : (
                       <div className="space-y-4">
                         {projects.slice(0, 3).map((project) => (
-                          <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                          <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
                             <div className="flex-1">
                               <h4 className="font-semibold text-gray-900">{project.title}</h4>
                               <p className="text-sm text-gray-600 mb-2">{project.description?.substring(0, 100)}...</p>
-                              <div className="flex items-center gap-4 text-sm">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                                 <Badge variant={project.status === 'completed' ? 'default' : 'secondary'}>
                                   {project.status}
                                 </Badge>
@@ -449,10 +449,11 @@ export default function DashboardPage() {
                                 )}
                               </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 w-full sm:w-auto">
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="w-full sm:w-auto"
                                 onClick={() => navigate(`/projects/${project.id}`)}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
@@ -482,25 +483,25 @@ export default function DashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
                       <Button
                         variant="outline"
-                        className="justify-start h-auto p-3 lg:p-4"
+                        className="justify-start h-auto p-2 sm:p-3 lg:p-4"
                         onClick={() => navigate('/projects')}
                       >
                         <div className="text-left">
-                          <div className="font-semibold text-sm lg:text-base">Browse Projects</div>
-                          <div className="text-xs lg:text-sm text-gray-500">View all available projects</div>
+                          <div className="font-semibold text-xs sm:text-sm lg:text-base">Browse Projects</div>
+                          <div className="text-xs sm:text-xs lg:text-sm text-gray-500">View all available projects</div>
                         </div>
                       </Button>
                       <Button
                         variant="outline"
-                        className="justify-start h-auto p-3 lg:p-4"
+                        className="justify-start h-auto p-2 sm:p-3 lg:p-4"
                         onClick={() => navigate('/portfolios')}
                       >
                         <div className="text-left">
-                          <div className="font-semibold text-sm lg:text-base">View Portfolio</div>
-                          <div className="text-xs lg:text-sm text-gray-500">Showcase your work</div>
+                          <div className="font-semibold text-xs sm:text-sm lg:text-base">View Portfolio</div>
+                          <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Showcase your work</div>
                         </div>
                       </Button>
                     </div>
