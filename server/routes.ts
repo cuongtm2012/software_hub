@@ -1576,7 +1576,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/external-requests", adminMiddleware, async (req, res, next) => {
     try {
-      const externalRequests = []; // TODO: Implement external requests feature
+      const externalRequests = await storage.getAllExternalRequests();
+      res.json(externalRequests);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Get external requests for logged-in user by email
+  app.get("/api/my-external-requests", isAuthenticated, async (req, res, next) => {
+    try {
+      const externalRequests = await storage.getUserExternalRequests(req.user?.email as string);
       res.json(externalRequests);
     } catch (error) {
       next(error);

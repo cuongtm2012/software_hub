@@ -28,6 +28,16 @@ interface Project {
   budget?: string;
 }
 
+interface ExternalRequest {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  project_description: string;
+  status: string;
+  created_at: string;
+}
+
 interface Quote {
   id: number;
   project_id: number;
@@ -85,7 +95,13 @@ export default function DashboardPage() {
   // Fetch projects and quotes (general dashboard)
   const { data: projects, isLoading: isLoadingProjects } = useQuery<Project[]>({
     queryKey: ['/api/projects'],
-    enabled: !!user,
+    enabled: !!user && (user.role === 'admin' || user.role === 'client' || user.role === 'developer'),
+  });
+
+  // Fetch external requests for users who are not admin/client/developer
+  const { data: externalRequests, isLoading: isLoadingExternalRequests } = useQuery<ExternalRequest[]>({
+    queryKey: ['/api/my-external-requests'],
+    enabled: !!user && user.role !== 'admin' && user.role !== 'client' && user.role !== 'developer',
   });
 
   const { data: quotes, isLoading: isLoadingQuotes } = useQuery<Quote[]>({
@@ -131,11 +147,14 @@ export default function DashboardPage() {
   };
 
   // Calculate project statistics
+  const allProjects = projects || [];
+  const allExternalRequests = externalRequests || [];
+  
   const projectStats = {
-    total: projects?.length || 0,
-    active: projects?.filter(p => p.status === 'in_progress').length || 0,
-    completed: projects?.filter(p => p.status === 'completed').length || 0,
-    pending: projects?.filter(p => p.status === 'pending').length || 0,
+    total: allProjects.length + allExternalRequests.length,
+    active: allProjects.filter(p => p.status === 'in_progress').length + allExternalRequests.filter(r => r.status === 'in_progress').length,
+    completed: allProjects.filter(p => p.status === 'completed').length + allExternalRequests.filter(r => r.status === 'completed').length,
+    pending: allProjects.filter(p => p.status === 'pending').length + allExternalRequests.filter(r => r.status === 'pending').length,
     quotes: quotes?.length || 0,
     acceptedQuotes: quotes?.filter(q => q.status === 'accepted').length || 0
   };
@@ -414,11 +433,11 @@ export default function DashboardPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {isLoadingProjects ? (
+                    {(isLoadingProjects || isLoadingExternalRequests) ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                       </div>
-                    ) : !projects || projects.length === 0 ? (
+                    ) : allProjects.length === 0 && allExternalRequests.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                         <p className="mb-4">No projects yet. Start your first project!</p>
@@ -432,8 +451,9 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {projects.slice(0, 3).map((project) => (
-                          <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
+                        {/* Show regular projects */}
+                        {allProjects.slice(0, 2).map((project) => (
+                          <div key={`project-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
                             <div className="flex-1">
                               <h4 className="font-semibold text-gray-900">{project.title}</h4>
                               <p className="text-sm text-gray-600 mb-2">{project.description?.substring(0, 100)}...</p>
@@ -462,10 +482,40 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         ))}
-                        {projects.length > 3 && (
+                        
+                        {/* Show external requests */}
+                        {allExternalRequests.slice(0, 3 - allProjects.length).map((request) => (
+                          <div key={`request-${request.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900">Project Request #{request.id}</h4>
+                              <p className="text-sm text-gray-600 mb-2">{request.project_description?.substring(0, 100)}...</p>
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                                <Badge variant={request.status === 'completed' ? 'default' : 'secondary'}>
+                                  {request.status}
+                                </Badge>
+                                <span className="text-gray-500">
+                                  Submitted: {new Date(request.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full sm:w-auto"
+                                onClick={() => navigate(`/request-project`)}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {(allProjects.length + allExternalRequests.length) > 3 && (
                           <div className="text-center pt-4">
                             <Button variant="outline" onClick={() => navigate('/projects')}>
-                              View All Projects ({projects.length})
+                              View All Projects ({allProjects.length + allExternalRequests.length})
                             </Button>
                           </div>
                         )}

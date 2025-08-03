@@ -82,6 +82,8 @@ export interface IStorage {
   getExternalRequestById(id: number): Promise<ExternalRequest | undefined>;
   updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
   convertExternalRequestToProject(id: number, project: InsertProject): Promise<Project>;
+  getAllExternalRequests(): Promise<ExternalRequest[]>;
+  getUserExternalRequests(email: string): Promise<ExternalRequest[]>;
   
   // Phase 2: Project Management
   createProject(project: InsertProject, clientId?: number): Promise<Project>; // clientId optional for external requests
@@ -442,6 +444,21 @@ export class DatabaseStorage implements IStorage {
     await this.updateExternalRequestStatus(id, 'converted');
     
     return result;
+  }
+
+  async getAllExternalRequests(): Promise<ExternalRequest[]> {
+    return await db
+      .select()
+      .from(externalRequests)
+      .orderBy(desc(externalRequests.created_at));
+  }
+
+  async getUserExternalRequests(email: string): Promise<ExternalRequest[]> {
+    return await db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.email, email))
+      .orderBy(desc(externalRequests.created_at));
   }
 
   // Phase 2: Project Management
