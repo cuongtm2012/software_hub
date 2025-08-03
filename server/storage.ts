@@ -84,6 +84,7 @@ export interface IStorage {
   convertExternalRequestToProject(id: number, project: InsertProject): Promise<Project>;
   getAllExternalRequests(): Promise<ExternalRequest[]>;
   getUserExternalRequests(email: string): Promise<ExternalRequest[]>;
+  getAvailableProjects(status?: string): Promise<Project[]>;
   
   // Phase 2: Project Management
   createProject(project: InsertProject, clientId?: number): Promise<Project>; // clientId optional for external requests
@@ -459,6 +460,24 @@ export class DatabaseStorage implements IStorage {
       .from(externalRequests)
       .where(eq(externalRequests.email, email))
       .orderBy(desc(externalRequests.created_at));
+  }
+
+  async getAvailableProjects(status?: string): Promise<Project[]> {
+    let query = db.select().from(projects);
+    
+    if (status && status !== 'all') {
+      // Map frontend status to database status
+      const statusMap: { [key: string]: string } = {
+        'pending': 'pending',
+        'in-progress': 'in_progress', 
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+      };
+      const dbStatus = statusMap[status] || status;
+      query = query.where(eq(projects.status, dbStatus));
+    }
+    
+    return await query.orderBy(desc(projects.created_at));
   }
 
   // Phase 2: Project Management

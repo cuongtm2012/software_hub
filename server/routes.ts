@@ -1592,6 +1592,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+
+  // Get all available projects (for marketplace/browsing)
+  app.get("/api/available-projects", isAuthenticated, async (req, res, next) => {
+    try {
+      const status = req.query.status as string;
+      const projects = await storage.getAvailableProjects(status);
+      res.json(projects);
+    } catch (error) {
+      next(error);
+    }
+  });
   
   app.get("/api/external-requests/:id", adminMiddleware, async (req, res, next) => {
     try {

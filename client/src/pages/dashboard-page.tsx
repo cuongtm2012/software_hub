@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const [selectedProjectStatus, setSelectedProjectStatus] = useState<string>('all');
 
   // Fetch seller profile and products (for sellers)
   const { data: sellerProfile, isLoading: isLoadingProfile } = useQuery<any>({
@@ -106,6 +108,12 @@ export default function DashboardPage() {
 
   const { data: quotes, isLoading: isLoadingQuotes } = useQuery<Quote[]>({
     queryKey: ['/api/quotes'],
+    enabled: !!user,
+  });
+
+  // Fetch all available projects for browsing
+  const { data: availableProjects, isLoading: isLoadingAvailableProjects } = useQuery<Project[]>({
+    queryKey: ['/api/available-projects', { status: selectedProjectStatus }],
     enabled: !!user,
   });
 
@@ -524,37 +532,93 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Quick Actions */}
+                {/* Available Projects Browser */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Target className="h-5 w-5" />
-                      Quick Actions
+                      <BarChart3 className="h-5 w-5" />
+                      Available Projects
                     </CardTitle>
+                    <CardDescription>
+                      Browse and discover projects available for collaboration
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto p-2 sm:p-3 lg:p-4"
-                        onClick={() => navigate('/projects')}
-                      >
-                        <div className="text-left">
-                          <div className="font-semibold text-xs sm:text-sm lg:text-base">Browse Projects</div>
-                          <div className="text-xs sm:text-xs lg:text-sm text-gray-500">View all available projects</div>
-                        </div>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto p-2 sm:p-3 lg:p-4"
-                        onClick={() => navigate('/portfolios')}
-                      >
-                        <div className="text-left">
-                          <div className="font-semibold text-xs sm:text-sm lg:text-base">View Portfolio</div>
-                          <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Showcase your work</div>
-                        </div>
-                      </Button>
+                    {/* Project Status Filter Tabs */}
+                    <div className="mb-4">
+                      <div className="flex flex-wrap gap-2 border-b">
+                        {[
+                          { key: 'all', label: 'All Projects' },
+                          { key: 'pending', label: 'Pending' },
+                          { key: 'in-progress', label: 'In Progress' },
+                          { key: 'completed', label: 'Completed' },
+                          { key: 'cancelled', label: 'Cancelled' }
+                        ].map((tab) => (
+                          <Button
+                            key={tab.key}
+                            variant={selectedProjectStatus === tab.key ? 'default' : 'ghost'}
+                            size="sm"
+                            className="px-3 py-1 text-xs sm:text-sm"
+                            onClick={() => setSelectedProjectStatus(tab.key)}
+                          >
+                            {tab.label}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Projects List */}
+                    {isLoadingAvailableProjects ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      </div>
+                    ) : !availableProjects || availableProjects.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <h3 className="font-semibold text-gray-900 mb-2">No projects found</h3>
+                        <p className="text-sm text-gray-600 mb-4">There are no available projects that match your criteria.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {availableProjects.slice(0, 5).map((project) => (
+                          <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
+                              <p className="text-xs text-gray-600 mb-2 line-clamp-2">{project.description?.substring(0, 80)}...</p>
+                              <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <Badge variant={project.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                                  {project.status}
+                                </Badge>
+                                {project.budget && (
+                                  <span className="text-green-600 font-medium">${parseFloat(project.budget).toFixed(2)}</span>
+                                )}
+                                {project.deadline && (
+                                  <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs px-2 py-1"
+                                onClick={() => navigate(`/projects/${project.id}`)}
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        {availableProjects.length > 5 && (
+                          <div className="text-center pt-3">
+                            <Button variant="outline" size="sm" onClick={() => navigate('/projects')}>
+                              View All Projects ({availableProjects.length})
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
