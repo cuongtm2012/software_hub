@@ -91,7 +91,21 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   // Create product mutation
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
-      return apiRequest("POST", "/api/products", data);
+      return apiRequest("/api/seller/products", {
+        method: "POST",
+        body: JSON.stringify({
+          title: data.name,
+          description: data.description,
+          price: data.price.toString(),
+          category: data.category,
+          price_type: "fixed",
+          stock_quantity: 1,
+          images: data.image_url ? [data.image_url] : null
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
     },
     onSuccess: () => {
       toast({
@@ -119,7 +133,19 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   // Update product mutation
   const updateProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
-      return apiRequest("PATCH", `/api/products/${productId}`, data);
+      return apiRequest(`/api/seller/products/${productId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: data.name,
+          description: data.description,
+          price: data.price.toString(),
+          category: data.category,
+          images: data.image_url ? [data.image_url] : null
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
     },
     onSuccess: () => {
       toast({
