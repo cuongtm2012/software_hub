@@ -354,7 +354,7 @@ export default function DashboardPage() {
                 {/* New Project Button */}
                 <div className="flex justify-start">
                   <Button
-                    onClick={() => navigate('/projects/new')}
+                    onClick={() => navigate('/request-project')}
                     className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
                     size="default"
                   >
@@ -423,7 +423,7 @@ export default function DashboardPage() {
                         <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                         <p className="mb-4">No projects yet. Start your first project!</p>
                         <Button
-                          onClick={() => navigate('/projects/new')}
+                          onClick={() => navigate('/request-project')}
                           variant="outline"
                         >
                           <Plus className="h-4 w-4 mr-2" />

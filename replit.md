@@ -65,6 +65,9 @@ The application uses a comprehensive PostgreSQL schema with the following main e
 - Maintain separation between client and server code
 
 ## Recent Changes
+- **2025-08-03**: Updated Projects tab navigation - "New Project" buttons now route to `/request-project` instead of `/projects/new`
+- **2025-08-03**: Enhanced mobile responsiveness for both Products and Projects tabs with optimized spacing and layouts
+- **2025-08-03**: Implemented tabbed dashboard with action buttons inside respective tab content areas
 - **2025-08-03**: Fixed product creation functionality - corrected API endpoints from /api/products to /api/seller/products
 - **2025-08-03**: Added delete functionality to products with confirmation dialogs
 - **2025-08-03**: Fixed navigation flow - product edit page now returns to dashboard instead of marketplace/seller
