@@ -99,9 +99,9 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
         description: "Product created successfully",
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/products/seller"],
+        queryKey: ["/api/seller/products"],
       });
-      navigate("/marketplace/seller");
+      navigate("/dashboard");
     },
     onError: (error: Error) => {
       setServerError(error.message);
@@ -127,12 +127,12 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
         description: "Product updated successfully",
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/products/seller"],
+        queryKey: ["/api/seller/products"],
       });
       queryClient.invalidateQueries({
         queryKey: [`/api/products/${productId}`],
       });
-      navigate("/marketplace/seller");
+      navigate("/dashboard");
     },
     onError: (error: Error) => {
       setServerError(error.message);
@@ -313,7 +313,7 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/marketplace/seller")}
+              onClick={() => navigate("/dashboard")}
               disabled={isLoading}
             >
               Cancel

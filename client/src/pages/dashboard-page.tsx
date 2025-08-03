@@ -301,11 +301,42 @@ export default function DashboardPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="flex-1"
                                   onClick={() => navigate(`/seller/products/${product.id}/edit`)}
                                 >
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    if (window.confirm('Are you sure you want to delete this product?')) {
+                                      // Add delete mutation here
+                                      const deleteProduct = async () => {
+                                        try {
+                                          await apiRequest(`/api/seller/products/${product.id}`, {
+                                            method: 'DELETE'
+                                          });
+                                          queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
+                                          toast({
+                                            title: "Success",
+                                            description: "Product deleted successfully"
+                                          });
+                                        } catch (error: any) {
+                                          toast({
+                                            title: "Error", 
+                                            description: error.message || "Failed to delete product",
+                                            variant: "destructive"
+                                          });
+                                        }
+                                      };
+                                      deleteProduct();
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
                                 </Button>
                               </div>
                             </div>

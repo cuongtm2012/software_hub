@@ -12,10 +12,10 @@ export default function MarketplaceSellerEditPage() {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Link href="/marketplace/seller">
+          <Link href="/dashboard">
             <Button variant="ghost" size="sm" className="flex items-center">
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Seller Dashboard
+              Back to Dashboard
             </Button>
           </Link>
           <h1 className="text-3xl font-bold">Edit Product</h1>
@@ -25,7 +25,7 @@ export default function MarketplaceSellerEditPage() {
           <div className="text-center py-10">
             <h2 className="text-xl text-red-600">Invalid Product ID</h2>
             <p className="mt-2">The product ID is not valid.</p>
-            <Link href="/marketplace/seller">
+            <Link href="/dashboard">
               <Button className="mt-4">Return to Dashboard</Button>
             </Link>
           </div>

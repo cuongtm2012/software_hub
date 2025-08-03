@@ -169,7 +169,7 @@ export default function MarketplaceSellerPage() {
     data: products = [], 
     isLoading: productsLoading 
   } = useQuery({
-    queryKey: ["/api/products/seller"],
+    queryKey: ["/api/seller/products"],
   });
 
   // Fetch seller's orders
@@ -177,7 +177,7 @@ export default function MarketplaceSellerPage() {
     data: orders = [], 
     isLoading: ordersLoading 
   } = useQuery({
-    queryKey: ["/api/orders/seller"],
+    queryKey: ["/api/seller/orders"],
   });
 
   // Delete product mutation
@@ -192,7 +192,7 @@ export default function MarketplaceSellerPage() {
       });
       setIsDeleteDialogOpen(false);
       queryClient.invalidateQueries({
-        queryKey: ["/api/products/seller"],
+        queryKey: ["/api/seller/products"],
       });
     },
     onError: (error: Error) => {
@@ -215,7 +215,7 @@ export default function MarketplaceSellerPage() {
         description: "The order status has been updated successfully.",
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/orders/seller"],
+        queryKey: ["/api/seller/orders"],
       });
     },
     onError: (error: Error) => {
