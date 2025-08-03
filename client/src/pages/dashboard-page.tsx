@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
@@ -144,138 +145,270 @@ export default function DashboardPage() {
       <Header />
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">
-          {/* Welcome Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome back, {user.name}!
-            </h1>
-            <p className="text-gray-600">
-              Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
-            </p>
+          {/* Welcome Header with Action Buttons */}
+          <div className="flex items-center justify-between mb-8 p-6 bg-white rounded-lg shadow-sm border">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Welcome back, {user.name}!
+              </h1>
+              <p className="text-gray-600">
+                Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {isSeller && (
+                <Button
+                  onClick={() => navigate('/seller/products/new')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
+              )}
+              <Button
+                onClick={() => navigate('/projects/new')}
+                variant="outline"
+                className="border-green-200 text-green-700 hover:bg-green-50"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Project
+              </Button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            {/* PRODUCTS SECTION - Only for sellers */}
-            {isSeller && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Package className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">Products</h2>
-                      <p className="text-gray-600">Manage your marketplace inventory</p>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => navigate('/seller/products/new')}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Product
-                  </Button>
-                </div>
+          {/* Tab Navigation */}
+          <Tabs defaultValue={isSeller ? "products" : "projects"} className="w-full">
+            <div className="bg-white rounded-lg shadow-sm border">
+              <TabsList className="grid w-full grid-cols-2 h-12 bg-gray-50 m-1">
+                {isSeller && (
+                  <TabsTrigger value="products" className="flex items-center gap-2 data-[state=active]:bg-white">
+                    <Package className="h-4 w-4" />
+                    Products
+                  </TabsTrigger>
+                )}
+                <TabsTrigger value="projects" className="flex items-center gap-2 data-[state=active]:bg-white">
+                  <Briefcase className="h-4 w-4" />
+                  Projects
+                </TabsTrigger>
+              </TabsList>
 
-                {/* Product Statistics Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-blue-600">Total Products</p>
-                          <p className="text-2xl font-bold text-blue-900">{productStats.total}</p>
+              {/* PRODUCTS TAB */}
+              {isSeller && (
+                <TabsContent value="products" className="p-6 space-y-6">
+                  {/* Product Statistics Cards */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-blue-600">Total Products</p>
+                            <p className="text-2xl font-bold text-blue-900">{productStats.total}</p>
+                          </div>
+                          <Package className="h-8 w-8 text-blue-600" />
                         </div>
-                        <Package className="h-8 w-8 text-blue-600" />
-                      </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-green-600">Active Products</p>
+                            <p className="text-2xl font-bold text-green-900">{productStats.active}</p>
+                          </div>
+                          <CheckCircle2 className="h-8 w-8 text-green-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-purple-600">Avg Rating</p>
+                            <p className="text-2xl font-bold text-purple-900">
+                              {productStats.avgRating.toFixed(1)}
+                            </p>
+                          </div>
+                          <Star className="h-8 w-8 text-purple-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-orange-600">Total Sales</p>
+                            <p className="text-2xl font-bold text-orange-900">{productStats.totalSales}</p>
+                          </div>
+                          <TrendingUp className="h-8 w-8 text-orange-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Products List */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Store className="h-5 w-5" />
+                        Your Products
+                      </CardTitle>
+                      <CardDescription>
+                        Manage and track your marketplace products
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {isLoadingProducts ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        </div>
+                      ) : products.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <p className="mb-4">No products yet. Start by adding your first product!</p>
+                          <Button
+                            onClick={() => navigate('/seller/products/new')}
+                            variant="outline"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Your First Product
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {products.slice(0, 3).map((product) => (
+                            <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900">{product.title}</h4>
+                                <p className="text-sm text-gray-600 mb-2">{product.description.substring(0, 100)}...</p>
+                                <div className="flex items-center gap-4 text-sm">
+                                  <span className="text-green-600 font-medium">${parseFloat(product.price).toFixed(2)}</span>
+                                  <Badge variant={product.status === 'approved' ? 'default' : 'secondary'}>
+                                    {product.status}
+                                  </Badge>
+                                  <span className="text-gray-500">Stock: {product.stock_quantity}</span>
+                                  {product.avg_rating && (
+                                    <div className="flex items-center gap-1">
+                                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                                      <span>{product.avg_rating.toFixed(1)}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => navigate(`/seller/products/${product.id}/edit`)}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          {products.length > 3 && (
+                            <div className="text-center pt-4">
+                              <Button variant="outline" onClick={() => navigate('/marketplace/seller')}>
+                                View All Products ({products.length})
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
+                </TabsContent>
+              )}
 
+              {/* PROJECTS TAB */}
+              <TabsContent value="projects" className="p-6 space-y-6">
+                {/* Project Statistics Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                   <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-green-600">Active Products</p>
-                          <p className="text-2xl font-bold text-green-900">{productStats.active}</p>
+                          <p className="text-sm font-medium text-green-600">Total Projects</p>
+                          <p className="text-2xl font-bold text-green-900">{projectStats.total}</p>
                         </div>
-                        <CheckCircle2 className="h-8 w-8 text-green-600" />
+                        <Briefcase className="h-8 w-8 text-green-600" />
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-purple-600">Avg Rating</p>
-                          <p className="text-2xl font-bold text-purple-900">
-                            {productStats.avgRating.toFixed(1)}
-                          </p>
+                          <p className="text-sm font-medium text-blue-600">Active Projects</p>
+                          <p className="text-2xl font-bold text-blue-900">{projectStats.active}</p>
                         </div>
-                        <Star className="h-8 w-8 text-purple-600" />
+                        <Clock className="h-8 w-8 text-blue-600" />
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                  <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-orange-600">Total Sales</p>
-                          <p className="text-2xl font-bold text-orange-900">{productStats.totalSales}</p>
+                          <p className="text-sm font-medium text-yellow-600">Total Quotes</p>
+                          <p className="text-2xl font-bold text-yellow-900">{projectStats.quotes}</p>
                         </div>
-                        <TrendingUp className="h-8 w-8 text-orange-600" />
+                        <FileText className="h-8 w-8 text-yellow-600" />
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Products List */}
+                {/* Projects List */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Store className="h-5 w-5" />
-                      Your Products
+                      <Code className="h-5 w-5" />
+                      Recent Projects
                     </CardTitle>
                     <CardDescription>
-                      Manage and track your marketplace products
+                      Track your ongoing and completed projects
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {isLoadingProducts ? (
+                    {isLoadingProjects ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                       </div>
-                    ) : products.length === 0 ? (
+                    ) : !projects || projects.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
-                        <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p className="mb-4">No products yet. Start by adding your first product!</p>
+                        <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p className="mb-4">No projects yet. Start your first project!</p>
                         <Button
-                          onClick={() => navigate('/seller/products/new')}
+                          onClick={() => navigate('/projects/new')}
                           variant="outline"
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Add Your First Product
+                          Create Your First Project
                         </Button>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {products.slice(0, 3).map((product) => (
-                          <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                        {projects.slice(0, 3).map((project) => (
+                          <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                             <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900">{product.title}</h4>
-                              <p className="text-sm text-gray-600 mb-2">{product.description.substring(0, 100)}...</p>
+                              <h4 className="font-semibold text-gray-900">{project.title}</h4>
+                              <p className="text-sm text-gray-600 mb-2">{project.description?.substring(0, 100)}...</p>
                               <div className="flex items-center gap-4 text-sm">
-                                <span className="text-green-600 font-medium">${parseFloat(product.price).toFixed(2)}</span>
-                                <Badge variant={product.status === 'approved' ? 'default' : 'secondary'}>
-                                  {product.status}
+                                <Badge variant={project.status === 'completed' ? 'default' : 'secondary'}>
+                                  {project.status}
                                 </Badge>
-                                <span className="text-gray-500">Stock: {product.stock_quantity}</span>
-                                {product.avg_rating && (
-                                  <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                                    <span>{product.avg_rating.toFixed(1)}</span>
-                                  </div>
+                                {project.budget && (
+                                  <span className="text-green-600 font-medium">${parseFloat(project.budget).toFixed(2)}</span>
+                                )}
+                                {project.deadline && (
+                                  <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
                                 )}
                               </div>
                             </div>
@@ -283,19 +416,18 @@ export default function DashboardPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="flex-1"
-                                onClick={() => navigate(`/seller/products/${product.id}/edit`)}
+                                onClick={() => navigate(`/projects/${project.id}`)}
                               >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
                               </Button>
                             </div>
                           </div>
                         ))}
-                        {products.length > 3 && (
+                        {projects.length > 3 && (
                           <div className="text-center pt-4">
-                            <Button variant="outline" onClick={() => navigate('/marketplace/seller')}>
-                              View All Products ({products.length})
+                            <Button variant="outline" onClick={() => navigate('/projects')}>
+                              View All Projects ({projects.length})
                             </Button>
                           </div>
                         )}
@@ -303,176 +435,43 @@ export default function DashboardPage() {
                     )}
                   </CardContent>
                 </Card>
-              </div>
-            )}
 
-            {/* PROJECTS SECTION */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Briefcase className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Projects</h2>
-                    <p className="text-gray-600">Custom development and consulting</p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => navigate('/projects/new')}
-                  variant="outline"
-                  className="border-green-200 text-green-700 hover:bg-green-50"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Project
-                </Button>
-              </div>
-
-              {/* Project Statistics Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-green-600">Total Projects</p>
-                        <p className="text-2xl font-bold text-green-900">{projectStats.total}</p>
-                      </div>
-                      <Briefcase className="h-8 w-8 text-green-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-blue-600">Active Projects</p>
-                        <p className="text-2xl font-bold text-blue-900">{projectStats.active}</p>
-                      </div>
-                      <Clock className="h-8 w-8 text-blue-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-yellow-600">Total Quotes</p>
-                        <p className="text-2xl font-bold text-yellow-900">{projectStats.quotes}</p>
-                      </div>
-                      <FileText className="h-8 w-8 text-yellow-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Projects List */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Code className="h-5 w-5" />
-                    Recent Projects
-                  </CardTitle>
-                  <CardDescription>
-                    Track your ongoing and completed projects
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingProjects ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-                    </div>
-                  ) : !projects || projects.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p className="mb-4">No projects yet. Start your first project!</p>
+                {/* Quick Actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Quick Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Button
-                        onClick={() => navigate('/projects/new')}
                         variant="outline"
+                        className="justify-start h-auto p-4"
+                        onClick={() => navigate('/projects')}
                       >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Your First Project
+                        <div className="text-left">
+                          <div className="font-semibold">Browse Projects</div>
+                          <div className="text-sm text-gray-500">View all available projects</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="justify-start h-auto p-4"
+                        onClick={() => navigate('/portfolios')}
+                      >
+                        <div className="text-left">
+                          <div className="font-semibold">View Portfolio</div>
+                          <div className="text-sm text-gray-500">Showcase your work</div>
+                        </div>
                       </Button>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {projects.slice(0, 3).map((project) => (
-                        <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900">{project.title}</h4>
-                            <p className="text-sm text-gray-600 mb-2">{project.description?.substring(0, 100)}...</p>
-                            <div className="flex items-center gap-4 text-sm">
-                              <Badge variant={project.status === 'completed' ? 'default' : 'secondary'}>
-                                {project.status}
-                              </Badge>
-                              {project.budget && (
-                                <span className="text-green-600 font-medium">${parseFloat(project.budget).toFixed(2)}</span>
-                              )}
-                              {project.deadline && (
-                                <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/projects/${project.id}`)}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      {projects.length > 3 && (
-                        <div className="text-center pt-4">
-                          <Button variant="outline" onClick={() => navigate('/projects')}>
-                            View All Projects ({projects.length})
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button
-                      variant="outline"
-                      className="justify-start h-auto p-4"
-                      onClick={() => navigate('/projects')}
-                    >
-                      <div className="text-left">
-                        <div className="font-semibold">Browse Projects</div>
-                        <div className="text-sm text-gray-500">View all available projects</div>
-                      </div>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start h-auto p-4"
-                      onClick={() => navigate('/portfolios')}
-                    >
-                      <div className="text-left">
-                        <div className="font-semibold">View Portfolio</div>
-                        <div className="text-sm text-gray-500">Showcase your work</div>
-                      </div>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </div>
-          </div>
+          </Tabs>
         </div>
       </main>
       <Footer />
