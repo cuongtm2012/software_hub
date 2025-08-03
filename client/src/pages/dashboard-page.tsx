@@ -144,22 +144,22 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
       <main className="pt-16">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
           {/* Welcome Header with Action Buttons */}
-          <div className="flex items-center justify-between mb-8 p-6 bg-white rounded-lg shadow-sm border">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8 p-4 lg:p-6 bg-white rounded-lg shadow-sm border">
+            <div className="flex-1">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
                 Welcome back, {user.name}!
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm lg:text-base">
                 Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 w-full lg:w-auto">
               {isSeller && (
                 <Button
                   onClick={() => navigate('/seller/products/new')}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Product
@@ -168,7 +168,7 @@ export default function DashboardPage() {
               <Button
                 onClick={() => navigate('/projects/new')}
                 variant="outline"
-                className="border-green-200 text-green-700 hover:bg-green-50"
+                className="border-green-200 text-green-700 hover:bg-green-50 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
@@ -179,24 +179,26 @@ export default function DashboardPage() {
           {/* Tab Navigation */}
           <Tabs defaultValue={isSeller ? "products" : "projects"} className="w-full">
             <div className="bg-white rounded-lg shadow-sm border">
-              <TabsList className="grid w-full grid-cols-2 h-12 bg-gray-50 m-1">
+              <TabsList className={`grid w-full h-12 bg-gray-50 m-1 ${isSeller ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {isSeller && (
-                  <TabsTrigger value="products" className="flex items-center gap-2 data-[state=active]:bg-white">
+                  <TabsTrigger value="products" className="flex items-center gap-2 data-[state=active]:bg-white text-sm lg:text-base">
                     <Package className="h-4 w-4" />
-                    Products
+                    <span className="hidden sm:inline">Products</span>
+                    <span className="sm:hidden">Products</span>
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="projects" className="flex items-center gap-2 data-[state=active]:bg-white">
+                <TabsTrigger value="projects" className="flex items-center gap-2 data-[state=active]:bg-white text-sm lg:text-base">
                   <Briefcase className="h-4 w-4" />
-                  Projects
+                  <span className="hidden sm:inline">Projects</span>
+                  <span className="sm:hidden">Projects</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* PRODUCTS TAB */}
               {isSeller && (
-                <TabsContent value="products" className="p-6 space-y-6">
+                <TabsContent value="products" className="p-4 lg:p-6 space-y-4 lg:space-y-6">
                   {/* Product Statistics Cards */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                     <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -356,9 +358,9 @@ export default function DashboardPage() {
               )}
 
               {/* PROJECTS TAB */}
-              <TabsContent value="projects" className="p-6 space-y-6">
+              <TabsContent value="projects" className="p-4 lg:p-6 space-y-4 lg:space-y-6">
                 {/* Project Statistics Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                   <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -476,25 +478,25 @@ export default function DashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
                       <Button
                         variant="outline"
-                        className="justify-start h-auto p-4"
+                        className="justify-start h-auto p-3 lg:p-4"
                         onClick={() => navigate('/projects')}
                       >
                         <div className="text-left">
-                          <div className="font-semibold">Browse Projects</div>
-                          <div className="text-sm text-gray-500">View all available projects</div>
+                          <div className="font-semibold text-sm lg:text-base">Browse Projects</div>
+                          <div className="text-xs lg:text-sm text-gray-500">View all available projects</div>
                         </div>
                       </Button>
                       <Button
                         variant="outline"
-                        className="justify-start h-auto p-4"
+                        className="justify-start h-auto p-3 lg:p-4"
                         onClick={() => navigate('/portfolios')}
                       >
                         <div className="text-left">
-                          <div className="font-semibold">View Portfolio</div>
-                          <div className="text-sm text-gray-500">Showcase your work</div>
+                          <div className="font-semibold text-sm lg:text-base">View Portfolio</div>
+                          <div className="text-xs lg:text-sm text-gray-500">Showcase your work</div>
                         </div>
                       </Button>
                     </div>
