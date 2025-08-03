@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { ExternalRequest, InsertExternalRequest, insertExternalRequestSchema } from "@shared/schema";
@@ -20,16 +20,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, ArrowLeft, CheckCircle2, Code, FileCog, FileCode, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, Code, FileCog, FileCode, Loader2, HelpCircle, Plus } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+
+// Phone number regex for international format
+const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
 
 // Project request form schema
 const projectRequestSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(6, "Phone must be at least 6 characters").optional(),
+  phone: z.string()
+    .min(1, "Phone number is required")
+    .regex(phoneRegex, "Please enter a valid phone number (e.g., +1234567890 or 1234567890)"),
   company: z.string().optional(),
   project_name: z.string().min(3, "Project name must be at least 3 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
@@ -38,12 +45,25 @@ const projectRequestSchema = z.object({
   timeline: z.string().optional(),
 });
 
+// Popular technology suggestions
+const techSuggestions = [
+  "React", "Node.js", "Python", "AWS", "Docker", "MongoDB", "PostgreSQL",
+  "TypeScript", "Next.js", "Express.js", "Vue.js", "Angular", "Laravel",
+  "Django", "Flask", "Redis", "Kubernetes", "Firebase", "GraphQL", "REST API"
+];
+
 type ProjectRequestFormValues = z.infer<typeof projectRequestSchema>;
 
 export default function ProjectRequestPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [formSubmitted, setFormSubmitted] = useState(false);
+  
+  // Get current user data
+  const { data: user } = useQuery({
+    queryKey: ["/api/user"],
+    retry: false,
+  });
   
   // Form definition
   const form = useForm<ProjectRequestFormValues>({
@@ -60,6 +80,23 @@ export default function ProjectRequestPage() {
       timeline: "",
     },
   });
+
+  // Pre-fill user info when user data is available
+  useEffect(() => {
+    if (user && typeof user === 'object' && 'name' in user && 'email' in user) {
+      form.setValue("name", (user as any).name || "");
+      form.setValue("email", (user as any).email || "");
+    }
+  }, [user, form]);
+
+  // Function to add technology suggestion to requirements
+  const addTechSuggestion = (tech: string) => {
+    const currentRequirements = form.getValues("requirements");
+    const newRequirements = currentRequirements 
+      ? `${currentRequirements}\n- ${tech}` 
+      : `- ${tech}`;
+    form.setValue("requirements", newRequirements);
+  };
 
   // Create external request mutation
   const createExternalRequestMutation = useMutation({
@@ -218,10 +255,10 @@ Timeline: ${data.timeline || 'N/A'}
                           name="phone"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700">Phone Number</FormLabel>
+                              <FormLabel className="text-gray-700">Phone Number <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input 
-                                  placeholder="Your phone number" 
+                                  placeholder="e.g., +1234567890 or 1234567890" 
                                   className="border-gray-300 focus-visible:ring-[#004080]" 
                                   {...field} 
                                 />
@@ -291,7 +328,19 @@ Timeline: ${data.timeline || 'N/A'}
                         name="requirements"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Technical Requirements <span className="text-red-500">*</span></FormLabel>
+                            <FormLabel className="text-gray-700 flex items-center gap-2">
+                              Technical Requirements <span className="text-red-500">*</span>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <HelpCircle className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <p>List key features, technologies, or specific requirements relevant to your project.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="List key features, technologies, or specific requirements" 
@@ -300,6 +349,24 @@ Timeline: ${data.timeline || 'N/A'}
                               />
                             </FormControl>
                             <FormMessage />
+                            
+                            {/* Technology Suggestions */}
+                            <div className="mt-3">
+                              <p className="text-sm text-gray-600 mb-2">Popular technologies (click to add):</p>
+                              <div className="flex flex-wrap gap-2">
+                                {techSuggestions.map((tech) => (
+                                  <Badge
+                                    key={tech}
+                                    variant="outline"
+                                    className="cursor-pointer hover:bg-[#004080] hover:text-white transition-colors text-xs px-2 py-1"
+                                    onClick={() => addTechSuggestion(tech)}
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    {tech}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
                           </FormItem>
                         )}
                       />
