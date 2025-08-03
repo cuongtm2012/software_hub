@@ -183,14 +183,12 @@ export default function DashboardPage() {
                 {isSeller && (
                   <TabsTrigger value="products" className="flex items-center gap-2 data-[state=active]:bg-white text-sm lg:text-base">
                     <Package className="h-4 w-4" />
-                    <span className="hidden sm:inline">Products</span>
-                    <span className="sm:hidden">Products</span>
+                    <span>Products</span>
                   </TabsTrigger>
                 )}
                 <TabsTrigger value="projects" className="flex items-center gap-2 data-[state=active]:bg-white text-sm lg:text-base">
                   <Briefcase className="h-4 w-4" />
-                  <span className="hidden sm:inline">Projects</span>
-                  <span className="sm:hidden">Projects</span>
+                  <span>Projects</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -281,11 +279,11 @@ export default function DashboardPage() {
                       ) : (
                         <div className="space-y-4">
                           {products.slice(0, 3).map((product) => (
-                            <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                            <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 gap-4">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-900">{product.title}</h4>
                                 <p className="text-sm text-gray-600 mb-2">{product.description.substring(0, 100)}...</p>
-                                <div className="flex items-center gap-4 text-sm">
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
                                   <span className="text-green-600 font-medium">${parseFloat(product.price).toFixed(2)}</span>
                                   <Badge variant={product.status === 'approved' ? 'default' : 'secondary'}>
                                     {product.status}
@@ -299,10 +297,11 @@ export default function DashboardPage() {
                                   )}
                                 </div>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 w-full sm:w-auto">
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  className="flex-1 sm:flex-none"
                                   onClick={() => navigate(`/seller/products/${product.id}/edit`)}
                                 >
                                   <Edit className="h-4 w-4 mr-2" />
@@ -311,7 +310,7 @@ export default function DashboardPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  className="flex-1 sm:flex-none text-red-600 hover:text-red-700 hover:bg-red-50"
                                   onClick={() => {
                                     if (window.confirm('Are you sure you want to delete this product?')) {
                                       // Add delete mutation here
