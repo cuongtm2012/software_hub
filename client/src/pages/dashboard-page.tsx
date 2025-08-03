@@ -145,7 +145,7 @@ export default function DashboardPage() {
       <Header />
       <main className="pt-16">
         <div className="container mx-auto px-1 sm:px-4 py-2 sm:py-8 max-w-full overflow-x-hidden">
-          {/* Welcome Header with Action Buttons */}
+          {/* Welcome Header */}
           <div className="flex flex-col gap-3 mb-4 sm:mb-8 p-3 sm:p-4 lg:p-6 bg-white rounded-lg shadow-sm border">
             <div className="flex-1">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
@@ -154,27 +154,6 @@ export default function DashboardPage() {
               <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
                 Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
               </p>
-            </div>
-            <div className="flex flex-col gap-2 w-full">
-              {isSeller && (
-                <Button
-                  onClick={() => navigate('/seller/products/new')}
-                  className="bg-blue-600 hover:bg-blue-700 w-full text-sm sm:text-base"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Product
-                </Button>
-              )}
-              <Button
-                onClick={() => navigate('/projects/new')}
-                variant="outline"
-                className="border-green-200 text-green-700 hover:bg-green-50 w-full text-sm sm:text-base"
-                size="sm"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Project
-              </Button>
             </div>
           </div>
 
@@ -197,6 +176,18 @@ export default function DashboardPage() {
               {/* PRODUCTS TAB */}
               {isSeller && (
                 <TabsContent value="products" className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
+                  {/* Add Product Button */}
+                  <div className="flex justify-start">
+                    <Button
+                      onClick={() => navigate('/seller/products/new')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      size="default"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Product
+                    </Button>
+                  </div>
+
                   {/* Product Statistics Cards */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                     <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
@@ -360,6 +351,18 @@ export default function DashboardPage() {
 
               {/* PROJECTS TAB */}
               <TabsContent value="projects" className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
+                {/* New Project Button */}
+                <div className="flex justify-start">
+                  <Button
+                    onClick={() => navigate('/projects/new')}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    size="default"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Project
+                  </Button>
+                </div>
+
                 {/* Project Statistics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
                   <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
