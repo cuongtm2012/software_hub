@@ -160,27 +160,36 @@ export default function DashboardPage() {
           {/* Tab Navigation */}
           <Tabs defaultValue={isSeller ? "products" : "projects"} className="w-full">
             <div className="bg-white rounded-lg shadow-sm border">
-              <TabsList className={`grid w-full h-10 sm:h-12 bg-gray-50 m-1 ${isSeller ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {isSeller && (
-                  <TabsTrigger value="products" className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white text-xs sm:text-sm lg:text-base px-2 sm:px-4">
-                    <Package className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span>Products</span>
+              {/* Mobile-First Responsive Tab List */}
+              <div className="overflow-x-auto">
+                <TabsList className={`flex w-full min-w-fit h-12 bg-gray-50 m-1 ${isSeller ? '' : 'justify-center'}`}>
+                  {isSeller && (
+                    <TabsTrigger 
+                      value="products" 
+                      className="flex items-center gap-2 data-[state=active]:bg-white text-sm lg:text-base px-4 py-2 min-w-fit whitespace-nowrap flex-shrink-0"
+                    >
+                      <Package className="h-4 w-4" />
+                      <span>Products</span>
+                    </TabsTrigger>
+                  )}
+                  <TabsTrigger 
+                    value="projects" 
+                    className="flex items-center gap-2 data-[state=active]:bg-white text-sm lg:text-base px-4 py-2 min-w-fit whitespace-nowrap flex-shrink-0"
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    <span>Projects</span>
                   </TabsTrigger>
-                )}
-                <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white text-xs sm:text-sm lg:text-base px-2 sm:px-4">
-                  <Briefcase className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Projects</span>
-                </TabsTrigger>
-              </TabsList>
+                </TabsList>
+              </div>
 
               {/* PRODUCTS TAB */}
               {isSeller && (
-                <TabsContent value="products" className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
+                <TabsContent value="products" className="p-3 sm:p-4 lg:p-6 space-y-4 lg:space-y-6">
                   {/* Add Product Button */}
                   <div className="flex justify-start">
                     <Button
                       onClick={() => navigate('/seller/products/new')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                       size="default"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -189,9 +198,9 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Product Statistics Cards */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                     <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                      <CardContent className="p-2 sm:p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-xs sm:text-sm font-medium text-blue-600">Total Products</p>
@@ -203,7 +212,7 @@ export default function DashboardPage() {
                     </Card>
 
                     <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                      <CardContent className="p-2 sm:p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-xs sm:text-sm font-medium text-green-600">Active Products</p>
@@ -215,7 +224,7 @@ export default function DashboardPage() {
                     </Card>
 
                     <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-                      <CardContent className="p-2 sm:p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-xs sm:text-sm font-medium text-purple-600">Avg Rating</p>
@@ -229,7 +238,7 @@ export default function DashboardPage() {
                     </Card>
 
                     <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-                      <CardContent className="p-2 sm:p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-xs sm:text-sm font-medium text-orange-600">Total Sales</p>
@@ -350,12 +359,12 @@ export default function DashboardPage() {
               )}
 
               {/* PROJECTS TAB */}
-              <TabsContent value="projects" className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
+              <TabsContent value="projects" className="p-3 sm:p-4 lg:p-6 space-y-4 lg:space-y-6">
                 {/* New Project Button */}
                 <div className="flex justify-start">
                   <Button
                     onClick={() => navigate('/projects/new')}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
                     size="default"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -364,7 +373,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Project Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                   <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
