@@ -144,22 +144,23 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
       <main className="pt-16">
-        <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="container mx-auto px-1 sm:px-4 py-2 sm:py-8 max-w-full overflow-x-hidden">
           {/* Welcome Header with Action Buttons */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8 p-4 lg:p-6 bg-white rounded-lg shadow-sm border">
+          <div className="flex flex-col gap-3 mb-4 sm:mb-8 p-3 sm:p-4 lg:p-6 bg-white rounded-lg shadow-sm border">
             <div className="flex-1">
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
                 Welcome back, {user.name}!
               </h1>
-              <p className="text-gray-600 text-sm lg:text-base">
+              <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
                 Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 w-full lg:w-auto">
+            <div className="flex flex-col gap-2 w-full">
               {isSeller && (
                 <Button
                   onClick={() => navigate('/seller/products/new')}
-                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                  className="bg-blue-600 hover:bg-blue-700 w-full text-sm sm:text-base"
+                  size="sm"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Product
@@ -168,7 +169,8 @@ export default function DashboardPage() {
               <Button
                 onClick={() => navigate('/projects/new')}
                 variant="outline"
-                className="border-green-200 text-green-700 hover:bg-green-50 w-full sm:w-auto"
+                className="border-green-200 text-green-700 hover:bg-green-50 w-full text-sm sm:text-base"
+                size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
@@ -179,70 +181,70 @@ export default function DashboardPage() {
           {/* Tab Navigation */}
           <Tabs defaultValue={isSeller ? "products" : "projects"} className="w-full">
             <div className="bg-white rounded-lg shadow-sm border">
-              <TabsList className={`grid w-full h-12 bg-gray-50 m-1 ${isSeller ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              <TabsList className={`grid w-full h-10 sm:h-12 bg-gray-50 m-1 ${isSeller ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {isSeller && (
-                  <TabsTrigger value="products" className="flex items-center gap-2 data-[state=active]:bg-white text-sm lg:text-base">
-                    <Package className="h-4 w-4" />
+                  <TabsTrigger value="products" className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white text-xs sm:text-sm lg:text-base px-2 sm:px-4">
+                    <Package className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>Products</span>
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="projects" className="flex items-center gap-2 data-[state=active]:bg-white text-sm lg:text-base">
-                  <Briefcase className="h-4 w-4" />
+                <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white text-xs sm:text-sm lg:text-base px-2 sm:px-4">
+                  <Briefcase className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span>Projects</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* PRODUCTS TAB */}
               {isSeller && (
-                <TabsContent value="products" className="p-4 lg:p-6 space-y-4 lg:space-y-6">
+                <TabsContent value="products" className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
                   {/* Product Statistics Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                     <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                      <CardContent className="p-4">
+                      <CardContent className="p-2 sm:p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-medium text-blue-600">Total Products</p>
-                            <p className="text-2xl font-bold text-blue-900">{productStats.total}</p>
+                            <p className="text-xs sm:text-sm font-medium text-blue-600">Total Products</p>
+                            <p className="text-lg sm:text-2xl font-bold text-blue-900">{productStats.total}</p>
                           </div>
-                          <Package className="h-8 w-8 text-blue-600" />
+                          <Package className="h-5 w-5 sm:h-8 sm:w-8 text-blue-600" />
                         </div>
                       </CardContent>
                     </Card>
 
                     <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                      <CardContent className="p-4">
+                      <CardContent className="p-2 sm:p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-medium text-green-600">Active Products</p>
-                            <p className="text-2xl font-bold text-green-900">{productStats.active}</p>
+                            <p className="text-xs sm:text-sm font-medium text-green-600">Active Products</p>
+                            <p className="text-lg sm:text-2xl font-bold text-green-900">{productStats.active}</p>
                           </div>
-                          <CheckCircle2 className="h-8 w-8 text-green-600" />
+                          <CheckCircle2 className="h-5 w-5 sm:h-8 sm:w-8 text-green-600" />
                         </div>
                       </CardContent>
                     </Card>
 
                     <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-                      <CardContent className="p-4">
+                      <CardContent className="p-2 sm:p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-medium text-purple-600">Avg Rating</p>
-                            <p className="text-2xl font-bold text-purple-900">
+                            <p className="text-xs sm:text-sm font-medium text-purple-600">Avg Rating</p>
+                            <p className="text-lg sm:text-2xl font-bold text-purple-900">
                               {productStats.avgRating.toFixed(1)}
                             </p>
                           </div>
-                          <Star className="h-8 w-8 text-purple-600" />
+                          <Star className="h-5 w-5 sm:h-8 sm:w-8 text-purple-600" />
                         </div>
                       </CardContent>
                     </Card>
 
                     <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-                      <CardContent className="p-4">
+                      <CardContent className="p-2 sm:p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-medium text-orange-600">Total Sales</p>
-                            <p className="text-2xl font-bold text-orange-900">{productStats.totalSales}</p>
+                            <p className="text-xs sm:text-sm font-medium text-orange-600">Total Sales</p>
+                            <p className="text-lg sm:text-2xl font-bold text-orange-900">{productStats.totalSales}</p>
                           </div>
-                          <TrendingUp className="h-8 w-8 text-orange-600" />
+                          <TrendingUp className="h-5 w-5 sm:h-8 sm:w-8 text-orange-600" />
                         </div>
                       </CardContent>
                     </Card>
@@ -357,9 +359,9 @@ export default function DashboardPage() {
               )}
 
               {/* PROJECTS TAB */}
-              <TabsContent value="projects" className="p-4 lg:p-6 space-y-4 lg:space-y-6">
+              <TabsContent value="projects" className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
                 {/* Project Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
                   <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
