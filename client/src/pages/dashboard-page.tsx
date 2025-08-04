@@ -828,8 +828,9 @@ export default function DashboardPage() {
                                 <div 
                                   key={project.id} 
                                   className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                                  onClick={() => navigate(`/project/${project.id}`)}
                                 >
-                                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                  <div className="flex flex-col gap-4">
                                     {/* Project Info */}
                                     <div className="flex-1 space-y-3">
                                       {/* Header Row */}
@@ -878,16 +879,7 @@ export default function DashboardPage() {
                                       </div>
                                     </div>
                                     
-                                    {/* Action Button */}
-                                    <div className="flex-shrink-0">
-                                      <Button 
-                                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-105"
-                                        onClick={() => navigate(`/project/${project.id}`)}
-                                      >
-                                        <Eye className="h-4 w-4 mr-2" />
-                                        View Details
-                                      </Button>
-                                    </div>
+
                                   </div>
                                 </div>
                               );
@@ -897,108 +889,296 @@ export default function DashboardPage() {
                       </TabsContent>
 
                       {/* Pending Projects Tab */}
-                      <TabsContent value="pending" className="space-y-4">
-                        <div className="space-y-3">
-                          {displayAvailableProjects?.filter((p: any) => p.status === 'pending').map((project: any) => (
-                            <div key={`pending-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
-                                <p className="text-xs text-gray-600 mb-2">{project.description?.substring(0, 80)}...</p>
-                                <Badge variant="secondary" className="text-xs">pending</Badge>
+                      <TabsContent value="pending" className="space-y-4 mt-6">
+                        <div className="grid gap-4">
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'pending').map((project: any) => {
+                            const statusConfig = { 
+                              color: 'bg-blue-100 text-blue-800 border-blue-200', 
+                              icon: '🔄',
+                              dotColor: 'bg-blue-500'
+                            };
+                            
+                            return (
+                              <div 
+                                key={`pending-${project.id}`} 
+                                className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                                onClick={() => navigate(`/project/${project.id}`)}
+                              >
+                                <div className="flex flex-col gap-4">
+                                  <div className="flex-1 space-y-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex-1">
+                                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                          {project.title || project.name || 'Untitled Project'}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                          {project.email && `Contact: ${project.email}`}
+                                        </p>
+                                      </div>
+                                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold border ${statusConfig.color}`}>
+                                        <span>{statusConfig.icon}</span>
+                                        <span className="capitalize">Pending</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
+                                      {project.project_description || project.description || 'No description available for this project.'}
+                                    </p>
+                                    
+                                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="h-4 w-4" />
+                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}</span>
+                                      </div>
+                                      {project.budget && (
+                                        <div className="flex items-center gap-1">
+                                          <DollarSign className="h-4 w-4" />
+                                          <span>Budget: ${project.budget}</span>
+                                        </div>
+                                      )}
+                                      {project.deadline && (
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-4 w-4" />
+                                          <span>Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => navigate(`/projects/${project.id}`)}>
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  View
-                                </Button>
-                              </div>
-                            </div>
-                          )) || []}
+                            );
+                          }) || []}
                           {(!displayAvailableProjects?.filter((p: any) => p.status === 'pending').length) && (
-                            <div className="text-center py-8 text-gray-500">
-                              <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                              <p>No pending projects</p>
+                            <div className="text-center py-12 bg-blue-50 rounded-xl border-2 border-dashed border-blue-200">
+                              <Clock className="h-16 w-16 mx-auto mb-4 text-blue-300" />
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">No pending projects</h3>
+                              <p className="text-gray-600 mb-6 max-w-md mx-auto">There are no pending projects at the moment.</p>
                             </div>
                           )}
                         </div>
                       </TabsContent>
 
                       {/* In Progress Projects Tab */}
-                      <TabsContent value="in_progress" className="space-y-4">
-                        <div className="space-y-3">
-                          {displayAvailableProjects?.filter((p: any) => p.status === 'in_progress' || p.status === 'in-progress').map((project: any) => (
-                            <div key={`progress-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
-                                <p className="text-xs text-gray-600 mb-2">{project.description?.substring(0, 80)}...</p>
-                                <Badge variant="default" className="text-xs">in progress</Badge>
+                      <TabsContent value="in_progress" className="space-y-4 mt-6">
+                        <div className="grid gap-4">
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'in_progress' || p.status === 'in-progress').map((project: any) => {
+                            const statusConfig = { 
+                              color: 'bg-orange-100 text-orange-800 border-orange-200', 
+                              icon: '⚡',
+                              dotColor: 'bg-orange-500'
+                            };
+                            
+                            return (
+                              <div 
+                                key={`progress-${project.id}`} 
+                                className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-orange-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                                onClick={() => navigate(`/project/${project.id}`)}
+                              >
+                                <div className="flex flex-col gap-4">
+                                  <div className="flex-1 space-y-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex-1">
+                                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-orange-700 transition-colors">
+                                          {project.title || project.name || 'Untitled Project'}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                          {project.email && `Contact: ${project.email}`}
+                                        </p>
+                                      </div>
+                                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold border ${statusConfig.color}`}>
+                                        <span>{statusConfig.icon}</span>
+                                        <span className="capitalize">In Progress</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
+                                      {project.project_description || project.description || 'No description available for this project.'}
+                                    </p>
+                                    
+                                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="h-4 w-4" />
+                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}</span>
+                                      </div>
+                                      {project.budget && (
+                                        <div className="flex items-center gap-1">
+                                          <DollarSign className="h-4 w-4" />
+                                          <span>Budget: ${project.budget}</span>
+                                        </div>
+                                      )}
+                                      {project.deadline && (
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-4 w-4" />
+                                          <span>Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => navigate(`/projects/${project.id}`)}>
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  View
-                                </Button>
-                              </div>
-                            </div>
-                          )) || []}
+                            );
+                          }) || []}
                           {(!displayAvailableProjects?.filter((p: any) => p.status === 'in_progress' || p.status === 'in-progress').length) && (
-                            <div className="text-center py-8 text-gray-500">
-                              <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                              <p>No projects in progress</p>
+                            <div className="text-center py-12 bg-orange-50 rounded-xl border-2 border-dashed border-orange-200">
+                              <TrendingUp className="h-16 w-16 mx-auto mb-4 text-orange-300" />
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects in progress</h3>
+                              <p className="text-gray-600 mb-6 max-w-md mx-auto">There are no active projects at the moment.</p>
                             </div>
                           )}
                         </div>
                       </TabsContent>
 
                       {/* Completed Projects Tab */}
-                      <TabsContent value="completed" className="space-y-4">
-                        <div className="space-y-3">
-                          {displayAvailableProjects?.filter((p: any) => p.status === 'completed').map((project: any) => (
-                            <div key={`completed-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
-                                <p className="text-xs text-gray-600 mb-2">{project.description?.substring(0, 80)}...</p>
-                                <Badge variant="default" className="text-xs">completed</Badge>
+                      <TabsContent value="completed" className="space-y-4 mt-6">
+                        <div className="grid gap-4">
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'completed').map((project: any) => {
+                            const statusConfig = { 
+                              color: 'bg-green-100 text-green-800 border-green-200', 
+                              icon: '✅',
+                              dotColor: 'bg-green-500'
+                            };
+                            
+                            return (
+                              <div 
+                                key={`completed-${project.id}`} 
+                                className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                                onClick={() => navigate(`/project/${project.id}`)}
+                              >
+                                <div className="flex flex-col gap-4">
+                                  <div className="flex-1 space-y-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex-1">
+                                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-green-700 transition-colors">
+                                          {project.title || project.name || 'Untitled Project'}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                          {project.email && `Contact: ${project.email}`}
+                                        </p>
+                                      </div>
+                                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold border ${statusConfig.color}`}>
+                                        <span>{statusConfig.icon}</span>
+                                        <span className="capitalize">Completed</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
+                                      {project.project_description || project.description || 'No description available for this project.'}
+                                    </p>
+                                    
+                                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="h-4 w-4" />
+                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}</span>
+                                      </div>
+                                      {project.budget && (
+                                        <div className="flex items-center gap-1">
+                                          <DollarSign className="h-4 w-4" />
+                                          <span>Budget: ${project.budget}</span>
+                                        </div>
+                                      )}
+                                      {project.deadline && (
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-4 w-4" />
+                                          <span>Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => navigate(`/projects/${project.id}`)}>
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  View
-                                </Button>
-                              </div>
-                            </div>
-                          )) || []}
+                            );
+                          }) || []}
                           {(!displayAvailableProjects?.filter((p: any) => p.status === 'completed').length) && (
-                            <div className="text-center py-8 text-gray-500">
-                              <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                              <p>No completed projects</p>
+                            <div className="text-center py-12 bg-green-50 rounded-xl border-2 border-dashed border-green-200">
+                              <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-green-300" />
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">No completed projects</h3>
+                              <p className="text-gray-600 mb-6 max-w-md mx-auto">There are no completed projects at the moment.</p>
                             </div>
                           )}
                         </div>
                       </TabsContent>
 
                       {/* Cancelled Projects Tab */}
-                      <TabsContent value="cancelled" className="space-y-4">
-                        <div className="space-y-3">
-                          {displayAvailableProjects?.filter((p: any) => p.status === 'cancelled').map((project: any) => (
-                            <div key={`cancelled-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
-                                <p className="text-xs text-gray-600 mb-2">{project.description?.substring(0, 80)}...</p>
-                                <Badge variant="destructive" className="text-xs">cancelled</Badge>
+                      <TabsContent value="cancelled" className="space-y-4 mt-6">
+                        <div className="grid gap-4">
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'cancelled').map((project: any) => {
+                            const statusConfig = { 
+                              color: 'bg-red-100 text-red-800 border-red-200', 
+                              icon: '❌',
+                              dotColor: 'bg-red-500'
+                            };
+                            
+                            return (
+                              <div 
+                                key={`cancelled-${project.id}`} 
+                                className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-red-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                                onClick={() => navigate(`/project/${project.id}`)}
+                              >
+                                <div className="flex flex-col gap-4">
+                                  <div className="flex-1 space-y-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex-1">
+                                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-red-700 transition-colors">
+                                          {project.title || project.name || 'Untitled Project'}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                          {project.email && `Contact: ${project.email}`}
+                                        </p>
+                                      </div>
+                                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold border ${statusConfig.color}`}>
+                                        <span>{statusConfig.icon}</span>
+                                        <span className="capitalize">Cancelled</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
+                                      {project.project_description || project.description || 'No description available for this project.'}
+                                    </p>
+                                    
+                                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="h-4 w-4" />
+                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}</span>
+                                      </div>
+                                      {project.budget && (
+                                        <div className="flex items-center gap-1">
+                                          <DollarSign className="h-4 w-4" />
+                                          <span>Budget: ${project.budget}</span>
+                                        </div>
+                                      )}
+                                      {project.deadline && (
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-4 w-4" />
+                                          <span>Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => navigate(`/projects/${project.id}`)}>
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  View
-                                </Button>
-                              </div>
-                            </div>
-                          )) || []}
+                            );
+                          }) || []}
                           {(!displayAvailableProjects?.filter((p: any) => p.status === 'cancelled').length) && (
-                            <div className="text-center py-8 text-gray-500">
-                              <XCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                              <p>No cancelled projects</p>
+                            <div className="text-center py-12 bg-red-50 rounded-xl border-2 border-dashed border-red-200">
+                              <XCircle className="h-16 w-16 mx-auto mb-4 text-red-300" />
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">No cancelled projects</h3>
+                              <p className="text-gray-600 mb-6 max-w-md mx-auto">There are no cancelled projects at the moment.</p>
                             </div>
                           )}
                         </div>
