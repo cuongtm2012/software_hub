@@ -532,7 +532,9 @@ export class DatabaseStorage implements IStorage {
       offset?: number;
     }
   ): Promise<{ projects: Project[]; total: number }> {
-    let query = db.select().from(projects);
+    let query = db.select().from(externalRequests).where(
+      sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
+    );
     
     if (status && status !== 'all') {
       // Map frontend status to database status
@@ -543,17 +545,21 @@ export class DatabaseStorage implements IStorage {
         'cancelled': 'cancelled'
       };
       const dbStatus = statusMap[status] || status;
-      query = query.where(eq(projects.status, dbStatus));
+      query = query.where(and(
+        eq(externalRequests.status, dbStatus as any),
+        sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
+      ));
     }
     
     // Get total count
     const [{ count }] = await db
       .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(projects);
+      .from(externalRequests)
+      .where(sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`);
     
     // Apply pagination and ordering
     const projectsList = await query
-      .orderBy(desc(projects.created_at))
+      .orderBy(desc(externalRequests.created_at))
       .limit(options?.limit || 50)
       .offset(options?.offset || 0);
     
