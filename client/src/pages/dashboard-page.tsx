@@ -131,6 +131,12 @@ export default function DashboardPage() {
     enabled: !!user && showAllProjects,
   });
 
+  // Fetch available projects for the tabs
+  const { data: availableProjectsData, isLoading: isLoadingAvailableProjects } = useQuery<{ projects: Project[]; total: number }>({
+    queryKey: ['/api/projects', { status: selectedProjectStatus !== 'all' ? selectedProjectStatus : undefined }],
+    enabled: !!user,
+  });
+
   const { data: quotes, isLoading: isLoadingQuotes } = useQuery<Quote[]>({
     queryKey: ['/api/quotes'],
     enabled: !!user,
@@ -197,6 +203,9 @@ export default function DashboardPage() {
     quotes: quotes?.length || 0,
     acceptedQuotes: quotes?.filter(q => q.status === 'accepted').length || 0
   };
+
+  // Available projects for tabs display
+  const displayAvailableProjects = availableProjectsData?.projects || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -666,7 +675,7 @@ export default function DashboardPage() {
                                           setCurrentProjectPage(pageNum);
                                           setIsLoadingProjectPagination(true);
                                         }}
-                                        disabled={isLoadingPaginatedExternal || isLoadingPaginatedAvailable}
+                                        disabled={isLoadingPaginatedProjects}
                                       >
                                         {pageNum}
                                       </Button>
@@ -690,7 +699,7 @@ export default function DashboardPage() {
                             )}
                             
                             {/* Loading indicator for pagination */}
-                            {showAllProjects && (isLoadingPaginatedExternal || isLoadingPaginatedAvailable) && (
+                            {showAllProjects && isLoadingPaginatedProjects && (
                               <div className="flex items-center justify-center py-4">
                                 <Loader2 className="h-6 w-6 animate-spin text-green-600" />
                                 <span className="ml-2 text-sm text-gray-600">Loading projects...</span>
