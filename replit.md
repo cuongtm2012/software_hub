@@ -65,6 +65,14 @@ The application uses a comprehensive PostgreSQL schema with the following main e
 - Maintain separation between client and server code
 
 ## Recent Changes
+- **2025-08-04**: Successfully completed database consolidation by removing redundant projects table:
+  - ✅ Enhanced external_requests table with comprehensive project fields (title, description, budget, deadline, client_id, assigned_developer_id, status)
+  - ✅ Physically dropped projects table from PostgreSQL database using CASCADE to remove related foreign key constraints
+  - ✅ Refactored all storage methods to use externalRequests exclusively for unified project data management
+  - ✅ Updated all schema relations and foreign key references from projects to externalRequests
+  - ✅ Fixed all TypeScript/LSP errors and import statements in server/storage.ts
+  - ✅ Eliminated data inconsistency between "Recent Projects" and "View All Available Projects" sections
+  - ✅ Single source of truth established for all project operations using external_requests table
 - **2025-08-04**: Fixed all critical issues reported by user:
   - ✅ Fixed seller product creation API calls (corrected apiRequest parameter structure)
   - ✅ Fixed dashboard "View All Products" delete functionality with proper API calls
