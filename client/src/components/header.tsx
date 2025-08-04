@@ -143,13 +143,15 @@ export function Header() {
                       >
                         <span className="flex-1">Your Profile</span>
                       </DropdownMenuItem>
-                      {/* Common user dashboard for all users */}
-                      <DropdownMenuItem
-                        onClick={() => navigate("/dashboard")}
-                        className="flex items-center gap-2 py-2 cursor-pointer"
-                      >
-                        <span className="flex-1">User Dashboard</span>
-                      </DropdownMenuItem>
+                      {/* Conditionally render User Dashboard if not an admin */}
+                      {user.role !== "admin" && (
+                        <DropdownMenuItem
+                          onClick={() => navigate("/dashboard")}
+                          className="flex items-center gap-2 py-2 cursor-pointer"
+                        >
+                          <span className="flex-1">User Dashboard</span>
+                        </DropdownMenuItem>
+                      )}
 
                       {/* Developer specific options */}
                       {user.role === "developer" && (
