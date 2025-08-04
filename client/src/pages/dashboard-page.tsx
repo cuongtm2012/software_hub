@@ -10,7 +10,7 @@ import {
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
   Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp, 
-  ChevronLeft, ChevronRight, Edit3
+  ChevronLeft, ChevronRight, Edit3, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -713,33 +713,55 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* View All Available Projects Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Code className="h-5 w-5" />
+                <Card className="shadow-lg border-0 bg-gradient-to-br from-white via-green-50/30 to-green-100/20">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-800">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Code className="h-6 w-6 text-green-600" />
+                      </div>
                       View All Available Projects
                     </CardTitle>
-                    <CardDescription>
-                      Browse and filter projects by status
+                    <CardDescription className="text-base text-gray-600">
+                      Browse and filter projects by status with enhanced visual details
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    {/* Project Filter Tabs */}
+                  <CardContent className="space-y-6">
+                    {/* Enhanced Project Filter Tabs */}
                     <Tabs defaultValue="all" className="w-full">
-                      <TabsList className="grid w-full grid-cols-5 h-10 bg-gray-50 mb-4">
-                        <TabsTrigger value="all" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                      <TabsList className="grid w-full grid-cols-5 h-12 bg-gradient-to-r from-gray-100 to-gray-50 p-1 rounded-xl shadow-inner">
+                        <TabsTrigger 
+                          value="all" 
+                          className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-green-700 transition-all duration-200 rounded-lg"
+                        >
+                          <div className="h-2 w-2 rounded-full bg-gray-400 data-[state=active]:bg-green-500"></div>
                           All
                         </TabsTrigger>
-                        <TabsTrigger value="pending" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                        <TabsTrigger 
+                          value="pending" 
+                          className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 transition-all duration-200 rounded-lg"
+                        >
+                          <div className="h-2 w-2 rounded-full bg-blue-400"></div>
                           Pending
                         </TabsTrigger>
-                        <TabsTrigger value="in_progress" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                        <TabsTrigger 
+                          value="in_progress" 
+                          className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-orange-700 transition-all duration-200 rounded-lg"
+                        >
+                          <div className="h-2 w-2 rounded-full bg-orange-400"></div>
                           In Progress
                         </TabsTrigger>
-                        <TabsTrigger value="completed" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                        <TabsTrigger 
+                          value="completed" 
+                          className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-green-700 transition-all duration-200 rounded-lg"
+                        >
+                          <div className="h-2 w-2 rounded-full bg-green-400"></div>
                           Completed
                         </TabsTrigger>
-                        <TabsTrigger value="cancelled" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                        <TabsTrigger 
+                          value="cancelled" 
+                          className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-red-700 transition-all duration-200 rounded-lg"
+                        >
+                          <div className="h-2 w-2 rounded-full bg-red-400"></div>
                           Cancelled
                         </TabsTrigger>
                       </TabsList>
@@ -751,43 +773,125 @@ export default function DashboardPage() {
                             <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                           </div>
                         ) : !displayAvailableProjects || displayAvailableProjects.length === 0 ? (
-                          <div className="text-center py-8 text-gray-500">
-                            <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                            <h3 className="font-semibold text-gray-900 mb-2">No projects found</h3>
-                            <p className="text-sm text-gray-600 mb-4">There are no available projects at the moment.</p>
+                          <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                            <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects found</h3>
+                            <p className="text-gray-600 mb-6 max-w-md mx-auto">There are no available projects at the moment. Check back later or try a different status filter.</p>
+                            <Button 
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => navigate('/request-project')}
+                            >
+                              Submit New Project Request
+                            </Button>
                           </div>
                         ) : (
-                          <div className="space-y-3">
-                            {displayAvailableProjects.map((project: any) => (
-                              <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
-                                <div className="flex-1">
-                                  <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
-                                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{project.description?.substring(0, 80)}...</p>
-                                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                                    <Badge variant={project.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                                      {project.status}
-                                    </Badge>
-                                    {project.budget && (
-                                      <span className="text-green-600 font-medium">${parseFloat(project.budget).toFixed(2)}</span>
-                                    )}
-                                    {project.deadline && (
-                                      <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
-                                    )}
+                          <div className="grid gap-4">
+                            {displayAvailableProjects.map((project: any) => {
+                              const getStatusConfig = (status: string) => {
+                                switch (status) {
+                                  case 'pending':
+                                    return { 
+                                      color: 'bg-blue-100 text-blue-800 border-blue-200', 
+                                      icon: '🔄',
+                                      dotColor: 'bg-blue-500'
+                                    };
+                                  case 'in_progress':
+                                    return { 
+                                      color: 'bg-orange-100 text-orange-800 border-orange-200', 
+                                      icon: '⚡',
+                                      dotColor: 'bg-orange-500'
+                                    };
+                                  case 'completed':
+                                    return { 
+                                      color: 'bg-green-100 text-green-800 border-green-200', 
+                                      icon: '✅',
+                                      dotColor: 'bg-green-500'
+                                    };
+                                  case 'cancelled':
+                                    return { 
+                                      color: 'bg-red-100 text-red-800 border-red-200', 
+                                      icon: '❌',
+                                      dotColor: 'bg-red-500'
+                                    };
+                                  default:
+                                    return { 
+                                      color: 'bg-gray-100 text-gray-800 border-gray-200', 
+                                      icon: '📋',
+                                      dotColor: 'bg-gray-500'
+                                    };
+                                }
+                              };
+                              
+                              const statusConfig = getStatusConfig(project.status);
+                              
+                              return (
+                                <div 
+                                  key={project.id} 
+                                  className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                                >
+                                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                    {/* Project Info */}
+                                    <div className="flex-1 space-y-3">
+                                      {/* Header Row */}
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="flex-1">
+                                          <h4 className="text-lg font-bold text-gray-900 group-hover:text-green-700 transition-colors">
+                                            {project.title || project.name || 'Untitled Project'}
+                                          </h4>
+                                          <p className="text-sm text-gray-600 mt-1">
+                                            {project.email && `Contact: ${project.email}`}
+                                          </p>
+                                        </div>
+                                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold border ${statusConfig.color}`}>
+                                          <span>{statusConfig.icon}</span>
+                                          <span className="capitalize">{project.status.replace('_', ' ')}</span>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Description */}
+                                      <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
+                                        {project.project_description || project.description || 'No description available for this project.'}
+                                      </p>
+                                      
+                                      {/* Metadata Row */}
+                                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                        <div className="flex items-center gap-1">
+                                          <Calendar className="h-4 w-4" />
+                                          <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
+                                            month: 'short', 
+                                            day: 'numeric', 
+                                            year: 'numeric' 
+                                          })}</span>
+                                        </div>
+                                        {project.budget && (
+                                          <div className="flex items-center gap-1">
+                                            <DollarSign className="h-4 w-4" />
+                                            <span>Budget: ${project.budget}</span>
+                                          </div>
+                                        )}
+                                        {project.deadline && (
+                                          <div className="flex items-center gap-1">
+                                            <Clock className="h-4 w-4" />
+                                            <span>Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Action Button */}
+                                    <div className="flex-shrink-0">
+                                      <Button 
+                                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-105"
+                                        onClick={() => navigate(`/project/${project.id}`)}
+                                      >
+                                        <Eye className="h-4 w-4 mr-2" />
+                                        View Details
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs px-2 py-1"
-                                    onClick={() => navigate(`/projects/${project.id}`)}
-                                  >
-                                    <Eye className="h-3 w-3 mr-1" />
-                                    View
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </TabsContent>
