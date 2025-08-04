@@ -336,9 +336,7 @@ export default function DashboardPage() {
                                       // Add delete mutation here
                                       const deleteProduct = async () => {
                                         try {
-                                          await apiRequest(`/api/seller/products/${product.id}`, {
-                                            method: 'DELETE'
-                                          });
+                                          await apiRequest('DELETE', `/api/seller/products/${product.id}`);
                                           queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
                                           toast({
                                             title: "Success",

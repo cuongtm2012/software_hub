@@ -65,6 +65,12 @@ The application uses a comprehensive PostgreSQL schema with the following main e
 - Maintain separation between client and server code
 
 ## Recent Changes
+- **2025-08-04**: Fixed all critical issues reported by user:
+  - ✅ Fixed seller product creation API calls (corrected apiRequest parameter structure)
+  - ✅ Fixed dashboard "View All Products" delete functionality with proper API calls
+  - ✅ Enhanced project request form with duplicate technology stack validation to prevent duplicates
+  - ✅ Fixed Vietnamese phone number validation (+84378246333, 0378246333 formats now supported)
+  - ✅ Added "Return to Project Dashboard" button to project request success page alongside existing functionality
 - **2025-08-04**: Replaced quick actions panel with comprehensive "View All Available Projects" section featuring filterable tabs (All, Pending, In Progress, Completed, Cancelled)
 - **2025-08-04**: Enhanced project browsing experience with status-based filtering using intuitive tab interface
 - **2025-08-04**: Added role-based project data fetching with proper authentication for different user types

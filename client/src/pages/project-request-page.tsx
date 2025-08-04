@@ -58,6 +58,7 @@ export default function ProjectRequestPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
   
   // Get current user data
   const { data: user } = useQuery({
@@ -89,14 +90,41 @@ export default function ProjectRequestPage() {
     }
   }, [user, form]);
 
-  // Function to add technology suggestion to requirements
+  // Function to add technology suggestion and prevent duplicates
   const addTechSuggestion = (tech: string) => {
     const currentRequirements = form.getValues("requirements");
+    const currentTechs = currentRequirements.split(/[,\n]/).map(t => t.trim()).filter(Boolean);
+    
+    // Check if technology is already mentioned
+    const techExists = currentTechs.some(existing => 
+      existing.toLowerCase().includes(tech.toLowerCase()) || 
+      tech.toLowerCase().includes(existing.toLowerCase())
+    );
+    
+    if (techExists) {
+      toast({
+        title: "Technology already mentioned",
+        description: `${tech} is already included in your requirements.`,
+        variant: "default",
+      });
+      return;
+    }
+    
+    // Add technology to requirements
     const newRequirements = currentRequirements 
-      ? `${currentRequirements}\n- ${tech}` 
+      ? `${currentRequirements}\n- ${tech}`
       : `- ${tech}`;
+    
     form.setValue("requirements", newRequirements);
+    setSelectedTechnologies(prev => [...prev, tech]);
+    
+    toast({
+      title: "Technology added",
+      description: `${tech} has been added to your requirements.`,
+    });
   };
+
+
 
   // Create external request mutation
   const createExternalRequestMutation = useMutation({
