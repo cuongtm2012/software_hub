@@ -10,7 +10,7 @@ import {
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
   Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp, 
-  ChevronLeft, ChevronRight, Edit3, Calendar
+  ChevronLeft, ChevronRight, Edit3, CalendarDays
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -857,7 +857,7 @@ export default function DashboardPage() {
                                       {/* Metadata Row */}
                                       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                         <div className="flex items-center gap-1">
-                                          <Calendar className="h-4 w-4" />
+                                          <CalendarDays className="h-4 w-4" />
                                           <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
                                             month: 'short', 
                                             day: 'numeric', 
@@ -927,7 +927,7 @@ export default function DashboardPage() {
                                     
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
-                                        <Calendar className="h-4 w-4" />
+                                        <CalendarDays className="h-4 w-4" />
                                         <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
                                           month: 'short', 
                                           day: 'numeric', 
@@ -1001,7 +1001,7 @@ export default function DashboardPage() {
                                     
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
-                                        <Calendar className="h-4 w-4" />
+                                        <CalendarDays className="h-4 w-4" />
                                         <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
                                           month: 'short', 
                                           day: 'numeric', 
@@ -1075,7 +1075,7 @@ export default function DashboardPage() {
                                     
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
-                                        <Calendar className="h-4 w-4" />
+                                        <CalendarDays className="h-4 w-4" />
                                         <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
                                           month: 'short', 
                                           day: 'numeric', 
@@ -1149,7 +1149,7 @@ export default function DashboardPage() {
                                     
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
-                                        <Calendar className="h-4 w-4" />
+                                        <CalendarDays className="h-4 w-4" />
                                         <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
                                           month: 'short', 
                                           day: 'numeric', 
