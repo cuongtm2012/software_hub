@@ -237,8 +237,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { status } = req.body;
       const softwareId = parseInt(id);
       
-      if (!['approved', 'rejected'].includes(status)) {
-        return res.status(400).json({ message: "Invalid status" });
+      if (!['pending', 'approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be: pending, approved, or rejected" });
       }
       
       const updatedSoftware = await storage.updateSoftwareStatus(softwareId, status);

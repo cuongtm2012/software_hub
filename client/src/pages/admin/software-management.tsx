@@ -140,11 +140,16 @@ export default function SoftwareManagement() {
   // Update software mutation
   const updateSoftwareMutation = useMutation({
     mutationFn: async (data: { id: number; updates: Partial<Software> }) => {
-      const response = await apiRequest(`/api/admin/software/${data.id}`, {
+      const response = await fetch(`/api/admin/software/${data.id}`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
         body: JSON.stringify(data.updates)
       });
-      return response;
+      if (!response.ok) throw new Error('Failed to update software');
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -167,10 +172,12 @@ export default function SoftwareManagement() {
   // Delete software mutation
   const deleteSoftwareMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest(`/api/admin/software/${id}`, {
-        method: 'DELETE'
+      const response = await fetch(`/api/admin/software/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
       });
-      return response;
+      if (!response.ok) throw new Error('Failed to delete software');
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -191,11 +198,22 @@ export default function SoftwareManagement() {
   // Status update mutation
   const updateStatusMutation = useMutation({
     mutationFn: async (data: { id: number; status: SoftwareStatus }) => {
-      const response = await apiRequest(`/api/admin/software/${data.id}/status`, {
+      console.log('Updating software status:', data);
+      const response = await fetch(`/api/admin/software/${data.id}/status`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
         body: JSON.stringify({ status: data.status })
       });
-      return response;
+      console.log('Status update response:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Status update error:', errorText);
+        throw new Error(`Failed to update status: ${response.status} ${errorText}`);
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -246,10 +264,10 @@ export default function SoftwareManagement() {
     
     // Check if only status changed for quick status update
     if (editFormData.status !== selectedSoftware.status && 
-        Object.keys(editFormData).length === 1 || 
+        (Object.keys(editFormData).length === 1 || 
         (Object.keys(editFormData).length === Object.keys(selectedSoftware).length && 
-         Object.keys(editFormData).filter(key => editFormData[key] !== selectedSoftware[key]).length === 1 &&
-         editFormData.status !== selectedSoftware.status)) {
+         Object.keys(editFormData).filter(key => (editFormData as any)[key] !== (selectedSoftware as any)[key]).length === 1 &&
+         editFormData.status !== selectedSoftware.status))) {
       updateStatusMutation.mutate({
         id: selectedSoftware.id,
         status: editFormData.status as SoftwareStatus
@@ -450,7 +468,7 @@ export default function SoftwareManagement() {
                   </TableCell>
                 </TableRow>
               ) : (
-                software.map((item, index) => (
+                software.map((item: Software, index: number) => (
                   <TableRow key={item.id}>
                     <TableCell>{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="font-medium">{item.name}</TableCell>
