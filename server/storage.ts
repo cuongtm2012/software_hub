@@ -1,7 +1,7 @@
 import { 
   users, softwares, categories, reviews, userDownloads,
-  projects, quotes, messages, portfolios, portfolioReviews,
-  products, orders, orderItems, payments, productReviews, externalRequests,
+  externalRequests, quotes, messages, portfolios, portfolioReviews,
+  products, orders, orderItems, payments, productReviews,
   sellerProfiles, cartItems, supportTickets, salesAnalytics,
   serviceRequests, serviceQuotations, serviceProjects, servicePayments,
   type User, type InsertUser, 
@@ -581,18 +581,19 @@ export class DatabaseStorage implements IStorage {
       type: sql<string>`'external_request'`.as('type')
     }).from(externalRequests).where(eq(externalRequests.email, userEmail));
 
-    // Get available projects
+    // Note: Since projects table is removed and everything is now in externalRequests,
+    // we'll use a subset of externalRequests that have proper project structure
     const availableProjectsQuery = db.select({
-      id: projects.id,
-      title: projects.title,
-      description: projects.description,
-      project_description: sql<string>`null`.as('project_description'),
-      status: projects.status,
-      created_at: projects.created_at,
-      budget: projects.budget,
-      deadline: projects.deadline,
+      id: externalRequests.id,
+      title: externalRequests.title,
+      description: sql<string>`null`.as('description'),
+      project_description: externalRequests.project_description,
+      status: externalRequests.status,
+      created_at: externalRequests.created_at,
+      budget: externalRequests.budget,
+      deadline: externalRequests.deadline,
       type: sql<string>`'project'`.as('type')
-    }).from(projects);
+    }).from(externalRequests).where(sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`);
 
     // Apply status filter if provided
     if (status && status !== 'all') {
@@ -604,7 +605,10 @@ export class DatabaseStorage implements IStorage {
       };
       const dbStatus = statusMap[status] || status;
       userRequestsQuery.where(eq(externalRequests.status, dbStatus));
-      availableProjectsQuery.where(eq(projects.status, dbStatus));
+      availableProjectsQuery.where(and(
+        eq(externalRequests.status, dbStatus),
+        sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
+      ));
     }
 
     // Execute queries to get counts
@@ -615,7 +619,8 @@ export class DatabaseStorage implements IStorage {
 
     const [availableProjectsCount] = await db
       .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(projects);
+      .from(externalRequests)
+      .where(sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`);
 
     const totalCount = userRequestsCount.count + availableProjectsCount.count;
 
@@ -627,7 +632,7 @@ export class DatabaseStorage implements IStorage {
 
     const remainingLimit = Math.max(0, (options?.limit || 10) - userRequests.length);
     const availableProjects = remainingLimit > 0 ? await availableProjectsQuery
-      .orderBy(desc(projects.created_at))
+      .orderBy(desc(externalRequests.created_at))
       .limit(remainingLimit)
       .offset(Math.max(0, (options?.offset || 0) - userRequestsCount.count)) : [];
 
@@ -641,7 +646,7 @@ export class DatabaseStorage implements IStorage {
   // Phase 2: Project Management
   async createProject(project: InsertProject, clientId?: number): Promise<Project> {
     const [createdProject] = await db
-      .insert(projects)
+      .insert(externalRequests)
       .values({
         ...project,
         client_id: clientId
@@ -651,31 +656,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProjectById(id: number): Promise<Project | undefined> {
-    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    const [project] = await db.select().from(externalRequests).where(eq(externalRequests.id, id));
     return project;
   }
 
   async getProjectsByClientId(clientId: number): Promise<Project[]> {
     return db
       .select()
-      .from(projects)
-      .where(eq(projects.client_id, clientId))
-      .orderBy(desc(projects.created_at));
+      .from(externalRequests)
+      .where(eq(externalRequests.client_id, clientId))
+      .orderBy(desc(externalRequests.created_at));
   }
 
   async getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: Project[], total: number }> {
-    let query = db.select().from(projects);
+    let query = db.select().from(externalRequests);
     
     if (status) {
-      query = query.where(eq(projects.status, status as any));
+      query = query.where(eq(externalRequests.status, status as any));
     }
     
     // Get total count
-    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(projects);
+    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(externalRequests);
     const total = totalResult[0]?.count || 0;
     
     // Apply ordering and pagination
-    query = query.orderBy(desc(projects.created_at));
+    query = query.orderBy(desc(externalRequests.created_at));
     
     if (limit) {
       query = query.limit(limit);
@@ -695,9 +700,9 @@ export class DatabaseStorage implements IStorage {
 
   async updateProjectStatus(id: number, status: string): Promise<Project | undefined> {
     const [updatedProject] = await db
-      .update(projects)
-      .set({ status: status as any })
-      .where(eq(projects.id, id))
+      .update(externalRequests)
+      .set({ status: status as any, updated_at: new Date() })
+      .where(eq(externalRequests.id, id))
       .returning();
     return updatedProject;
   }

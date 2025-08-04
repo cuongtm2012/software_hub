@@ -118,36 +118,43 @@ export const reviews = pgTable("reviews", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
-// External Requests Table
+// Enhanced external_requests table to serve as the unified projects table
 export const externalRequests = pgTable("external_requests", {
   id: serial("id").primaryKey(),
+  // Contact information
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
+  
+  // Project details (enhanced for unified use)
+  title: text("title"), // Optional title for internal projects  
   project_description: text("project_description").notNull(),
+  requirements: text("requirements"), // Detailed requirements
+  technology_stack: text("technology_stack").array(),
+  timeline: text("timeline"),
+  budget_range: text("budget_range"),
+  budget: numeric("budget"), // Specific budget amount
+  deadline: timestamp("deadline"), // Specific deadline
+  
+  // Project management
   status: externalRequestStatusEnum("status").default('pending').notNull(),
+  client_id: integer("client_id").references(() => users.id), // Link to registered users
+  assigned_developer_id: integer("assigned_developer_id").references(() => users.id), // Assigned developer
+  priority: text("priority").default('normal'), // 'low', 'normal', 'high', 'urgent'
+  admin_notes: text("admin_notes"), // Internal notes
+  contact_email: text("contact_email"), // For external requests
+  contact_phone: text("contact_phone"), // For external requests
+  
   created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 // Phase 2: Project Management Tables
-export const projects = pgTable("projects", {
-  id: serial("id").primaryKey(),
-  client_id: integer("client_id").references(() => users.id),  // Nullable for external requests
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  requirements: text("requirements"),
-  budget: numeric("budget"),
-  deadline: timestamp("deadline"),
-  status: projectStatusEnum("status").default('pending').notNull(),
-  contact_email: text("contact_email"),  // For external requests
-  contact_phone: text("contact_phone"),  // For external requests
-  external_request_id: integer("external_request_id").references(() => externalRequests.id), // Link to external request if applicable
-  created_at: timestamp("created_at").defaultNow().notNull(),
-});
+// REMOVED: projects table - now using external_requests for all project data
 
 export const quotes = pgTable("quotes", {
   id: serial("id").primaryKey(),
-  project_id: integer("project_id").references(() => projects.id).notNull(),
+  project_id: integer("project_id").references(() => externalRequests.id).notNull(),
   developer_id: integer("developer_id").references(() => users.id).notNull(),
   price: numeric("price").notNull(),
   timeline: text("timeline").notNull(),
@@ -158,7 +165,7 @@ export const quotes = pgTable("quotes", {
 
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
-  project_id: integer("project_id").references(() => projects.id).notNull(),
+  project_id: integer("project_id").references(() => externalRequests.id).notNull(),
   sender_id: integer("sender_id").references(() => users.id).notNull(),
   content: text("content").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -232,7 +239,7 @@ export const orderItems = pgTable("order_items", {
 export const payments = pgTable("payments", {
   id: serial("id").primaryKey(),
   order_id: integer("order_id").references(() => orders.id),
-  project_id: integer("project_id").references(() => projects.id),
+  project_id: integer("project_id").references(() => externalRequests.id),
   amount: numeric("amount").notNull(),
   payment_method: text("payment_method").notNull(),
   status: paymentStatusEnum("status").default('pending').notNull(),
@@ -369,7 +376,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   softwares: many(softwares),
   reviews: many(reviews),
   downloads: many(userDownloads),
-  clientProjects: many(projects, { relationName: "clientProjects" }),
+  clientProjects: many(externalRequests, { relationName: "clientProjects" }),
   developerQuotes: many(quotes, { relationName: "developerQuotes" }),
   messages: many(messages, { relationName: "senderMessages" }),
   portfolios: many(portfolios),
@@ -416,9 +423,13 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   }),
 }));
 
-export const projectsRelations = relations(projects, ({ one, many }) => ({
+export const externalRequestsRelations = relations(externalRequests, ({ one, many }) => ({
   client: one(users, {
-    fields: [projects.client_id],
+    fields: [externalRequests.client_id],
+    references: [users.id],
+  }),
+  assignedDeveloper: one(users, {
+    fields: [externalRequests.assigned_developer_id],
     references: [users.id],
   }),
   quotes: many(quotes),
@@ -427,9 +438,9 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
 }));
 
 export const quotesRelations = relations(quotes, ({ one }) => ({
-  project: one(projects, {
+  project: one(externalRequests, {
     fields: [quotes.project_id],
-    references: [projects.id],
+    references: [externalRequests.id],
   }),
   developer: one(users, {
     fields: [quotes.developer_id],
@@ -438,9 +449,9 @@ export const quotesRelations = relations(quotes, ({ one }) => ({
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
-  project: one(projects, {
+  project: one(externalRequests, {
     fields: [messages.project_id],
-    references: [projects.id],
+    references: [externalRequests.id],
   }),
   sender: one(users, {
     fields: [messages.sender_id],
@@ -509,9 +520,9 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
     fields: [payments.order_id],
     references: [orders.id],
   }),
-  project: one(projects, {
+  project: one(externalRequests, {
     fields: [payments.project_id],
-    references: [projects.id],
+    references: [externalRequests.id],
   }),
 }));
 
@@ -674,13 +685,14 @@ export const insertExternalRequestSchema = createInsertSchema(externalRequests).
   status: true,
 });
 
-// Phase 2 schemas
-export const insertProjectSchema = createInsertSchema(projects).omit({
+// Phase 2 schemas - Project schema now uses externalRequests as unified table
+export const insertProjectSchema = createInsertSchema(externalRequests).omit({
   id: true,
   created_at: true,
+  updated_at: true,
   status: true,
   client_id: true,
-  external_request_id: true,
+  assigned_developer_id: true,
 });
 
 export const insertQuoteSchema = createInsertSchema(quotes).omit({
@@ -824,8 +836,8 @@ export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
-// Phase 2 types
-export type Project = typeof projects.$inferSelect;
+// Phase 2 types - Project is now unified with ExternalRequest
+export type Project = typeof externalRequests.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 
 export type Quote = typeof quotes.$inferSelect;
