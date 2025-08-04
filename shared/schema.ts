@@ -39,6 +39,9 @@ export const serviceQuotationStatusEnum = pgEnum('service_quotation_status', ['p
 // IT Service payment type enum
 export const servicePaymentTypeEnum = pgEnum('service_payment_type', ['deposit', 'final', 'full']);
 
+// External request status enum for IT services workflow
+export const externalRequestStatusEnum = pgEnum('external_request_status', ['pending', 'in_progress', 'completed', 'cancelled', 'contacted', 'converted', 'rejected']);
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -122,7 +125,7 @@ export const externalRequests = pgTable("external_requests", {
   email: text("email").notNull(),
   phone: text("phone"),
   project_description: text("project_description").notNull(),
-  status: text("status").default('new').notNull(), // 'new', 'contacted', 'converted', 'rejected'
+  status: externalRequestStatusEnum("status").default('pending').notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 

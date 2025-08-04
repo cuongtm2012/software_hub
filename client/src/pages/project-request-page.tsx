@@ -142,7 +142,7 @@ Requirements: ${data.requirements}
 Budget: ${data.budget || 'N/A'}
 Timeline: ${data.timeline || 'N/A'}
         `.trim(),
-        status: "new",
+        status: "pending",
       });
       
       return await response.json();
