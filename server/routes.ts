@@ -712,7 +712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (
         req.user?.role !== 'admin' && 
         project.client_id !== req.user?.id && 
-        project.developer_id !== req.user?.id
+        project.assigned_developer_id !== req.user?.id
       ) {
         return res.status(403).json({ message: "You do not have permission to view this project" });
       }
@@ -768,12 +768,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (
         req.user?.role !== 'admin' && 
         project.client_id !== req.user?.id && 
-        project.developer_id !== req.user?.id
+        project.assigned_developer_id !== req.user?.id
       ) {
         return res.status(403).json({ message: "You do not have permission to view quotes for this project" });
       }
       
-      const quotes = await storage.getProjectQuotes(parseInt(id));
+      const quotes = await storage.getQuotesByProjectId(parseInt(id));
       res.json(quotes);
     } catch (error) {
       next(error);
@@ -879,12 +879,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (
         req.user?.role !== 'admin' && 
         project.client_id !== req.user?.id && 
-        project.developer_id !== req.user?.id
+        project.assigned_developer_id !== req.user?.id
       ) {
         return res.status(403).json({ message: "You do not have permission to view messages for this project" });
       }
       
-      const messages = await storage.getProjectMessages(parseInt(id));
+      const messages = await storage.getMessagesByProjectId(parseInt(id));
       res.json(messages);
     } catch (error) {
       next(error);
@@ -904,7 +904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (
         req.user?.role !== 'admin' && 
         project.client_id !== req.user?.id && 
-        project.developer_id !== req.user?.id
+        project.assigned_developer_id !== req.user?.id
       ) {
         return res.status(403).json({ message: "You do not have permission to send messages for this project" });
       }
@@ -915,7 +915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sender_id: req.user?.id
       });
       
-      const message = await storage.createMessage(insertData);
+      const message = await storage.sendMessage(insertData, req.user?.id!);
       res.status(201).json(message);
     } catch (error) {
       if (error instanceof ZodError) {

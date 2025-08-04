@@ -82,7 +82,7 @@ export default function ProjectDetailPage() {
     isLoading: isLoadingQuotes,
     error: quotesError,
   } = useQuery({
-    queryKey: ['/api/quotes/project', projectId],
+    queryKey: ['/api/projects', projectId, 'quotes'],
     queryFn: undefined,
     enabled: !!projectId,
   });
@@ -93,7 +93,7 @@ export default function ProjectDetailPage() {
     isLoading: isLoadingMessages,
     error: messagesError,
   } = useQuery({
-    queryKey: ['/api/messages/project', projectId],
+    queryKey: ['/api/projects', projectId, 'messages'],
     queryFn: undefined,
     enabled: !!projectId,
   });
@@ -133,7 +133,7 @@ export default function ProjectDetailPage() {
         title: "Quote submitted successfully",
         description: "The client will review your proposal.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/quotes/project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'quotes'] });
       quoteForm.reset();
     },
     onError: (error: Error) => {
@@ -159,7 +159,7 @@ export default function ProjectDetailPage() {
       toast({
         title: "Message sent",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages/project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'messages'] });
       messageForm.reset();
     },
     onError: (error: Error) => {
@@ -210,7 +210,7 @@ export default function ProjectDetailPage() {
       toast({
         title: "Quote status updated",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/quotes/project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'quotes'] });
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
     },
     onError: (error: Error) => {
