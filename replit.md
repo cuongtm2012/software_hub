@@ -65,6 +65,14 @@ The application uses a comprehensive PostgreSQL schema with the following main e
 - Maintain separation between client and server code
 
 ## Recent Changes
+- **2025-08-04**: Fixed critical data synchronization issue between "Recent Projects" and "View All Available Projects" sections:
+  - ✅ Identified root cause: /api/projects endpoint blocked sellers with 403 error due to role restrictions
+  - ✅ Updated dashboard to use unified data source (/api/my-combined-projects) for both sections to ensure synchronization
+  - ✅ Added seller role access to /api/projects endpoint for backward compatibility
+  - ✅ Fixed database column errors by adding missing columns (title, description, budget, deadline) to external_requests table
+  - ✅ Updated all storage methods to use externalRequests table exclusively, eliminating projects table references
+  - ✅ Resolved 113 LSP diagnostics and compilation errors across server/storage.ts and server/routes.ts
+  - ✅ Both sections now display consistent project data from the unified external_requests table
 - **2025-08-04**: Successfully completed database consolidation by removing redundant projects table:
   - ✅ Enhanced external_requests table with comprehensive project fields (title, description, budget, deadline, client_id, assigned_developer_id, status)
   - ✅ Physically dropped projects table from PostgreSQL database using CASCADE to remove related foreign key constraints

@@ -659,6 +659,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projects = await storage.getClientProjects(req.user.id, status as string);
       } else if (req.user?.role === 'developer') {
         projects = await storage.getDeveloperProjects(req.user.id, status as string);
+      } else if (req.user?.role === 'seller') {
+        // Sellers can view available projects for collaboration
+        projects = await storage.getAvailableProjects(status as string);
       } else {
         return res.status(403).json({ message: "Insufficient permissions" });
       }

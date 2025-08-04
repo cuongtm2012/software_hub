@@ -131,9 +131,9 @@ export default function DashboardPage() {
     enabled: !!user && showAllProjects,
   });
 
-  // Fetch available projects for the tabs
+  // Fetch available projects for the tabs - use the same source as combined projects for consistency
   const { data: availableProjectsData, isLoading: isLoadingAvailableProjects } = useQuery<{ projects: Project[]; total: number }>({
-    queryKey: ['/api/projects', { status: selectedProjectStatus !== 'all' ? selectedProjectStatus : undefined }],
+    queryKey: ['/api/my-combined-projects', { status: selectedProjectStatus !== 'all' ? selectedProjectStatus : undefined, limit: 100 }],
     enabled: !!user,
   });
 
