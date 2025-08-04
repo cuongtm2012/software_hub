@@ -36,16 +36,21 @@ function isAuthenticated(req: Request, res: Response, next: NextFunction) {
 // Role-based access control middleware
 function hasRole(roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
+    console.log('Role check - session userId:', req.session?.userId, 'user:', req.session?.user?.email, 'role:', req.session?.user?.role);
+    
     if (!req.session.userId || !req.session.user) {
+      console.log('Authorization failed: no session user');
       return res.status(401).json({ message: "Unauthorized" });
     }
     
     req.user = req.session.user;
     
     if (!roles.includes(req.user?.role as string)) {
+      console.log('Role check failed: user role', req.user?.role, 'not in required roles', roles);
       return res.status(403).json({ message: `Forbidden: Required role not assigned` });
     }
     
+    console.log('Role check passed for user:', req.user?.email);
     next();
   };
 }
@@ -136,6 +141,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Software Management Routes
   app.get("/api/admin/software", adminMiddleware, async (req, res, next) => {
     try {
+      console.log('Admin software endpoint called by user:', req.user?.email, 'role:', req.user?.role);
+      
       const { 
         page = 1, 
         limit = 10, 
@@ -160,9 +167,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dateTo: dateTo as string
       };
       
+      console.log('Fetching admin software list with filters:', filters);
       const result = await storage.getAdminSoftwareList(filters, limitNum, offset);
+      console.log('Admin software result:', { total: result.total, count: result.softwares.length });
+      
       res.json(result);
     } catch (error) {
+      console.error('Error in admin software endpoint:', error);
       next(error);
     }
   });

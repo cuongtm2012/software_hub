@@ -106,9 +106,24 @@ export default function SoftwareManagement() {
         ...(filters.dateTo && { dateTo: filters.dateTo })
       });
       
-      const response = await fetch(`/api/admin/software?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch software');
-      return response.json();
+      console.log('Fetching admin software with params:', params.toString());
+      const response = await fetch(`/api/admin/software?${params}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Admin software response status:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Admin software error:', errorText);
+        throw new Error(`Failed to fetch software: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Admin software data received:', data);
+      return data;
     }
   });
 
