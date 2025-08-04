@@ -1740,8 +1740,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/seller/products", isAuthenticated, async (req, res, next) => {
     try {
-      const products = await storage.getProductsBySellerId(req.user!.id);
-      res.json({ products });
+      const { 
+        page = "1", 
+        limit = "50", // Default to 50 for dashboard, but supports pagination
+        status,
+        search 
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const result = await storage.getProductsBySellerId(
+        req.user!.id, 
+        {
+          limit: limitNum,
+          offset,
+          status: status as string,
+          search: search as string
+        }
+      );
+      
+      res.json(result);
     } catch (error) {
       next(error);
     }

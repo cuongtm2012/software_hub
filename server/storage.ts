@@ -797,12 +797,49 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getProductsBySellerId(sellerId: number): Promise<Product[]> {
-    return db
-      .select()
+  async getProductsBySellerId(
+    sellerId: number, 
+    options?: {
+      limit?: number;
+      offset?: number;
+      status?: string;
+      search?: string;
+    }
+  ): Promise<{ products: Product[]; total: number }> {
+    let query = db.select().from(products).where(eq(products.seller_id, sellerId));
+    
+    // Add filters
+    if (options?.status && options.status !== 'all') {
+      query = query.where(and(
+        eq(products.seller_id, sellerId),
+        eq(products.status, options.status)
+      ));
+    }
+    
+    if (options?.search) {
+      query = query.where(and(
+        eq(products.seller_id, sellerId),
+        or(
+          ilike(products.title, `%${options.search}%`),
+          ilike(products.description, `%${options.search}%`),
+          ilike(products.category, `%${options.search}%`)
+        )
+      ));
+    }
+    
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)`.mapWith(Number) })
       .from(products)
-      .where(eq(products.seller_id, sellerId))
-      .orderBy(desc(products.created_at));
+      .where(eq(products.seller_id, sellerId));
+    
+    // Apply pagination and ordering
+    const productList = await query
+      .orderBy(desc(products.created_at))
+      .limit(options?.limit || 50)
+      .offset(options?.offset || 0);
+    
+    return { products: productList, total: count };
   }
 
   async searchProducts(search: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }> {

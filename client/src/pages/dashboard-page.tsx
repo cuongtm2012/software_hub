@@ -9,7 +9,8 @@ import { useLocation } from "wouter";
 import { 
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
-  Users, BarChart3, Briefcase, Code, Target, XCircle
+  Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp, 
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -77,6 +78,12 @@ export default function DashboardPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [selectedProjectStatus, setSelectedProjectStatus] = useState<string>('all');
+  
+  // Product list expansion state
+  const [showAllProducts, setShowAllProducts] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingPagination, setIsLoadingPagination] = useState(false);
+  const productsPerPage = 10;
 
   // Fetch seller profile and products (for sellers)
   const { data: sellerProfile, isLoading: isLoadingProfile } = useQuery<any>({
@@ -84,9 +91,16 @@ export default function DashboardPage() {
     enabled: !!user && user.role === 'seller',
   });
 
-  const { data: sellerProducts, isLoading: isLoadingProducts } = useQuery<{ products: Product[] }>({
-    queryKey: ["/api/seller/products"],
+  const { data: sellerProducts, isLoading: isLoadingProducts } = useQuery<{ products: Product[]; total: number }>({
+    queryKey: ["/api/seller/products", { page: showAllProducts ? currentPage : 1, limit: showAllProducts ? productsPerPage : 50 }],
     enabled: !!user && user.role === 'seller',
+  });
+
+  // Fetch paginated products when expanded
+  const { data: paginatedProducts, isLoading: isLoadingPaginated } = useQuery<{ products: Product[]; total: number }>({
+    queryKey: ["/api/seller/products", { page: currentPage, limit: productsPerPage }],
+    enabled: !!user && user.role === 'seller' && showAllProducts,
+    onSettled: () => setIsLoadingPagination(false),
   });
 
   const { data: sellerOrders, isLoading: isLoadingOrders } = useQuery<{ orders: Order[] }>({
@@ -140,11 +154,14 @@ export default function DashboardPage() {
 
   const products = sellerProducts?.products || [];
   const orders = sellerOrders?.orders || [];
+  const totalProducts = sellerProducts?.total || 0;
+  const displayProducts = showAllProducts ? (paginatedProducts?.products || products) : products;
+  const totalPages = showAllProducts ? Math.ceil(totalProducts / productsPerPage) : 1;
   const isSeller = user.role === 'seller';
 
   // Calculate product statistics
   const productStats = {
-    total: products.length,
+    total: totalProducts || products.length,
     active: products.filter(p => p.status === 'approved').length,
     pending: products.filter(p => p.status === 'pending').length,
     totalSales: products.reduce((sum, p) => sum + p.total_sales, 0),
@@ -298,7 +315,7 @@ export default function DashboardPage() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {products.slice(0, 3).map((product) => (
+                          {displayProducts.slice(0, showAllProducts ? displayProducts.length : 3).map((product) => (
                             <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 gap-4">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-900">{product.title}</h4>
@@ -360,11 +377,91 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           ))}
-                          {products.length > 3 && (
-                            <div className="text-center pt-4">
-                              <Button variant="outline" onClick={() => navigate('/marketplace/seller')}>
-                                View All Products ({products.length})
-                              </Button>
+                          {/* Expand/Collapse Button and Pagination */}
+                          {totalProducts > 3 && (
+                            <div className="space-y-4">
+                              <div className="text-center pt-4">
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    setShowAllProducts(!showAllProducts);
+                                    setCurrentPage(1);
+                                  }}
+                                  disabled={isLoadingPaginated}
+                                >
+                                  {isLoadingPaginated ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : showAllProducts ? (
+                                    <ChevronUp className="h-4 w-4 mr-2" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4 mr-2" />
+                                  )}
+                                  {showAllProducts ? 'Show Less' : `View All Products (${totalProducts})`}
+                                </Button>
+                              </div>
+                              
+                              {/* Pagination Controls */}
+                              {showAllProducts && totalPages > 1 && (
+                                <div className="flex items-center justify-between pt-4 border-t">
+                                  <div className="text-sm text-gray-600">
+                                    Page {currentPage} of {totalPages} ({totalProducts} products)
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setCurrentPage(currentPage - 1);
+                                        setIsLoadingPagination(true);
+                                      }}
+                                      disabled={currentPage === 1 || isLoadingPaginated}
+                                    >
+                                      <ChevronLeft className="h-4 w-4" />
+                                      Previous
+                                    </Button>
+                                    
+                                    {/* Page numbers */}
+                                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                      const pageNum = i + 1;
+                                      return (
+                                        <Button
+                                          key={pageNum}
+                                          variant={currentPage === pageNum ? "default" : "outline"}
+                                          size="sm"
+                                          onClick={() => {
+                                            setCurrentPage(pageNum);
+                                            setIsLoadingPagination(true);
+                                          }}
+                                          disabled={isLoadingPaginated}
+                                        >
+                                          {pageNum}
+                                        </Button>
+                                      );
+                                    })}
+                                    
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setCurrentPage(currentPage + 1);
+                                        setIsLoadingPagination(true);
+                                      }}
+                                      disabled={currentPage === totalPages || isLoadingPaginated}
+                                    >
+                                      Next
+                                      <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Loading indicator for pagination */}
+                              {showAllProducts && isLoadingPaginated && (
+                                <div className="flex items-center justify-center py-4">
+                                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                                  <span className="ml-2 text-sm text-gray-600">Loading products...</span>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
