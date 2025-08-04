@@ -42,25 +42,25 @@ interface ExternalRequest {
 interface Quote {
   id: number;
   project_id: number;
-  developer_id?: number;
-  price: string;
+  developer_id: number;
   status: string;
-  message?: string;
-  project?: { title: string };
-  developer?: { name: string };
+  price: string;
+  estimated_duration: string;
+  message: string;
+  created_at: string;
 }
 
 interface Product {
   id: number;
+  seller_id: number;
   title: string;
   description: string;
   price: string;
   status: string;
   category: string;
   stock_quantity: number;
+  avg_rating: number;
   total_sales: number;
-  avg_rating: number | null;
-  featured: boolean;
   created_at: string;
 }
 
@@ -111,10 +111,10 @@ export default function DashboardPage() {
     enabled: !!user,
   });
 
-  // Fetch all available projects for browsing
+  // Fetch all available projects for browsing (only for non-sellers)
   const { data: availableProjects, isLoading: isLoadingAvailableProjects } = useQuery<Project[]>({
     queryKey: ['/api/available-projects', { status: selectedProjectStatus }],
-    enabled: !!user,
+    enabled: !!user && user.role !== 'seller',
   });
 
   if (!user) {
@@ -184,19 +184,28 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Tab Navigation */}
+          {/* Tabbed Interface */}
           <Tabs defaultValue={isSeller ? "products" : "projects"} className="w-full">
-            <div className="bg-white rounded-lg shadow-sm border">
-              <TabsList className={`grid w-full h-10 sm:h-12 bg-gray-50 m-1 ${isSeller ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+              <TabsList className="w-full grid h-auto p-0 bg-transparent border-b rounded-none" 
+                       style={{ gridTemplateColumns: isSeller ? '1fr 1fr' : '1fr' }}>
                 {isSeller && (
-                  <TabsTrigger value="products" className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white text-xs sm:text-sm lg:text-base px-2 sm:px-4">
-                    <Package className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span>Products</span>
+                  <TabsTrigger
+                    value="products"
+                    className="flex items-center gap-2 p-2 sm:p-3 lg:p-4 text-xs sm:text-sm lg:text-base data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none"
+                  >
+                    <Package className="h-4 w-4" />
+                    <span className="hidden sm:inline">Products</span>
+                    <span className="sm:hidden">Products</span>
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white text-xs sm:text-sm lg:text-base px-2 sm:px-4">
-                  <Briefcase className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Projects</span>
+                <TabsTrigger
+                  value="projects"
+                  className="flex items-center gap-2 p-2 sm:p-3 lg:p-4 text-xs sm:text-sm lg:text-base data-[state=active]:bg-green-50 data-[state=active]:text-green-700 data-[state=active]:border-b-2 data-[state=active]:border-green-600 rounded-none"
+                >
+                  <Briefcase className="h-4 w-4" />
+                  <span className="hidden sm:inline">Projects</span>
+                  <span className="sm:hidden">Projects</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -207,76 +216,73 @@ export default function DashboardPage() {
                   <div className="flex justify-start">
                     <Button
                       onClick={() => navigate('/seller/products/new')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-                      size="default"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Product
                     </Button>
                   </div>
 
-                  {/* Product Statistics Cards */}
+                  {/* Products Overview Cards */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                     <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                      <CardContent className="p-2 sm:p-4">
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-xs sm:text-sm font-medium text-blue-600">Total Products</p>
-                            <p className="text-lg sm:text-2xl font-bold text-blue-900">{productStats.total}</p>
+                            <p className="text-blue-600 text-xs sm:text-sm lg:text-base font-medium">Total Products</p>
+                            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-700">{productStats.total}</p>
                           </div>
-                          <Package className="h-5 w-5 sm:h-8 sm:w-8 text-blue-600" />
+                          <Package className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-blue-600" />
                         </div>
                       </CardContent>
                     </Card>
 
                     <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                      <CardContent className="p-2 sm:p-4">
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-xs sm:text-sm font-medium text-green-600">Active Products</p>
-                            <p className="text-lg sm:text-2xl font-bold text-green-900">{productStats.active}</p>
+                            <p className="text-green-600 text-xs sm:text-sm lg:text-base font-medium">Revenue</p>
+                            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700">${productStats.totalRevenue.toFixed(0)}</p>
                           </div>
-                          <CheckCircle2 className="h-5 w-5 sm:h-8 sm:w-8 text-green-600" />
+                          <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-green-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-yellow-600 text-xs sm:text-sm lg:text-base font-medium">Total Sales</p>
+                            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-700">{productStats.totalSales}</p>
+                          </div>
+                          <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-yellow-600" />
                         </div>
                       </CardContent>
                     </Card>
 
                     <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-                      <CardContent className="p-2 sm:p-4">
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-xs sm:text-sm font-medium text-purple-600">Avg Rating</p>
-                            <p className="text-lg sm:text-2xl font-bold text-purple-900">
-                              {productStats.avgRating.toFixed(1)}
-                            </p>
+                            <p className="text-purple-600 text-xs sm:text-sm lg:text-base font-medium">Avg Rating</p>
+                            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-700">{productStats.avgRating.toFixed(1)}</p>
                           </div>
-                          <Star className="h-5 w-5 sm:h-8 sm:w-8 text-purple-600" />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-                      <CardContent className="p-2 sm:p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs sm:text-sm font-medium text-orange-600">Total Sales</p>
-                            <p className="text-lg sm:text-2xl font-bold text-orange-900">{productStats.totalSales}</p>
-                          </div>
-                          <TrendingUp className="h-5 w-5 sm:h-8 sm:w-8 text-orange-600" />
+                          <Star className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-purple-600" />
                         </div>
                       </CardContent>
                     </Card>
                   </div>
 
-                  {/* Products List */}
+                  {/* Recent Products */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Store className="h-5 w-5" />
-                        Your Products
+                        <Package className="h-5 w-5" />
+                        Recent Products
                       </CardTitle>
                       <CardDescription>
-                        Manage and track your marketplace products
+                        Track and manage your latest product listings
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -333,7 +339,6 @@ export default function DashboardPage() {
                                   className="flex-1 sm:flex-none text-red-600 hover:text-red-700 hover:bg-red-50"
                                   onClick={() => {
                                     if (window.confirm('Are you sure you want to delete this product?')) {
-                                      // Add delete mutation here
                                       const deleteProduct = async () => {
                                         try {
                                           await apiRequest(`/api/seller/products/${product.id}`, {
@@ -382,58 +387,69 @@ export default function DashboardPage() {
                 <div className="flex justify-start">
                   <Button
                     onClick={() => navigate('/request-project')}
-                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
-                    size="default"
+                    className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     New Project
                   </Button>
                 </div>
 
-                {/* Project Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+                {/* Projects Overview Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                   <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                    <CardContent className="p-2 sm:p-4">
+                    <CardContent className="p-3 sm:p-4 lg:p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs sm:text-sm font-medium text-green-600">Total Projects</p>
-                          <p className="text-lg sm:text-2xl font-bold text-green-900">{projectStats.total}</p>
+                          <p className="text-green-600 text-xs sm:text-sm lg:text-base font-medium">Total Projects</p>
+                          <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700">{projectStats.total}</p>
                         </div>
-                        <Briefcase className="h-5 w-5 sm:h-8 sm:w-8 text-green-600" />
+                        <Briefcase className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-green-600" />
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                    <CardContent className="p-2 sm:p-4">
+                    <CardContent className="p-3 sm:p-4 lg:p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs sm:text-sm font-medium text-blue-600">Active Projects</p>
-                          <p className="text-lg sm:text-2xl font-bold text-blue-900">{projectStats.active}</p>
+                          <p className="text-blue-600 text-xs sm:text-sm lg:text-base font-medium">Active</p>
+                          <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-700">{projectStats.active}</p>
                         </div>
-                        <Clock className="h-5 w-5 sm:h-8 sm:w-8 text-blue-600" />
+                        <Clock className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-blue-600" />
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-                    <CardContent className="p-2 sm:p-4">
+                    <CardContent className="p-3 sm:p-4 lg:p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs sm:text-sm font-medium text-yellow-600">Total Quotes</p>
-                          <p className="text-lg sm:text-2xl font-bold text-yellow-900">{projectStats.quotes}</p>
+                          <p className="text-yellow-600 text-xs sm:text-sm lg:text-base font-medium">Pending</p>
+                          <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-700">{projectStats.pending}</p>
                         </div>
-                        <FileText className="h-5 w-5 sm:h-8 sm:w-8 text-yellow-600" />
+                        <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-yellow-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                    <CardContent className="p-3 sm:p-4 lg:p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-purple-600 text-xs sm:text-sm lg:text-base font-medium">Completed</p>
+                          <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-700">{projectStats.completed}</p>
+                        </div>
+                        <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-purple-600" />
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Projects List */}
+                {/* Recent Projects */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Code className="h-5 w-5" />
+                      <Briefcase className="h-5 w-5" />
                       Recent Projects
                     </CardTitle>
                     <CardDescription>
@@ -448,7 +464,7 @@ export default function DashboardPage() {
                     ) : allProjects.length === 0 && allExternalRequests.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p className="mb-4">No projects yet. Start your first project!</p>
+                        <p className="mb-4">No projects yet. Start by creating your first project!</p>
                         <Button
                           onClick={() => navigate('/request-project')}
                           variant="outline"
@@ -532,95 +548,152 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Available Projects Browser */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
-                      Available Projects
-                    </CardTitle>
-                    <CardDescription>
-                      Browse and discover projects available for collaboration
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Project Status Filter Tabs */}
-                    <div className="mb-4">
-                      <div className="flex flex-wrap gap-2 border-b">
-                        {[
-                          { key: 'all', label: 'All Projects' },
-                          { key: 'pending', label: 'Pending' },
-                          { key: 'in-progress', label: 'In Progress' },
-                          { key: 'completed', label: 'Completed' },
-                          { key: 'cancelled', label: 'Cancelled' }
-                        ].map((tab) => (
-                          <Button
-                            key={tab.key}
-                            variant={selectedProjectStatus === tab.key ? 'default' : 'ghost'}
-                            size="sm"
-                            className="px-3 py-1 text-xs sm:text-sm"
-                            onClick={() => setSelectedProjectStatus(tab.key)}
-                          >
-                            {tab.label}
-                          </Button>
-                        ))}
+                {/* Role-specific content */}
+                {!isSeller && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        Available Projects
+                      </CardTitle>
+                      <CardDescription>
+                        Browse and discover projects available for collaboration
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Project Status Filter Tabs */}
+                      <div className="mb-4">
+                        <div className="flex flex-wrap gap-2 border-b">
+                          {[
+                            { key: 'all', label: 'All Projects' },
+                            { key: 'pending', label: 'Pending' },
+                            { key: 'in-progress', label: 'In Progress' },
+                            { key: 'completed', label: 'Completed' },
+                            { key: 'cancelled', label: 'Cancelled' }
+                          ].map((tab) => (
+                            <Button
+                              key={tab.key}
+                              variant={selectedProjectStatus === tab.key ? 'default' : 'ghost'}
+                              size="sm"
+                              className="px-3 py-1 text-xs sm:text-sm"
+                              onClick={() => setSelectedProjectStatus(tab.key)}
+                            >
+                              {tab.label}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Projects List */}
-                    {isLoadingAvailableProjects ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                      </div>
-                    ) : !availableProjects || availableProjects.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <h3 className="font-semibold text-gray-900 mb-2">No projects found</h3>
-                        <p className="text-sm text-gray-600 mb-4">There are no available projects that match your criteria.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {availableProjects.slice(0, 5).map((project) => (
-                          <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
-                              <p className="text-xs text-gray-600 mb-2 line-clamp-2">{project.description?.substring(0, 80)}...</p>
-                              <div className="flex flex-wrap items-center gap-2 text-xs">
-                                <Badge variant={project.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                                  {project.status}
-                                </Badge>
-                                {project.budget && (
-                                  <span className="text-green-600 font-medium">${parseFloat(project.budget).toFixed(2)}</span>
-                                )}
-                                {project.deadline && (
-                                  <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
-                                )}
+                      {/* Projects List */}
+                      {isLoadingAvailableProjects ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        </div>
+                      ) : !availableProjects || availableProjects.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <h3 className="font-semibold text-gray-900 mb-2">No projects found</h3>
+                          <p className="text-sm text-gray-600 mb-4">There are no available projects that match your criteria.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {availableProjects.slice(0, 5).map((project) => (
+                            <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
+                                <p className="text-xs text-gray-600 mb-2 line-clamp-2">{project.description?.substring(0, 80)}...</p>
+                                <div className="flex flex-wrap items-center gap-2 text-xs">
+                                  <Badge variant={project.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                                    {project.status}
+                                  </Badge>
+                                  {project.budget && (
+                                    <span className="text-green-600 font-medium">${parseFloat(project.budget).toFixed(2)}</span>
+                                  )}
+                                  {project.deadline && (
+                                    <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs px-2 py-1"
+                                  onClick={() => navigate(`/projects/${project.id}`)}
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs px-2 py-1"
-                                onClick={() => navigate(`/projects/${project.id}`)}
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                View
+                          ))}
+                          {availableProjects.length > 5 && (
+                            <div className="text-center pt-3">
+                              <Button variant="outline" size="sm" onClick={() => navigate('/projects')}>
+                                View All Projects ({availableProjects.length})
                               </Button>
                             </div>
-                          </div>
-                        ))}
-                        {availableProjects.length > 5 && (
-                          <div className="text-center pt-3">
-                            <Button variant="outline" size="sm" onClick={() => navigate('/projects')}>
-                              View All Projects ({availableProjects.length})
-                            </Button>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Marketplace Analytics for Sellers */}
+                {isSeller && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Marketplace Insights
+                      </CardTitle>
+                      <CardDescription>
+                        Track your marketplace performance and customer engagement
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <div className="text-2xl font-bold text-blue-600">{productStats.total}</div>
+                          <div className="text-sm text-blue-700">Total Products</div>
+                        </div>
+                        <div className="bg-green-50 p-3 rounded-lg">
+                          <div className="text-2xl font-bold text-green-600">${productStats.totalRevenue.toFixed(2)}</div>
+                          <div className="text-sm text-green-700">Total Revenue</div>
+                        </div>
+                        <div className="bg-yellow-50 p-3 rounded-lg">
+                          <div className="text-2xl font-bold text-yellow-600">{productStats.totalSales}</div>
+                          <div className="text-sm text-yellow-700">Total Sales</div>
+                        </div>
+                        <div className="bg-purple-50 p-3 rounded-lg">
+                          <div className="text-2xl font-bold text-purple-600">{productStats.avgRating.toFixed(1)}</div>
+                          <div className="text-sm text-purple-700">Avg Rating</div>
+                        </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      <div className="space-y-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start"
+                          onClick={() => navigate('/marketplace')}
+                        >
+                          <Package className="h-4 w-4 mr-2" />
+                          Browse Marketplace
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start"
+                          onClick={() => navigate('/seller/analytics')}
+                        >
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          View Analytics
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
             </div>
           </Tabs>
