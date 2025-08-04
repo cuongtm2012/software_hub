@@ -59,6 +59,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
       // Force immediate refetch to ensure fresh data
       await queryClient.refetchQueries({ queryKey: ["/api/user"] });
+      
+      // Auto-redirect based on user role
+      setTimeout(() => {
+        if (user.role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/dashboard';
+        }
+      }, 500);
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.name}!`,
