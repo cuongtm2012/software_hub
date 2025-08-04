@@ -140,8 +140,11 @@ export default function SoftwareManagement() {
   // Update software mutation
   const updateSoftwareMutation = useMutation({
     mutationFn: async (data: { id: number; updates: Partial<Software> }) => {
-      const response = await apiRequest('PUT', `/api/softwares/${data.id}`, data.updates);
-      return response.json();
+      const response = await apiRequest(`/api/admin/software/${data.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data.updates)
+      });
+      return response;
     },
     onSuccess: () => {
       toast({
@@ -164,8 +167,10 @@ export default function SoftwareManagement() {
   // Delete software mutation
   const deleteSoftwareMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest('DELETE', `/api/softwares/${id}`);
-      return response.json();
+      const response = await apiRequest(`/api/admin/software/${id}`, {
+        method: 'DELETE'
+      });
+      return response;
     },
     onSuccess: () => {
       toast({
@@ -178,6 +183,31 @@ export default function SoftwareManagement() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete software",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Status update mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async (data: { id: number; status: SoftwareStatus }) => {
+      const response = await apiRequest(`/api/admin/software/${data.id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: data.status })
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Status updated successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/softwares'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update status",
         variant: "destructive"
       });
     }
@@ -213,9 +243,29 @@ export default function SoftwareManagement() {
 
   const handleSaveEdit = () => {
     if (!selectedSoftware) return;
-    updateSoftwareMutation.mutate({
-      id: selectedSoftware.id,
-      updates: editFormData
+    
+    // Check if only status changed for quick status update
+    if (editFormData.status !== selectedSoftware.status && 
+        Object.keys(editFormData).length === 1 || 
+        (Object.keys(editFormData).length === Object.keys(selectedSoftware).length && 
+         Object.keys(editFormData).filter(key => editFormData[key] !== selectedSoftware[key]).length === 1 &&
+         editFormData.status !== selectedSoftware.status)) {
+      updateStatusMutation.mutate({
+        id: selectedSoftware.id,
+        status: editFormData.status as SoftwareStatus
+      });
+    } else {
+      updateSoftwareMutation.mutate({
+        id: selectedSoftware.id,
+        updates: editFormData
+      });
+    }
+  };
+
+  const handleQuickStatusChange = (software: Software, newStatus: SoftwareStatus) => {
+    updateStatusMutation.mutate({
+      id: software.id,
+      status: newStatus
     });
   };
 
@@ -407,7 +457,21 @@ export default function SoftwareManagement() {
                     <TableCell>{item.version || '1.0.0'}</TableCell>
                     <TableCell>{item.vendor || 'Unknown'}</TableCell>
                     <TableCell>{item.license || 'Free'}</TableCell>
-                    <TableCell>{getStatusBadge(item.status)}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={item.status}
+                        onValueChange={(newStatus: SoftwareStatus) => handleQuickStatusChange(item, newStatus)}
+                      >
+                        <SelectTrigger className="w-auto">
+                          {getStatusBadge(item.status)}
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="approved">Active</SelectItem>
+                          <SelectItem value="pending">Under Review</SelectItem>
+                          <SelectItem value="rejected">Deprecated</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell>{format(new Date(item.created_at), 'MMM dd, yyyy')}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
