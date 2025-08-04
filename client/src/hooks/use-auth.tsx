@@ -42,6 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<AuthUser | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    staleTime: 0, // Always refetch to ensure fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const loginMutation = useMutation({
@@ -49,8 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
-    onSuccess: (user: AuthUser) => {
+    onSuccess: async (userData: any) => {
+      // Extract user data from response
+      const user = userData.user || userData;
+      console.log("Login success, user data:", user);
       queryClient.setQueryData(["/api/user"], user);
+      // Force immediate refetch to ensure fresh data
+      await queryClient.refetchQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.name}!`,

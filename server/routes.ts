@@ -91,13 +91,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       res.json({ 
-        message: "Login successful", 
-        user: { 
-          id: user.id, 
-          name: user.name, 
-          email: user.email, 
-          role: user.role 
-        } 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role 
       });
     } catch (error) {
       console.error("Login error:", error);

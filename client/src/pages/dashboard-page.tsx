@@ -144,7 +144,9 @@ export default function DashboardPage() {
 
   // Redirect admin users to admin dashboard
   React.useEffect(() => {
+    console.log("Dashboard effect - user:", user);
     if (user && user.role === 'admin') {
+      console.log("Redirecting admin to admin dashboard");
       navigate('/admin');
     }
   }, [user, navigate]);
