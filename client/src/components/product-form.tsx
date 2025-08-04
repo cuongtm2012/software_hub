@@ -53,12 +53,12 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
 
   // Fetch categories
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<any[]>({
     queryKey: ["/api/categories"],
   });
 
   // Fetch product if editing
-  const { data: product, isLoading: productLoading } = useQuery({
+  const { data: product, isLoading: productLoading } = useQuery<any>({
     queryKey: [`/api/products/${productId}`],
     enabled: isEdit && !!productId,
   });
@@ -79,9 +79,9 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   useEffect(() => {
     if (isEdit && product) {
       form.reset({
-        name: product.name,
+        name: product.title || product.name,
         description: product.description,
-        price: product.price,
+        price: parseFloat(product.price) || 0,
         category: product.category,
         image_url: product.image_url || "",
       });
@@ -91,20 +91,14 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   // Create product mutation
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
-      return apiRequest("/api/seller/products", {
-        method: "POST",
-        body: JSON.stringify({
-          title: data.name,
-          description: data.description,
-          price: data.price.toString(),
-          category: data.category,
-          price_type: "fixed",
-          stock_quantity: 1,
-          images: data.image_url ? [data.image_url] : null
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      return apiRequest("POST", "/api/seller/products", {
+        title: data.name,
+        description: data.description,
+        price: data.price.toString(),
+        category: data.category,
+        price_type: "fixed",
+        stock_quantity: 1,
+        images: data.image_url ? [data.image_url] : null
       });
     },
     onSuccess: () => {
@@ -133,18 +127,12 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   // Update product mutation
   const updateProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
-      return apiRequest(`/api/seller/products/${productId}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          title: data.name,
-          description: data.description,
-          price: data.price.toString(),
-          category: data.category,
-          images: data.image_url ? [data.image_url] : null
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      return apiRequest("PUT", `/api/seller/products/${productId}`, {
+        title: data.name,
+        description: data.description,
+        price: data.price.toString(),
+        category: data.category,
+        images: data.image_url ? [data.image_url] : null
       });
     },
     onSuccess: () => {

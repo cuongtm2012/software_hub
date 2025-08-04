@@ -84,23 +84,17 @@ export default function SellerProductNewPage() {
     mutationFn: async (data: ProductFormData) => {
       const tagsArray = data.tags ? data.tags.split(",").map(tag => tag.trim()).filter(Boolean) : [];
       
-      return await apiRequest("/api/seller/products", {
-        method: "POST",
-        body: JSON.stringify({
-          title: data.title,
-          description: data.description,
-          category: data.category,
-          price: data.price.toString(), // Convert to string for API
-          price_type: data.price_type,
-          stock_quantity: data.stock_quantity,
-          download_link: data.download_link || null,
-          license_info: data.license_info || null,
-          tags: tagsArray,
-          status: "pending", // Products go for review by default
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      return await apiRequest("POST", "/api/seller/products", {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        price: data.price.toString(), // Convert to string for API
+        price_type: data.price_type,
+        stock_quantity: data.stock_quantity,
+        download_link: data.download_link || null,
+        license_info: data.license_info || null,
+        tags: tagsArray,
+        status: "pending", // Products go for review by default
       });
     },
     onSuccess: () => {

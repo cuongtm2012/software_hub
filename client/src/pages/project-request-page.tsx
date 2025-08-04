@@ -27,8 +27,8 @@ import { Footer } from "@/components/footer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 
-// Phone number regex for international format
-const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+// Phone number regex for international format (including Vietnam +84 with leading 0)
+const phoneRegex = /^[\+]?[0-9][\d\s\-\(\)]{6,18}$/;
 
 // Project request form schema
 const projectRequestSchema = z.object({
@@ -36,7 +36,7 @@ const projectRequestSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   phone: z.string()
     .min(1, "Phone number is required")
-    .regex(phoneRegex, "Please enter a valid phone number (e.g., +1234567890 or 1234567890)"),
+    .regex(phoneRegex, "Please enter a valid phone number (e.g., +84378246333, 0378246333, or 1234567890)"),
   company: z.string().optional(),
   project_name: z.string().min(3, "Project name must be at least 3 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
@@ -173,6 +173,13 @@ Timeline: ${data.timeline || 'N/A'}
                   <Button 
                     variant="outline" 
                     className="bg-white text-[#004080] border-[#004080] hover:bg-[#004080]/10"
+                    onClick={() => navigate('/dashboard')}
+                  >
+                    Return to Project Dashboard
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
                     onClick={() => navigate('/')}
                   >
                     Return to Home
