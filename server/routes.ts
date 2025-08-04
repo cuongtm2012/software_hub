@@ -463,6 +463,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+
+  // Admin update user endpoint
+  app.put("/api/admin/users/:id", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userData = req.body;
+      
+      const updatedUser = await storage.updateUser(parseInt(id), userData);
+      res.json(updatedUser);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Admin delete user endpoint
+  app.delete("/api/admin/users/:id", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user?.id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+      
+      await storage.deleteUser(parseInt(id));
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Admin external requests endpoint
+  app.get("/api/admin/external-requests", adminMiddleware, async (req, res, next) => {
+    try {
+      const { 
+        page = "1", 
+        limit = "20", 
+        status,
+        search
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const result = await storage.getAllExternalRequests({
+        status: status as string,
+        search: search as string,
+        limit: limitNum,
+        offset
+      });
+      
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Admin update external request status endpoint
+  app.put("/api/admin/external-requests/:id/status", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      const updatedRequest = await storage.updateExternalRequestStatus(parseInt(id), status);
+      res.json(updatedRequest);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Admin assign developer to external request endpoint
+  app.put("/api/admin/external-requests/:id/assign", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { assigned_developer_id } = req.body;
+      
+      const updatedRequest = await storage.assignDeveloperToExternalRequest(parseInt(id), assigned_developer_id);
+      res.json(updatedRequest);
+    } catch (error) {
+      next(error);
+    }
+  });
   
   app.post("/api/softwares", isAuthenticated, async (req, res, next) => {
     try {

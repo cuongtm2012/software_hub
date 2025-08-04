@@ -142,6 +142,13 @@ export default function DashboardPage() {
     enabled: !!user,
   });
 
+  // Redirect admin users to admin dashboard
+  React.useEffect(() => {
+    if (user && user.role === 'admin') {
+      navigate('/admin');
+    }
+  }, [user, navigate]);
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -161,6 +168,12 @@ export default function DashboardPage() {
         <Footer />
       </div>
     );
+  }
+
+  // Redirect admins to admin dashboard
+  if (user.role === 'admin') {
+    navigate('/admin');
+    return null;
   }
 
   const products = sellerProducts?.products || [];

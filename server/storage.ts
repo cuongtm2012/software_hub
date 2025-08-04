@@ -46,7 +46,8 @@ export interface IStorage {
   updateUserProfile(userId: number, profileData: any): Promise<User | undefined>;
   
   // Admin User Management
-  getAllUsers(): Promise<User[]>;
+  getAllUsers(params?: { role?: string; search?: string; limit?: number; offset?: number }): Promise<{ users: User[], total: number }>;
+  deleteUser(id: number): Promise<boolean>;
   
   // User Downloads
   createUserDownload(userId: number, softwareId: number, version: string): Promise<UserDownload>;
@@ -87,9 +88,14 @@ export interface IStorage {
   getExternalRequestById(id: number): Promise<ExternalRequest | undefined>;
   updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
   convertExternalRequestToProject(id: number, project: InsertProject): Promise<Project>;
-  getAllExternalRequests(): Promise<ExternalRequest[]>;
+  getAllExternalRequests(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ requests: ExternalRequest[], total: number }>;
+  assignDeveloperToExternalRequest(id: number, developerId: number): Promise<ExternalRequest | undefined>;
   getUserExternalRequests(email: string): Promise<ExternalRequest[]>;
   getAvailableProjects(status?: string): Promise<Project[]>;
+  getAllProjects(status?: string): Promise<Project[]>;
+  getClientProjects(clientId: number, status?: string): Promise<Project[]>;
+  getDeveloperProjects(developerId: number, status?: string): Promise<Project[]>;
+  getProjectsCount(status?: string): Promise<{ count: number }>;
   
   // Phase 2: Project Management
   createProject(project: InsertProject, clientId?: number): Promise<Project>; // clientId optional for external requests
@@ -226,8 +232,62 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Admin methods
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(users.id);
+  async getAllUsers(params?: { role?: string; search?: string; limit?: number; offset?: number }): Promise<{ users: User[], total: number }> {
+    let baseQuery = db.select().from(users);
+    
+    // Apply filters
+    if (params?.role && params.role !== 'all') {
+      baseQuery = baseQuery.where(eq(users.role, params.role));
+    }
+    
+    if (params?.search) {
+      baseQuery = baseQuery.where(
+        or(
+          ilike(users.name, `%${params.search}%`),
+          ilike(users.email, `%${params.search}%`)
+        )
+      );
+    }
+    
+    // Get total count first
+    const countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
+    if (params?.role && params.role !== 'all') {
+      countQuery.where(eq(users.role, params.role));
+    }
+    if (params?.search) {
+      countQuery.where(
+        or(
+          ilike(users.name, `%${params.search}%`),
+          ilike(users.email, `%${params.search}%`)
+        )
+      );
+    }
+    
+    const totalResult = await countQuery;
+    const total = totalResult[0]?.count || 0;
+    
+    // Apply ordering and pagination
+    baseQuery = baseQuery.orderBy(desc(users.created_at));
+    
+    if (params?.limit) {
+      baseQuery = baseQuery.limit(params.limit);
+    }
+    
+    if (params?.offset) {
+      baseQuery = baseQuery.offset(params.offset);
+    }
+    
+    const usersList = await baseQuery;
+    
+    return {
+      users: usersList,
+      total: Number(total)
+    };
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount > 0;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -485,11 +545,71 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getAllExternalRequests(): Promise<ExternalRequest[]> {
-    return await db
-      .select()
-      .from(externalRequests)
-      .orderBy(desc(externalRequests.created_at));
+  async getAllExternalRequests(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ requests: ExternalRequest[], total: number }> {
+    let baseQuery = db.select().from(externalRequests);
+    
+    // Apply filters
+    if (params?.status && params.status !== 'all') {
+      baseQuery = baseQuery.where(eq(externalRequests.status, params.status));
+    }
+    
+    if (params?.search) {
+      baseQuery = baseQuery.where(
+        or(
+          ilike(externalRequests.name, `%${params.search}%`),
+          ilike(externalRequests.email, `%${params.search}%`),
+          ilike(externalRequests.project_description, `%${params.search}%`)
+        )
+      );
+    }
+    
+    // Get total count first
+    const countQuery = db.select({ count: sql<number>`count(*)` }).from(externalRequests);
+    if (params?.status && params.status !== 'all') {
+      countQuery.where(eq(externalRequests.status, params.status));
+    }
+    if (params?.search) {
+      countQuery.where(
+        or(
+          ilike(externalRequests.name, `%${params.search}%`),
+          ilike(externalRequests.email, `%${params.search}%`),
+          ilike(externalRequests.project_description, `%${params.search}%`)
+        )
+      );
+    }
+    
+    const totalResult = await countQuery;
+    const total = totalResult[0]?.count || 0;
+    
+    // Apply ordering and pagination
+    baseQuery = baseQuery.orderBy(desc(externalRequests.created_at));
+    
+    if (params?.limit) {
+      baseQuery = baseQuery.limit(params.limit);
+    }
+    
+    if (params?.offset) {
+      baseQuery = baseQuery.offset(params.offset);
+    }
+    
+    const requestsList = await baseQuery;
+    
+    return {
+      requests: requestsList,
+      total: Number(total)
+    };
+  }
+
+  async assignDeveloperToExternalRequest(id: number, developerId: number): Promise<ExternalRequest | undefined> {
+    const [updatedRequest] = await db
+      .update(externalRequests)
+      .set({ 
+        assigned_developer_id: developerId,
+        updated_at: new Date()
+      })
+      .where(eq(externalRequests.id, id))
+      .returning();
+    return updatedRequest;
   }
 
   async getUserExternalRequests(
@@ -525,7 +645,29 @@ export class DatabaseStorage implements IStorage {
     return { requests: requestsList, total: count };
   }
 
-  async getAvailableProjects(
+  async getAvailableProjects(status?: string): Promise<Project[]> {
+    let query = db.select().from(externalRequests).where(
+      sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
+    );
+    
+    if (status && status !== 'all') {
+      const statusMap: { [key: string]: string } = {
+        'pending': 'pending',
+        'in-progress': 'in_progress', 
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+      };
+      const dbStatus = statusMap[status] || status;
+      query = query.where(and(
+        eq(externalRequests.status, dbStatus as any),
+        sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
+      ));
+    }
+    
+    return query.orderBy(desc(externalRequests.created_at));
+  }
+
+  async getAvailableProjectsPaginated(
     status?: string,
     options?: {
       limit?: number;
@@ -711,6 +853,90 @@ export class DatabaseStorage implements IStorage {
       .where(eq(externalRequests.id, id))
       .returning();
     return updatedProject;
+  }
+
+  // New methods for admin dashboard
+  async getAllProjects(status?: string): Promise<Project[]> {
+    let query = db.select().from(externalRequests);
+    
+    if (status && status !== 'all') {
+      const statusMap: { [key: string]: string } = {
+        'pending': 'pending',
+        'in-progress': 'in_progress', 
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+      };
+      const dbStatus = statusMap[status] || status;
+      query = query.where(eq(externalRequests.status, dbStatus as any));
+    }
+    
+    return query.orderBy(desc(externalRequests.created_at));
+  }
+
+  async getClientProjects(clientId: number, status?: string): Promise<Project[]> {
+    let query = db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.client_id, clientId));
+    
+    if (status && status !== 'all') {
+      const statusMap: { [key: string]: string } = {
+        'pending': 'pending',
+        'in-progress': 'in_progress', 
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+      };
+      const dbStatus = statusMap[status] || status;
+      query = query.where(and(
+        eq(externalRequests.client_id, clientId),
+        eq(externalRequests.status, dbStatus as any)
+      ));
+    }
+    
+    return query.orderBy(desc(externalRequests.created_at));
+  }
+
+  async getDeveloperProjects(developerId: number, status?: string): Promise<Project[]> {
+    let query = db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.assigned_developer_id, developerId));
+    
+    if (status && status !== 'all') {
+      const statusMap: { [key: string]: string } = {
+        'pending': 'pending',
+        'in-progress': 'in_progress', 
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+      };
+      const dbStatus = statusMap[status] || status;
+      query = query.where(and(
+        eq(externalRequests.assigned_developer_id, developerId),
+        eq(externalRequests.status, dbStatus as any)
+      ));
+    }
+    
+    return query.orderBy(desc(externalRequests.created_at));
+  }
+
+  async getProjectsCount(status?: string): Promise<{ count: number }> {
+    let query = db
+      .select({ count: sql`count(*)`.mapWith(Number) })
+      .from(externalRequests);
+    
+    if (status && status !== 'all') {
+      const statusMap: { [key: string]: string } = {
+        'pending': 'pending',
+        'in-progress': 'in_progress', 
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+      };
+      const dbStatus = statusMap[status] || status;
+      query = query.where(eq(externalRequests.status, dbStatus as any));
+    }
+    
+    const [result] = await query;
+    return { count: result.count };
   }
 
   // Quotes
