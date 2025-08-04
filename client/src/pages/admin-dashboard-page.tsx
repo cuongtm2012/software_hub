@@ -426,10 +426,22 @@ function ExternalRequestsComponent() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number, status: string }) => {
-      return apiRequest(`/api/admin/external-requests/${id}/status`, {
+      console.log('Updating external request status:', { id, status });
+      const response = await fetch(`/api/admin/external-requests/${id}/status`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
         body: JSON.stringify({ status })
       });
+      console.log('External request status update response:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('External request status update error:', errorText);
+        throw new Error(`Failed to update status: ${response.status} ${errorText}`);
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -449,10 +461,16 @@ function ExternalRequestsComponent() {
 
   const assignDeveloperMutation = useMutation({
     mutationFn: async ({ id, developerId }: { id: number, developerId: number }) => {
-      return apiRequest(`/api/admin/external-requests/${id}/assign`, {
+      const response = await fetch(`/api/admin/external-requests/${id}/assign`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
         body: JSON.stringify({ assigned_developer_id: developerId })
       });
+      if (!response.ok) throw new Error('Failed to assign developer');
+      return response.json();
     },
     onSuccess: () => {
       toast({
