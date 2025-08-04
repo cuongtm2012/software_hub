@@ -182,31 +182,30 @@ export default function DashboardPage() {
     totalRevenue: orders.reduce((sum, o) => sum + parseFloat(o.total_amount || '0'), 0)
   };
 
-  // Calculate project statistics using unified data
-  const allProjects = projects || [];
-  const userExternalRequests = externalRequestsData?.requests || [];
-  const totalUserRequests = externalRequestsData?.total || 0;
+  // Use unified data source - all sections should show the same projects from combined endpoint
+  const allCombinedProjects = availableProjectsData?.projects || [];
+  const totalCombinedProjectsCount = availableProjectsData?.total || allCombinedProjects.length;
   
-  // For expanded view, use paginated combined data; for compact view, show user's recent requests only
+  // For expanded view, use paginated combined data; for compact view, show first 3 from combined data
   const displayedProjects = showAllProjects 
     ? (paginatedProjectsData?.projects || [])
-    : userExternalRequests.slice(0, 3); // Show only first 3 for compact view
+    : allCombinedProjects.slice(0, 3); // Show only first 3 for compact view
   
-  const totalCombinedProjects = showAllProjects ? (paginatedProjectsData?.total || 0) : totalUserRequests;
+  const totalCombinedProjects = showAllProjects ? (paginatedProjectsData?.total || 0) : totalCombinedProjectsCount;
   const totalProjectPages = showAllProjects ? Math.ceil(totalCombinedProjects / projectsPerPage) : 1;
   
-  // Use only user's own external requests for project statistics since that's what the user actually owns
+  // Use unified combined projects for statistics
   const projectStats = {
-    total: totalUserRequests, // Only count user's own external requests
-    active: userExternalRequests.filter(r => r.status === 'in_progress').length,
-    completed: userExternalRequests.filter(r => r.status === 'completed').length,
-    pending: userExternalRequests.filter(r => r.status === 'pending').length,
+    total: totalCombinedProjectsCount,
+    active: allCombinedProjects.filter((r: any) => r.status === 'in_progress').length,
+    completed: allCombinedProjects.filter((r: any) => r.status === 'completed').length,
+    pending: allCombinedProjects.filter((r: any) => r.status === 'pending').length,
     quotes: quotes?.length || 0,
     acceptedQuotes: quotes?.filter(q => q.status === 'accepted').length || 0
   };
 
-  // Available projects for tabs display
-  const displayAvailableProjects = availableProjectsData?.projects || [];
+  // Both sections now use the same data source for consistency
+  const displayAvailableProjects = allCombinedProjects;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -580,7 +579,7 @@ export default function DashboardPage() {
                       <div className="space-y-4">
                         {/* Show unified projects (external requests + available projects) */}
                         {displayedProjects.map((project: any) => (
-                          <div key={`project-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
+                          <div key={`recent-project-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
                             <div className="flex-1">
                               <h4 className="font-semibold text-gray-900">
                                 {project.title || `Project Request #${project.id}`}
@@ -827,7 +826,7 @@ export default function DashboardPage() {
                               
                               return (
                                 <div 
-                                  key={project.id} 
+                                  key={`all-tab-${project.id}`} 
                                   className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                   onClick={() => navigate(`/project/${project.id}`)}
                                 >
