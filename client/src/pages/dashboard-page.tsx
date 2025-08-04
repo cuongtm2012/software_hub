@@ -10,7 +10,7 @@ import {
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
   Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp, 
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Edit3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -84,6 +84,12 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingPagination, setIsLoadingPagination] = useState(false);
   const productsPerPage = 10;
+  
+  // Project list expansion state
+  const [showAllProjects, setShowAllProjects] = useState(false);
+  const [currentProjectPage, setCurrentProjectPage] = useState(1);
+  const [isLoadingProjectPagination, setIsLoadingProjectPagination] = useState(false);
+  const projectsPerPage = 10;
 
   // Fetch seller profile and products (for sellers)
   const { data: sellerProfile, isLoading: isLoadingProfile } = useQuery<any>({
@@ -100,7 +106,6 @@ export default function DashboardPage() {
   const { data: paginatedProducts, isLoading: isLoadingPaginated } = useQuery<{ products: Product[]; total: number }>({
     queryKey: ["/api/seller/products", { page: currentPage, limit: productsPerPage }],
     enabled: !!user && user.role === 'seller' && showAllProducts,
-    onSettled: () => setIsLoadingPagination(false),
   });
 
   const { data: sellerOrders, isLoading: isLoadingOrders } = useQuery<{ orders: Order[] }>({
@@ -115,9 +120,15 @@ export default function DashboardPage() {
   });
 
   // Fetch external requests for users who are not admin/client/developer
-  const { data: externalRequests, isLoading: isLoadingExternalRequests } = useQuery<ExternalRequest[]>({
-    queryKey: ['/api/my-external-requests'],
+  const { data: externalRequestsData, isLoading: isLoadingExternalRequests } = useQuery<{ requests: ExternalRequest[]; total: number }>({
+    queryKey: ['/api/my-external-requests', { page: showAllProjects ? currentProjectPage : 1, limit: showAllProjects ? projectsPerPage : 50 }],
     enabled: !!user && user.role !== 'admin' && user.role !== 'client' && user.role !== 'developer',
+  });
+
+  // Fetch paginated external requests when expanded
+  const { data: paginatedExternalRequests, isLoading: isLoadingPaginatedExternal } = useQuery<{ requests: ExternalRequest[]; total: number }>({
+    queryKey: ['/api/my-external-requests', { page: currentProjectPage, limit: projectsPerPage }],
+    enabled: !!user && user.role !== 'admin' && user.role !== 'client' && user.role !== 'developer' && showAllProjects,
   });
 
   const { data: quotes, isLoading: isLoadingQuotes } = useQuery<Quote[]>({
@@ -126,9 +137,15 @@ export default function DashboardPage() {
   });
 
   // Fetch all available projects for browsing
-  const { data: availableProjects, isLoading: isLoadingAvailableProjects } = useQuery<Project[]>({
-    queryKey: ['/api/available-projects', { status: selectedProjectStatus }],
+  const { data: availableProjectsData, isLoading: isLoadingAvailableProjects } = useQuery<{ projects: Project[]; total: number }>({
+    queryKey: ['/api/available-projects', { status: selectedProjectStatus, page: showAllProjects ? currentProjectPage : 1, limit: showAllProjects ? projectsPerPage : 50 }],
     enabled: !!user,
+  });
+
+  // Fetch paginated available projects when expanded
+  const { data: paginatedAvailableProjects, isLoading: isLoadingPaginatedAvailable } = useQuery<{ projects: Project[]; total: number }>({
+    queryKey: ['/api/available-projects', { status: selectedProjectStatus, page: currentProjectPage, limit: projectsPerPage }],
+    enabled: !!user && showAllProjects,
   });
 
   if (!user) {
@@ -173,10 +190,15 @@ export default function DashboardPage() {
 
   // Calculate project statistics
   const allProjects = projects || [];
-  const allExternalRequests = externalRequests || [];
+  const allExternalRequests = externalRequestsData?.requests || [];
+  const totalExternalRequests = externalRequestsData?.total || 0;
+  const totalAvailableProjects = availableProjectsData?.total || 0;
+  const displayExternalRequests = showAllProjects ? (paginatedExternalRequests?.requests || allExternalRequests) : allExternalRequests;
+  const displayAvailableProjects = showAllProjects ? (paginatedAvailableProjects?.projects || availableProjectsData?.projects || []) : (availableProjectsData?.projects || []);
+  const totalProjectPages = showAllProjects ? Math.ceil((totalExternalRequests + totalAvailableProjects) / projectsPerPage) : 1;
   
   const projectStats = {
-    total: allProjects.length + allExternalRequests.length,
+    total: allProjects.length + totalExternalRequests,
     active: allProjects.filter(p => p.status === 'in_progress').length + allExternalRequests.filter(r => r.status === 'in_progress').length,
     completed: allProjects.filter(p => p.status === 'completed').length + allExternalRequests.filter(r => r.status === 'completed').length,
     pending: allProjects.filter(p => p.status === 'pending').length + allExternalRequests.filter(r => r.status === 'pending').length,
@@ -555,7 +577,7 @@ export default function DashboardPage() {
                     ) : (
                       <div className="space-y-4">
                         {/* Show regular projects */}
-                        {allProjects.slice(0, 2).map((project) => (
+                        {allProjects.slice(0, showAllProjects ? allProjects.length : 2).map((project) => (
                           <div key={`project-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
                             <div className="flex-1">
                               <h4 className="font-semibold text-gray-900">{project.title}</h4>
@@ -587,7 +609,7 @@ export default function DashboardPage() {
                         ))}
                         
                         {/* Show external requests */}
-                        {allExternalRequests.slice(0, 3 - allProjects.length).map((request) => (
+                        {displayExternalRequests.slice(0, showAllProjects ? displayExternalRequests.length : (3 - allProjects.length)).map((request: any) => (
                           <div key={`request-${request.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
                             <div className="flex-1">
                               <h4 className="font-semibold text-gray-900">Project Request #{request.id}</h4>
@@ -615,11 +637,91 @@ export default function DashboardPage() {
                           </div>
                         ))}
                         
-                        {(allProjects.length + allExternalRequests.length) > 3 && (
-                          <div className="text-center pt-4">
-                            <Button variant="outline" onClick={() => navigate('/projects')}>
-                              View All Projects ({allProjects.length + allExternalRequests.length})
-                            </Button>
+                        {/* Expand/Collapse Button and Pagination for Projects */}
+                        {(allProjects.length + totalExternalRequests) > 3 && (
+                          <div className="space-y-4">
+                            <div className="text-center pt-4">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => {
+                                  setShowAllProjects(!showAllProjects);
+                                  setCurrentProjectPage(1);
+                                }}
+                                disabled={isLoadingPaginatedExternal || isLoadingPaginatedAvailable}
+                              >
+                                {(isLoadingPaginatedExternal || isLoadingPaginatedAvailable) ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : showAllProjects ? (
+                                  <ChevronUp className="h-4 w-4 mr-2" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 mr-2" />
+                                )}
+                                {showAllProjects ? 'Show Less' : `View All Projects (${allProjects.length + totalExternalRequests})`}
+                              </Button>
+                            </div>
+                            
+                            {/* Pagination Controls for Projects */}
+                            {showAllProjects && totalProjectPages > 1 && (
+                              <div className="flex items-center justify-between pt-4 border-t">
+                                <div className="text-sm text-gray-600">
+                                  Page {currentProjectPage} of {totalProjectPages} ({allProjects.length + totalExternalRequests} projects)
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setCurrentProjectPage(currentProjectPage - 1);
+                                      setIsLoadingProjectPagination(true);
+                                    }}
+                                    disabled={currentProjectPage === 1 || (isLoadingPaginatedExternal || isLoadingPaginatedAvailable)}
+                                  >
+                                    <ChevronLeft className="h-4 w-4" />
+                                    Previous
+                                  </Button>
+                                  
+                                  {/* Page numbers */}
+                                  {Array.from({ length: Math.min(totalProjectPages, 5) }, (_, i) => {
+                                    const pageNum = i + 1;
+                                    return (
+                                      <Button
+                                        key={pageNum}
+                                        variant={currentProjectPage === pageNum ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => {
+                                          setCurrentProjectPage(pageNum);
+                                          setIsLoadingProjectPagination(true);
+                                        }}
+                                        disabled={isLoadingPaginatedExternal || isLoadingPaginatedAvailable}
+                                      >
+                                        {pageNum}
+                                      </Button>
+                                    );
+                                  })}
+                                  
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setCurrentProjectPage(currentProjectPage + 1);
+                                      setIsLoadingProjectPagination(true);
+                                    }}
+                                    disabled={currentProjectPage === totalProjectPages || (isLoadingPaginatedExternal || isLoadingPaginatedAvailable)}
+                                  >
+                                    Next
+                                    <ChevronRight className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Loading indicator for pagination */}
+                            {showAllProjects && (isLoadingPaginatedExternal || isLoadingPaginatedAvailable) && (
+                              <div className="flex items-center justify-center py-4">
+                                <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+                                <span className="ml-2 text-sm text-gray-600">Loading projects...</span>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -665,7 +767,7 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-center py-8">
                             <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                           </div>
-                        ) : !availableProjects || availableProjects.length === 0 ? (
+                        ) : !displayAvailableProjects || displayAvailableProjects.length === 0 ? (
                           <div className="text-center py-8 text-gray-500">
                             <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                             <h3 className="font-semibold text-gray-900 mb-2">No projects found</h3>
@@ -673,7 +775,7 @@ export default function DashboardPage() {
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            {availableProjects.map((project) => (
+                            {displayAvailableProjects.map((project: any) => (
                               <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
                                 <div className="flex-1">
                                   <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
@@ -710,7 +812,7 @@ export default function DashboardPage() {
                       {/* Pending Projects Tab */}
                       <TabsContent value="pending" className="space-y-4">
                         <div className="space-y-3">
-                          {availableProjects?.filter(p => p.status === 'pending').map((project) => (
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'pending').map((project: any) => (
                             <div key={`pending-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
@@ -725,7 +827,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           )) || []}
-                          {(!availableProjects?.filter(p => p.status === 'pending').length) && (
+                          {(!displayAvailableProjects?.filter((p: any) => p.status === 'pending').length) && (
                             <div className="text-center py-8 text-gray-500">
                               <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                               <p>No pending projects</p>
@@ -737,7 +839,7 @@ export default function DashboardPage() {
                       {/* In Progress Projects Tab */}
                       <TabsContent value="in_progress" className="space-y-4">
                         <div className="space-y-3">
-                          {availableProjects?.filter(p => p.status === 'in_progress' || p.status === 'in-progress').map((project) => (
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'in_progress' || p.status === 'in-progress').map((project: any) => (
                             <div key={`progress-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
@@ -752,7 +854,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           )) || []}
-                          {(!availableProjects?.filter(p => p.status === 'in_progress' || p.status === 'in-progress').length) && (
+                          {(!displayAvailableProjects?.filter((p: any) => p.status === 'in_progress' || p.status === 'in-progress').length) && (
                             <div className="text-center py-8 text-gray-500">
                               <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                               <p>No projects in progress</p>
@@ -764,7 +866,7 @@ export default function DashboardPage() {
                       {/* Completed Projects Tab */}
                       <TabsContent value="completed" className="space-y-4">
                         <div className="space-y-3">
-                          {availableProjects?.filter(p => p.status === 'completed').map((project) => (
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'completed').map((project: any) => (
                             <div key={`completed-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
@@ -779,7 +881,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           )) || []}
-                          {(!availableProjects?.filter(p => p.status === 'completed').length) && (
+                          {(!displayAvailableProjects?.filter((p: any) => p.status === 'completed').length) && (
                             <div className="text-center py-8 text-gray-500">
                               <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                               <p>No completed projects</p>
@@ -791,7 +893,7 @@ export default function DashboardPage() {
                       {/* Cancelled Projects Tab */}
                       <TabsContent value="cancelled" className="space-y-4">
                         <div className="space-y-3">
-                          {availableProjects?.filter(p => p.status === 'cancelled').map((project) => (
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'cancelled').map((project: any) => (
                             <div key={`cancelled-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
@@ -806,7 +908,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           )) || []}
-                          {(!availableProjects?.filter(p => p.status === 'cancelled').length) && (
+                          {(!displayAvailableProjects?.filter((p: any) => p.status === 'cancelled').length) && (
                             <div className="text-center py-8 text-gray-500">
                               <XCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                               <p>No cancelled projects</p>

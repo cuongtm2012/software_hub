@@ -492,15 +492,46 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(externalRequests.created_at));
   }
 
-  async getUserExternalRequests(email: string): Promise<ExternalRequest[]> {
-    return await db
-      .select()
+  async getUserExternalRequests(
+    email: string, 
+    options?: {
+      limit?: number;
+      offset?: number;
+      status?: string;
+    }
+  ): Promise<{ requests: ExternalRequest[]; total: number }> {
+    let query = db.select().from(externalRequests).where(eq(externalRequests.email, email));
+    
+    // Add status filter
+    if (options?.status && options.status !== 'all') {
+      query = query.where(and(
+        eq(externalRequests.email, email),
+        eq(externalRequests.status, options.status)
+      ));
+    }
+    
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)`.mapWith(Number) })
       .from(externalRequests)
-      .where(eq(externalRequests.email, email))
-      .orderBy(desc(externalRequests.created_at));
+      .where(eq(externalRequests.email, email));
+    
+    // Apply pagination and ordering
+    const requestsList = await query
+      .orderBy(desc(externalRequests.created_at))
+      .limit(options?.limit || 50)
+      .offset(options?.offset || 0);
+    
+    return { requests: requestsList, total: count };
   }
 
-  async getAvailableProjects(status?: string): Promise<Project[]> {
+  async getAvailableProjects(
+    status?: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<{ projects: Project[]; total: number }> {
     let query = db.select().from(projects);
     
     if (status && status !== 'all') {
@@ -515,7 +546,18 @@ export class DatabaseStorage implements IStorage {
       query = query.where(eq(projects.status, dbStatus));
     }
     
-    return await query.orderBy(desc(projects.created_at));
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)`.mapWith(Number) })
+      .from(projects);
+    
+    // Apply pagination and ordering
+    const projectsList = await query
+      .orderBy(desc(projects.created_at))
+      .limit(options?.limit || 50)
+      .offset(options?.offset || 0);
+    
+    return { projects: projectsList, total: count };
   }
 
   // Phase 2: Project Management

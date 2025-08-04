@@ -1588,8 +1588,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get external requests for logged-in user by email
   app.get("/api/my-external-requests", isAuthenticated, async (req, res, next) => {
     try {
-      const externalRequests = await storage.getUserExternalRequests(req.user?.email as string);
-      res.json(externalRequests);
+      const { 
+        page = "1", 
+        limit = "50", 
+        status 
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const result = await storage.getUserExternalRequests(
+        req.user?.email as string,
+        {
+          limit: limitNum,
+          offset,
+          status: status as string
+        }
+      );
+      
+      res.json(result);
     } catch (error) {
       next(error);
     }
@@ -1598,9 +1616,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all available projects (for marketplace/browsing)
   app.get("/api/available-projects", isAuthenticated, async (req, res, next) => {
     try {
-      const status = req.query.status as string;
-      const projects = await storage.getAvailableProjects(status);
-      res.json(projects);
+      const { 
+        page = "1", 
+        limit = "50", 
+        status 
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const result = await storage.getAvailableProjects(
+        status as string,
+        {
+          limit: limitNum,
+          offset
+        }
+      );
+      
+      res.json(result);
     } catch (error) {
       next(error);
     }
