@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Users, Package, FileText, BarChart3, Search, Eye, User, Mail, Phone, Calendar, DollarSign, Clock, Loader2, Trash2, Edit } from "lucide-react";
+import SoftwareManagement from "@/pages/admin/software-management";
 
 // Types
 interface User {
@@ -113,12 +114,12 @@ function UserManagementComponent() {
     }
   });
 
-  const filteredUsers = usersData?.users?.filter(user => {
+  const filteredUsers = (usersData?.users?.users || []).filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     return matchesSearch && matchesRole;
-  }) || [];
+  });
 
   if (isLoading) {
     return (
@@ -140,7 +141,7 @@ function UserManagementComponent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-semibold text-gray-900">User Management</h3>
-          <p className="text-sm text-gray-500 mt-1">{filteredUsers.length} of {usersData?.total || 0} users</p>
+          <p className="text-sm text-gray-500 mt-1">{filteredUsers.length} of {usersData?.users?.total || 0} users</p>
         </div>
       </div>
 
@@ -793,7 +794,22 @@ export default function AdminDashboardPage() {
 
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <SoftwareListComponent />
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      Software Overview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-4">
+                      <p className="text-sm text-gray-600">Use the Software tab for full management capabilities</p>
+                      <Button variant="outline" size="sm" className="mt-2">
+                        View All Software
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
                 <div className="space-y-6">
                   <Card>
                     <CardHeader>
@@ -830,7 +846,7 @@ export default function AdminDashboardPage() {
             </TabsContent>
 
             <TabsContent value="software">
-              <SoftwareListComponent />
+              <SoftwareManagement />
             </TabsContent>
           </Tabs>
         </div>
