@@ -9,7 +9,7 @@ import { useLocation } from "wouter";
 import { 
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
-  Users, BarChart3, Briefcase, Code, Target
+  Users, BarChart3, Briefcase, Code, Target, XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -532,93 +532,194 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Available Projects Browser */}
+                {/* View All Available Projects Section */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
-                      Available Projects
+                      <Code className="h-5 w-5" />
+                      View All Available Projects
                     </CardTitle>
                     <CardDescription>
-                      Browse and discover projects available for collaboration
+                      Browse and filter projects by status
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {/* Project Status Filter Tabs */}
-                    <div className="mb-4">
-                      <div className="flex flex-wrap gap-2 border-b">
-                        {[
-                          { key: 'all', label: 'All Projects' },
-                          { key: 'pending', label: 'Pending' },
-                          { key: 'in-progress', label: 'In Progress' },
-                          { key: 'completed', label: 'Completed' },
-                          { key: 'cancelled', label: 'Cancelled' }
-                        ].map((tab) => (
-                          <Button
-                            key={tab.key}
-                            variant={selectedProjectStatus === tab.key ? 'default' : 'ghost'}
-                            size="sm"
-                            className="px-3 py-1 text-xs sm:text-sm"
-                            onClick={() => setSelectedProjectStatus(tab.key)}
-                          >
-                            {tab.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
+                    {/* Project Filter Tabs */}
+                    <Tabs defaultValue="all" className="w-full">
+                      <TabsList className="grid w-full grid-cols-5 h-10 bg-gray-50 mb-4">
+                        <TabsTrigger value="all" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                          All
+                        </TabsTrigger>
+                        <TabsTrigger value="pending" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                          Pending
+                        </TabsTrigger>
+                        <TabsTrigger value="in_progress" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                          In Progress
+                        </TabsTrigger>
+                        <TabsTrigger value="completed" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                          Completed
+                        </TabsTrigger>
+                        <TabsTrigger value="cancelled" className="text-xs sm:text-sm data-[state=active]:bg-white">
+                          Cancelled
+                        </TabsTrigger>
+                      </TabsList>
 
-                    {/* Projects List */}
-                    {isLoadingAvailableProjects ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                      </div>
-                    ) : !availableProjects || availableProjects.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <h3 className="font-semibold text-gray-900 mb-2">No projects found</h3>
-                        <p className="text-sm text-gray-600 mb-4">There are no available projects that match your criteria.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {availableProjects.slice(0, 5).map((project) => (
-                          <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
-                              <p className="text-xs text-gray-600 mb-2 line-clamp-2">{project.description?.substring(0, 80)}...</p>
-                              <div className="flex flex-wrap items-center gap-2 text-xs">
-                                <Badge variant={project.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                                  {project.status}
-                                </Badge>
-                                {project.budget && (
-                                  <span className="text-green-600 font-medium">${parseFloat(project.budget).toFixed(2)}</span>
-                                )}
-                                {project.deadline && (
-                                  <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs px-2 py-1"
-                                onClick={() => navigate(`/projects/${project.id}`)}
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                View
-                              </Button>
-                            </div>
+                      {/* All Projects Tab */}
+                      <TabsContent value="all" className="space-y-4">
+                        {isLoadingAvailableProjects ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                           </div>
-                        ))}
-                        {availableProjects.length > 5 && (
-                          <div className="text-center pt-3">
-                            <Button variant="outline" size="sm" onClick={() => navigate('/projects')}>
-                              View All Projects ({availableProjects.length})
-                            </Button>
+                        ) : !availableProjects || availableProjects.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <h3 className="font-semibold text-gray-900 mb-2">No projects found</h3>
+                            <p className="text-sm text-gray-600 mb-4">There are no available projects at the moment.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {availableProjects.map((project) => (
+                              <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
+                                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{project.description?.substring(0, 80)}...</p>
+                                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                                    <Badge variant={project.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                                      {project.status}
+                                    </Badge>
+                                    {project.budget && (
+                                      <span className="text-green-600 font-medium">${parseFloat(project.budget).toFixed(2)}</span>
+                                    )}
+                                    {project.deadline && (
+                                      <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs px-2 py-1"
+                                    onClick={() => navigate(`/projects/${project.id}`)}
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
-                      </div>
-                    )}
+                      </TabsContent>
+
+                      {/* Pending Projects Tab */}
+                      <TabsContent value="pending" className="space-y-4">
+                        <div className="space-y-3">
+                          {availableProjects?.filter(p => p.status === 'pending').map((project) => (
+                            <div key={`pending-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
+                                <p className="text-xs text-gray-600 mb-2">{project.description?.substring(0, 80)}...</p>
+                                <Badge variant="secondary" className="text-xs">pending</Badge>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => navigate(`/projects/${project.id}`)}>
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+                          )) || []}
+                          {(!availableProjects?.filter(p => p.status === 'pending').length) && (
+                            <div className="text-center py-8 text-gray-500">
+                              <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No pending projects</p>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      {/* In Progress Projects Tab */}
+                      <TabsContent value="in_progress" className="space-y-4">
+                        <div className="space-y-3">
+                          {availableProjects?.filter(p => p.status === 'in_progress' || p.status === 'in-progress').map((project) => (
+                            <div key={`progress-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
+                                <p className="text-xs text-gray-600 mb-2">{project.description?.substring(0, 80)}...</p>
+                                <Badge variant="default" className="text-xs">in progress</Badge>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => navigate(`/projects/${project.id}`)}>
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+                          )) || []}
+                          {(!availableProjects?.filter(p => p.status === 'in_progress' || p.status === 'in-progress').length) && (
+                            <div className="text-center py-8 text-gray-500">
+                              <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No projects in progress</p>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      {/* Completed Projects Tab */}
+                      <TabsContent value="completed" className="space-y-4">
+                        <div className="space-y-3">
+                          {availableProjects?.filter(p => p.status === 'completed').map((project) => (
+                            <div key={`completed-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
+                                <p className="text-xs text-gray-600 mb-2">{project.description?.substring(0, 80)}...</p>
+                                <Badge variant="default" className="text-xs">completed</Badge>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => navigate(`/projects/${project.id}`)}>
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+                          )) || []}
+                          {(!availableProjects?.filter(p => p.status === 'completed').length) && (
+                            <div className="text-center py-8 text-gray-500">
+                              <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No completed projects</p>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      {/* Cancelled Projects Tab */}
+                      <TabsContent value="cancelled" className="space-y-4">
+                        <div className="space-y-3">
+                          {availableProjects?.filter(p => p.status === 'cancelled').map((project) => (
+                            <div key={`cancelled-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 gap-3">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 text-sm">{project.title}</h4>
+                                <p className="text-xs text-gray-600 mb-2">{project.description?.substring(0, 80)}...</p>
+                                <Badge variant="destructive" className="text-xs">cancelled</Badge>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="text-xs px-2 py-1" onClick={() => navigate(`/projects/${project.id}`)}>
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+                          )) || []}
+                          {(!availableProjects?.filter(p => p.status === 'cancelled').length) && (
+                            <div className="text-center py-8 text-gray-500">
+                              <XCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No cancelled projects</p>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                   </CardContent>
                 </Card>
               </TabsContent>

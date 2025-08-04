@@ -1,0 +1,66 @@
+## Example AI Prompt for IT Services Workflow & Dashboard Implementation
+
+---
+
+**Instruction:**  
+You are an expert software architect and developer. Implement the IT Services feature for a marketplace app with two user roles: **Admin** and **Client**. Follow the detailed workflow and dashboard requirements below. Provide the output as structured user stories, API endpoints, database schema suggestions, and UI component descriptions.
+
+---
+
+### User Roles
+
+- **Admin**: Manages job requests, creates quotations, tracks projects, manages payments.  
+- **Client**: Marketplace users who submit IT service requests, review quotations, make payments, and track project progress.
+
+---
+
+### Workflow Steps
+
+1. **Client submits IT service request**  
+   - Endpoint: POST /service-requests  
+   - Data: project description, requirements, client ID  
+   - Result: New job request created, visible to Admin
+
+2. **Admin reviews request and creates quotation**  
+   - Endpoint: POST /quotations  
+   - Data: service request ID, price, deliverables, timeline  
+   - Result: Quotation sent to Client, status updated
+
+3. **Client reviews and accepts/rejects quotation**  
+   - Endpoint: POST /quotations/{id}/response  
+   - Data: accept/reject flag  
+   - If accepted: trigger 50% deposit payment request
+
+4. **Client makes 50% deposit payment**  
+   - Endpoint: POST /payments  
+   - Data: quotation ID, amount (50% of total)  
+   - Result: Payment recorded, project status changes to In Progress
+
+5. **Admin works on project**  
+   - Admin updates project status, milestones, messages
+
+6. **Admin completes project and submits deliverables**  
+   - Endpoint: POST /projects/{id}/complete  
+   - Result: Project marked Completed, Client notified
+
+7. **Client makes final 50% payment**  
+   - Endpoint: POST /payments  
+   - Data: quotation ID, amount (remaining 50%)  
+   - Result: Payment recorded, project status changes to Closed
+
+---
+
+### Dashboard Requirements
+
+**Admin Dashboard:**  
+- List new job requests (filter by status)  
+- Manage quotations (create, update, track responses)  
+- View ongoing projects with progress and payment status  
+- Notifications for new requests, accepted quotations, payments received
+
+**Client Dashboard:**  
+- View submitted requests and their statuses  
+- Review quotations and respond  
+- Make payments (deposit and final)  
+- Track project progress and completion  
+- Receive notifications on status changes and payments

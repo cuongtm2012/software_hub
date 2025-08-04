@@ -30,6 +30,15 @@ export const productStatusEnum = pgEnum('product_status', ['pending', 'approved'
 // Seller verification status enum
 export const verificationStatusEnum = pgEnum('verification_status', ['pending', 'verified', 'rejected']);
 
+// IT Service request status enum
+export const serviceRequestStatusEnum = pgEnum('service_request_status', ['submitted', 'under_review', 'quoted', 'accepted', 'in_progress', 'completed', 'closed', 'rejected']);
+
+// IT Service quotation status enum  
+export const serviceQuotationStatusEnum = pgEnum('service_quotation_status', ['pending', 'accepted', 'rejected', 'expired']);
+
+// IT Service payment type enum
+export const servicePaymentTypeEnum = pgEnum('service_payment_type', ['deposit', 'final', 'full']);
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -285,6 +294,73 @@ export const salesAnalytics = pgTable("sales_analytics", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
+// IT Services Tables
+export const serviceRequests = pgTable("service_requests", {
+  id: serial("id").primaryKey(),
+  client_id: integer("client_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  requirements: text("requirements"),
+  budget_range: text("budget_range"), // e.g. "$1000-$5000"
+  timeline: text("timeline"), // e.g. "2-4 weeks"
+  status: serviceRequestStatusEnum("status").default('submitted').notNull(),
+  admin_notes: text("admin_notes"),
+  priority: text("priority").default('normal'), // 'low', 'normal', 'high', 'urgent'
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const serviceQuotations = pgTable("service_quotations", {
+  id: serial("id").primaryKey(),
+  service_request_id: integer("service_request_id").references(() => serviceRequests.id).notNull(),
+  admin_id: integer("admin_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  deliverables: text("deliverables").array(),
+  total_price: numeric("total_price").notNull(),
+  deposit_amount: numeric("deposit_amount").notNull(), // Usually 50%
+  timeline_days: integer("timeline_days").notNull(),
+  terms_conditions: text("terms_conditions"),
+  status: serviceQuotationStatusEnum("status").default('pending').notNull(),
+  client_response: text("client_response"),
+  expires_at: timestamp("expires_at"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const serviceProjects = pgTable("service_projects", {
+  id: serial("id").primaryKey(),
+  quotation_id: integer("quotation_id").references(() => serviceQuotations.id).notNull(),
+  service_request_id: integer("service_request_id").references(() => serviceRequests.id).notNull(),
+  client_id: integer("client_id").references(() => users.id).notNull(),
+  admin_id: integer("admin_id").references(() => users.id).notNull(),
+  status: projectStatusEnum("status").default('pending').notNull(),
+  progress_percentage: integer("progress_percentage").default(0).notNull(),
+  milestones: jsonb("milestones"), // Array of milestone objects
+  deliverables_submitted: text("deliverables_submitted").array(),
+  client_feedback: text("client_feedback"),
+  admin_notes: text("admin_notes"),
+  started_at: timestamp("started_at"),
+  completed_at: timestamp("completed_at"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const servicePayments = pgTable("service_payments", {
+  id: serial("id").primaryKey(),
+  quotation_id: integer("quotation_id").references(() => serviceQuotations.id).notNull(),
+  service_project_id: integer("service_project_id").references(() => serviceProjects.id),
+  client_id: integer("client_id").references(() => users.id).notNull(),
+  amount: numeric("amount").notNull(),
+  payment_type: servicePaymentTypeEnum("payment_type").notNull(),
+  status: paymentStatusEnum("status").default('pending').notNull(),
+  stripe_payment_intent_id: text("stripe_payment_intent_id"),
+  payment_method: text("payment_method"), // 'card', 'bank_transfer', etc.
+  transaction_fee: numeric("transaction_fee").default('0'),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Define relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   softwares: many(softwares),
@@ -304,6 +380,11 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   sellerTickets: many(supportTickets, { relationName: "sellerTickets" }),
   sellerProfile: one(sellerProfiles),
   salesAnalytics: many(salesAnalytics),
+  // IT Services relations
+  serviceRequests: many(serviceRequests),
+  serviceQuotations: many(serviceQuotations),
+  serviceProjects: many(serviceProjects),
+  servicePayments: many(servicePayments),
 }));
 
 export const sellerProfilesRelations = relations(sellerProfiles, ({ one }) => ({
@@ -500,6 +581,64 @@ export const salesAnalyticsRelations = relations(salesAnalytics, ({ one }) => ({
   }),
 }));
 
+// IT Services Relations
+export const serviceRequestsRelations = relations(serviceRequests, ({ one, many }) => ({
+  client: one(users, {
+    fields: [serviceRequests.client_id],
+    references: [users.id],
+  }),
+  quotations: many(serviceQuotations),
+  serviceProjects: many(serviceProjects),
+}));
+
+export const serviceQuotationsRelations = relations(serviceQuotations, ({ one, many }) => ({
+  serviceRequest: one(serviceRequests, {
+    fields: [serviceQuotations.service_request_id],
+    references: [serviceRequests.id],
+  }),
+  admin: one(users, {
+    fields: [serviceQuotations.admin_id],
+    references: [users.id],
+  }),
+  serviceProjects: many(serviceProjects),
+  servicePayments: many(servicePayments),
+}));
+
+export const serviceProjectsRelations = relations(serviceProjects, ({ one, many }) => ({
+  quotation: one(serviceQuotations, {
+    fields: [serviceProjects.quotation_id],
+    references: [serviceQuotations.id],
+  }),
+  serviceRequest: one(serviceRequests, {
+    fields: [serviceProjects.service_request_id],
+    references: [serviceRequests.id],
+  }),
+  client: one(users, {
+    fields: [serviceProjects.client_id],
+    references: [users.id],
+  }),
+  admin: one(users, {
+    fields: [serviceProjects.admin_id],
+    references: [users.id],
+  }),
+  servicePayments: many(servicePayments),
+}));
+
+export const servicePaymentsRelations = relations(servicePayments, ({ one }) => ({
+  quotation: one(serviceQuotations, {
+    fields: [servicePayments.quotation_id],
+    references: [serviceQuotations.id],
+  }),
+  serviceProject: one(serviceProjects, {
+    fields: [servicePayments.service_project_id],
+    references: [serviceProjects.id],
+  }),
+  client: one(users, {
+    fields: [servicePayments.client_id],
+    references: [users.id],
+  }),
+}));
+
 // Schemas for inserting
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -635,6 +774,40 @@ export const insertSalesAnalyticsSchema = createInsertSchema(salesAnalytics).omi
   created_at: true,
 });
 
+// IT Services schemas
+export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  status: true,
+  client_id: true,
+});
+
+export const insertServiceQuotationSchema = createInsertSchema(serviceQuotations).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  status: true,
+  admin_id: true,
+});
+
+export const insertServiceProjectSchema = createInsertSchema(serviceProjects).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  status: true,
+  client_id: true,
+  admin_id: true,
+});
+
+export const insertServicePaymentSchema = createInsertSchema(servicePayments).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  status: true,
+  client_id: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -698,3 +871,16 @@ export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
 
 export type SalesAnalytics = typeof salesAnalytics.$inferSelect;
 export type InsertSalesAnalytics = z.infer<typeof insertSalesAnalyticsSchema>;
+
+// IT Services types
+export type ServiceRequest = typeof serviceRequests.$inferSelect;
+export type InsertServiceRequest = z.infer<typeof insertServiceRequestSchema>;
+
+export type ServiceQuotation = typeof serviceQuotations.$inferSelect;
+export type InsertServiceQuotation = z.infer<typeof insertServiceQuotationSchema>;
+
+export type ServiceProject = typeof serviceProjects.$inferSelect;
+export type InsertServiceProject = z.infer<typeof insertServiceProjectSchema>;
+
+export type ServicePayment = typeof servicePayments.$inferSelect;
+export type InsertServicePayment = z.infer<typeof insertServicePaymentSchema>;

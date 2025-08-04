@@ -3,6 +3,7 @@ import {
   projects, quotes, messages, portfolios, portfolioReviews,
   products, orders, orderItems, payments, productReviews, externalRequests,
   sellerProfiles, cartItems, supportTickets, salesAnalytics,
+  serviceRequests, serviceQuotations, serviceProjects, servicePayments,
   type User, type InsertUser, 
   type Software, type InsertSoftware,
   type Category, type InsertCategory,
@@ -22,7 +23,11 @@ import {
   type SellerProfile, type InsertSellerProfile,
   type CartItem, type InsertCartItem,
   type SupportTicket, type InsertSupportTicket,
-  type SalesAnalytics, type InsertSalesAnalytics
+  type SalesAnalytics, type InsertSalesAnalytics,
+  type ServiceRequest, type InsertServiceRequest,
+  type ServiceQuotation, type InsertServiceQuotation,
+  type ServiceProject, type InsertServiceProject,
+  type ServicePayment, type InsertServicePayment
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
@@ -166,6 +171,39 @@ export interface IStorage {
   // Sales Analytics
   createSalesAnalytics(analytics: InsertSalesAnalytics): Promise<SalesAnalytics>;
   getSalesAnalytics(sellerId: number, filters?: { startDate?: Date; endDate?: Date; }): Promise<SalesAnalytics[]>;
+  
+  // IT Services
+  // Service Requests
+  createServiceRequest(request: InsertServiceRequest, clientId: number): Promise<ServiceRequest>;
+  getServiceRequestById(id: number): Promise<ServiceRequest | undefined>;
+  getServiceRequestsByClient(clientId: number): Promise<ServiceRequest[]>;
+  getAllServiceRequests(): Promise<ServiceRequest[]>;
+  updateServiceRequest(id: number, request: Partial<InsertServiceRequest>): Promise<ServiceRequest | undefined>;
+  updateServiceRequestStatus(id: number, status: string, adminNotes?: string): Promise<ServiceRequest | undefined>;
+  
+  // Service Quotations
+  createServiceQuotation(quotation: InsertServiceQuotation, adminId: number): Promise<ServiceQuotation>;
+  getServiceQuotationById(id: number): Promise<ServiceQuotation | undefined>;
+  getServiceQuotationsByRequest(requestId: number): Promise<ServiceQuotation[]>;
+  getAllServiceQuotations(): Promise<ServiceQuotation[]>;
+  updateServiceQuotation(id: number, quotation: Partial<InsertServiceQuotation>): Promise<ServiceQuotation | undefined>;
+  updateServiceQuotationStatus(id: number, status: string, clientResponse?: string): Promise<ServiceQuotation | undefined>;
+  
+  // Service Projects
+  createServiceProject(project: InsertServiceProject): Promise<ServiceProject>;
+  getServiceProjectById(id: number): Promise<ServiceProject | undefined>;
+  getServiceProjectsByClient(clientId: number): Promise<ServiceProject[]>;
+  getServiceProjectsByAdmin(adminId: number): Promise<ServiceProject[]>;
+  getAllServiceProjects(): Promise<ServiceProject[]>;
+  updateServiceProject(id: number, project: Partial<InsertServiceProject>): Promise<ServiceProject | undefined>;
+  updateServiceProjectProgress(id: number, progress: number, adminNotes?: string): Promise<ServiceProject | undefined>;
+  
+  // Service Payments
+  createServicePayment(payment: InsertServicePayment): Promise<ServicePayment>;
+  getServicePaymentById(id: number): Promise<ServicePayment | undefined>;
+  getServicePaymentsByQuotation(quotationId: number): Promise<ServicePayment[]>;
+  getServicePaymentsByClient(clientId: number): Promise<ServicePayment[]>;
+  updateServicePaymentStatus(id: number, status: string): Promise<ServicePayment | undefined>;
   
   // Session store
   sessionStore: any;
@@ -1316,6 +1354,238 @@ export class DatabaseStorage implements IStorage {
     }
 
     return query.orderBy(desc(salesAnalytics.date));
+  }
+
+  // IT Services Implementation
+  
+  // Service Requests
+  async createServiceRequest(request: InsertServiceRequest, clientId: number): Promise<ServiceRequest> {
+    const [created] = await db
+      .insert(serviceRequests)
+      .values({
+        ...request,
+        client_id: clientId
+      })
+      .returning();
+    return created;
+  }
+
+  async getServiceRequestById(id: number): Promise<ServiceRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(serviceRequests)
+      .where(eq(serviceRequests.id, id));
+    return request;
+  }
+
+  async getServiceRequestsByClient(clientId: number): Promise<ServiceRequest[]> {
+    return db
+      .select()
+      .from(serviceRequests)
+      .where(eq(serviceRequests.client_id, clientId))
+      .orderBy(desc(serviceRequests.created_at));
+  }
+
+  async getAllServiceRequests(): Promise<ServiceRequest[]> {
+    return db
+      .select()
+      .from(serviceRequests)
+      .orderBy(desc(serviceRequests.created_at));
+  }
+
+  async updateServiceRequest(id: number, request: Partial<InsertServiceRequest>): Promise<ServiceRequest | undefined> {
+    const [updated] = await db
+      .update(serviceRequests)
+      .set({
+        ...request,
+        updated_at: new Date()
+      })
+      .where(eq(serviceRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateServiceRequestStatus(id: number, status: string, adminNotes?: string): Promise<ServiceRequest | undefined> {
+    const [updated] = await db
+      .update(serviceRequests)
+      .set({
+        status: status as any,
+        admin_notes: adminNotes,
+        updated_at: new Date()
+      })
+      .where(eq(serviceRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Service Quotations
+  async createServiceQuotation(quotation: InsertServiceQuotation, adminId: number): Promise<ServiceQuotation> {
+    const [created] = await db
+      .insert(serviceQuotations)
+      .values({
+        ...quotation,
+        admin_id: adminId
+      })
+      .returning();
+    return created;
+  }
+
+  async getServiceQuotationById(id: number): Promise<ServiceQuotation | undefined> {
+    const [quotation] = await db
+      .select()
+      .from(serviceQuotations)
+      .where(eq(serviceQuotations.id, id));
+    return quotation;
+  }
+
+  async getServiceQuotationsByRequest(requestId: number): Promise<ServiceQuotation[]> {
+    return db
+      .select()
+      .from(serviceQuotations)
+      .where(eq(serviceQuotations.service_request_id, requestId))
+      .orderBy(desc(serviceQuotations.created_at));
+  }
+
+  async getAllServiceQuotations(): Promise<ServiceQuotation[]> {
+    return db
+      .select()
+      .from(serviceQuotations)
+      .orderBy(desc(serviceQuotations.created_at));
+  }
+
+  async updateServiceQuotation(id: number, quotation: Partial<InsertServiceQuotation>): Promise<ServiceQuotation | undefined> {
+    const [updated] = await db
+      .update(serviceQuotations)
+      .set({
+        ...quotation,
+        updated_at: new Date()
+      })
+      .where(eq(serviceQuotations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateServiceQuotationStatus(id: number, status: string, clientResponse?: string): Promise<ServiceQuotation | undefined> {
+    const [updated] = await db
+      .update(serviceQuotations)
+      .set({
+        status: status as any,
+        client_response: clientResponse,
+        updated_at: new Date()
+      })
+      .where(eq(serviceQuotations.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Service Projects
+  async createServiceProject(project: InsertServiceProject): Promise<ServiceProject> {
+    const [created] = await db
+      .insert(serviceProjects)
+      .values(project)
+      .returning();
+    return created;
+  }
+
+  async getServiceProjectById(id: number): Promise<ServiceProject | undefined> {
+    const [project] = await db
+      .select()
+      .from(serviceProjects)
+      .where(eq(serviceProjects.id, id));
+    return project;
+  }
+
+  async getServiceProjectsByClient(clientId: number): Promise<ServiceProject[]> {
+    return db
+      .select()
+      .from(serviceProjects)
+      .where(eq(serviceProjects.client_id, clientId))
+      .orderBy(desc(serviceProjects.created_at));
+  }
+
+  async getServiceProjectsByAdmin(adminId: number): Promise<ServiceProject[]> {
+    return db
+      .select()
+      .from(serviceProjects)
+      .where(eq(serviceProjects.admin_id, adminId))
+      .orderBy(desc(serviceProjects.created_at));
+  }
+
+  async getAllServiceProjects(): Promise<ServiceProject[]> {
+    return db
+      .select()
+      .from(serviceProjects)
+      .orderBy(desc(serviceProjects.created_at));
+  }
+
+  async updateServiceProject(id: number, project: Partial<InsertServiceProject>): Promise<ServiceProject | undefined> {
+    const [updated] = await db
+      .update(serviceProjects)
+      .set({
+        ...project,
+        updated_at: new Date()
+      })
+      .where(eq(serviceProjects.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateServiceProjectProgress(id: number, progress: number, adminNotes?: string): Promise<ServiceProject | undefined> {
+    const [updated] = await db
+      .update(serviceProjects)
+      .set({
+        progress_percentage: progress,
+        admin_notes: adminNotes,
+        updated_at: new Date()
+      })
+      .where(eq(serviceProjects.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Service Payments
+  async createServicePayment(payment: InsertServicePayment): Promise<ServicePayment> {
+    const [created] = await db
+      .insert(servicePayments)
+      .values(payment)
+      .returning();
+    return created;
+  }
+
+  async getServicePaymentById(id: number): Promise<ServicePayment | undefined> {
+    const [payment] = await db
+      .select()
+      .from(servicePayments)
+      .where(eq(servicePayments.id, id));
+    return payment;
+  }
+
+  async getServicePaymentsByQuotation(quotationId: number): Promise<ServicePayment[]> {
+    return db
+      .select()
+      .from(servicePayments)
+      .where(eq(servicePayments.quotation_id, quotationId))
+      .orderBy(desc(servicePayments.created_at));
+  }
+
+  async getServicePaymentsByClient(clientId: number): Promise<ServicePayment[]> {
+    return db
+      .select()
+      .from(servicePayments)
+      .where(eq(servicePayments.client_id, clientId))
+      .orderBy(desc(servicePayments.created_at));
+  }
+
+  async updateServicePaymentStatus(id: number, status: string): Promise<ServicePayment | undefined> {
+    const [updated] = await db
+      .update(servicePayments)
+      .set({
+        status: status as any,
+        updated_at: new Date()
+      })
+      .where(eq(servicePayments.id, id))
+      .returning();
+    return updated;
   }
 }
 

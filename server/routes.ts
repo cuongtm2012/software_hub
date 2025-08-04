@@ -12,6 +12,8 @@ import {
   insertPaymentSchema, insertProductReviewSchema, insertExternalRequestSchema,
   insertUserDownloadSchema, insertSellerProfileSchema, insertCartItemSchema,
   insertSupportTicketSchema, insertSalesAnalyticsSchema,
+  insertServiceRequestSchema, insertServiceQuotationSchema, 
+  insertServiceProjectSchema, insertServicePaymentSchema,
   products
 } from "@shared/schema";
 import { db } from "./db";
@@ -1859,6 +1861,278 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(product);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // IT Services API Routes
+  
+  // Service Requests
+  app.post("/api/service-requests", isAuthenticated, async (req, res, next) => {
+    try {
+      const requestData = insertServiceRequestSchema.parse(req.body);
+      const serviceRequest = await storage.createServiceRequest(requestData, req.user!.id);
+      res.status(201).json(serviceRequest);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.get("/api/service-requests", isAuthenticated, async (req, res, next) => {
+    try {
+      let requests;
+      
+      if (req.user?.role === 'admin') {
+        requests = await storage.getAllServiceRequests();
+      } else {
+        requests = await storage.getServiceRequestsByClient(req.user!.id);
+      }
+      
+      res.json(requests);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/service-requests/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const request = await storage.getServiceRequestById(parseInt(id));
+      
+      if (!request) {
+        return res.status(404).json({ message: "Service request not found" });
+      }
+      
+      // Check permissions
+      if (req.user?.role !== 'admin' && request.client_id !== req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(request);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/service-requests/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const updateData = insertServiceRequestSchema.partial().parse(req.body);
+      
+      const existingRequest = await storage.getServiceRequestById(parseInt(id));
+      if (!existingRequest) {
+        return res.status(404).json({ message: "Service request not found" });
+      }
+      
+      // Check permissions
+      if (req.user?.role !== 'admin' && existingRequest.client_id !== req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const updatedRequest = await storage.updateServiceRequest(parseInt(id), updateData);
+      res.json(updatedRequest);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.put("/api/service-requests/:id/status", hasRole(['admin']), async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status, adminNotes } = req.body;
+      
+      const updatedRequest = await storage.updateServiceRequestStatus(parseInt(id), status, adminNotes);
+      res.json(updatedRequest);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Service Quotations
+  app.post("/api/service-quotations", hasRole(['admin']), async (req, res, next) => {
+    try {
+      const quotationData = insertServiceQuotationSchema.parse(req.body);
+      const quotation = await storage.createServiceQuotation(quotationData, req.user!.id);
+      res.status(201).json(quotation);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.get("/api/service-quotations", isAuthenticated, async (req, res, next) => {
+    try {
+      const { requestId } = req.query;
+      let quotations;
+      
+      if (requestId) {
+        quotations = await storage.getServiceQuotationsByRequest(parseInt(requestId as string));
+      } else if (req.user?.role === 'admin') {
+        quotations = await storage.getAllServiceQuotations();
+      } else {
+        // Get quotations for requests created by this client
+        const userRequests = await storage.getServiceRequestsByClient(req.user!.id);
+        const requestIds = userRequests.map(r => r.id);
+        quotations = [];
+        for (const reqId of requestIds) {
+          const reqQuotations = await storage.getServiceQuotationsByRequest(reqId);
+          quotations.push(...reqQuotations);
+        }
+      }
+      
+      res.json(quotations);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/service-quotations/:id/status", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status, clientResponse } = req.body;
+      
+      const quotation = await storage.getServiceQuotationById(parseInt(id));
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      // Get the related service request
+      const serviceRequest = await storage.getServiceRequestById(quotation.service_request_id);
+      if (!serviceRequest) {
+        return res.status(404).json({ message: "Related service request not found" });
+      }
+      
+      // Check permissions - admin or client who owns the request
+      if (req.user?.role !== 'admin' && serviceRequest.client_id !== req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const updatedQuotation = await storage.updateServiceQuotationStatus(parseInt(id), status, clientResponse);
+      res.json(updatedQuotation);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Service Projects
+  app.post("/api/service-projects", hasRole(['admin']), async (req, res, next) => {
+    try {
+      const projectData = insertServiceProjectSchema.parse(req.body);
+      const project = await storage.createServiceProject(projectData);
+      res.status(201).json(project);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.get("/api/service-projects", isAuthenticated, async (req, res, next) => {
+    try {
+      let projects;
+      
+      if (req.user?.role === 'admin') {
+        projects = await storage.getAllServiceProjects();
+      } else {
+        projects = await storage.getServiceProjectsByClient(req.user!.id);
+      }
+      
+      res.json(projects);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/service-projects/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const project = await storage.getServiceProjectById(parseInt(id));
+      
+      if (!project) {
+        return res.status(404).json({ message: "Service project not found" });
+      }
+      
+      // Check permissions
+      if (req.user?.role !== 'admin' && project.client_id !== req.user?.id && project.admin_id !== req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/service-projects/:id/progress", hasRole(['admin']), async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { progress, adminNotes } = req.body;
+      
+      const updatedProject = await storage.updateServiceProjectProgress(parseInt(id), progress, adminNotes);
+      res.json(updatedProject);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Service Payments
+  app.post("/api/service-payments", isAuthenticated, async (req, res, next) => {
+    try {
+      const paymentData = insertServicePaymentSchema.parse(req.body);
+      const payment = await storage.createServicePayment(paymentData);
+      res.status(201).json(payment);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.get("/api/service-payments", isAuthenticated, async (req, res, next) => {
+    try {
+      const { quotationId } = req.query;
+      let payments;
+      
+      if (quotationId) {
+        payments = await storage.getServicePaymentsByQuotation(parseInt(quotationId as string));
+      } else {
+        payments = await storage.getServicePaymentsByClient(req.user!.id);
+      }
+      
+      res.json(payments);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/service-payments/:id/status", hasRole(['admin']), async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      const updatedPayment = await storage.updateServicePaymentStatus(parseInt(id), status);
+      res.json(updatedPayment);
     } catch (error) {
       next(error);
     }
