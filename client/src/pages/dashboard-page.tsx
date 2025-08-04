@@ -195,11 +195,12 @@ export default function DashboardPage() {
   const totalCombinedProjects = showAllProjects ? (paginatedProjectsData?.total || 0) : totalUserRequests;
   const totalProjectPages = showAllProjects ? Math.ceil(totalCombinedProjects / projectsPerPage) : 1;
   
+  // Use only user's own external requests for project statistics since that's what the user actually owns
   const projectStats = {
-    total: allProjects.length + totalUserRequests,
-    active: allProjects.filter(p => p.status === 'in_progress').length + userExternalRequests.filter(r => r.status === 'in_progress').length,
-    completed: allProjects.filter(p => p.status === 'completed').length + userExternalRequests.filter(r => r.status === 'completed').length,
-    pending: allProjects.filter(p => p.status === 'pending').length + userExternalRequests.filter(r => r.status === 'pending').length,
+    total: totalUserRequests, // Only count user's own external requests
+    active: userExternalRequests.filter(r => r.status === 'in_progress').length,
+    completed: userExternalRequests.filter(r => r.status === 'completed').length,
+    pending: userExternalRequests.filter(r => r.status === 'pending').length,
     quotes: quotes?.length || 0,
     acceptedQuotes: quotes?.filter(q => q.status === 'accepted').length || 0
   };
