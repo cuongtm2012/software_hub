@@ -136,12 +136,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Software Management Routes
   app.get("/api/admin/software", adminMiddleware, async (req, res, next) => {
     try {
-      const { limit = 50, offset = 0, status } = req.query;
-      const result = await storage.getSoftwareList({
-        limit: parseInt(limit as string),
-        offset: parseInt(offset as string),
-        status: status as 'pending' | 'approved' | 'rejected' | undefined
-      });
+      const { 
+        page = 1, 
+        limit = 10, 
+        search = '', 
+        status = '', 
+        type = '', 
+        license = '', 
+        dateFrom = '', 
+        dateTo = '' 
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const filters = {
+        search: search as string,
+        status: status as string,
+        type: type as string,
+        license: license as string,
+        dateFrom: dateFrom as string,
+        dateTo: dateTo as string
+      };
+      
+      const result = await storage.getAdminSoftwareList(filters, limitNum, offset);
       res.json(result);
     } catch (error) {
       next(error);
@@ -171,24 +190,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/software/:id", adminMiddleware, async (req, res, next) => {
     try {
       const { id } = req.params;
-      const softwareId = parseInt(id);
+      const updates = req.body;
       
-      // Get existing software to update it
-      const existingSoftware = await storage.getSoftwareById(softwareId);
-      if (!existingSoftware) {
+      const software = await storage.updateSoftwareAdmin(parseInt(id), updates);
+      
+      if (!software) {
         return res.status(404).json({ message: "Software not found" });
       }
-
-      // Validate the update data (partial schema)
-      const updateData = req.body;
-      if (updateData.category_id) {
-        updateData.category_id = parseInt(updateData.category_id);
-      }
-
-      // Update the software in storage (you'll need to implement this method)
-      const updatedSoftware = await storage.updateSoftware(softwareId, updateData);
       
-      res.json({ software: updatedSoftware });
+      res.json(software);
     } catch (error) {
       next(error);
     }

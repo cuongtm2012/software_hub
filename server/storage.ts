@@ -424,6 +424,66 @@ export class DatabaseStorage implements IStorage {
     return updatedSoftware;
   }
 
+  async getAdminSoftwareList(filters: any, limit: number, offset: number) {
+    try {
+      let query = db.select().from(softwares);
+      
+      // Apply filters
+      if (filters.search) {
+        query = query.where(
+          or(
+            ilike(softwares.name, `%${filters.search}%`),
+            ilike(softwares.description, `%${filters.search}%`)
+          )
+        );
+      }
+      
+      if (filters.status && filters.status !== 'all') {
+        query = query.where(eq(softwares.status, filters.status));
+      }
+      
+      // Get total count first
+      const totalQuery = db.select({ count: sql`count(*)`.mapWith(Number) }).from(softwares);
+      const [{ count }] = await totalQuery;
+      
+      // Apply pagination and get results
+      const results = await query
+        .limit(limit)
+        .offset(offset)
+        .orderBy(desc(softwares.created_at));
+      
+      return {
+        softwares: results,
+        total: count,
+        page: Math.floor(offset / limit) + 1,
+        totalPages: Math.ceil(count / limit)
+      };
+    } catch (error) {
+      console.error('Error in getAdminSoftwareList:', error);
+      return {
+        softwares: [],
+        total: 0,
+        page: 1,
+        totalPages: 0
+      };
+    }
+  }
+
+  async updateSoftwareAdmin(id: number, updates: Partial<any>) {
+    try {
+      const result = await db
+        .update(softwares)
+        .set(updates)
+        .where(eq(softwares.id, id))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating software:', error);
+      return null;
+    }
+  }
+
   async deleteSoftware(id: number): Promise<boolean> {
     const result = await db
       .delete(softwares)
