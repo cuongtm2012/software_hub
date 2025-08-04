@@ -72,7 +72,6 @@ export default function ProjectDetailPage() {
     error: projectError,
   } = useQuery({
     queryKey: ['/api/projects', projectId],
-    queryFn: undefined,
     enabled: !!projectId,
   });
   
@@ -83,7 +82,6 @@ export default function ProjectDetailPage() {
     error: quotesError,
   } = useQuery({
     queryKey: ['/api/projects', projectId, 'quotes'],
-    queryFn: undefined,
     enabled: !!projectId,
   });
   
@@ -94,7 +92,6 @@ export default function ProjectDetailPage() {
     error: messagesError,
   } = useQuery({
     queryKey: ['/api/projects', projectId, 'messages'],
-    queryFn: undefined,
     enabled: !!projectId,
   });
   
@@ -274,13 +271,13 @@ export default function ProjectDetailPage() {
   };
 
   // Check if current user is the client who created the project
-  const isClient = user?.id === project?.client_id;
+  const isClient = user?.id === (project as any)?.client_id;
   
   // Check if current user is a developer who has submitted a quote
-  const isDeveloperWithQuote = user?.role === 'developer' && quotes?.some((quote: any) => quote.developer_id === user.id);
+  const isDeveloperWithQuote = user?.role === 'developer' && Array.isArray(quotes) && quotes.some((quote: any) => quote.developer_id === user.id);
   
   // Check if there's an accepted quote
-  const hasAcceptedQuote = quotes?.some((quote: any) => quote.status === 'accepted');
+  const hasAcceptedQuote = Array.isArray(quotes) && quotes.some((quote: any) => quote.status === 'accepted');
   
   // Loading and error states
   const isLoading = isLoadingProject || isLoadingQuotes || isLoadingMessages;
@@ -337,21 +334,21 @@ export default function ProjectDetailPage() {
           
           <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{project.title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{(project as any)?.title || "Project Details"}</h1>
               <div className="flex items-center space-x-2 mt-1">
-                <p className="text-gray-500">Project #{project.id}</p>
+                <p className="text-gray-500">Project #{(project as any)?.id}</p>
                 <span className="text-gray-300">•</span>
                 <p className="text-gray-500">
                   <Clock className="inline-block h-3 w-3 mr-1" />
-                  Created on {formatDate(project.created_at)}
+                  Created on {formatDate((project as any)?.created_at)}
                 </p>
               </div>
             </div>
             
             <div className="flex items-center space-x-2">
-              {getStatusBadge(project.status)}
+              {getStatusBadge((project as any)?.status)}
               
-              {isClient && project.status === 'pending' && (
+              {isClient && (project as any)?.status === 'pending' && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
@@ -369,7 +366,7 @@ export default function ProjectDetailPage() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         className="bg-red-600 hover:bg-red-700"
-                        onClick={() => updateProjectStatusMutation.mutate({ id: project.id, status: 'cancelled' })}
+                        onClick={() => updateProjectStatusMutation.mutate({ id: (project as any)?.id, status: 'cancelled' })}
                       >
                         Confirm Cancellation
                       </AlertDialogAction>
@@ -378,7 +375,7 @@ export default function ProjectDetailPage() {
                 </AlertDialog>
               )}
               
-              {isClient && project.status === 'in_progress' && (
+              {isClient && (project as any)?.status === 'in_progress' && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button className="bg-green-600 hover:bg-green-700 text-white">
@@ -396,7 +393,7 @@ export default function ProjectDetailPage() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         className="bg-green-600 hover:bg-green-700"
-                        onClick={() => updateProjectStatusMutation.mutate({ id: project.id, status: 'completed' })}
+                        onClick={() => updateProjectStatusMutation.mutate({ id: (project as any)?.id, status: 'completed' })}
                       >
                         Confirm Completion
                       </AlertDialogAction>
@@ -414,10 +411,10 @@ export default function ProjectDetailPage() {
               Project Details
             </TabsTrigger>
             <TabsTrigger value="quotes" className="text-sm rounded-sm data-[state=active]:bg-[#004080] data-[state=active]:text-white">
-              Quotes {quotes?.length > 0 && `(${quotes.length})`}
+              Quotes {Array.isArray(quotes) && quotes.length > 0 && `(${quotes.length})`}
             </TabsTrigger>
             <TabsTrigger value="messages" className="text-sm rounded-sm data-[state=active]:bg-[#004080] data-[state=active]:text-white">
-              Messages {messages?.length > 0 && `(${messages.length})`}
+              Messages {Array.isArray(messages) && messages.length > 0 && `(${messages.length})`}
             </TabsTrigger>
           </TabsList>
           
@@ -427,7 +424,7 @@ export default function ProjectDetailPage() {
                 <CardTitle>Project Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 whitespace-pre-wrap">{project.description}</p>
+                <p className="text-gray-700 whitespace-pre-wrap">{(project as any)?.project_description || (project as any)?.description || "No description provided."}</p>
               </CardContent>
             </Card>
             
@@ -436,7 +433,7 @@ export default function ProjectDetailPage() {
                 <CardTitle>Technical Requirements</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 whitespace-pre-wrap">{project.requirements || "No specific technical requirements provided."}</p>
+                <p className="text-gray-700 whitespace-pre-wrap">{(project as any)?.requirements || "No specific technical requirements provided."}</p>
               </CardContent>
             </Card>
             
@@ -449,7 +446,7 @@ export default function ProjectDetailPage() {
                   <div className="flex items-center">
                     <DollarSign className="h-5 w-5 mr-2 text-gray-400" />
                     <p className="text-lg font-medium">
-                      {project.budget ? `$${parseFloat(project.budget).toFixed(2)} USD` : "Not specified"}
+                      {(project as any)?.budget ? `$${parseFloat((project as any).budget).toFixed(2)} USD` : "Not specified"}
                     </p>
                   </div>
                 </CardContent>
@@ -463,14 +460,14 @@ export default function ProjectDetailPage() {
                   <div className="flex items-center">
                     <Calendar className="h-5 w-5 mr-2 text-gray-400" />
                     <p className="text-lg font-medium">
-                      {project.deadline ? formatDate(project.deadline) : "Not specified"}
+                      {(project as any)?.deadline ? formatDate((project as any).deadline) : "Not specified"}
                     </p>
                   </div>
                 </CardContent>
               </Card>
             </div>
             
-            {user?.role === 'developer' && project.status === 'pending' && !isDeveloperWithQuote && (
+            {user?.role === 'developer' && (project as any)?.status === 'pending' && !isDeveloperWithQuote && (
               <Card className="bg-white shadow-sm border-blue-200">
                 <CardHeader className="bg-blue-50 border-b border-blue-100">
                   <CardTitle>Submit a Quote</CardTitle>
@@ -566,7 +563,7 @@ export default function ProjectDetailPage() {
           </TabsContent>
           
           <TabsContent value="quotes" className="space-y-6">
-            {quotes?.length === 0 ? (
+            {!Array.isArray(quotes) || quotes.length === 0 ? (
               <Card className="bg-white shadow-sm p-6 text-center">
                 <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No quotes yet</h3>
@@ -577,7 +574,7 @@ export default function ProjectDetailPage() {
                     ? "Be the first developer to submit a quote for this project."
                     : "There are no quotes available for this project."}
                 </p>
-                {user?.role === 'developer' && !isDeveloperWithQuote && project.status === 'pending' && (
+                {user?.role === 'developer' && !isDeveloperWithQuote && (project as any)?.status === 'pending' && (
                   <Button 
                     onClick={() => setActiveTab("details")}
                     className="bg-[#004080] hover:bg-[#003366] text-white"
@@ -588,7 +585,7 @@ export default function ProjectDetailPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {quotes.map((quote: any) => (
+                {Array.isArray(quotes) && quotes.map((quote: any) => (
                   <Card key={quote.id} className={`bg-white shadow-sm ${quote.status === 'accepted' ? 'border-green-200' : ''}`}>
                     <CardHeader className={`flex flex-row items-start justify-between pb-3 ${quote.status === 'accepted' ? 'bg-green-50 border-b border-green-100' : ''}`}>
                       <div>
@@ -669,7 +666,7 @@ export default function ProjectDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {messages?.length === 0 ? (
+                {!Array.isArray(messages) || messages.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
@@ -679,7 +676,7 @@ export default function ProjectDetailPage() {
                   </div>
                 ) : (
                   <div className="space-y-4 mb-6 max-h-[500px] overflow-y-auto p-2">
-                    {messages.map((message: any) => (
+                    {Array.isArray(messages) && messages.map((message: any) => (
                       <div
                         key={message.id}
                         className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
@@ -707,7 +704,7 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
                 
-                {(project.status === 'in_progress' || project.status === 'pending') && (isClient || isDeveloperWithQuote || hasAcceptedQuote) && (
+                {((project as any)?.status === 'in_progress' || (project as any)?.status === 'pending') && (isClient || isDeveloperWithQuote || hasAcceptedQuote) && (
                   <div className="mt-4">
                     <Separator className="my-4" />
                     <Form {...messageForm}>
