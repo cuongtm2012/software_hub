@@ -560,6 +560,84 @@ export class DatabaseStorage implements IStorage {
     return { projects: projectsList, total: count };
   }
 
+  async getCombinedProjectsForUser(
+    userEmail: string,
+    status?: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<{ projects: any[]; total: number }> {
+    // Get user's external requests
+    const userRequestsQuery = db.select({
+      id: externalRequests.id,
+      title: sql<string>`null`.as('title'),
+      description: sql<string>`null`.as('description'),
+      project_description: externalRequests.project_description,
+      status: externalRequests.status,
+      created_at: externalRequests.created_at,
+      budget: sql<string>`null`.as('budget'),
+      deadline: sql<string>`null`.as('deadline'),
+      type: sql<string>`'external_request'`.as('type')
+    }).from(externalRequests).where(eq(externalRequests.email, userEmail));
+
+    // Get available projects
+    const availableProjectsQuery = db.select({
+      id: projects.id,
+      title: projects.title,
+      description: projects.description,
+      project_description: sql<string>`null`.as('project_description'),
+      status: projects.status,
+      created_at: projects.created_at,
+      budget: projects.budget,
+      deadline: projects.deadline,
+      type: sql<string>`'project'`.as('type')
+    }).from(projects);
+
+    // Apply status filter if provided
+    if (status && status !== 'all') {
+      const statusMap: { [key: string]: string } = {
+        'pending': 'pending',
+        'in-progress': 'in_progress', 
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+      };
+      const dbStatus = statusMap[status] || status;
+      userRequestsQuery.where(eq(externalRequests.status, dbStatus));
+      availableProjectsQuery.where(eq(projects.status, dbStatus));
+    }
+
+    // Execute queries to get counts
+    const [userRequestsCount] = await db
+      .select({ count: sql`count(*)`.mapWith(Number) })
+      .from(externalRequests)
+      .where(eq(externalRequests.email, userEmail));
+
+    const [availableProjectsCount] = await db
+      .select({ count: sql`count(*)`.mapWith(Number) })
+      .from(projects);
+
+    const totalCount = userRequestsCount.count + availableProjectsCount.count;
+
+    // Get the combined results with pagination
+    const userRequests = await userRequestsQuery
+      .orderBy(desc(externalRequests.created_at))
+      .limit(Math.min(options?.limit || 10, totalCount))
+      .offset(options?.offset || 0);
+
+    const remainingLimit = Math.max(0, (options?.limit || 10) - userRequests.length);
+    const availableProjects = remainingLimit > 0 ? await availableProjectsQuery
+      .orderBy(desc(projects.created_at))
+      .limit(remainingLimit)
+      .offset(Math.max(0, (options?.offset || 0) - userRequestsCount.count)) : [];
+
+    // Combine and sort by created_at
+    const combinedProjects = [...userRequests, ...availableProjects]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return { projects: combinedProjects, total: totalCount };
+  }
+
   // Phase 2: Project Management
   async createProject(project: InsertProject, clientId?: number): Promise<Project> {
     const [createdProject] = await db

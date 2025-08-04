@@ -119,33 +119,21 @@ export default function DashboardPage() {
     enabled: !!user && (user.role === 'admin' || user.role === 'client' || user.role === 'developer'),
   });
 
-  // Fetch external requests for users who are not admin/client/developer
+  // Fetch user's own external requests (for "My Projects" section)
   const { data: externalRequestsData, isLoading: isLoadingExternalRequests } = useQuery<{ requests: ExternalRequest[]; total: number }>({
-    queryKey: ['/api/my-external-requests', { page: showAllProjects ? currentProjectPage : 1, limit: showAllProjects ? projectsPerPage : 50 }],
-    enabled: !!user && user.role !== 'admin' && user.role !== 'client' && user.role !== 'developer',
+    queryKey: ['/api/my-external-requests', { page: 1, limit: 5, status: selectedProjectStatus }],
+    enabled: !!user,
   });
 
-  // Fetch paginated external requests when expanded
-  const { data: paginatedExternalRequests, isLoading: isLoadingPaginatedExternal } = useQuery<{ requests: ExternalRequest[]; total: number }>({
-    queryKey: ['/api/my-external-requests', { page: currentProjectPage, limit: projectsPerPage }],
-    enabled: !!user && user.role !== 'admin' && user.role !== 'client' && user.role !== 'developer' && showAllProjects,
+  // Fetch paginated combined projects when expanded (includes both external requests and available projects)
+  const { data: paginatedProjectsData, isLoading: isLoadingPaginatedProjects } = useQuery<{ projects: (Project | ExternalRequest)[]; total: number }>({
+    queryKey: ['/api/my-combined-projects', { page: currentProjectPage, limit: projectsPerPage, status: selectedProjectStatus }],
+    enabled: !!user && showAllProjects,
   });
 
   const { data: quotes, isLoading: isLoadingQuotes } = useQuery<Quote[]>({
     queryKey: ['/api/quotes'],
     enabled: !!user,
-  });
-
-  // Fetch all available projects for browsing
-  const { data: availableProjectsData, isLoading: isLoadingAvailableProjects } = useQuery<{ projects: Project[]; total: number }>({
-    queryKey: ['/api/available-projects', { status: selectedProjectStatus, page: showAllProjects ? currentProjectPage : 1, limit: showAllProjects ? projectsPerPage : 50 }],
-    enabled: !!user,
-  });
-
-  // Fetch paginated available projects when expanded
-  const { data: paginatedAvailableProjects, isLoading: isLoadingPaginatedAvailable } = useQuery<{ projects: Project[]; total: number }>({
-    queryKey: ['/api/available-projects', { status: selectedProjectStatus, page: currentProjectPage, limit: projectsPerPage }],
-    enabled: !!user && showAllProjects,
   });
 
   if (!user) {
@@ -188,20 +176,24 @@ export default function DashboardPage() {
     totalRevenue: orders.reduce((sum, o) => sum + parseFloat(o.total_amount || '0'), 0)
   };
 
-  // Calculate project statistics
+  // Calculate project statistics using unified data
   const allProjects = projects || [];
-  const allExternalRequests = externalRequestsData?.requests || [];
-  const totalExternalRequests = externalRequestsData?.total || 0;
-  const totalAvailableProjects = availableProjectsData?.total || 0;
-  const displayExternalRequests = showAllProjects ? (paginatedExternalRequests?.requests || allExternalRequests) : allExternalRequests;
-  const displayAvailableProjects = showAllProjects ? (paginatedAvailableProjects?.projects || availableProjectsData?.projects || []) : (availableProjectsData?.projects || []);
-  const totalProjectPages = showAllProjects ? Math.ceil((totalExternalRequests + totalAvailableProjects) / projectsPerPage) : 1;
+  const userExternalRequests = externalRequestsData?.requests || [];
+  const totalUserRequests = externalRequestsData?.total || 0;
+  
+  // For expanded view, use paginated combined data; for compact view, show user's recent requests only
+  const displayedProjects = showAllProjects 
+    ? (paginatedProjectsData?.projects || [])
+    : userExternalRequests.slice(0, 3); // Show only first 3 for compact view
+  
+  const totalCombinedProjects = showAllProjects ? (paginatedProjectsData?.total || 0) : totalUserRequests;
+  const totalProjectPages = showAllProjects ? Math.ceil(totalCombinedProjects / projectsPerPage) : 1;
   
   const projectStats = {
-    total: allProjects.length + totalExternalRequests,
-    active: allProjects.filter(p => p.status === 'in_progress').length + allExternalRequests.filter(r => r.status === 'in_progress').length,
-    completed: allProjects.filter(p => p.status === 'completed').length + allExternalRequests.filter(r => r.status === 'completed').length,
-    pending: allProjects.filter(p => p.status === 'pending').length + allExternalRequests.filter(r => r.status === 'pending').length,
+    total: allProjects.length + totalUserRequests,
+    active: allProjects.filter(p => p.status === 'in_progress').length + userExternalRequests.filter(r => r.status === 'in_progress').length,
+    completed: allProjects.filter(p => p.status === 'completed').length + userExternalRequests.filter(r => r.status === 'completed').length,
+    pending: allProjects.filter(p => p.status === 'pending').length + userExternalRequests.filter(r => r.status === 'pending').length,
     quotes: quotes?.length || 0,
     acceptedQuotes: quotes?.filter(q => q.status === 'accepted').length || 0
   };
@@ -562,7 +554,7 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                       </div>
-                    ) : allProjects.length === 0 && allExternalRequests.length === 0 ? (
+                    ) : displayedProjects.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                         <p className="mb-4">No projects yet. Start your first project!</p>
@@ -576,12 +568,16 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {/* Show regular projects */}
-                        {allProjects.slice(0, showAllProjects ? allProjects.length : 2).map((project) => (
+                        {/* Show unified projects (external requests + available projects) */}
+                        {displayedProjects.map((project: any) => (
                           <div key={`project-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
                             <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900">{project.title}</h4>
-                              <p className="text-sm text-gray-600 mb-2">{project.description?.substring(0, 100)}...</p>
+                              <h4 className="font-semibold text-gray-900">
+                                {project.title || `Project Request #${project.id}`}
+                              </h4>
+                              <p className="text-sm text-gray-600 mb-2">
+                                {(project.description || project.project_description)?.substring(0, 100)}...
+                              </p>
                               <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                                 <Badge variant={project.status === 'completed' ? 'default' : 'secondary'}>
                                   {project.status}
@@ -591,6 +587,11 @@ export default function DashboardPage() {
                                 )}
                                 {project.deadline && (
                                   <span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                                )}
+                                {project.created_at && !project.deadline && (
+                                  <span className="text-gray-500">
+                                    Submitted: {new Date(project.created_at).toLocaleDateString()}
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -608,37 +609,10 @@ export default function DashboardPage() {
                           </div>
                         ))}
                         
-                        {/* Show external requests */}
-                        {displayExternalRequests.slice(0, showAllProjects ? displayExternalRequests.length : (3 - allProjects.length)).map((request: any) => (
-                          <div key={`request-${request.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900">Project Request #{request.id}</h4>
-                              <p className="text-sm text-gray-600 mb-2">{request.project_description?.substring(0, 100)}...</p>
-                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                                <Badge variant={request.status === 'completed' ? 'default' : 'secondary'}>
-                                  {request.status}
-                                </Badge>
-                                <span className="text-gray-500">
-                                  Submitted: {new Date(request.created_at).toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full sm:w-auto"
-                                onClick={() => navigate(`/request-project`)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                View
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+
                         
                         {/* Expand/Collapse Button and Pagination for Projects */}
-                        {(allProjects.length + totalExternalRequests) > 3 && (
+                        {totalCombinedProjects > 3 && (
                           <div className="space-y-4">
                             <div className="text-center pt-4">
                               <Button 
@@ -647,16 +621,16 @@ export default function DashboardPage() {
                                   setShowAllProjects(!showAllProjects);
                                   setCurrentProjectPage(1);
                                 }}
-                                disabled={isLoadingPaginatedExternal || isLoadingPaginatedAvailable}
+                                disabled={isLoadingPaginatedProjects}
                               >
-                                {(isLoadingPaginatedExternal || isLoadingPaginatedAvailable) ? (
+                                {isLoadingPaginatedProjects ? (
                                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                 ) : showAllProjects ? (
                                   <ChevronUp className="h-4 w-4 mr-2" />
                                 ) : (
                                   <ChevronDown className="h-4 w-4 mr-2" />
                                 )}
-                                {showAllProjects ? 'Show Less' : `View All Projects (${allProjects.length + totalExternalRequests})`}
+                                {showAllProjects ? 'Show Less' : `View All Projects (${totalCombinedProjects})`}
                               </Button>
                             </div>
                             
@@ -664,7 +638,7 @@ export default function DashboardPage() {
                             {showAllProjects && totalProjectPages > 1 && (
                               <div className="flex items-center justify-between pt-4 border-t">
                                 <div className="text-sm text-gray-600">
-                                  Page {currentProjectPage} of {totalProjectPages} ({allProjects.length + totalExternalRequests} projects)
+                                  Page {currentProjectPage} of {totalProjectPages} ({totalCombinedProjects} projects)
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Button
@@ -674,7 +648,7 @@ export default function DashboardPage() {
                                       setCurrentProjectPage(currentProjectPage - 1);
                                       setIsLoadingProjectPagination(true);
                                     }}
-                                    disabled={currentProjectPage === 1 || (isLoadingPaginatedExternal || isLoadingPaginatedAvailable)}
+                                    disabled={currentProjectPage === 1 || isLoadingPaginatedProjects}
                                   >
                                     <ChevronLeft className="h-4 w-4" />
                                     Previous
@@ -706,7 +680,7 @@ export default function DashboardPage() {
                                       setCurrentProjectPage(currentProjectPage + 1);
                                       setIsLoadingProjectPagination(true);
                                     }}
-                                    disabled={currentProjectPage === totalProjectPages || (isLoadingPaginatedExternal || isLoadingPaginatedAvailable)}
+                                    disabled={currentProjectPage === totalProjectPages || isLoadingPaginatedProjects}
                                   >
                                     Next
                                     <ChevronRight className="h-4 w-4" />

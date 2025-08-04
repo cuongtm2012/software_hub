@@ -1639,6 +1639,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+
+  // Get combined projects for user dashboard (includes user's external requests + available projects)
+  app.get("/api/my-combined-projects", isAuthenticated, async (req, res, next) => {
+    try {
+      const { 
+        page = "1", 
+        limit = "10", 
+        status 
+      } = req.query;
+      
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const result = await storage.getCombinedProjectsForUser(
+        req.user?.email as string,
+        status as string,
+        {
+          limit: limitNum,
+          offset
+        }
+      );
+      
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
   
   app.get("/api/external-requests/:id", adminMiddleware, async (req, res, next) => {
     try {
