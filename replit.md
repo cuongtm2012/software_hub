@@ -65,6 +65,12 @@ The application uses a comprehensive PostgreSQL schema with the following main e
 - Maintain separation between client and server code
 
 ## Recent Changes
+- **2025-08-04**: Fixed critical admin authentication and routing issue:
+  - ✅ Resolved admin login redirect problem - admin users now properly route to /admin dashboard instead of regular user dashboard
+  - ✅ Enhanced authentication flow to automatically redirect based on user role (admin → /admin, others → /dashboard)
+  - ✅ Fixed auth page redirect logic to handle admin users correctly when already logged in
+  - ✅ Added role-based redirect with timeout to ensure proper navigation after login
+  - ✅ Backend authentication confirmed working consistently with proper session persistence
 - **2025-08-04**: Fixed critical data synchronization issue between "Recent Projects" and "View All Available Projects" sections:
   - ✅ Identified root cause: /api/projects endpoint blocked sellers with 403 error due to role restrictions
   - ✅ Updated dashboard to use unified data source (/api/my-combined-projects) for both sections to ensure synchronization
