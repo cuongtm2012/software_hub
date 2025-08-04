@@ -89,7 +89,7 @@ export default function SoftwareManagement() {
 
   // Fetch software list with filters
   const { data: softwareData, isLoading, refetch } = useQuery({
-    queryKey: ['/api/admin/software', { 
+    queryKey: ['/api/admin/softwares', { 
       page: currentPage, 
       limit: pageSize,
       ...filters 
@@ -107,7 +107,7 @@ export default function SoftwareManagement() {
       });
       
       console.log('Fetching admin software with params:', params.toString());
-      const response = await fetch(`/api/admin/software?${params}`, {
+      const response = await fetch(`/api/admin/softwares?${params}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
@@ -140,7 +140,7 @@ export default function SoftwareManagement() {
   // Update software mutation
   const updateSoftwareMutation = useMutation({
     mutationFn: async (data: { id: number; updates: Partial<Software> }) => {
-      const response = await apiRequest('PUT', `/api/admin/software/${data.id}`, data.updates);
+      const response = await apiRequest('PUT', `/api/softwares/${data.id}`, data.updates);
       return response.json();
     },
     onSuccess: () => {
@@ -148,7 +148,7 @@ export default function SoftwareManagement() {
         title: "Success",
         description: "Software updated successfully"
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/software'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/softwares'] });
       setIsEditModalOpen(false);
       setSelectedSoftware(null);
     },
@@ -164,7 +164,7 @@ export default function SoftwareManagement() {
   // Delete software mutation
   const deleteSoftwareMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest('DELETE', `/api/admin/software/${id}`);
+      const response = await apiRequest('DELETE', `/api/softwares/${id}`);
       return response.json();
     },
     onSuccess: () => {
@@ -172,7 +172,7 @@ export default function SoftwareManagement() {
         title: "Success",
         description: "Software deleted successfully"
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/software'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/softwares'] });
     },
     onError: (error: any) => {
       toast({
