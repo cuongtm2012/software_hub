@@ -125,6 +125,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Registration endpoint
+  app.post("/api/register", async (req, res, next) => {
+    try {
+      // Validate input
+      const { name, email, password } = req.body;
+      
+      if (!name || !email || !password) {
+        return res.status(400).json({ message: "Name, email, and password are required" });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email is already registered" });
+      }
+
+      // Create the user with default 'user' role
+      const user = await storage.createUser({
+        name,
+        email,
+        password, // Note: In production, hash this password
+        role: 'user', // Default role for new registrations
+      });
+
+      // Send welcome email (don't wait for it to complete)
+      emailService.sendWelcomeEmail(user.email, user.name).then(result => {
+        if (result.success) {
+          console.log(`Welcome email sent to ${user.email} (${result.messageId})`);
+        } else {
+          console.error(`Failed to send welcome email to ${user.email}:`, result.error);
+        }
+      }).catch(error => {
+        console.error(`Welcome email error for ${user.email}:`, error);
+      });
+
+      // Create session
+      req.session.userId = user.id;
+      req.session.user = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      };
+
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+
+      res.status(201).json({
+        ...userWithoutPassword,
+        welcomeEmailSent: true,
+        message: "Account created successfully! A welcome email has been sent to your email address."
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      next(error);
+    }
+  });
+
   // Skip setupAuth to avoid session conflicts
   // setupAuth(app);
   
