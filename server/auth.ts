@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import emailService from "./services/emailService.js";
 
 declare global {
   namespace Express {
@@ -104,10 +105,25 @@ export function setupAuth(app: Express) {
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
 
+      // Send welcome email (don't wait for it to complete)
+      emailService.sendWelcomeEmail(user.email, user.name).then(result => {
+        if (result.success) {
+          console.log(`Welcome email sent to ${user.email} (${result.messageId})`);
+        } else {
+          console.error(`Failed to send welcome email to ${user.email}:`, result.error);
+        }
+      }).catch(error => {
+        console.error(`Welcome email error for ${user.email}:`, error);
+      });
+
       // Login the user
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(201).json(userWithoutPassword);
+        res.status(201).json({
+          ...userWithoutPassword,
+          welcomeEmailSent: true,
+          message: "Account created successfully! A welcome email has been sent to your email address."
+        });
       });
     } catch (error) {
       next(error);

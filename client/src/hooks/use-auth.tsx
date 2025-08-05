@@ -88,11 +88,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/register", userData);
       return await res.json();
     },
-    onSuccess: (user: AuthUser) => {
+    onSuccess: (responseData: any) => {
+      // Extract user data from response
+      const user = responseData.user || responseData;
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Show success message with email confirmation
+      const welcomeMessage = responseData.welcomeEmailSent 
+        ? `Welcome to SoftwareHub, ${user.name}! A welcome email has been sent to ${user.email}.`
+        : `Welcome to SoftwareHub, ${user.name}!`;
+      
       toast({
         title: "Registration successful",
-        description: `Welcome to SoftwareHub, ${user.name}!`,
+        description: welcomeMessage,
       });
     },
     onError: (error: Error) => {
