@@ -96,24 +96,58 @@ class EmailService {
 
   // Predefined email templates for common use cases
   async sendWelcomeEmail(userEmail: string, userName: string) {
+    // Check if email service is initialized
+    if (!this.initialized) {
+      console.error('Email service not initialized - SENDGRID_API_KEY missing');
+      return { success: false, error: 'Email service not initialized' };
+    }
+
+    // Use a verified sender email - this is critical for SendGrid
+    // For development, we'll try multiple potential verified senders
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev';
+    
+    console.log(`Attempting to send welcome email from ${senderEmail} to ${userEmail}`);
+
     return this.sendEmail({
       to: userEmail,
-      from: 'noreply@softwarehub.com',
+      from: senderEmail,
       subject: 'Welcome to SoftwareHub!',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #333;">Welcome to SoftwareHub, ${userName}!</h1>
-          <p>Thank you for joining our platform. You can now:</p>
-          <ul>
-            <li>Browse and download software</li>
-            <li>Request custom development projects</li>
-            <li>Connect with developers</li>
-            <li>Access our marketplace</li>
-          </ul>
-          <p>Get started by exploring our software catalog!</p>
-          <p>Best regards,<br>The SoftwareHub Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to SoftwareHub!</h1>
+          </div>
+          
+          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+            <h2 style="color: #333; margin-top: 0;">Hi ${userName}!</h2>
+            
+            <p style="color: #666; line-height: 1.6; font-size: 16px;">
+              Thank you for joining SoftwareHub, the ultimate platform for software discovery and collaboration!
+            </p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+              <h3 style="color: #333; margin-top: 0;">What you can do with SoftwareHub:</h3>
+              <ul style="color: #666; line-height: 1.8;">
+                <li><strong>Discover Software:</strong> Browse our extensive catalog of free software</li>
+                <li><strong>Request Projects:</strong> Get custom software developed by our expert developers</li>
+                <li><strong>Join the Marketplace:</strong> Buy and sell software products</li>
+                <li><strong>Collaborate:</strong> Connect with developers and clients worldwide</li>
+              </ul>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="#" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
+                Get Started Now
+              </a>
+            </div>
+            
+            <p style="color: #999; font-size: 14px; text-align: center; margin-top: 30px;">
+              Need help? Contact our support team
+            </p>
+          </div>
         </div>
-      `
+      `,
+      text: `Welcome to SoftwareHub, ${userName}!\n\nThank you for joining our platform. You can now browse software, request projects, and connect with developers.\n\nBest regards,\nThe SoftwareHub Team`
     });
   }
 
