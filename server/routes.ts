@@ -19,6 +19,7 @@ import {
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import emailService from "./services/emailService.js";
 
 // Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -2319,6 +2320,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedPayment = await storage.updateServicePaymentStatus(parseInt(id), status);
       res.json(updatedPayment);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Email service endpoints
+  app.post("/api/email/send", isAuthenticated, async (req, res, next) => {
+    try {
+      const { to, subject, message, type = 'custom' } = req.body;
+      
+      if (!to || !subject || !message) {
+        return res.status(400).json({ 
+          message: "Missing required fields: to, subject, message" 
+        });
+      }
+      
+      const result = await emailService.sendEmail({
+        to,
+        from: 'noreply@softwarehub.com',
+        subject,
+        html: message
+      });
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send email",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Email sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/email/welcome", adminMiddleware, async (req, res, next) => {
+    try {
+      const { userEmail, userName } = req.body;
+      
+      if (!userEmail || !userName) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userEmail, userName" 
+        });
+      }
+      
+      const result = await emailService.sendWelcomeEmail(userEmail, userName);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send welcome email",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Welcome email sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/email/project-notification", adminMiddleware, async (req, res, next) => {
+    try {
+      const { userEmail, userName, projectTitle, status } = req.body;
+      
+      if (!userEmail || !userName || !projectTitle || !status) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userEmail, userName, projectTitle, status" 
+        });
+      }
+      
+      const result = await emailService.sendProjectNotification(userEmail, userName, projectTitle, status);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send project notification",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Project notification sent successfully" 
+      });
+      
     } catch (error) {
       next(error);
     }

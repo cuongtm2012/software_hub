@@ -1,0 +1,227 @@
+
+## Microservices Design with Node.js (Express)
+
+### 1. **Email Service**
+
+- **Purpose:**  
+  Send notification and transactional emails from Admin to users.
+
+- **Technologies:**  
+  - Node.js with Express to build REST API.  
+  - Use **@sendgrid/mail** library to call SendGrid API for sending emails.  
+  - API endpoint to receive email send requests from other services.
+
+- **Features:**  
+  - Send emails using templates (can use SendGrid dynamic templates).  
+  - Retry on failure (using retry libraries or custom implementation).  
+  - Log email sending status (can save to MongoDB or file logs).
+
+---
+
+### 2. **Chat Service**
+
+- **Purpose:**  
+  Real-time chat between users and admins, supporting 1:1 and group chats.
+
+- **Technologies:**  
+  - Node.js with Express + **Socket.IO** for realtime WebSocket.  
+  - Redis for Pub/Sub and presence state storage.  
+  - MongoDB to store chat history.
+
+- **Features:**  
+  - Realtime WebSocket connection.  
+  - Broadcast messages via Redis Pub/Sub to scale multiple instances.  
+  - Save messages to MongoDB.  
+  - Manage online/offline and typing status via Redis.  
+  - Authenticate user/admin on connection (e.g., JWT).
+
+---
+
+### 3. **Notification Service**
+
+- **Purpose:**  
+  Send push notifications to users (mobile/web).
+
+- **Technologies:**  
+  - Node.js with Express API.  
+  - Send notifications via **Firebase Cloud Messaging (FCM)** using **firebase-admin** library.  
+  - MongoDB to store notification metadata and read status.
+
+- **Features:**  
+  - API to create and send notifications.  
+  - Manage subscriptions and preferences.  
+  - Retry on failure.
+
+---
+
+### 4. **Message Queue**
+
+- **Purpose:**  
+  Handle asynchronous processing and decouple services.
+
+- **Technologies:**  
+  - Redis used as message queue (Redis Lists or Streams).  
+  - Services publish events to Redis queue.  
+  - Separate Node.js worker(s) consume and process messages.
+
+---
+
+### 5. **Containerization and Deployment**
+
+- **Technologies:**  
+  - Docker containers for each Node.js service.  
+  - Redis and MongoDB can run as containers or managed services.  
+  - Docker Compose or Kubernetes orchestration.
+
+- **Configuration Management:**  
+  - Environment variables for API keys, DB URLs, Redis URL, FCM credentials.
+
+---
+
+## Example Folder Structure for Email Service (Node.js)
+
+```
+email-service/
+├── src/
+│   ├── controllers/
+│   │   └── emailController.js
+│   ├── services/
+│   │   └── sendGridService.js
+│   ├── utils/
+│   │   └── retry.js
+│   └── app.js
+├── Dockerfile
+├── package.json
+└── .env
+```
+
+---
+
+## Example Folder Structures for Other Services
+
+```
+chat-service/
+├── src/
+│   ├── controllers/
+│   │   └── chatController.js           # REST API (optional)
+│   ├── socket/
+│   │   ├── socketServer.js             # Initialize Socket.IO server, handle events
+│   │   ├── handlers/                   # Socket event handlers (message, typing, etc.)
+│   │   │   ├── messageHandler.js
+│   │   │   ├── presenceHandler.js
+│   │   │   └── authHandler.js
+│   ├── services/
+│   │   ├── redisService.js             # Pub/Sub, presence management
+│   │   ├── mongoService.js             # MongoDB connection, message storage
+│   ├── utils/
+│   │   └── jwt.js                     # JWT authentication for socket and REST API
+│   └── app.js                         # Initialize Express + Socket.IO
+├── Dockerfile
+├── package.json
+└── .env
+
+
+notification-service/
+├── src/
+│   ├── controllers/
+│   │   └── notificationController.js    # API to create and send notifications
+│   ├── services/
+│   │   ├── fcmService.js                 # Send notifications via FCM
+│   │   ├── dbService.js                  # DB connection, metadata storage
+│   ├── utils/
+│   │   └── retry.js                     # Retry mechanism for sending notifications
+│   └── app.js                          # Initialize Express server
+├── Dockerfile
+├── package.json
+└── .env
+
+
+worker-service/
+├── src/
+│   ├── workers/
+│   │   ├── emailWorker.js             # Consume email send messages from queue, call Email Service
+│   │   ├── notificationWorker.js      # Consume notification send messages
+│   │   └── chatWorker.js               # Handle chat-related tasks such as saving messages
+│   ├── services/
+│   │   ├── redisService.js             # Redis connection, queue processing
+│   │   ├── emailServiceClient.js       # Call Email Service API (if needed)
+│   │   ├── notificationServiceClient.js # Call Notification Service API
+│   └── app.js                         # Initialize worker, listen to queue
+├── Dockerfile
+├── package.json
+└── .env
+```
+
+---
+
+## Example Dockerfiles for Node.js Services
+
+### chat-service/Dockerfile
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package.json & package-lock.json to install dependencies
+COPY package*.json ./
+
+RUN npm install --production
+
+# Copy all source code
+COPY . .
+
+# Set production environment
+ENV NODE_ENV=production
+
+# Expose default port (if needed)
+EXPOSE 3000
+
+# Start main app (app.js with Express + Socket.IO)
+CMD ["node", "src/app.js"]
+```
+
+---
+
+### notification-service/Dockerfile
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install --production
+
+COPY . .
+
+ENV NODE_ENV=production
+
+EXPOSE 3000
+
+CMD ["node", "src/app.js"]
+```
+
+---
+
+### worker-service/Dockerfile
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install --production
+
+COPY . .
+
+ENV NODE_ENV=production
+
+# Worker usually does not expose any port
+CMD ["node", "src/app.js"]
+```
+
+---

@@ -64,7 +64,47 @@ The application uses a comprehensive PostgreSQL schema with the following main e
 - Implement proper error handling and validation
 - Maintain separation between client and server code
 
+## Microservices Architecture
+
+### Overview
+The application now follows a comprehensive microservices architecture with the following services:
+
+1. **Main Application** (Port 5000) - SoftwareHub web application
+2. **Email Service** (Port 3001) - SendGrid email handling with retry mechanisms
+3. **Chat Service** (Port 3002) - Real-time messaging with Socket.IO and Redis
+4. **Notification Service** (Port 3003) - Push notifications with FCM integration
+5. **Worker Service** - Background job processing for emails, notifications, and analytics
+
+### Service Communication
+- **Email Service**: Integrated into main app with `/api/email/*` endpoints
+- **Inter-service Communication**: REST APIs between services
+- **Message Queue**: Redis-based queuing for asynchronous processing
+- **Real-time**: WebSocket connections handled by Chat Service
+- **Data Storage**: PostgreSQL (main), MongoDB (chat), Redis (cache/queue)
+
+### Docker Orchestration
+Complete Docker Compose setup with:
+- Service networking and load balancing
+- Environment variable management
+- Volume persistence for databases
+- Nginx reverse proxy for routing
+
+### Development vs Production
+- **Development**: In-memory implementations for external dependencies
+- **Production**: Full Redis, MongoDB, FCM, and SendGrid integrations
+- **Scalability**: Each service can be scaled independently
+
 ## Recent Changes
+- **2025-08-05**: Implemented comprehensive microservices architecture:
+  - ✅ Created Email Service with SendGrid integration and retry mechanisms
+  - ✅ Built Chat Service with Socket.IO, real-time messaging, and presence management
+  - ✅ Developed Notification Service with FCM support and bulk notifications
+  - ✅ Implemented Worker Service for background job processing with Redis queues
+  - ✅ Added Docker Compose orchestration with PostgreSQL, MongoDB, Redis, and Nginx
+  - ✅ Integrated Email Service into main application with `/api/email/*` endpoints
+  - ✅ Created comprehensive service architecture with proper error handling and logging
+  - ✅ Established inter-service communication patterns and health checks
+  - ✅ Set up development environment with in-memory implementations for external dependencies
 - **2025-08-04**: Fixed critical admin authentication and routing issue:
   - ✅ Resolved admin login redirect problem - admin users now properly route to /admin dashboard instead of regular user dashboard
   - ✅ Enhanced authentication flow to automatically redirect based on user role (admin → /admin, others → /dashboard)
