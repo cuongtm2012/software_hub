@@ -114,15 +114,41 @@ export default function ChatPage() {
 
   // Create direct room mutation
   const createDirectRoomMutation = useMutation({
-    mutationFn: (userId: number) => 
-      apiRequest('/api/chat/rooms/direct', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId })
-      }),
+    mutationFn: async (userId: number) => {
+      try {
+        const response = await fetch('/api/chat/rooms/direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ user_id: userId })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Failed to create direct room:', error);
+        throw error;
+      }
+    },
     onSuccess: (data: any) => {
       setSelectedRoom(data.room.id);
       queryClient.invalidateQueries({ queryKey: ['/api/chat/rooms'] });
+      toast({
+        title: 'Chat Started',
+        description: 'Direct chat room created successfully',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Chat room creation error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create chat room',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -385,7 +411,7 @@ export default function ChatPage() {
                 <ScrollArea className="flex-1 p-4">
                   {messagesLoading ? (
                     <div className="text-center py-8">Loading messages...</div>
-                  ) : messagesData?.messages?.length > 0 ? (
+                  ) : messagesData?.messages && messagesData.messages.length > 0 ? (
                     <div className="space-y-4">
                       {messagesData.messages.map((message: ChatMessage) => (
                         <div

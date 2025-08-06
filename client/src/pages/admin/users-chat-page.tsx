@@ -105,12 +105,28 @@ export default function AdminUsersChatPage() {
 
   // Create direct room mutation
   const createDirectRoomMutation = useMutation({
-    mutationFn: (userId: number) => 
-      apiRequest('/api/chat/rooms/direct', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId })
-      }),
+    mutationFn: async (userId: number) => {
+      try {
+        const response = await fetch('/api/chat/rooms/direct', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json' 
+          },
+          credentials: 'include', // This is crucial for session authentication
+          body: JSON.stringify({ user_id: userId })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Failed to create direct room:', error);
+        throw error;
+      }
+    },
     onSuccess: (data: any) => {
       setSelectedRoom(data.room.id);
       setSelectedUser(null); // Clear user selection when room is created
@@ -120,10 +136,11 @@ export default function AdminUsersChatPage() {
         description: 'Direct chat room created successfully',
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Chat room creation error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create chat room',
+        description: error.message || 'Failed to create chat room',
         variant: 'destructive',
       });
     },
@@ -322,7 +339,7 @@ export default function AdminUsersChatPage() {
                   <div className="space-y-2">
                     {filteredUsers.map((user: User) => (
                       <Button
-                        key={user.id}
+                        key={`admin-user-${user.id}`}
                         variant={selectedUser?.id === user.id ? "default" : "ghost"}
                         className="w-full justify-start h-auto p-3"
                         onClick={() => startChatWithUser(user)}
