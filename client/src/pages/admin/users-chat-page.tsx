@@ -74,9 +74,9 @@ export default function AdminUsersChatPage() {
     enabled: true,
   });
 
-  // Get all users for admin
-  const { data: usersData, isLoading: usersLoading } = useQuery<{ users: { users: User[]; total: number } }>({
-    queryKey: ['/api/admin/users'],
+  // Get chat users for admin (filtered appropriately)
+  const { data: usersData, isLoading: usersLoading } = useQuery<{ users: User[] }>({
+    queryKey: ['/api/chat/users'],
     enabled: !!currentUser && currentUser.role === 'admin',
   });
 
@@ -105,17 +105,27 @@ export default function AdminUsersChatPage() {
 
   // Create direct room mutation
   const createDirectRoomMutation = useMutation({
-    mutationFn: async (userId: number) => {
-      const response = await fetch('/api/chat/rooms/direct', {
+    mutationFn: (userId: number) => 
+      apiRequest('/api/chat/rooms/direct', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId })
-      });
-      return response.json();
-    },
+      }),
     onSuccess: (data: any) => {
       setSelectedRoom(data.room.id);
+      setSelectedUser(null); // Clear user selection when room is created
       queryClient.invalidateQueries({ queryKey: ['/api/chat/rooms'] });
+      toast({
+        title: 'Chat Started',
+        description: 'Direct chat room created successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to create chat room',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -224,19 +234,10 @@ export default function AdminUsersChatPage() {
     sendMessageMutation.mutate({ content: newMessage.trim() });
   };
 
-  const startChatWithUser = async (user: User) => {
+  const startChatWithUser = (user: User) => {
     setSelectedUser(user);
-    
     // Create or get existing chat room
-    try {
-      createDirectRoomMutation.mutate(user.id);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to start chat with user',
-        variant: 'destructive',
-      });
-    }
+    createDirectRoomMutation.mutate(user.id);
   };
 
   const getRoleIcon = (role: string) => {
@@ -260,7 +261,7 @@ export default function AdminUsersChatPage() {
   };
 
   // Filter users based on search term
-  const allUsers = usersData?.users?.users || [];
+  const allUsers = usersData?.users || [];
   const filteredUsers = allUsers.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
