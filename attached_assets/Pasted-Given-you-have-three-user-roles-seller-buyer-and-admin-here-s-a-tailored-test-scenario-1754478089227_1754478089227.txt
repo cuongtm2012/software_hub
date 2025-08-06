@@ -1,0 +1,107 @@
+Given you have three user roles—**seller**, **buyer**, and **admin**—here’s a tailored test scenario plan for the CHAT functionality based on typical screens and interactions these roles might have. This plan assumes your chat supports 1:1 conversations among these roles and possibly group chats involving admin.
+
+---
+
+## Chat Functionality Test Scenarios for Seller, Buyer, and Admin
+
+### 1. User Roles & Permissions Overview
+- **Seller:** Can chat with buyers and admin.
+- **Buyer:** Can chat with sellers and admin.
+- **Admin:** Can chat with any user (buyer or seller), manage groups if applicable.
+
+---
+
+### 2. Test Scenarios by User Role and Screen
+
+#### 2.1 Buyer Chat Screen
+- Buyer logs in, sees list of active chats (with sellers and admin).
+- Buyer selects a seller or admin to chat 1:1.
+- Buyer sends and receives messages in realtime.
+- Buyer sees typing indicators when seller/admin is typing.
+- Buyer receives notifications for new messages.
+- Buyer cannot message users not connected or blocked.
+
+**Tests:**
+- [ ] Buyer can open chat with a seller.
+- [ ] Buyer can send a message; seller receives it instantly.
+- [ ] Buyer receives message sent by seller/admin.
+- [ ] Typing indicators show correctly.
+- [ ] Buyer receives push or in-app notification for new messages.
+- [ ] Buyer tries to message a blocked or non-existent user → error or disabled.
+
+#### 2.2 Seller Chat Screen
+- Seller logs in, sees list of buyers and admin chats.
+- Seller can initiate chat with buyer or admin.
+- Seller sends/receives messages realtime.
+- Seller sees typing indicators.
+- Seller receives notifications.
+- Seller cannot message unauthorized users.
+
+**Tests:**
+- [ ] Seller can open chat with a buyer.
+- [ ] Seller sends message; buyer receives instantly.
+- [ ] Seller receives messages from buyer/admin.
+- [ ] Typing indicators work.
+- [ ] Seller receives notifications.
+- [ ] Seller tries to message unauthorized user → error.
+
+#### 2.3 Admin Chat Screen
+- Admin logs in, sees all chats with buyers and sellers.
+- Admin can initiate 1:1 chats or group chats.
+- Admin can send/receive messages realtime.
+- Admin sees typing indicators.
+- Admin receives notifications.
+- Admin can manage group membership (if group chat supported).
+
+**Tests:**
+- [ ] Admin opens chat with buyer or seller.
+- [ ] Admin sends message; recipient receives instantly.
+- [ ] Admin receives messages from users.
+- [ ] Typing indicators work.
+- [ ] Admin creates a group chat, adds/removes members.
+- [ ] Group chat messages sent and received by all members.
+- [ ] Unauthorized users cannot join group chats.
+
+---
+
+### 3. Common Cross-Role Tests
+
+- [ ] All users authenticate with valid JWT before connecting to chat.
+- [ ] Users cannot connect with invalid or expired tokens.
+- [ ] Messages are saved in MongoDB with correct sender, receiver, timestamps.
+- [ ] Presence (online/offline) status updates correctly across roles.
+- [ ] Typing indicators reflect user activity properly.
+- [ ] Message delivery is reliable and ordered.
+- [ ] Offline users receive missed messages upon reconnect.
+- [ ] Users cannot send empty or invalid messages.
+- [ ] Users cannot send messages to users who blocked them.
+- [ ] Scaling test: multiple users chatting simultaneously without message loss.
+
+---
+
+### 4. Edge Cases & Error Handling
+
+- [ ] User loses connection mid-chat and reconnects — chat resumes seamlessly.
+- [ ] User tries to send message with invalid format → rejected with error.
+- [ ] User tries to send message to a non-existent or deleted user → error.
+- [ ] User tries to join group chat without permission → denied.
+- [ ] Admin forcibly removes a user from group → user loses access immediately.
+
+---
+
+### 5. Notifications & UI Feedback
+
+- [ ] When a new message arrives, the chat list updates with unread count.
+- [ ] Push notifications (if implemented) arrive correctly when app is in background.
+- [ ] Read receipts (if implemented) update correctly across users.
+- [ ] Typing indicators and presence status update in real-time.
+
+---
+
+### Summary
+
+| Role   | Can Chat With         | Can Create Group | Can Manage Group |
+|--------|----------------------|------------------|------------------|
+| Buyer  | Seller, Admin        | No               | No               |
+| Seller | Buyer, Admin         | No               | No               |
+| Admin  | Buyer, Seller, Groups| Yes              | Yes              |

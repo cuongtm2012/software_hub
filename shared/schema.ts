@@ -42,6 +42,12 @@ export const servicePaymentTypeEnum = pgEnum('service_payment_type', ['deposit',
 // External request status enum for IT services workflow
 export const externalRequestStatusEnum = pgEnum('external_request_status', ['pending', 'in_progress', 'completed', 'cancelled', 'contacted', 'converted', 'rejected']);
 
+// Chat message status enum
+export const messageStatusEnum = pgEnum('message_status', ['sent', 'delivered', 'read']);
+
+// Chat room type enum
+export const roomTypeEnum = pgEnum('room_type', ['direct', 'group']);
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -899,3 +905,118 @@ export type InsertServiceProject = z.infer<typeof insertServiceProjectSchema>;
 
 export type ServicePayment = typeof servicePayments.$inferSelect;
 export type InsertServicePayment = z.infer<typeof insertServicePaymentSchema>;
+
+// Chat rooms table
+export const chatRooms = pgTable("chat_rooms", {
+  id: serial("id").primaryKey(),
+  name: text("name"),
+  type: roomTypeEnum("type").default('direct').notNull(),
+  created_by: integer("created_by").references(() => users.id).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Chat room members table
+export const chatRoomMembers = pgTable("chat_room_members", {
+  id: serial("id").primaryKey(),
+  room_id: integer("room_id").references(() => chatRooms.id).notNull(),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  joined_at: timestamp("joined_at").defaultNow().notNull(),
+  last_read_at: timestamp("last_read_at"),
+  is_admin: boolean("is_admin").default(false).notNull(),
+});
+
+// Chat messages table
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  room_id: integer("room_id").references(() => chatRooms.id).notNull(),
+  sender_id: integer("sender_id").references(() => users.id).notNull(),
+  content: text("content").notNull(),
+  message_type: text("message_type").default('text').notNull(), // text, image, file, system
+  status: messageStatusEnum("status").default('sent').notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  edited_at: timestamp("edited_at"),
+});
+
+// User presence table for online status
+export const userPresence = pgTable("user_presence", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id).notNull().unique(),
+  is_online: boolean("is_online").default(false).notNull(),
+  last_seen: timestamp("last_seen").defaultNow().notNull(),
+  socket_id: text("socket_id"),
+});
+
+// Chat room relations
+export const chatRoomsRelations = relations(chatRooms, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [chatRooms.created_by],
+    references: [users.id],
+  }),
+  members: many(chatRoomMembers),
+  messages: many(chatMessages),
+}));
+
+export const chatRoomMembersRelations = relations(chatRoomMembers, ({ one }) => ({
+  room: one(chatRooms, {
+    fields: [chatRoomMembers.room_id],
+    references: [chatRooms.id],
+  }),
+  user: one(users, {
+    fields: [chatRoomMembers.user_id],
+    references: [users.id],
+  }),
+}));
+
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+  room: one(chatRooms, {
+    fields: [chatMessages.room_id],
+    references: [chatRooms.id],
+  }),
+  sender: one(users, {
+    fields: [chatMessages.sender_id],
+    references: [users.id],
+  }),
+}));
+
+export const userPresenceRelations = relations(userPresence, ({ one }) => ({
+  user: one(users, {
+    fields: [userPresence.user_id],
+    references: [users.id],
+  }),
+}));
+
+// Chat schemas
+export const insertChatRoomSchema = createInsertSchema(chatRooms).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+});
+
+export const insertChatRoomMemberSchema = createInsertSchema(chatRoomMembers).omit({
+  id: true,
+  joined_at: true,
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  created_at: true,
+});
+
+export const insertUserPresenceSchema = createInsertSchema(userPresence).omit({
+  id: true,
+  last_seen: true,
+});
+
+// Chat types
+export type ChatRoom = typeof chatRooms.$inferSelect;
+export type InsertChatRoom = z.infer<typeof insertChatRoomSchema>;
+
+export type ChatRoomMember = typeof chatRoomMembers.$inferSelect;
+export type InsertChatRoomMember = z.infer<typeof insertChatRoomMemberSchema>;
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+export type UserPresence = typeof userPresence.$inferSelect;
+export type InsertUserPresence = z.infer<typeof insertUserPresenceSchema>;

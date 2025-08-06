@@ -14,10 +14,13 @@ import {
   insertSupportTicketSchema, insertSalesAnalyticsSchema,
   insertServiceRequestSchema, insertServiceQuotationSchema, 
   insertServiceProjectSchema, insertServicePaymentSchema,
+  insertChatRoomSchema, insertChatRoomMemberSchema, insertChatMessageSchema,
+  insertUserPresenceSchema, chatRooms, chatRoomMembers, chatMessages, userPresence,
   products
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, ne, inArray, desc, gt, count, update } from "drizzle-orm";
+import { users } from "@shared/schema";
 import { z } from "zod";
 import emailService from "./services/emailService.js";
 
@@ -2085,6 +2088,213 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat API Routes
+  app.get("/api/chat/rooms", isAuthenticated, async (req, res, next) => {
+    try {
+      const userRooms = await db
+        .select({
+          id: chatRooms.id,
+          name: chatRooms.name,
+          type: chatRooms.type,
+          created_at: chatRooms.created_at,
+          updated_at: chatRooms.updated_at,
+        })
+        .from(chatRooms)
+        .innerJoin(chatRoomMembers, eq(chatRooms.id, chatRoomMembers.room_id))
+        .where(eq(chatRoomMembers.user_id, req.user!.id));
+      
+      res.json({ rooms: userRooms });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/chat/rooms/:roomId/messages", isAuthenticated, async (req, res, next) => {
+    try {
+      const { roomId } = req.params;
+      const { page = 1, limit = 50 } = req.query;
+      
+      // Check if user is member of this room
+      const membership = await db
+        .select()
+        .from(chatRoomMembers)
+        .where(
+          and(
+            eq(chatRoomMembers.room_id, parseInt(roomId)),
+            eq(chatRoomMembers.user_id, req.user!.id)
+          )
+        )
+        .limit(1);
+      
+      if (membership.length === 0) {
+        return res.status(403).json({ message: "You are not a member of this room" });
+      }
+      
+      const messages = await db
+        .select({
+          id: chatMessages.id,
+          content: chatMessages.content,
+          message_type: chatMessages.message_type,
+          status: chatMessages.status,
+          created_at: chatMessages.created_at,
+          sender: {
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            role: users.role,
+          }
+        })
+        .from(chatMessages)
+        .innerJoin(users, eq(chatMessages.sender_id, users.id))
+        .where(eq(chatMessages.room_id, parseInt(roomId)))
+        .orderBy(desc(chatMessages.created_at))
+        .limit(parseInt(limit as string))
+        .offset((parseInt(page as string) - 1) * parseInt(limit as string));
+      
+      res.json({ messages: messages.reverse() });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/chat/rooms", isAuthenticated, async (req, res, next) => {
+    try {
+      const roomData = insertChatRoomSchema.parse({
+        ...req.body,
+        created_by: req.user!.id
+      });
+      
+      const [room] = await db.insert(chatRooms).values(roomData).returning();
+      
+      // Add creator as member
+      await db.insert(chatRoomMembers).values({
+        room_id: room.id,
+        user_id: req.user!.id,
+        is_admin: true
+      });
+      
+      // Add other members if specified
+      if (req.body.member_ids && Array.isArray(req.body.member_ids)) {
+        const memberValues = req.body.member_ids
+          .filter((id: number) => id !== req.user!.id) // Don't add creator twice
+          .map((id: number) => ({
+            room_id: room.id,
+            user_id: id,
+            is_admin: false
+          }));
+        
+        if (memberValues.length > 0) {
+          await db.insert(chatRoomMembers).values(memberValues);
+        }
+      }
+      
+      res.status(201).json({ room });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+
+  app.post("/api/chat/rooms/direct", isAuthenticated, async (req, res, next) => {
+    try {
+      const { user_id } = req.body;
+      
+      if (!user_id || user_id === req.user!.id) {
+        return res.status(400).json({ message: "Invalid user_id" });
+      }
+      
+      // Check if direct room already exists between these users
+      const existingRoom = await db
+        .select({ id: chatRooms.id })
+        .from(chatRooms)
+        .innerJoin(chatRoomMembers, eq(chatRooms.id, chatRoomMembers.room_id))
+        .where(
+          and(
+            eq(chatRooms.type, 'direct'),
+            inArray(chatRoomMembers.user_id, [req.user!.id, user_id])
+          )
+        )
+        .groupBy(chatRooms.id)
+        .having(eq(count(chatRoomMembers.user_id), 2));
+      
+      if (existingRoom.length > 0) {
+        return res.json({ room: { id: existingRoom[0].id } });
+      }
+      
+      // Create new direct room
+      const [room] = await db.insert(chatRooms).values({
+        type: 'direct',
+        created_by: req.user!.id
+      }).returning();
+      
+      // Add both users as members
+      await db.insert(chatRoomMembers).values([
+        { room_id: room.id, user_id: req.user!.id, is_admin: false },
+        { room_id: room.id, user_id: user_id, is_admin: false }
+      ]);
+      
+      res.status(201).json({ room });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/chat/users", isAuthenticated, async (req, res, next) => {
+    try {
+      const { role } = req.query;
+      const currentUserRole = req.user!.role;
+      
+      // Define role-based access rules
+      let allowedRoles: string[] = [];
+      
+      if (currentUserRole === 'admin') {
+        allowedRoles = ['seller', 'buyer', 'user', 'developer', 'client'];
+      } else if (currentUserRole === 'seller') {
+        allowedRoles = ['buyer', 'admin'];
+      } else if (currentUserRole === 'buyer') {
+        allowedRoles = ['seller', 'admin'];
+      } else {
+        allowedRoles = ['admin']; // Regular users can only chat with admin
+      }
+      
+      let query = db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          is_online: userPresence.is_online,
+          last_seen: userPresence.last_seen,
+        })
+        .from(users)
+        .leftJoin(userPresence, eq(users.id, userPresence.user_id))
+        .where(
+          and(
+            inArray(users.role, allowedRoles),
+            ne(users.id, req.user!.id) // Exclude current user
+          )
+        );
+      
+      if (role && allowedRoles.includes(role as string)) {
+        query = query.where(
+          and(
+            eq(users.role, role as any),
+            ne(users.id, req.user!.id)
+          )
+        );
+      }
+      
+      const chatUsers = await query;
+      res.json({ users: chatUsers });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Public Marketplace Routes
   app.get("/api/marketplace/products", async (req, res, next) => {
     try {
@@ -2479,7 +2689,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
+  // WebSocket integration for real-time chat
+  const server = createServer(app);
+  const { Server } = await import('socket.io');
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+  
+  // Socket.IO chat handlers
+  io.on('connection', (socket: any) => {
+    console.log(`User connected: ${socket.id}`);
+    
+    // Handle user authentication
+    socket.on('authenticate', async (data: { token?: string, userId?: number }) => {
+      try {
+        if (data.userId) {
+          socket.userId = data.userId;
+          
+          // Update user presence
+          try {
+            await db.insert(userPresence).values({
+              user_id: data.userId,
+              is_online: true,
+              socket_id: socket.id
+            });
+          } catch (error) {
+            // User already exists, update
+            await db.update(userPresence)
+              .set({
+                is_online: true,
+                socket_id: socket.id,
+                last_seen: new Date()
+              })
+              .where(eq(userPresence.user_id, data.userId));
+          }
+          
+          socket.join(`user_${data.userId}`);
+          socket.emit('authenticated', { success: true });
+          console.log(`User ${data.userId} authenticated`);
+        }
+      } catch (error) {
+        console.error('Authentication error:', error);
+        socket.emit('auth_error', { message: 'Authentication failed' });
+      }
+    });
+    
+    // Handle joining chat rooms
+    socket.on('join_room', async (data: { roomId: number }) => {
+      try {
+        if (!socket.userId) {
+          return socket.emit('error', { message: 'Not authenticated' });
+        }
+        
+        // Verify user is member of this room
+        const membership = await db
+          .select()
+          .from(chatRoomMembers)
+          .where(
+            and(
+              eq(chatRoomMembers.room_id, data.roomId),
+              eq(chatRoomMembers.user_id, socket.userId)
+            )
+          )
+          .limit(1);
+        
+        if (membership.length === 0) {
+          return socket.emit('error', { message: 'Not authorized to join this room' });
+        }
+        
+        socket.join(`room_${data.roomId}`);
+        socket.emit('joined_room', { roomId: data.roomId });
+        console.log(`User ${socket.userId} joined room ${data.roomId}`);
+      } catch (error) {
+        console.error('Join room error:', error);
+        socket.emit('error', { message: 'Failed to join room' });
+      }
+    });
+    
+    // Handle sending messages
+    socket.on('send_message', async (data: { roomId: number, content: string, messageType?: string }) => {
+      try {
+        if (!socket.userId) {
+          return socket.emit('error', { message: 'Not authenticated' });
+        }
+        
+        // Verify user is member of this room
+        const membership = await db
+          .select()
+          .from(chatRoomMembers)
+          .where(
+            and(
+              eq(chatRoomMembers.room_id, data.roomId),
+              eq(chatRoomMembers.user_id, socket.userId)
+            )
+          )
+          .limit(1);
+        
+        if (membership.length === 0) {
+          return socket.emit('error', { message: 'Not authorized to send to this room' });
+        }
+        
+        // Save message to database
+        const [message] = await db.insert(chatMessages).values({
+          room_id: data.roomId,
+          sender_id: socket.userId,
+          content: data.content,
+          message_type: data.messageType || 'text'
+        }).returning();
+        
+        // Get sender details for broadcasting
+        const [sender] = await db
+          .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            role: users.role
+          })
+          .from(users)
+          .where(eq(users.id, socket.userId))
+          .limit(1);
+        
+        const messageWithSender = {
+          ...message,
+          sender
+        };
+        
+        // Broadcast message to all room members
+        io.to(`room_${data.roomId}`).emit('new_message', messageWithSender);
+        
+        console.log(`Message sent to room ${data.roomId} by user ${socket.userId}`);
+      } catch (error) {
+        console.error('Send message error:', error);
+        socket.emit('error', { message: 'Failed to send message' });
+      }
+    });
+    
+    // Handle typing indicators
+    socket.on('typing', (data: { roomId: number, isTyping: boolean }) => {
+      socket.to(`room_${data.roomId}`).emit('user_typing', {
+        userId: socket.userId,
+        isTyping: data.isTyping
+      });
+    });
+    
+    // Handle disconnect
+    socket.on('disconnect', async () => {
+      console.log(`User disconnected: ${socket.id}`);
+      
+      if (socket.userId) {
+        // Update user presence to offline
+        await db.update(userPresence)
+          .set({
+            is_online: false,
+            last_seen: new Date()
+          })
+          .where(eq(userPresence.user_id, socket.userId));
+      }
+    });
+  });
 
-  return httpServer;
+  return server;
 }

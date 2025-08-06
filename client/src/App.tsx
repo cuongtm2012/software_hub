@@ -59,6 +59,7 @@ import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
 import DashboardPage from "@/pages/dashboard-page";
+import ChatPage from "@/pages/chat-page";
 
 function Router() {
   return (
@@ -71,6 +72,7 @@ function Router() {
       {/* Protected Routes - Available to logged-in users */}
       <ProtectedRoute path="/profile" component={UserProfilePage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
+      <ProtectedRoute path="/chat" component={ChatPage} />
       
       {/* Admin Routes - Only accessible to admin users */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />

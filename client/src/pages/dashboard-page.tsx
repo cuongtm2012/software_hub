@@ -10,7 +10,7 @@ import {
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
   Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp, 
-  ChevronLeft, ChevronRight, Edit3, CalendarDays
+  ChevronLeft, ChevronRight, Edit3, CalendarDays, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -259,8 +259,8 @@ export default function DashboardPage() {
               {/* PRODUCTS TAB */}
               {isSeller && (
                 <TabsContent value="products" className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
-                  {/* Add Product Button */}
-                  <div className="flex justify-start">
+                  {/* Add Product & Chat Buttons */}
+                  <div className="flex flex-wrap gap-2 justify-start">
                     <Button
                       onClick={() => navigate('/seller/products/new')}
                       className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
@@ -268,6 +268,14 @@ export default function DashboardPage() {
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Product
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate('/chat')}
+                      className="text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
+                    >
+                      <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                      Messages
                     </Button>
                   </div>
 
@@ -512,8 +520,8 @@ export default function DashboardPage() {
 
               {/* PROJECTS TAB */}
               <TabsContent value="projects" className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
-                {/* New Project Button */}
-                <div className="flex justify-start">
+                {/* New Project & Chat Buttons */}
+                <div className="flex flex-wrap gap-2 justify-start">
                   <Button
                     onClick={() => navigate('/request-project')}
                     className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
@@ -521,6 +529,14 @@ export default function DashboardPage() {
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     New Project
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/chat')}
+                    className="text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
+                  >
+                    <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    Messages
                   </Button>
                 </div>
 
