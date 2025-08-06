@@ -54,6 +54,7 @@ import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
 // Admin
 import AdminDashboardPage from "@/pages/admin-dashboard-page";
 import AdminUsersPage from "@/pages/admin/users-page";
+import AdminUsersChatPage from "@/pages/admin/users-chat-page";
 import AdminSoftwareManagementPage from "@/pages/admin/software-management-page";
 import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
@@ -77,6 +78,7 @@ function Router() {
       {/* Admin Routes - Only accessible to admin users */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/users/chat" component={AdminUsersChatPage} roles={['admin']} />
       <ProtectedRoute path="/admin/software" component={AdminSoftwareManagementPage} roles={['admin']} />
       
       {/* Phase 2: Code Service & Product Build Module */}

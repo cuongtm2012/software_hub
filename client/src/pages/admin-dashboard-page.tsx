@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Users, Package, FileText, BarChart3, Search, Eye, User, Mail, Phone, Calendar, DollarSign, Clock, Loader2, Trash2, Edit } from "lucide-react";
+import { AlertCircle, Users, Package, FileText, BarChart3, Search, Eye, User, Mail, Phone, Calendar, DollarSign, Clock, Loader2, Trash2, Edit, MessageCircle } from "lucide-react";
 import SoftwareManagement from "@/pages/admin/software-management";
 
 // Types
@@ -785,9 +785,18 @@ export default function AdminDashboardPage() {
       <Header />
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">Manage users, software, and external requests</p>
+          <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+              <p className="text-gray-600">Manage users, software, and external requests</p>
+            </div>
+            <Button
+              onClick={() => navigate('/admin/users/chat')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              User Chat Management
+            </Button>
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
