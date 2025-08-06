@@ -90,9 +90,17 @@ export default function ChatPage() {
   });
 
   // Get available users to chat with
-  const { data: usersData } = useQuery<{ users: User[] }>({
+  const { data: usersData, error: usersError } = useQuery<{ users: User[] }>({
     queryKey: ['/api/chat/users'],
     enabled: !!currentUser,
+    refetchOnWindowFocus: false, // Prevent duplicate fetches
+    staleTime: 30000, // Cache for 30 seconds
+    onError: (error) => {
+      console.error('Failed to fetch chat users:', error);
+    },
+    onSuccess: (data) => {
+      console.log('Chat users fetched:', data);
+    }
   });
 
   // Send message mutation
@@ -349,34 +357,50 @@ export default function ChatPage() {
                   Start New Chat
                 </h3>
                 <ScrollArea className="h-[200px]">
-                  {usersData?.users?.map((user: User) => (
-                    <Button
-                      key={user.id}
-                      variant="ghost"
-                      className="w-full justify-start h-auto p-2 mb-1"
-                      onClick={() => startDirectChat(user.id)}
-                      disabled={createDirectRoomMutation.isPending}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarFallback className="text-xs">
-                            {user.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 text-left">
-                          <div className="text-sm font-medium">{user.name}</div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
-                              {user.role}
-                            </Badge>
-                            {user.is_online && (
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            )}
+                  {(() => {
+                    // Remove duplicate users based on ID
+                    const allUsers = usersData?.users || [];
+                    const uniqueUsers = allUsers.filter((user, index, self) => 
+                      index === self.findIndex(u => u.id === user.id)
+                    );
+                    
+                    if (usersError) {
+                      return (
+                        <div className="text-center py-4 text-red-500 text-sm">
+                          Error loading users: {usersError.message}
+                        </div>
+                      );
+                    }
+                    
+                    return uniqueUsers.map((user: User) => (
+                      <Button
+                        key={`chat-user-${user.id}`}
+                        variant="ghost"
+                        className="w-full justify-start h-auto p-2 mb-1"
+                        onClick={() => createDirectRoomMutation.mutate(user.id)}
+                        disabled={createDirectRoomMutation.isPending}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="text-xs">
+                              {user.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 text-left">
+                            <div className="text-sm font-medium">{user.name}</div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
+                                {user.role}
+                              </Badge>
+                              {user.is_online && (
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Button>
-                  ))}
+                      </Button>
+                    ));
+                  })()}
                 </ScrollArea>
               </div>
             </CardContent>
