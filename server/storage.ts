@@ -233,61 +233,84 @@ export class DatabaseStorage implements IStorage {
   
   // Admin methods
   async getAllUsers(params?: { role?: string; search?: string; limit?: number; offset?: number }): Promise<{ users: User[], total: number }> {
-    let baseQuery = db.select().from(users);
-    
-    // Apply filters
-    if (params?.role && params.role !== 'all') {
-      baseQuery = baseQuery.where(eq(users.role, params.role));
+    try {
+      // Build conditions array
+      const conditions = [];
+      
+      if (params?.role && params.role !== 'all') {
+        conditions.push(eq(users.role, params.role as any));
+      }
+      
+      if (params?.search) {
+        conditions.push(
+          or(
+            ilike(users.name, `%${params.search}%`),
+            ilike(users.email, `%${params.search}%`)
+          )
+        );
+      }
+      
+      // Get total count
+      let countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions));
+      }
+      
+      const totalResult = await countQuery;
+      const total = totalResult[0]?.count || 0;
+      
+      // Build main query with presence data
+      let mainQuery = db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          status: users.status,
+          created_at: users.created_at,
+          is_online: userPresence.is_online,
+          last_seen: userPresence.last_seen,
+        })
+        .from(users)
+        .leftJoin(userPresence, eq(users.id, userPresence.user_id));
+      
+      if (conditions.length > 0) {
+        mainQuery = mainQuery.where(and(...conditions));
+      }
+      
+      mainQuery = mainQuery.orderBy(desc(users.created_at));
+      
+      if (params?.limit) {
+        mainQuery = mainQuery.limit(params.limit);
+      }
+      
+      if (params?.offset) {
+        mainQuery = mainQuery.offset(params.offset);
+      }
+      
+      const usersList = await mainQuery;
+      
+      return {
+        users: usersList,
+        total: Number(total)
+      };
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      return {
+        users: [],
+        total: 0
+      };
     }
-    
-    if (params?.search) {
-      baseQuery = baseQuery.where(
-        or(
-          ilike(users.name, `%${params.search}%`),
-          ilike(users.email, `%${params.search}%`)
-        )
-      );
-    }
-    
-    // Get total count first
-    const countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
-    if (params?.role && params.role !== 'all') {
-      countQuery.where(eq(users.role, params.role));
-    }
-    if (params?.search) {
-      countQuery.where(
-        or(
-          ilike(users.name, `%${params.search}%`),
-          ilike(users.email, `%${params.search}%`)
-        )
-      );
-    }
-    
-    const totalResult = await countQuery;
-    const total = totalResult[0]?.count || 0;
-    
-    // Apply ordering and pagination
-    baseQuery = baseQuery.orderBy(desc(users.created_at));
-    
-    if (params?.limit) {
-      baseQuery = baseQuery.limit(params.limit);
-    }
-    
-    if (params?.offset) {
-      baseQuery = baseQuery.offset(params.offset);
-    }
-    
-    const usersList = await baseQuery;
-    
-    return {
-      users: usersList,
-      total: Number(total)
-    };
   }
 
   async deleteUser(id: number): Promise<boolean> {
-    const result = await db.delete(users).where(eq(users.id, id));
-    return result.rowCount > 0;
+    try {
+      const result = await db.delete(users).where(eq(users.id, id)).returning({ id: users.id });
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -373,46 +396,62 @@ export class DatabaseStorage implements IStorage {
     limit?: number;
     offset?: number;
   }): Promise<{ softwares: Software[], total: number }> {
-    // Start with base query
-    let baseQuery = db.select().from(softwares);
-    
-    // By default, only show approved software unless specified
-    baseQuery = baseQuery.where(eq(softwares.status, params.status || 'approved'));
-    
-    if (params.category) {
-      baseQuery = baseQuery.where(eq(softwares.category_id, params.category));
+    try {
+      // Build conditions
+      const conditions = [];
+      conditions.push(eq(softwares.status, params.status || 'approved'));
+      
+      if (params.category) {
+        conditions.push(eq(softwares.category_id, params.category));
+      }
+      
+      if (params.search) {
+        conditions.push(
+          or(
+            ilike(softwares.name, `%${params.search}%`),
+            ilike(softwares.description, `%${params.search}%`)
+          )
+        );
+      }
+      
+      // Get total count first
+      let countQuery = db.select({ count: sql<number>`count(*)` }).from(softwares);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions));
+      }
+      
+      const totalResult = await countQuery;
+      const total = totalResult[0]?.count || 0;
+      
+      // Build main query
+      let mainQuery = db.select().from(softwares);
+      if (conditions.length > 0) {
+        mainQuery = mainQuery.where(and(...conditions));
+      }
+      
+      mainQuery = mainQuery.orderBy(desc(softwares.created_at));
+      
+      if (params.limit) {
+        mainQuery = mainQuery.limit(params.limit);
+      }
+      
+      if (params.offset) {
+        mainQuery = mainQuery.offset(params.offset);
+      }
+      
+      const softwareList = await mainQuery;
+      
+      return {
+        softwares: softwareList,
+        total: Number(total)
+      };
+    } catch (error) {
+      console.error('Error in getSoftwareList:', error);
+      return {
+        softwares: [],
+        total: 0
+      };
     }
-    
-    if (params.search) {
-      baseQuery = baseQuery.where(
-        or(
-          ilike(softwares.name, `%${params.search}%`),
-          ilike(softwares.description, `%${params.search}%`)
-        )
-      );
-    }
-    
-    // Get total count first
-    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(softwares);
-    const total = totalResult[0]?.count || 0;
-    
-    // Apply ordering and pagination
-    baseQuery = baseQuery.orderBy(desc(softwares.created_at));
-    
-    if (params.limit) {
-      baseQuery = baseQuery.limit(params.limit);
-    }
-    
-    if (params.offset) {
-      baseQuery = baseQuery.offset(params.offset);
-    }
-    
-    const softwareList = await baseQuery;
-    
-    return {
-      softwares: softwareList,
-      total: Number(total)
-    };
   }
 
   async updateSoftware(id: number, updateData: Partial<InsertSoftware>): Promise<Software | undefined> {
@@ -426,11 +465,11 @@ export class DatabaseStorage implements IStorage {
 
   async getAdminSoftwareList(filters: any, limit: number, offset: number) {
     try {
-      let query = db.select().from(softwares);
+      const conditions = [];
       
       // Apply filters
       if (filters.search) {
-        query = query.where(
+        conditions.push(
           or(
             ilike(softwares.name, `%${filters.search}%`),
             ilike(softwares.description, `%${filters.search}%`)
@@ -439,15 +478,26 @@ export class DatabaseStorage implements IStorage {
       }
       
       if (filters.status && filters.status !== 'all') {
-        query = query.where(eq(softwares.status, filters.status));
+        conditions.push(eq(softwares.status, filters.status));
       }
       
       // Get total count first
-      const totalQuery = db.select({ count: sql`count(*)`.mapWith(Number) }).from(softwares);
-      const [{ count }] = await totalQuery;
+      let countQuery = db.select({ count: sql<number>`count(*)` }).from(softwares);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions));
+      }
       
-      // Apply pagination and get results
-      const results = await query
+      const totalResult = await countQuery;
+      const count = totalResult[0]?.count || 0;
+      
+      // Build main query
+      let mainQuery = db.select().from(softwares);
+      if (conditions.length > 0) {
+        mainQuery = mainQuery.where(and(...conditions));
+      }
+      
+      // Apply pagination and ordering
+      const results = await mainQuery
         .limit(limit)
         .offset(offset)
         .orderBy(desc(softwares.created_at));
@@ -543,23 +593,44 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getExternalRequests(status?: string, limit: number = 20, offset: number = 0): Promise<{ requests: ExternalRequest[], total: number }> {
-    let query = db.select().from(externalRequests);
+    try {
+      const conditions = [];
+      
+      if (status) {
+        conditions.push(eq(externalRequests.status, status as any));
+      }
+      
+      // Get total count
+      let countQuery = db.select({ count: sql<number>`count(*)` }).from(externalRequests);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions));
+      }
+      
+      const totalResult = await countQuery;
+      const total = totalResult[0]?.count || 0;
+      
+      // Build main query
+      let mainQuery = db.select().from(externalRequests);
+      if (conditions.length > 0) {
+        mainQuery = mainQuery.where(and(...conditions));
+      }
+      
+      const requests = await mainQuery
+        .orderBy(desc(externalRequests.created_at))
+        .limit(limit)
+        .offset(offset);
     
-    if (status) {
-      query = query.where(eq(externalRequests.status, status));
+      return {
+        requests,
+        total: Number(total)
+      };
+    } catch (error) {
+      console.error('Error in getExternalRequests:', error);
+      return {
+        requests: [],
+        total: 0
+      };
     }
-    
-    const requests = await query
-      .orderBy(desc(externalRequests.created_at))
-      .limit(limit)
-      .offset(offset);
-    
-    const [{ count }] = await db
-      .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(externalRequests)
-      .where(status ? eq(externalRequests.status, status) : sql`1=1`);
-    
-    return { requests, total: count };
   }
   
   async getExternalRequestById(id: number): Promise<ExternalRequest | undefined> {
