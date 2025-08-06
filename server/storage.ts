@@ -4,11 +4,12 @@ import {
   products, orders, orderItems, payments, productReviews,
   sellerProfiles, cartItems, supportTickets, salesAnalytics,
   serviceRequests, serviceQuotations, serviceProjects, servicePayments,
+  userPresence,
   type User, type InsertUser, 
   type Software, type InsertSoftware,
   type Category, type InsertCategory,
   type Review, type InsertReview,
-  type Project, type InsertProject,
+  type ExternalRequest, type InsertExternalRequest,
   type Quote, type InsertQuote,
   type Message, type InsertMessage,
   type Portfolio, type InsertPortfolio,
@@ -18,7 +19,6 @@ import {
   type OrderItem, type InsertOrderItem,
   type Payment, type InsertPayment,
   type ProductReview, type InsertProductReview,
-  type ExternalRequest, type InsertExternalRequest,
   type UserDownload, type InsertUserDownload,
   type SellerProfile, type InsertSellerProfile,
   type CartItem, type InsertCartItem,
@@ -27,7 +27,8 @@ import {
   type ServiceRequest, type InsertServiceRequest,
   type ServiceQuotation, type InsertServiceQuotation,
   type ServiceProject, type InsertServiceProject,
-  type ServicePayment, type InsertServicePayment
+  type ServicePayment, type InsertServicePayment,
+  type UserPresence, type InsertUserPresence
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
@@ -87,22 +88,22 @@ export interface IStorage {
   getExternalRequests(status?: string, limit?: number, offset?: number): Promise<{ requests: ExternalRequest[], total: number }>;
   getExternalRequestById(id: number): Promise<ExternalRequest | undefined>;
   updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
-  convertExternalRequestToProject(id: number, project: InsertProject): Promise<Project>;
+  convertExternalRequestToProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest>;
   getAllExternalRequests(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ requests: ExternalRequest[], total: number }>;
   assignDeveloperToExternalRequest(id: number, developerId: number): Promise<ExternalRequest | undefined>;
   getUserExternalRequests(email: string): Promise<ExternalRequest[]>;
-  getAvailableProjects(status?: string): Promise<Project[]>;
-  getAllProjects(status?: string): Promise<Project[]>;
-  getClientProjects(clientId: number, status?: string): Promise<Project[]>;
-  getDeveloperProjects(developerId: number, status?: string): Promise<Project[]>;
+  getAvailableProjects(status?: string): Promise<ExternalRequest[]>;
+  getAllProjects(status?: string): Promise<ExternalRequest[]>;
+  getClientProjects(clientId: number, status?: string): Promise<ExternalRequest[]>;
+  getDeveloperProjects(developerId: number, status?: string): Promise<ExternalRequest[]>;
   getProjectsCount(status?: string): Promise<{ count: number }>;
   
-  // Phase 2: Project Management
-  createProject(project: InsertProject, clientId?: number): Promise<Project>; // clientId optional for external requests
-  getProjectById(id: number): Promise<Project | undefined>;
-  getProjectsByClientId(clientId: number): Promise<Project[]>;
-  getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: Project[], total: number }>;
-  updateProjectStatus(id: number, status: string): Promise<Project | undefined>;
+  // Phase 2: Project Management (now using external requests)
+  createProject(project: InsertExternalRequest, clientId?: number): Promise<ExternalRequest>; // clientId optional for external requests
+  getProjectById(id: number): Promise<ExternalRequest | undefined>;
+  getProjectsByClientId(clientId: number): Promise<ExternalRequest[]>;
+  getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: ExternalRequest[], total: number }>;
+  updateProjectStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
   
   // Quotes
   createQuote(quote: InsertQuote, developerId: number): Promise<Quote>;
@@ -266,7 +267,6 @@ export class DatabaseStorage implements IStorage {
           name: users.name,
           email: users.email,
           role: users.role,
-          status: users.status,
           created_at: users.created_at,
           is_online: userPresence.is_online,
           last_seen: userPresence.last_seen,
@@ -652,26 +652,20 @@ export class DatabaseStorage implements IStorage {
     return request;
   }
   
-  async convertExternalRequestToProject(id: number, project: InsertProject): Promise<Project> {
-    // Get the external request
-    const externalRequest = await this.getExternalRequestById(id);
-    if (!externalRequest) {
-      throw new Error("External request not found");
-    }
-    
-    // Create a project from the external request
+  async convertExternalRequestToProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest> {
+    // Update the external request with project data and change status
     const [result] = await db
-      .insert(projects)
-      .values({
-        ...project,
-        contact_email: externalRequest.email,
-        contact_phone: externalRequest.phone,
-        external_request_id: externalRequest.id,
+      .update(externalRequests)
+      .set({
+        ...updates,
+        status: 'converted',
       })
+      .where(eq(externalRequests.id, id))
       .returning();
     
-    // Update the external request status to 'converted'
-    await this.updateExternalRequestStatus(id, 'converted');
+    if (!result) {
+      throw new Error("External request not found");
+    }
     
     return result;
   }
@@ -776,7 +770,7 @@ export class DatabaseStorage implements IStorage {
     return { requests: requestsList, total: count };
   }
 
-  async getAvailableProjects(status?: string): Promise<Project[]> {
+  async getAvailableProjects(status?: string): Promise<ExternalRequest[]> {
     let query = db.select().from(externalRequests).where(
       sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
     );
@@ -923,7 +917,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Phase 2: Project Management
-  async createProject(project: InsertProject, clientId?: number): Promise<Project> {
+  async createProject(project: InsertExternalRequest, clientId?: number): Promise<ExternalRequest> {
     const [createdProject] = await db
       .insert(externalRequests)
       .values({
@@ -934,12 +928,12 @@ export class DatabaseStorage implements IStorage {
     return createdProject;
   }
 
-  async getProjectById(id: number): Promise<Project | undefined> {
+  async getProjectById(id: number): Promise<ExternalRequest | undefined> {
     const [project] = await db.select().from(externalRequests).where(eq(externalRequests.id, id));
     return project;
   }
 
-  async getProjectsByClientId(clientId: number): Promise<Project[]> {
+  async getProjectsByClientId(clientId: number): Promise<ExternalRequest[]> {
     return db
       .select()
       .from(externalRequests)
@@ -947,7 +941,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(externalRequests.created_at));
   }
 
-  async getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: Project[], total: number }> {
+  async getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: ExternalRequest[], total: number }> {
     let query = db.select().from(externalRequests);
     
     if (status) {
@@ -977,7 +971,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async updateProjectStatus(id: number, status: string): Promise<Project | undefined> {
+  async updateProjectStatus(id: number, status: string): Promise<ExternalRequest | undefined> {
     const [updatedProject] = await db
       .update(externalRequests)
       .set({ status: status as any, updated_at: new Date() })
@@ -987,7 +981,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // New methods for admin dashboard
-  async getAllProjects(status?: string): Promise<Project[]> {
+  async getAllProjects(status?: string): Promise<ExternalRequest[]> {
     let query = db.select().from(externalRequests);
     
     if (status && status !== 'all') {
@@ -1004,7 +998,7 @@ export class DatabaseStorage implements IStorage {
     return query.orderBy(desc(externalRequests.created_at));
   }
 
-  async getClientProjects(clientId: number, status?: string): Promise<Project[]> {
+  async getClientProjects(clientId: number, status?: string): Promise<ExternalRequest[]> {
     let query = db
       .select()
       .from(externalRequests)
@@ -1027,7 +1021,7 @@ export class DatabaseStorage implements IStorage {
     return query.orderBy(desc(externalRequests.created_at));
   }
 
-  async getDeveloperProjects(developerId: number, status?: string): Promise<Project[]> {
+  async getDeveloperProjects(developerId: number, status?: string): Promise<ExternalRequest[]> {
     let query = db
       .select()
       .from(externalRequests)
