@@ -75,9 +75,17 @@ export default function AdminUsersChatPage() {
   });
 
   // Get chat users for admin (filtered appropriately)
-  const { data: usersData, isLoading: usersLoading } = useQuery<{ users: User[] }>({
+  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery<{ users: User[] }>({
     queryKey: ['/api/chat/users'],
     enabled: !!currentUser && currentUser.role === 'admin',
+    refetchOnWindowFocus: false, // Prevent duplicate fetches
+    staleTime: 30000, // Cache for 30 seconds
+    onError: (error) => {
+      console.error('Failed to fetch chat users:', error);
+    },
+    onSuccess: (data) => {
+      console.log('Chat users fetched:', data);
+    }
   });
 
   // Get messages for selected room
@@ -277,9 +285,12 @@ export default function AdminUsersChatPage() {
     }
   };
 
-  // Filter users based on search term
+  // Filter users based on search term and remove duplicates
   const allUsers = usersData?.users || [];
-  const filteredUsers = allUsers.filter(user =>
+  const uniqueUsers = allUsers.filter((user, index, self) => 
+    index === self.findIndex(u => u.id === user.id)
+  );
+  const filteredUsers = uniqueUsers.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.role.toLowerCase().includes(searchTerm.toLowerCase())
@@ -335,6 +346,12 @@ export default function AdminUsersChatPage() {
               <ScrollArea className="h-[500px]">
                 {usersLoading ? (
                   <div className="text-center py-4">Loading users...</div>
+                ) : usersError ? (
+                  <div className="text-center py-4 text-red-500">
+                    Error loading users. Please try again.
+                    <br />
+                    <small>{usersError.message}</small>
+                  </div>
                 ) : filteredUsers.length > 0 ? (
                   <div className="space-y-2">
                     {filteredUsers.map((user: User) => (
