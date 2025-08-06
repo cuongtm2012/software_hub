@@ -2243,6 +2243,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get messages for a chat room
+  app.get("/api/chat/rooms/:roomId/messages", isAuthenticated, async (req, res, next) => {
+    try {
+      const { roomId } = req.params;
+      const roomIdInt = parseInt(roomId);
+      
+      // Verify user is member of the room
+      const membership = await db
+        .select()
+        .from(chatRoomMembers)
+        .where(
+          and(
+            eq(chatRoomMembers.room_id, roomIdInt),
+            eq(chatRoomMembers.user_id, req.user!.id)
+          )
+        )
+        .limit(1);
+      
+      if (membership.length === 0) {
+        return res.status(403).json({ message: "Access denied to this chat room" });
+      }
+      
+      // Get messages with sender information
+      const messages = await db
+        .select({
+          id: chatMessages.id,
+          room_id: chatMessages.room_id,
+          sender_id: chatMessages.sender_id,
+          content: chatMessages.content,
+          message_type: chatMessages.message_type,
+          status: chatMessages.status,
+          created_at: chatMessages.created_at,
+          sender: {
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            role: users.role,
+          }
+        })
+        .from(chatMessages)
+        .leftJoin(users, eq(chatMessages.sender_id, users.id))
+        .where(eq(chatMessages.room_id, roomIdInt))
+        .orderBy(chatMessages.created_at);
+      
+      res.json({ messages });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/chat/users", isAuthenticated, async (req, res, next) => {
     try {
       const { role } = req.query;

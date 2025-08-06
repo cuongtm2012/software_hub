@@ -188,13 +188,23 @@ export default function ChatPage() {
     });
 
     newSocket.on('new_message', (message: ChatMessage) => {
+      // Update messages for the specific room
       queryClient.setQueryData(
-        ['/api/chat/rooms', selectedRoom, 'messages'],
+        ['/api/chat/rooms', message.room_id, 'messages'],
         (old: { messages: ChatMessage[] } | undefined) => {
           if (!old) return { messages: [message] };
+          // Check if message already exists to avoid duplicates
+          const exists = old.messages.some(m => m.id === message.id);
+          if (exists) return old;
           return { messages: [...old.messages, message] };
         }
       );
+      
+      // Also invalidate queries to force refresh if needed
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/chat/rooms', message.room_id, 'messages'] 
+      });
+      
       scrollToBottom();
     });
 
