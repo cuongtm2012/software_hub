@@ -89,9 +89,11 @@ export default function AdminUsersChatPage() {
   });
 
   // Get messages for selected room
-  const { data: messagesData, isLoading: messagesLoading } = useQuery<{ messages: ChatMessage[] }>({
+  const { data: messagesData, isLoading: messagesLoading, refetch: refetchMessages } = useQuery<{ messages: ChatMessage[] }>({
     queryKey: ['/api/chat/rooms', selectedRoom, 'messages'],
     enabled: !!selectedRoom && !!currentUser,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always fetch fresh messages
   });
 
   // Send message mutation
@@ -260,9 +262,11 @@ export default function AdminUsersChatPage() {
       console.log(`Admin joining room ${selectedRoom}`);
       socket.emit('join_room', { roomId: selectedRoom });
       
-      // Listen for confirmation
+      // Listen for confirmation and fetch messages
       socket.on('joined_room', (data) => {
         console.log(`Admin successfully joined room ${data.roomId}`);
+        // Fetch existing messages when room is joined
+        refetchMessages();
       });
     }
   }, [socket, selectedRoom]);

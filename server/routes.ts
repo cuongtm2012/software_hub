@@ -2819,8 +2819,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     socket.on('join_room', async (data: { roomId: number }) => {
       try {
         if (!socket.userId) {
+          console.log('Join room failed: User not authenticated');
           return socket.emit('error', { message: 'Not authenticated' });
         }
+        
+        console.log(`User ${socket.userId} attempting to join room ${data.roomId}`);
         
         // Verify user is member of this room
         const membership = await db
@@ -2834,13 +2837,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
           .limit(1);
         
+        console.log(`Room membership check for user ${socket.userId} in room ${data.roomId}:`, membership);
+        
         if (membership.length === 0) {
+          console.log(`User ${socket.userId} not authorized for room ${data.roomId}`);
           return socket.emit('error', { message: 'Not authorized to join this room' });
         }
         
         socket.join(`room_${data.roomId}`);
         socket.emit('joined_room', { roomId: data.roomId });
-        console.log(`User ${socket.userId} joined Socket.IO room room_${data.roomId}`);
+        console.log(`✓ User ${socket.userId} successfully joined Socket.IO room room_${data.roomId}`);
+        
+        // Verify the user is actually in the room
+        const rooms = Array.from(socket.rooms);
+        console.log(`User ${socket.userId} is now in Socket.IO rooms:`, rooms);
       } catch (error) {
         console.error('Join room error:', error);
         socket.emit('error', { message: 'Failed to join room' });
