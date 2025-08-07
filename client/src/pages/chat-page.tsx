@@ -216,6 +216,7 @@ export default function ChatPage() {
     });
 
     newSocket.on('new_message', (message: ChatMessage) => {
+      console.log('Seller received new message:', message);
       // Update messages for the specific room
       queryClient.setQueryData(
         ['/api/chat/rooms', message.room_id, 'messages'],
@@ -266,7 +267,13 @@ export default function ChatPage() {
   // Join room when selected
   useEffect(() => {
     if (socket && selectedRoom) {
+      console.log(`Seller joining room ${selectedRoom}`);
       socket.emit('join_room', { roomId: selectedRoom });
+      
+      // Listen for confirmation
+      socket.on('joined_room', (data) => {
+        console.log(`Seller successfully joined room ${data.roomId}`);
+      });
     }
   }, [socket, selectedRoom]);
 

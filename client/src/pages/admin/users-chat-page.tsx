@@ -159,9 +159,10 @@ export default function AdminUsersChatPage() {
       }
     },
     onSuccess: (data: any) => {
+      console.log('Admin room created successfully:', data.room.id);
       setSelectedRoom(data.room.id);
-      setSelectedUser(null); // Clear user selection when room is created
       queryClient.invalidateQueries({ queryKey: ['/api/chat/rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/rooms', data.room.id, 'messages'] });
       toast({
         title: 'Chat Started',
         description: 'Direct chat room created successfully',
@@ -256,7 +257,13 @@ export default function AdminUsersChatPage() {
   // Join room when selected
   useEffect(() => {
     if (socket && selectedRoom) {
+      console.log(`Admin joining room ${selectedRoom}`);
       socket.emit('join_room', { roomId: selectedRoom });
+      
+      // Listen for confirmation
+      socket.on('joined_room', (data) => {
+        console.log(`Admin successfully joined room ${data.roomId}`);
+      });
     }
   }, [socket, selectedRoom]);
 

@@ -2840,7 +2840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         socket.join(`room_${data.roomId}`);
         socket.emit('joined_room', { roomId: data.roomId });
-        console.log(`User ${socket.userId} joined room ${data.roomId}`);
+        console.log(`User ${socket.userId} joined Socket.IO room room_${data.roomId}`);
       } catch (error) {
         console.error('Join room error:', error);
         socket.emit('error', { message: 'Failed to join room' });
@@ -2896,6 +2896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         
         // Broadcast message to all room members
+        console.log(`Broadcasting message to Socket.IO room room_${data.roomId}:`, messageWithSender);
         io.to(`room_${data.roomId}`).emit('new_message', messageWithSender);
         
         console.log(`Message sent to room ${data.roomId} by user ${socket.userId}`);
