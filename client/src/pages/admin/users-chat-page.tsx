@@ -97,18 +97,41 @@ export default function AdminUsersChatPage() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: (data: { content: string }) => {
-      if (socket && selectedRoom) {
+      return new Promise<void>((resolve, reject) => {
+        if (!socket || !selectedRoom) {
+          reject(new Error('Socket not connected or no room selected'));
+          return;
+        }
+        
+        console.log('Admin sending message via Socket.IO:', { roomId: selectedRoom, content: data.content });
+        
+        // Send the message via Socket.IO
         socket.emit('send_message', {
           roomId: selectedRoom,
           content: data.content,
           messageType: 'text'
         });
-      }
-      return Promise.resolve();
+        
+        // Resolve immediately since we don't wait for server confirmation
+        resolve();
+      });
     },
     onSuccess: () => {
       setNewMessage('');
+      // Clear typing indicator
+      if (socket && selectedRoom && isTyping) {
+        socket.emit('typing', { roomId: selectedRoom, isTyping: false });
+        setIsTyping(false);
+      }
     },
+    onError: (error: any) => {
+      console.error('Admin message send error:', error);
+      toast({
+        title: 'Send Error',
+        description: error.message || 'Failed to send message',
+        variant: 'destructive',
+      });
+    }
   });
 
   // Create direct room mutation
