@@ -2091,6 +2091,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat API Routes
   app.get("/api/chat/rooms", isAuthenticated, async (req, res, next) => {
     try {
+      // Add cache-busting headers to prevent stale data
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       const userRooms = await db
         .select({
           id: chatRooms.id,
@@ -2103,6 +2110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .innerJoin(chatRoomMembers, eq(chatRooms.id, chatRoomMembers.room_id))
         .where(eq(chatRoomMembers.user_id, req.user!.id));
       
+      console.log(`Chat rooms for user ${req.user!.id}:`, userRooms);
       res.json({ rooms: userRooms });
     } catch (error) {
       next(error);

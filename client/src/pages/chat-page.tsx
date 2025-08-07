@@ -78,9 +78,12 @@ export default function ChatPage() {
   });
 
   // Get chat rooms
-  const { data: roomsData, isLoading: roomsLoading } = useQuery<{ rooms: ChatRoom[] }>({
+  const { data: roomsData, isLoading: roomsLoading, refetch: refetchRooms } = useQuery<{ rooms: ChatRoom[] }>({
     queryKey: ['/api/chat/rooms'],
     enabled: !!currentUser,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always refetch to avoid stale data
+    cacheTime: 0, // Don't cache results
   });
 
   // Get messages for selected room
@@ -167,7 +170,9 @@ export default function ChatPage() {
     },
     onSuccess: (data: any) => {
       setSelectedRoom(data.room.id);
+      // Force refetch rooms data to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/chat/rooms'] });
+      refetchRooms();
       toast({
         title: 'Chat Started',
         description: 'Direct chat room created successfully',
