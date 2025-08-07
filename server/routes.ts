@@ -2311,17 +2311,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         allowedRoles = ['admin']; // Regular users can only chat with admin
       }
       
+      // First get distinct users without JOIN to avoid duplicates
       let query = db
-        .select({
+        .selectDistinct({
           id: users.id,
           name: users.name,
           email: users.email,
           role: users.role,
-          is_online: userPresence.is_online,
-          last_seen: userPresence.last_seen,
         })
         .from(users)
-        .leftJoin(userPresence, eq(users.id, userPresence.user_id))
         .where(
           and(
             inArray(users.role, allowedRoles),
@@ -2338,7 +2336,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      const chatUsers = await query;
+      const baseUsers = await query;
+      
+      // Now get presence info for these users separately to avoid duplicates
+      const userIds = baseUsers.map(user => user.id);
+      const presenceData = userIds.length > 0 ? await db
+        .select({
+          user_id: userPresence.user_id,
+          is_online: userPresence.is_online,
+          last_seen: userPresence.last_seen,
+        })
+        .from(userPresence)
+        .where(inArray(userPresence.user_id, userIds))
+        .groupBy(userPresence.user_id) : [];
+      
+      // Merge presence data with users
+      const chatUsers = baseUsers.map(user => {
+        const presence = presenceData.find(p => p.user_id === user.id);
+        return {
+          ...user,
+          is_online: presence?.is_online || false,
+          last_seen: presence?.last_seen || null,
+        };
+      });
+      
       res.json({ users: chatUsers });
     } catch (error) {
       next(error);
