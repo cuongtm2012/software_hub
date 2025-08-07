@@ -2347,10 +2347,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           last_seen: userPresence.last_seen,
         })
         .from(userPresence)
-        .where(inArray(userPresence.user_id, userIds))
-        .groupBy(userPresence.user_id) : [];
+        .where(inArray(userPresence.user_id, userIds)) : [];
       
-      // Merge presence data with users
+      // Merge presence data with users (handle potential duplicates by taking the first match)
       const chatUsers = baseUsers.map(user => {
         const presence = presenceData.find(p => p.user_id === user.id);
         return {
