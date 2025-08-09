@@ -154,6 +154,9 @@ class EmailController {
       console.log('Sending welcome email with details:', {
         to: emailContent.to,
         from: emailContent.from,
+        subject: emailContent.subject,
+        hasHeaders: !!emailContent.headers,
+        categories: emailContent.categories,
         apiKeyFormat: process.env.SENDGRID_API_KEY ? (process.env.SENDGRID_API_KEY.startsWith('SG.') ? 'Valid (SG.*)' : 'Invalid (not SG.*)') : 'Missing'
       });
 
@@ -210,7 +213,19 @@ class EmailController {
             </div>
             <p style="color: #dc2626; font-weight: bold;">This link expires in 24 hours.</p>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['activation', 'user-onboarding'],
+        customArgs: {
+          userId: 'test_user',
+          campaignType: 'activation'
+        }
       };
 
       const result = await retryUtil.withRetry(
@@ -270,7 +285,19 @@ class EmailController {
               If you didn't request this, please ignore this email.
             </p>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['password-reset', 'security'],
+        customArgs: {
+          userId: 'test_user',
+          campaignType: 'password-reset'
+        }
       };
 
       const result = await retryUtil.withRetry(
@@ -414,7 +441,19 @@ class EmailController {
               </a>
             </div>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['project-update', 'notifications'],
+        customArgs: {
+          userId: 'test_user',
+          campaignType: 'project-notification'
+        }
       };
 
       const result = await retryUtil.withRetry(

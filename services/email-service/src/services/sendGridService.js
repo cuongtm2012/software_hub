@@ -38,7 +38,20 @@ class SendGridService {
       };
     } catch (error) {
       console.error('SendGrid error:', error);
-      throw new Error(`SendGrid send failed: ${error.message}`);
+      console.error('SendGrid response body:', error.response?.body);
+      console.error('SendGrid status code:', error.code);
+      
+      // More specific error messages
+      let errorMessage = 'SendGrid send failed';
+      if (error.code === 403) {
+        errorMessage = 'SendGrid Forbidden - Check sender verification and API key permissions';
+      } else if (error.code === 401) {
+        errorMessage = 'SendGrid Unauthorized - Invalid API key';
+      } else if (error.response?.body?.errors) {
+        errorMessage = `SendGrid error: ${JSON.stringify(error.response.body.errors)}`;
+      }
+      
+      throw new Error(`${errorMessage}: ${error.message}`);
     }
   }
 
