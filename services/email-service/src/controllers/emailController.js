@@ -103,10 +103,7 @@ class EmailController {
 
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: {
-          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
-          name: 'SoftwareHub Team'
-        },
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Welcome to SoftwareHub! Please activate your account',
         html: `
@@ -194,10 +191,7 @@ class EmailController {
       const token = activationToken || 'test_activation_token_' + Date.now();
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: {
-          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
-          name: 'SoftwareHub Team'
-        },
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Activate Your SoftwareHub Account',
         html: `
@@ -263,10 +257,7 @@ class EmailController {
       const token = resetToken || 'test_reset_token_' + Date.now();
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: {
-          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
-          name: 'SoftwareHub Security Team'
-        },
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Reset Your SoftwareHub Password',
         html: `
@@ -342,10 +333,7 @@ class EmailController {
 
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: {
-          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
-          name: 'SoftwareHub Orders'
-        },
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: `Order Confirmation - ${order.id}`,
         html: `
@@ -428,10 +416,7 @@ class EmailController {
 
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: {
-          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
-          name: 'SoftwareHub Projects'
-        },
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: `Project Update: ${project.name}`,
         html: `

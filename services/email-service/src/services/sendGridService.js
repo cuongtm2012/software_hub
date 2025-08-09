@@ -37,19 +37,53 @@ class SendGridService {
         statusCode: result[0].statusCode
       };
     } catch (error) {
-      console.error('SendGrid error:', error);
-      console.error('SendGrid response body:', error.response?.body);
+      console.error('=== SENDGRID ERROR DEBUG ===');
+      console.error('Full error object:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
       
-      // Log the actual error details
-      if (error.response?.body?.errors) {
-        console.error('SendGrid specific errors:');
-        error.response.body.errors.forEach((err, index) => {
-          console.error(`Error ${index + 1}:`, JSON.stringify(err, null, 2));
-        });
+      // The response structure might be nested differently
+      const response = error.response;
+      if (response) {
+        console.error('Response keys:', Object.keys(response));
+        console.error('Response body:', response.body);
+        
+        // If body is an object with errors
+        if (response.body && typeof response.body === 'object') {
+          if (response.body.errors && Array.isArray(response.body.errors)) {
+            console.error('SendGrid specific errors:');
+            response.body.errors.forEach((err, index) => {
+              console.error(`Error ${index + 1}:`, err);
+              if (typeof err === 'object') {
+                Object.keys(err).forEach(key => {
+                  console.error(`  ${key}:`, err[key]);
+                });
+              }
+            });
+          }
+        }
+        
+        // Also try to parse if it's a string
+        if (typeof response.body === 'string') {
+          try {
+            const parsed = JSON.parse(response.body);
+            console.error('Parsed response body:', parsed);
+            if (parsed.errors) {
+              console.error('Parsed errors:', parsed.errors);
+            }
+          } catch (e) {
+            console.error('Could not parse response body as JSON');
+          }
+        }
       }
       
-      console.error('SendGrid status code:', error.code);
-      console.error('Email content being sent:', JSON.stringify(emailContent, null, 2));
+      console.error('Email content that failed:');
+      console.error('TO:', emailContent.to);
+      console.error('FROM:', emailContent.from);
+      console.error('SUBJECT:', emailContent.subject);
+      console.error('HEADERS:', emailContent.headers);
+      console.error('CATEGORIES:', emailContent.categories);
+      console.error('=== END SENDGRID ERROR DEBUG ===');
       
       // More specific error messages
       let errorMessage = 'SendGrid send failed';

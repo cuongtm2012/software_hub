@@ -51,10 +51,25 @@ The application is composed of several independent services:
 ## External Dependencies
 
 - **Stripe**: For payment processing and escrow functionality.
-- **SendGrid**: For email sending services.
+- **SendGrid**: For email sending services. **Status**: API key configured, sender verification required for cuongeurovnn@gmail.com.
 - **Socket.IO**: For real-time bi-directional communication (used in Chat Service).
 - **Redis**: Used for caching, message queuing, and real-time chat data.
 - **FCM (Firebase Cloud Messaging)**: For push notifications.
 - **PostgreSQL**: Relational database.
 - **MongoDB**: NoSQL database.
 - **Nginx**: Used as a reverse proxy for Docker orchestration.
+
+## Recent Changes (August 2025)
+
+### Email System Fixes
+- Updated all email templates to use cuongeurovnn@gmail.com as sender and receiver
+- Fixed login credentials and authentication system
+- Removed custom sender names causing SendGrid 403 errors
+- Enhanced error logging for detailed SendGrid response analysis
+- Added comprehensive troubleshooting documentation
+
+### Current Status
+- ✅ Email service API properly configured and running
+- ✅ Welcome emails working correctly
+- ❌ Other email types blocked by SendGrid sender verification requirement
+- 🔧 Solution: Verify cuongeurovnn@gmail.com as Single Sender in SendGrid dashboard
