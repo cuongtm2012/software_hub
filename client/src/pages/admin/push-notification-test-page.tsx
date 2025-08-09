@@ -129,7 +129,7 @@ export default function PushNotificationTestPage() {
   const sendNotification = async (endpoint: string, data: any, testType: string) => {
     setIsLoading(true);
     try {
-      const result = await apiRequest('POST', endpoint, data) as NotificationResult;
+      const result = await apiRequest('POST', endpoint, data) as unknown as NotificationResult;
       
       if (result.success) {
         addTestLog(testType, 'success', `Notification sent successfully`, result);

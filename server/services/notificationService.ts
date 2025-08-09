@@ -96,16 +96,6 @@ class NotificationService {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
 
-    // Simulate occasional failures for realistic testing
-    const shouldFail = Math.random() < 0.05; // 5% failure rate
-
-    if (shouldFail) {
-      return {
-        success: false,
-        error: 'Simulated delivery failure'
-      };
-    }
-
     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     console.log(`📱 Push Notification Sent:
