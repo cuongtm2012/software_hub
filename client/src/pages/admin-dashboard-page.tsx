@@ -19,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Users, Package, FileText, BarChart3, Search, Eye, User, Mail, Phone, Calendar, DollarSign, Clock, Loader2, Trash2, Edit, MessageCircle } from "lucide-react";
 import SoftwareManagement from "@/pages/admin/software-management";
+import { deduplicateUsersByEmail, getUserDuplicationStats } from "@/lib/userUtils";
 
 // Types
 interface User {
@@ -114,7 +115,11 @@ function UserManagementComponent() {
     }
   });
 
-  const filteredUsers = (usersData?.users?.users || []).filter(user => {
+  const allUsers = usersData?.users?.users || [];
+  const uniqueUsers = deduplicateUsersByEmail(allUsers);
+  const stats = getUserDuplicationStats(allUsers);
+  
+  const filteredUsers = uniqueUsers.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
@@ -141,7 +146,14 @@ function UserManagementComponent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-semibold text-gray-900">User Management</h3>
-          <p className="text-sm text-gray-500 mt-1">{filteredUsers.length} of {usersData?.users?.total || 0} users</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {filteredUsers.length} of {stats.uniqueUsers} unique users 
+            {stats.duplicatesRemoved > 0 && (
+              <span className="text-orange-600 font-medium">
+                ({stats.duplicatesRemoved} duplicates removed - {stats.duplicatePercentage}%)
+              </span>
+            )}
+          </p>
         </div>
       </div>
 
@@ -186,7 +198,7 @@ function UserManagementComponent() {
           <TableBody>
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={`user-${user.id}-${user.email}`}>
                   <TableCell>
                     <div>
                       <div className="font-medium text-gray-900">{user.name}</div>
