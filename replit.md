@@ -95,6 +95,15 @@ Complete Docker Compose setup with:
 - **Scalability**: Each service can be scaled independently
 
 ## Recent Changes
+- **2025-08-09**: Successfully resolved email service spam filter issues and enhanced deliverability:
+  - ✅ Fixed SendGrid API key configuration with proper SG.* format
+  - ✅ Updated all email templates to use cuongeurovnn@gmail.com as default sender and receiver
+  - ✅ Added comprehensive anti-spam headers (List-Unsubscribe, X-Priority, etc.)
+  - ✅ Enhanced email templates with professional HTML design and proper sender names
+  - ✅ Implemented proper "from" field structure with display names (e.g., "SoftwareHub Team")
+  - ✅ Added replyTo fields and email categories for better deliverability
+  - ✅ Created comprehensive email deliverability guide with spam prevention best practices
+  - ✅ Email service now working perfectly with professional templates sending to cuongeurovnn@gmail.com
 - **2025-08-09**: Enhanced notification microservice with comprehensive FCM push notification testing:
   - ✅ Enhanced existing notification-service with all 12 test notification scenarios
   - ✅ Added specialized test endpoints for User Activity, System, Transactional, Reminders, Marketing, and Security notifications

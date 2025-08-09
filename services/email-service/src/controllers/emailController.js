@@ -103,27 +103,52 @@ class EmailController {
 
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+        from: {
+          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+          name: 'SoftwareHub Team'
+        },
+        replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Welcome to SoftwareHub! Please activate your account',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Welcome to SoftwareHub, ${userName}!</h2>
-            <p>Thank you for joining our software discovery and management platform.</p>
-            <p>To get started, please click the button below to activate your account:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:5000'}/activate?email=${encodeURIComponent(userEmail)}" 
-                 style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                Activate Account
-              </a>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">Welcome to SoftwareHub!</h1>
             </div>
-            <p>If the button doesn't work, copy and paste this link:</p>
-            <p style="word-break: break-all; color: #6b7280;">${process.env.FRONTEND_URL || 'http://localhost:5000'}/activate?email=${encodeURIComponent(userEmail)}</p>
-            <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
-              Best regards,<br>
-              The SoftwareHub Team
-            </p>
+            <div style="padding: 30px; background: #f9f9f9; border-radius: 0 0 8px 8px;">
+              <h2 style="color: #333; margin-top: 0;">Hi ${userName}!</h2>
+              <p style="color: #666; line-height: 1.6;">Thank you for joining our professional software discovery and management platform.</p>
+              <p style="color: #666; line-height: 1.6;">To get started, please click the button below to activate your account:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:5000'}/activate?email=${encodeURIComponent(userEmail)}" 
+                   style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">
+                  Activate Account
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link:</p>
+              <p style="word-break: break-all; color: #667eea; font-size: 12px;">${process.env.FRONTEND_URL || 'http://localhost:5000'}/activate?email=${encodeURIComponent(userEmail)}</p>
+              
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <p style="color: #666; font-size: 14px; margin: 0;">
+                  Best regards,<br>
+                  <strong>The SoftwareHub Team</strong><br>
+                  <span style="color: #999; font-size: 12px;">Professional Software Solutions</span>
+                </p>
+              </div>
+            </div>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['welcome', 'user-onboarding'],
+        customArgs: {
+          userId: 'test_user',
+          campaignType: 'welcome'
+        }
       };
 
       console.log('Sending welcome email with details:', {
@@ -166,7 +191,11 @@ class EmailController {
       const token = activationToken || 'test_activation_token_' + Date.now();
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+        from: {
+          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+          name: 'SoftwareHub Team'
+        },
+        replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Activate Your SoftwareHub Account',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -219,7 +248,11 @@ class EmailController {
       const token = resetToken || 'test_reset_token_' + Date.now();
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+        from: {
+          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+          name: 'SoftwareHub Security Team'
+        },
+        replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Reset Your SoftwareHub Password',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -282,7 +315,11 @@ class EmailController {
 
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+        from: {
+          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+          name: 'SoftwareHub Orders'
+        },
+        replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: `Order Confirmation - ${order.id}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -352,7 +389,11 @@ class EmailController {
 
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+        from: {
+          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+          name: 'SoftwareHub Projects'
+        },
+        replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: `Project Update: ${project.name}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
