@@ -21,19 +21,23 @@ const messaging = firebase.messaging();
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message:', payload);
+  console.log('🔥 [SW] Received background message:', payload);
   
-  const notificationTitle = payload.notification.title;
+  const notificationTitle = payload.notification?.title || 'SoftwareHub Notification';
   const notificationOptions = {
-    body: payload.notification.body,
+    body: payload.notification?.body || 'You have a new notification',
     icon: '/icon-192x192.svg',
     badge: '/badge-72x72.svg',
     tag: 'softwarehub-notification',
     requireInteraction: true,
-    data: payload.data
+    data: {
+      ...payload.data,
+      click_action: payload.data?.click_action || payload.fcmOptions?.link || '/'
+    }
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  console.log('📱 [SW] Showing notification:', notificationTitle);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // Handle notification clicks

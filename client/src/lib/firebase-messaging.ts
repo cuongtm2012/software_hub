@@ -12,9 +12,8 @@ const firebaseConfig = {
   measurementId: "G-ZDBVWVQ4Y1"
 };
 
-// VAPID key for web push - IMPORTANT: Replace this placeholder with your real VAPID key from Firebase Console
-// Go to: Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates -> Generate Key Pair
-const VAPID_KEY = "BH8Q_C-z8QfQjOw4GpgGjQbHJ8CuDXJqL2QLZBjIYLOLqHY2gCfKXWVgMYyMdO9FHLOe5-2DvfDdGq7BhZLYrxQ";
+// VAPID key for web push - Real key from Firebase Console
+const VAPID_KEY = "BNcpCG47ZDyNf-dZ-mWNYt5CTokMIyrQO46BJJ_gIkMidiJQBahNEe0fV8yZ9o6IzBxMqHf5o-FZ869n0QoibGo";
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -53,10 +52,11 @@ export async function requestNotificationPermission(): Promise<string | null> {
       });
 
       if (token) {
-        console.log('FCM Token obtained:', token);
+        console.log('🎉 FCM Token successfully obtained:', token);
+        console.log('✅ VAPID key is working correctly!');
         return token;
       } else {
-        console.log('No registration token available.');
+        console.log('❌ No registration token available - VAPID key might be invalid');
         return null;
       }
     } else {
@@ -75,11 +75,12 @@ export function setupForegroundMessageListener() {
   if (!messaging) return;
 
   onMessage(messaging, (payload) => {
-    console.log('Foreground message received:', payload);
+    console.log('🔥 Foreground message received:', payload);
     
     // Show notification even when app is in foreground
     if (payload.notification) {
-      new Notification(payload.notification.title || 'New notification', {
+      console.log('📱 Showing browser notification:', payload.notification.title);
+      const notification = new Notification(payload.notification.title || 'New notification', {
         body: payload.notification.body,
         icon: '/icon-192x192.svg',
         badge: '/badge-72x72.svg',
@@ -87,6 +88,15 @@ export function setupForegroundMessageListener() {
         requireInteraction: true,
         data: payload.data
       });
+      
+      // Add click handler
+      notification.onclick = () => {
+        console.log('🖱️ Notification clicked');
+        const clickAction = payload.data?.click_action || payload.fcmOptions?.link || '/';
+        window.focus();
+        window.location.href = clickAction;
+        notification.close();
+      };
     }
   });
 }
