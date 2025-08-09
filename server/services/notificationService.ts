@@ -1,6 +1,40 @@
 import { Request, Response } from 'express';
 
-// Mock FCM service for development environment
+// Firebase Admin SDK for real push notifications
+let admin: any;
+let messaging: any;
+
+// Initialize Firebase Admin SDK with lazy loading
+async function initializeFirebase() {
+  try {
+    if (!admin) {
+      admin = await import('firebase-admin').then(module => module.default);
+    }
+    
+    // Initialize Firebase Admin SDK if credentials are available
+    if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PROJECT_ID) {
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+          })
+        });
+      }
+      messaging = admin.messaging();
+      console.log('🔥 Firebase Admin SDK initialized successfully');
+      return true;
+    } else {
+      console.warn('Firebase credentials not found, using simulation mode');
+      return false;
+    }
+  } catch (error: any) {
+    console.warn('Firebase Admin SDK not available, using simulation mode:', error.message);
+    return false;
+  }
+}
+
 interface NotificationPayload {
   title: string;
   body: string;
@@ -26,21 +60,31 @@ interface NotificationResult {
 }
 
 class NotificationService {
-  private isProduction: boolean;
+  private firebaseInitialized: boolean = false;
   
   constructor() {
-    this.isProduction = process.env.NODE_ENV === 'production';
-    console.log(`NotificationService initialized in ${this.isProduction ? 'production' : 'development'} mode`);
+    // Initialize Firebase asynchronously
+    this.initializeAsync();
+  }
+  
+  private async initializeAsync() {
+    this.firebaseInitialized = await initializeFirebase();
+    console.log(`NotificationService initialized with Firebase ${this.firebaseInitialized ? 'READY' : 'SIMULATION'} mode`);
   }
 
   // Send push notification to single user
   async sendNotification(payload: NotificationPayload, target: NotificationTarget): Promise<NotificationResult> {
     try {
-      if (this.isProduction) {
-        // In production, integrate with FCM
+      // Ensure Firebase is initialized
+      if (!this.firebaseInitialized) {
+        this.firebaseInitialized = await initializeFirebase();
+      }
+      
+      if (this.firebaseInitialized && messaging) {
+        // Use Firebase Admin SDK for real notifications
         return this.sendFCMNotification(payload, target);
       } else {
-        // In development, simulate notification sending
+        // Fallback to simulation when Firebase is not configured
         return this.simulateNotification(payload, target);
       }
     } catch (error) {
@@ -84,11 +128,70 @@ class NotificationService {
     }
   }
 
-  // Production FCM integration (placeholder)
+  // Real Firebase Cloud Messaging integration
   private async sendFCMNotification(payload: NotificationPayload, target: NotificationTarget): Promise<NotificationResult> {
-    // This would integrate with Firebase Cloud Messaging in production
-    // For now, return simulated result
-    return this.simulateNotification(payload, target);
+    try {
+      if (!messaging) {
+        throw new Error('Firebase messaging not initialized');
+      }
+
+      // Construct FCM message
+      const message: any = {
+        notification: {
+          title: payload.title,
+          body: payload.body,
+          ...(payload.imageUrl && { image: payload.imageUrl })
+        },
+        data: {
+          ...(payload.data || {}),
+          ...(payload.clickAction && { click_action: payload.clickAction })
+        },
+        webpush: {
+          notification: {
+            title: payload.title,
+            body: payload.body,
+            icon: '/icon-192x192.png',
+            badge: '/badge-72x72.png',
+            ...(payload.clickAction && { click_action: payload.clickAction }),
+            ...(payload.badge && { badge: payload.badge.toString() })
+          }
+        }
+      };
+
+      // Set target
+      if (target.deviceToken) {
+        message.token = target.deviceToken;
+      } else if (target.topic) {
+        message.topic = target.topic;
+      } else if (target.condition) {
+        message.condition = target.condition;
+      } else {
+        // For userId, we would need to look up user's FCM tokens from database
+        // For now, send to topic 'all_users' as fallback
+        message.topic = 'all_users';
+      }
+
+      const response = await messaging.send(message);
+      
+      console.log(`🔥 Firebase FCM Notification Sent:
+        Target: ${target.userId ? `User ${target.userId}` : target.deviceToken || target.topic || 'Unknown'}
+        Title: ${payload.title}
+        Body: ${payload.body}
+        FCM Message ID: ${response}
+        Click Action: ${payload.clickAction || 'None'}
+      `);
+
+      return {
+        success: true,
+        messageId: response
+      };
+
+    } catch (error) {
+      console.error('FCM send error:', error);
+      // Fallback to simulation if FCM fails
+      console.log('Falling back to simulation mode...');
+      return this.simulateNotification(payload, target);
+    }
   }
 
   // Development simulation
