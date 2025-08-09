@@ -189,23 +189,41 @@ class EmailController {
       }
 
       const token = activationToken || 'test_activation_token_' + Date.now();
+      // Temporary test: Copy exact working welcome email structure
       const emailContent = {
         to: userEmail || 'cuongeurovnn@gmail.com',
-        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+        from: {
+          email: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
+          name: 'SoftwareHub Team'
+        },
         replyTo: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
-        subject: 'Activate Your SoftwareHub Account',
+        subject: 'Welcome to SoftwareHub! Please activate your account',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #059669;">Account Activation Required</h2>
-            <p>Hi ${userName},</p>
-            <p>Please click the link below to activate your SoftwareHub account:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:5000'}/activate/${token}" 
-                 style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                Activate Now
-              </a>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">Welcome to SoftwareHub!</h1>
             </div>
-            <p style="color: #dc2626; font-weight: bold;">This link expires in 24 hours.</p>
+            <div style="padding: 30px; background: #f9f9f9; border-radius: 0 0 8px 8px;">
+              <h2 style="color: #333; margin-top: 0;">Hi ${userName}!</h2>
+              <p style="color: #666; line-height: 1.6;">Thank you for joining our professional software discovery and management platform.</p>
+              <p style="color: #666; line-height: 1.6;">To get started, please click the button below to activate your account:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:5000'}/activate?email=${encodeURIComponent(userEmail)}" 
+                   style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">
+                  Activate Account
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link:</p>
+              <p style="word-break: break-all; color: #667eea; font-size: 12px;">${process.env.FRONTEND_URL || 'http://localhost:5000'}/activate?email=${encodeURIComponent(userEmail)}</p>
+              
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <p style="color: #666; font-size: 14px; margin: 0;">
+                  Best regards,<br>
+                  <strong>The SoftwareHub Team</strong><br>
+                  <span style="color: #999; font-size: 12px;">Professional Software Solutions</span>
+                </p>
+              </div>
+            </div>
           </div>
         `,
         // Anti-spam headers
@@ -215,7 +233,7 @@ class EmailController {
           'X-MSMail-Priority': 'Normal',
           'Importance': 'Normal'
         },
-        categories: ['activation', 'user-onboarding'],
+        categories: ['welcome', 'user-onboarding'],
         customArgs: {
           userId: 'test_user',
           campaignType: 'activation'
