@@ -1,0 +1,94 @@
+# Push Notification Test Cases
+
+## 1. User Activity Alerts
+
+### Scenario: Notify user about new message
+**Given** the user is subscribed to push notifications  
+**When** a new message is received  
+**Then** a push notification should be sent with message preview  
+**And** clicking the notification should open the chat window  
+
+### Scenario: Notify user about comment/reply
+**Given** the user has content that others can comment on  
+**When** a new comment or reply is posted  
+**Then** a push notification should be sent with comment details  
+**And** clicking the notification should navigate to the comment thread  
+
+---
+
+## 2. System Notifications
+
+### Scenario: Send system maintenance alert
+**Given** a scheduled maintenance is planned  
+**When** the maintenance notification is sent  
+**Then** all subscribed users should receive the notification  
+**And** the notification should contain maintenance time and details  
+
+### Scenario: Send system update announcement
+**Given** a new system update is released  
+**When** the announcement notification is sent  
+**Then** all subscribed users should receive the notification  
+**And** clicking it should open the update details page  
+
+---
+
+## 3. Transactional Notifications
+
+### Scenario: Notify user of order confirmation
+**Given** the user places an order successfully  
+**When** the order confirmation notification is sent  
+**Then** the user should receive a push notification with order summary  
+**And** clicking the notification should open the order details page  
+
+### Scenario: Notify user of payment failure
+**Given** a payment attempt fails  
+**When** the payment failure notification is sent  
+**Then** the user should receive a push notification with failure reason  
+**And** clicking the notification should open the payment retry page  
+
+---
+
+## 4. Reminders and Alerts
+
+### Scenario: Send event reminder notification
+**Given** the user has upcoming events  
+**When** the reminder notification is sent before the event  
+**Then** the user should receive the notification with event info  
+**And** clicking the notification should open the event page  
+
+### Scenario: Send subscription renewal reminder
+**Given** the user subscription is about to expire  
+**When** the renewal reminder notification is sent  
+**Then** the user should receive the notification with renewal instructions  
+**And** clicking the notification should open the subscription page  
+
+---
+
+## 5. Marketing and Promotional Messages
+
+### Scenario: Send promotional offer notification
+**Given** a new promotional offer is available  
+**When** the marketing notification is sent  
+**Then** subscribed users should receive the notification with offer details  
+**And** clicking the notification should open the offer page  
+
+### Scenario: Handle user opt-out from marketing notifications
+**Given** a user opts out from marketing notifications  
+**When** a promotional notification is sent  
+**Then** the user should NOT receive the notification  
+
+---
+
+## 6. Security Alerts
+
+### Scenario: Notify user of unusual login
+**Given** a login from a new device or location is detected  
+**When** the security alert notification is sent  
+**Then** the user should receive the notification with login details  
+**And** clicking the notification should open the security settings page  
+
+### Scenario: Notify user of password change
+**Given** the user changes their password  
+**When** the password change confirmation notification is sent  
+**Then** the user should receive the notification confirming the change  
+**And** clicking the notification should open the account settings page  
