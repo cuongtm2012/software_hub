@@ -19,7 +19,8 @@ import {
   products
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, ne, inArray, desc, gt, count, update } from "drizzle-orm";
+import { eq, and, ne, inArray, desc, gt, count } from "drizzle-orm";
+import { update } from "drizzle-orm/pg-core";
 import { users } from "@shared/schema";
 import { z } from "zod";
 import emailService from "./services/emailService.js";
@@ -630,12 +631,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/softwares", isAuthenticated, async (req, res, next) => {
     try {
-      const insertData = insertSoftwareSchema.parse({
-        ...req.body,
-        author_id: req.user?.id
-      });
+      const insertData = insertSoftwareSchema.parse(req.body);
       
-      const software = await storage.createSoftware(insertData);
+      const software = await storage.createSoftware(insertData, req.user?.id as number);
       res.status(201).json(software);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -671,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Software not found" });
       }
       
-      if (software.author_id !== req.user?.id && req.user?.role !== 'admin') {
+      if (software.created_by !== req.user?.id && req.user?.role !== 'admin') {
         return res.status(403).json({ message: "You do not have permission to update this software" });
       }
       
@@ -712,7 +710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Software not found" });
       }
       
-      if (software.author_id !== req.user?.id && req.user?.role !== 'admin') {
+      if (software.created_by !== req.user?.id && req.user?.role !== 'admin') {
         return res.status(403).json({ message: "You do not have permission to delete this software" });
       }
       

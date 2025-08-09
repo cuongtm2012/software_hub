@@ -67,6 +67,7 @@ export interface IStorage {
   createSoftware(software: InsertSoftware, userId: number): Promise<Software>;
   getSoftwareById(id: number): Promise<Software | undefined>;
   updateSoftware(id: number, software: Partial<InsertSoftware>): Promise<Software | undefined>;
+  updateSoftwareAdmin(id: number, software: Partial<InsertSoftware>): Promise<Software | undefined>;
   deleteSoftware(id: number): Promise<boolean>;
   updateSoftwareStatus(id: number, status: 'approved' | 'rejected'): Promise<Software | undefined>;
   getSoftwareList(params: {
@@ -77,10 +78,14 @@ export interface IStorage {
     limit?: number;
     offset?: number;
   }): Promise<{ softwares: Software[], total: number }>;
+  getAdminSoftwareList(filters: any, limit?: number, offset?: number): Promise<{ softwares: Software[], total: number }>;
   
   // Reviews
   createReview(review: InsertReview, userId: number): Promise<Review>;
   getReviewsBySoftwareId(softwareId: number): Promise<Review[]>;
+  getSoftwareReviews(softwareId: number): Promise<Review[]>;
+  getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined>;
+  getReviewById(id: number): Promise<Review | undefined>;
   deleteReview(id: number, userId: number): Promise<boolean>;
   
   // External Project Requests
@@ -103,13 +108,17 @@ export interface IStorage {
   getProjectById(id: number): Promise<ExternalRequest | undefined>;
   getProjectsByClientId(clientId: number): Promise<ExternalRequest[]>;
   getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: ExternalRequest[], total: number }>;
+  updateProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest | undefined>;
   updateProjectStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
   
   // Quotes
   createQuote(quote: InsertQuote, developerId: number): Promise<Quote>;
   getQuotesByProjectId(projectId: number): Promise<Quote[]>;
   getQuotesByDeveloperId(developerId: number): Promise<Quote[]>;
+  getDeveloperQuoteForProject(developerId: number, projectId: number): Promise<Quote | undefined>;
+  getQuoteById(id: number): Promise<Quote | undefined>;
   updateQuoteStatus(id: number, status: string): Promise<Quote | undefined>;
+  rejectOtherQuotes(projectId: number, acceptedQuoteId: number): Promise<void>;
   
   // Messages
   sendMessage(message: InsertMessage, senderId: number): Promise<Message>;
@@ -119,6 +128,7 @@ export interface IStorage {
   createPortfolio(portfolio: InsertPortfolio, developerId: number): Promise<Portfolio>;
   getPortfolioById(id: number): Promise<Portfolio | undefined>;
   getPortfoliosByDeveloperId(developerId: number): Promise<Portfolio[]>;
+  getDeveloperPortfolio(developerId: number): Promise<Portfolio[]>;
   getAllPortfolios(limit?: number, offset?: number): Promise<{ portfolios: Portfolio[], total: number }>;
   updatePortfolio(id: number, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined>;
   deletePortfolio(id: number, developerId: number): Promise<boolean>;
@@ -126,12 +136,15 @@ export interface IStorage {
   // Portfolio Reviews
   createPortfolioReview(review: InsertPortfolioReview, userId: number): Promise<PortfolioReview>;
   getPortfolioReviewsByPortfolioId(portfolioId: number): Promise<PortfolioReview[]>;
+  getPortfolioReviews(portfolioId: number): Promise<PortfolioReview[]>;
+  getClientReviewForPortfolio(clientId: number, portfolioId: number): Promise<PortfolioReview | undefined>;
   deletePortfolioReview(id: number, userId: number): Promise<boolean>;
   
   // Phase 3: Marketplace
   // Products
   createProduct(product: InsertProduct, sellerId: number): Promise<Product>;
   getProductById(id: number): Promise<Product | undefined>;
+  getProducts(params?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ products: Product[], total: number }>;
   getProductsByCategory(category: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }>;
   getProductsBySellerId(sellerId: number): Promise<Product[]>;
   searchProducts(search: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }>;
@@ -141,19 +154,30 @@ export interface IStorage {
   // Orders
   createOrder(order: InsertOrder, items: InsertOrderItem[], buyerId: number): Promise<Order>;
   getOrderById(id: number): Promise<Order | undefined>;
+  getAllOrders(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ orders: Order[], total: number }>;
   getOrdersByBuyerId(buyerId: number): Promise<Order[]>;
+  getBuyerOrders(buyerId: number): Promise<Order[]>;
   getOrdersBySellerId(sellerId: number): Promise<Order[]>;
+  getSellerOrders(sellerId: number): Promise<Order[]>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
   
   // Payments
   createPayment(payment: InsertPayment): Promise<Payment>;
   getPaymentById(id: number): Promise<Payment | undefined>;
   getPaymentsByOrderId(orderId: number): Promise<Payment[]>;
+  getAllPayments(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ payments: Payment[], total: number }>;
+  getClientPayments(clientId: number): Promise<Payment[]>;
+  getDeveloperPayments(developerId: number): Promise<Payment[]>;
+  getBuyerPayments(buyerId: number): Promise<Payment[]>;
+  getSellerPayments(sellerId: number): Promise<Payment[]>;
+  updatePaymentStatus(id: number, status: string): Promise<Payment | undefined>;
   releaseEscrow(id: number, buyerId: number): Promise<Payment | undefined>;
   
   // Product Reviews
   createProductReview(review: InsertProductReview, buyerId: number): Promise<ProductReview>;
   getProductReviewsByProductId(productId: number): Promise<ProductReview[]>;
+  getProductReviews(productId: number): Promise<ProductReview[]>;
+  getUserReviewForProduct(userId: number, productId: number): Promise<ProductReview | undefined>;
   getProductReviewsByBuyerId(buyerId: number): Promise<ProductReview[]>;
   deleteProductReview(id: number, buyerId: number): Promise<boolean>;
   
