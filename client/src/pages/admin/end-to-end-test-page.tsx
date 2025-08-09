@@ -60,8 +60,8 @@ export default function EndToEndTestPage() {
   
   // Test user data
   const [testUserData, setTestUserData] = useState({
-    email: 'test.user@softwarehub.com',
-    name: 'Test User',
+    email: 'cuongeurovnn@gmail.com',
+    name: 'Cuong Euro VN',
     userId: '12345'
   });
 

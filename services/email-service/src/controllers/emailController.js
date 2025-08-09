@@ -102,8 +102,8 @@ class EmailController {
       }
 
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Welcome to SoftwareHub! Please activate your account',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -159,8 +159,8 @@ class EmailController {
 
       const token = activationToken || 'test_activation_token_' + Date.now();
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Activate Your SoftwareHub Account',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -212,8 +212,8 @@ class EmailController {
 
       const token = resetToken || 'test_reset_token_' + Date.now();
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Reset Your SoftwareHub Password',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -275,8 +275,8 @@ class EmailController {
       };
 
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: `Order Confirmation - ${order.id}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -345,8 +345,8 @@ class EmailController {
       };
 
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: `Project Update: ${project.name}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -403,8 +403,8 @@ class EmailController {
       }
 
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Newsletter Subscription Confirmed',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -466,8 +466,8 @@ class EmailController {
       }
 
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Account Deactivation Confirmation',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -531,8 +531,8 @@ class EmailController {
       }
 
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: 'Welcome Back! Account Reactivated',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -606,8 +606,8 @@ class EmailController {
       };
 
       const emailContent = {
-        to: userEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: userEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: campaign.title,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -669,8 +669,8 @@ class EmailController {
       }
 
       const emailContent = {
-        to: supportEmail,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: supportEmail || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: `Support Request: ${subject}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -734,8 +734,8 @@ class EmailController {
       }
 
       const messages = emails.map(email => ({
-        to: email,
-        from: process.env.FROM_EMAIL || 'noreply@softwarehub.com',
+        to: email || 'cuongeurovnn@gmail.com',
+        from: process.env.FROM_EMAIL || 'cuongeurovnn@gmail.com',
         subject: subject,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
