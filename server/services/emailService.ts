@@ -104,7 +104,7 @@ class EmailService {
 
     // Use a verified sender email - this is critical for SendGrid
     // For development, we'll try multiple potential verified senders
-    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev';
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
     
     console.log(`Attempting to send welcome email from ${senderEmail} to ${userEmail}`);
 

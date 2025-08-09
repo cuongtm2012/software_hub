@@ -6,8 +6,17 @@ class SendGridService {
       throw new Error('SENDGRID_API_KEY environment variable is required');
     }
     
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    console.log('SendGrid service initialized');
+    const apiKey = process.env.SENDGRID_API_KEY;
+    
+    // Validate SendGrid API key format
+    if (!apiKey.startsWith('SG.')) {
+      console.warn('API key does not start with "SG." - this might indicate an invalid SendGrid API key');
+      console.warn('Expected format: SG.xxxxxxxxxxxxxxxxxxxxxxx');
+      console.warn('Please check your SendGrid API key configuration');
+    }
+    
+    sgMail.setApiKey(apiKey);
+    console.log('SendGrid service initialized with API key format:', apiKey.startsWith('SG.') ? 'Valid (SG.*)' : 'Invalid (not SG.*)');
   }
 
   async sendEmail({ to, from, subject, text, html }) {

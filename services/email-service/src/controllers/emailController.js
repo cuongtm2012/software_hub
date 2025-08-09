@@ -126,6 +126,12 @@ class EmailController {
         `
       };
 
+      console.log('Sending welcome email with details:', {
+        to: emailContent.to,
+        from: emailContent.from,
+        apiKeyFormat: process.env.SENDGRID_API_KEY ? (process.env.SENDGRID_API_KEY.startsWith('SG.') ? 'Valid (SG.*)' : 'Invalid (not SG.*)') : 'Missing'
+      });
+
       const result = await retryUtil.withRetry(
         () => sendGridService.sendEmail(emailContent),
         3,

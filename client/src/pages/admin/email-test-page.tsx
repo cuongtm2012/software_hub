@@ -23,14 +23,14 @@ export default function EmailTestPage() {
   // Single Email Test State
   const [singleTestData, setSingleTestData] = useState({
     testType: '',
-    userEmail: '',
-    userName: 'Test User',
+    userEmail: 'cuongeurovnn@gmail.com',
+    userName: 'Cuong Euro VN',
     additionalData: {}
   });
 
   // Bulk Test State
   const [bulkTestData, setBulkTestData] = useState({
-    recipients: [{ email: '', name: 'Test User' }],
+    recipients: [{ email: 'cuongeurovnn@gmail.com', name: 'Cuong Euro VN' }],
     campaignData: {
       subject: 'Test Marketing Campaign',
       title: 'Special Offer',
