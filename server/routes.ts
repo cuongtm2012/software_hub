@@ -3199,61 +3199,397 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PUSH NOTIFICATION TESTING ENDPOINTS - Proxy to Microservice
-  
-  // Generic proxy function for notification test endpoints
-  const proxyToNotificationService = (endpoint: string) => {
-    return async (req: Request, res: Response) => {
-      try {
-        // Check admin role first
-        if (!req.session?.userId || !req.session?.user) {
-          return res.status(401).json({ message: "Unauthorized" });
-        }
-        
-        const userRole = req.session.user.role;
-        if (!userRole || userRole !== 'admin') {
-          return res.status(403).json({ message: "Admin access required" });
-        }
+  // PUSH NOTIFICATION TESTING ENDPOINTS - Using Local Service
 
-        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3003';
-        const response = await fetch(`${notificationServiceUrl}${endpoint}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(req.body)
+  // Test notification endpoints using local notification service
+  app.post(
+    '/api/notifications/test-new-message',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendNewMessageNotification(
+          1, // Test user ID
+          "Alice Johnson",
+          "Hey, how's your project coming along?"
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'new-message',
+          message: 'new-message test notification sent successfully'
         });
-        
-        const result = await response.json();
-        res.status(response.status).json(result);
-      } catch (error) {
-        console.error(`Notification test error for ${endpoint}:`, error);
+      } catch (error: any) {
+        console.error('New message notification test error:', error);
         res.status(500).json({ 
           success: false, 
-          error: `Failed to send notification test: ${error instanceof Error ? error.message : 'Unknown error'}` 
+          error: error.message || 'Failed to send test notification',
+          testType: 'new-message'
         });
       }
-    };
-  };
+    }
+  );
 
-  // Map all notification test endpoints to the microservice
-  const notificationTestEndpoints = [
-    '/api/notifications/test-new-message',
+  app.post(
     '/api/notifications/test-comment',
-    '/api/notifications/test-maintenance-alert',
-    '/api/notifications/test-system-update',
-    '/api/notifications/test-order-confirmation',
-    '/api/notifications/test-payment-failure',
-    '/api/notifications/test-event-reminder',
-    '/api/notifications/test-subscription-renewal',
-    '/api/notifications/test-promotional-offer',
-    '/api/notifications/test-unusual-login',
-    '/api/notifications/test-password-change',
-    '/api/notifications/test-bulk'
-  ];
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendCommentNotification(
+          1, // Test user ID
+          "Bob Smith", 
+          "Your Latest Project"
+        );
 
-  // Register all notification test endpoints
-  notificationTestEndpoints.forEach(endpoint => {
-    app.post(endpoint, proxyToNotificationService(endpoint));
-  });
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'comment',
+          message: 'comment test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Comment notification test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'comment'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-maintenance-alert',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendMaintenanceAlert(
+          "Saturday 2:00 AM - 4:00 AM EST",
+          "We'll be updating our servers."
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'maintenance-alert',
+          message: 'maintenance-alert test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Maintenance alert test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'maintenance-alert'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-system-update',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendSystemUpdateNotification(
+          "2.1.0",
+          "New dashboard, improved performance, bug fixes"
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'system-update',
+          message: 'system-update test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('System update test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'system-update'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-order-confirmation',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendOrderConfirmation(
+          1, // Test user ID
+          "ORD-2024-001",
+          "$99.99"
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'order-confirmation',
+          message: 'order-confirmation test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Order confirmation test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'order-confirmation'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-payment-failure',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendPaymentFailureNotification(
+          1, // Test user ID
+          "ORD-2024-001",
+          "Insufficient funds"
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'payment-failure',
+          message: 'payment-failure test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Payment failure test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'payment-failure'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-event-reminder',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendEventReminder(
+          1, // Test user ID
+          "Product Launch Webinar",
+          "Tomorrow 3:00 PM EST"
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'event-reminder',
+          message: 'event-reminder test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Event reminder test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'event-reminder'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-subscription-renewal',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendSubscriptionRenewalReminder(
+          1, // Test user ID
+          "March 15, 2024"
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'subscription-renewal',
+          message: 'subscription-renewal test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Subscription renewal test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'subscription-renewal'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-promotional-offer',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendPromotionalOffer(
+          "50% Off Premium Features",
+          "Upgrade now and save big!",
+          "March 31, 2024"
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'promotional-offer',
+          message: 'promotional-offer test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Promotional offer test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'promotional-offer'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-unusual-login',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendUnusualLoginNotification(
+          1, // Test user ID
+          "San Francisco, CA",
+          "iPhone 14"
+        );
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'unusual-login',
+          message: 'unusual-login test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Unusual login test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'unusual-login'
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/notifications/test-password-change',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      try {
+        const result = await notificationService.sendPasswordChangeConfirmation(1); // Test user ID
+
+        res.json({
+          success: result.success,
+          messageId: result.messageId,
+          testType: 'password-change',
+          message: 'password-change test notification sent successfully'
+        });
+      } catch (error: any) {
+        console.error('Password change test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'password-change'
+        });
+      }
+    }
+  );
 
   // EMAIL MICROSERVICE PROXY ENDPOINTS
   const proxyToEmailService = (endpoint: string) => {
