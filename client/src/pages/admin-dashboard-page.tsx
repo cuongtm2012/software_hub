@@ -6,20 +6,76 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Users, Package, FileText, BarChart3, Search, Eye, User, Mail, Phone, Calendar, DollarSign, Clock, Loader2, Trash2, Edit, MessageCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Users,
+  Package,
+  FileText,
+  BarChart3,
+  Search,
+  Eye,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  DollarSign,
+  Clock,
+  Loader2,
+  Trash2,
+  Edit,
+  MessageCircle,
+} from "lucide-react";
 import SoftwareManagement from "@/pages/admin/software-management";
-import { deduplicateUsersByEmail, getUserDuplicationStats } from "@/lib/userUtils";
+import {
+  deduplicateUsersByEmail,
+  getUserDuplicationStats,
+} from "@/lib/userUtils";
 
 // Types
 interface User {
@@ -64,21 +120,28 @@ function UserManagementComponent() {
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const { data: usersData, isLoading, refetch } = useQuery<{ users: User[], total: number }>({
-    queryKey: ['/api/admin/users'],
+  const {
+    data: usersData,
+    isLoading,
+    refetch,
+  } = useQuery<{ users: User[]; total: number }>({
+    queryKey: ["/api/admin/users"],
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, userData }: { id: number, userData: Partial<User> }) => {
-      return apiRequest(`/api/admin/users/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(userData)
-      });
+    mutationFn: async ({
+      id,
+      userData,
+    }: {
+      id: number;
+      userData: Partial<User>;
+    }) => {
+      return apiRequest("PUT", `/api/admin/users/${id}`, userData);
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "User updated successfully"
+        description: "User updated successfully",
       });
       setIsEditUserDialogOpen(false);
       refetch();
@@ -87,41 +150,42 @@ function UserManagementComponent() {
       toast({
         title: "Error",
         description: "Failed to update user",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/admin/users/${id}`, {
-        method: 'DELETE'
-      });
+      const response = await apiRequest("DELETE", `/api/admin/users/${id}`);
+      return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "User deleted successfully"
+        description: "User deleted successfully",
       });
       setIsDeleteDialogOpen(false);
       refetch();
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error('Delete user error:', error);
       toast({
         title: "Error",
-        description: "Failed to delete user",
-        variant: "destructive"
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const allUsers = usersData?.users?.users || [];
   const uniqueUsers = deduplicateUsersByEmail(allUsers);
   const stats = getUserDuplicationStats(allUsers);
-  
-  const filteredUsers = uniqueUsers.filter(user => {
-    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+  const filteredUsers = uniqueUsers.filter((user) => {
+    const matchesSearch =
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -145,15 +209,9 @@ function UserManagementComponent() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">User Management</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            {filteredUsers.length} of {stats.uniqueUsers} unique users 
-            {stats.duplicatesRemoved > 0 && (
-              <span className="text-orange-600 font-medium">
-                ({stats.duplicatesRemoved} duplicates removed - {stats.duplicatePercentage}%)
-              </span>
-            )}
-          </p>
+          <h3 className="text-xl font-semibold text-gray-900">
+            User Management
+          </h3>
         </div>
       </div>
 
@@ -201,22 +259,34 @@ function UserManagementComponent() {
                 <TableRow key={`user-${user.id}-${user.email}`}>
                   <TableCell>
                     <div>
-                      <div className="font-medium text-gray-900">{user.name}</div>
+                      <div className="font-medium text-gray-900">
+                        {user.name}
+                      </div>
                       <div className="text-sm text-gray-500">{user.email}</div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={
-                      user.role === 'admin' ? 'default' :
-                      user.role === 'developer' ? 'secondary' :
-                      user.role === 'seller' ? 'outline' : 'secondary'
-                    }>
+                    <Badge
+                      variant={
+                        user.role === "admin"
+                          ? "default"
+                          : user.role === "developer"
+                            ? "secondary"
+                            : user.role === "seller"
+                              ? "outline"
+                              : "secondary"
+                      }
+                    >
                       {user.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.status === 'active' ? 'default' : 'destructive'}>
-                      {user.status || 'active'}
+                    <Badge
+                      variant={
+                        user.status === "active" ? "default" : "destructive"
+                      }
+                    >
+                      {user.status || "active"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-gray-500">
@@ -251,7 +321,9 @@ function UserManagementComponent() {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8">
-                  <div className="text-gray-500">No users found matching your criteria</div>
+                  <div className="text-gray-500">
+                    No users found matching your criteria
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -260,7 +332,10 @@ function UserManagementComponent() {
       </div>
 
       {/* Edit User Dialog */}
-      <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
+      <Dialog
+        open={isEditUserDialogOpen}
+        onOpenChange={setIsEditUserDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
@@ -275,7 +350,9 @@ function UserManagementComponent() {
                 <Input
                   id="edit-name"
                   value={selectedUser.name}
-                  onChange={(e) => setSelectedUser({ ...selectedUser, name: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, name: e.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -284,12 +361,19 @@ function UserManagementComponent() {
                   id="edit-email"
                   type="email"
                   value={selectedUser.email}
-                  onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, email: e.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-role">Role</Label>
-                <Select value={selectedUser.role} onValueChange={(value) => setSelectedUser({ ...selectedUser, role: value })}>
+                <Select
+                  value={selectedUser.role}
+                  onValueChange={(value) =>
+                    setSelectedUser({ ...selectedUser, role: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -304,7 +388,12 @@ function UserManagementComponent() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-status">Status</Label>
-                <Select value={selectedUser.status || 'active'} onValueChange={(value) => setSelectedUser({ ...selectedUser, status: value })}>
+                <Select
+                  value={selectedUser.status || "active"}
+                  onValueChange={(value) =>
+                    setSelectedUser({ ...selectedUser, status: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -318,12 +407,25 @@ function UserManagementComponent() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditUserDialogOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={() => selectedUser && updateUserMutation.mutate({ id: selectedUser.id, userData: selectedUser })}
+            <Button
+              variant="outline"
+              onClick={() => setIsEditUserDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                selectedUser &&
+                updateUserMutation.mutate({
+                  id: selectedUser.id,
+                  userData: selectedUser,
+                })
+              }
               disabled={updateUserMutation.isPending}
             >
-              {updateUserMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {updateUserMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               Update User
             </Button>
           </DialogFooter>
@@ -331,21 +433,29 @@ function UserManagementComponent() {
       </Dialog>
 
       {/* Delete User Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedUser?.name}? This action cannot be undone.
+              Are you sure you want to delete {selectedUser?.name}? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => selectedUser && deleteUserMutation.mutate(selectedUser.id)}
+              onClick={() =>
+                selectedUser && deleteUserMutation.mutate(selectedUser.id)
+              }
               disabled={deleteUserMutation.isPending}
             >
-              {deleteUserMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {deleteUserMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -357,8 +467,11 @@ function UserManagementComponent() {
 
 // Software List Component
 function SoftwareListComponent() {
-  const { data: softwareData, isLoading } = useQuery<{ software: Software[], total: number }>({
-    queryKey: ['/api/software'],
+  const { data: softwareData, isLoading } = useQuery<{
+    software: Software[];
+    total: number;
+  }>({
+    queryKey: ["/api/software"],
   });
 
   if (isLoading) {
@@ -375,8 +488,12 @@ function SoftwareListComponent() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">Software Management</h3>
-          <p className="text-sm text-gray-500 mt-1">{softwareData?.total || 0} software items</p>
+          <h3 className="text-xl font-semibold text-gray-900">
+            Software Management
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            {softwareData?.total || 0} software items
+          </p>
         </div>
       </div>
 
@@ -399,7 +516,9 @@ function SoftwareListComponent() {
                   <TableCell>
                     <Badge variant="outline">{software.category}</Badge>
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">{software.description}</TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {software.description}
+                  </TableCell>
                   <TableCell className="text-sm text-gray-500">
                     {new Date(software.created_at).toLocaleDateString()}
                   </TableCell>
@@ -417,7 +536,9 @@ function SoftwareListComponent() {
         <div className="text-center py-8">
           <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium mb-2">No Software</h3>
-          <p className="text-gray-500">No software items have been added yet.</p>
+          <p className="text-gray-500">
+            No software items have been added yet.
+          </p>
         </div>
       )}
     </div>
@@ -429,36 +550,46 @@ function ExternalRequestsComponent() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedRequest, setSelectedRequest] = useState<ExternalRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] =
+    useState<ExternalRequest | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
-  const { data: requestsData, isLoading, refetch } = useQuery<{ requests: ExternalRequest[], total: number }>({
-    queryKey: ['/api/admin/external-requests'],
+  const {
+    data: requestsData,
+    isLoading,
+    refetch,
+  } = useQuery<{ requests: ExternalRequest[]; total: number }>({
+    queryKey: ["/api/admin/external-requests"],
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number, status: string }) => {
-      console.log('Updating external request status:', { id, status });
-      const response = await fetch(`/api/admin/external-requests/${id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      console.log("Updating external request status:", { id, status });
+      const response = await fetch(
+        `/api/admin/external-requests/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ status }),
         },
-        credentials: 'include',
-        body: JSON.stringify({ status })
-      });
-      console.log('External request status update response:', response.status);
+      );
+      console.log("External request status update response:", response.status);
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('External request status update error:', errorText);
-        throw new Error(`Failed to update status: ${response.status} ${errorText}`);
+        console.error("External request status update error:", errorText);
+        throw new Error(
+          `Failed to update status: ${response.status} ${errorText}`,
+        );
       }
       return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Request status updated successfully"
+        description: "Request status updated successfully",
       });
       refetch();
     },
@@ -466,28 +597,37 @@ function ExternalRequestsComponent() {
       toast({
         title: "Error",
         description: "Failed to update request status",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const assignDeveloperMutation = useMutation({
-    mutationFn: async ({ id, developerId }: { id: number, developerId: number }) => {
-      const response = await fetch(`/api/admin/external-requests/${id}/assign`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
+    mutationFn: async ({
+      id,
+      developerId,
+    }: {
+      id: number;
+      developerId: number;
+    }) => {
+      const response = await fetch(
+        `/api/admin/external-requests/${id}/assign`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ assigned_developer_id: developerId }),
         },
-        credentials: 'include',
-        body: JSON.stringify({ assigned_developer_id: developerId })
-      });
-      if (!response.ok) throw new Error('Failed to assign developer');
+      );
+      if (!response.ok) throw new Error("Failed to assign developer");
       return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Developer assigned successfully"
+        description: "Developer assigned successfully",
       });
       refetch();
     },
@@ -495,24 +635,29 @@ function ExternalRequestsComponent() {
       toast({
         title: "Error",
         description: "Failed to assign developer",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
-  const filteredRequests = requestsData?.requests?.filter(request => {
-    const matchesSearch = request.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.project_description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || request.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }) || [];
+  const filteredRequests =
+    requestsData?.requests?.filter((request) => {
+      const matchesSearch =
+        request.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.project_description
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || request.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    }) || [];
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold">External Requests</h3>  
+          <h3 className="text-xl font-semibold">External Requests</h3>
         </div>
         <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
@@ -527,8 +672,12 @@ function ExternalRequestsComponent() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">External Requests & Projects</h3>
-          <p className="text-sm text-gray-500 mt-1">{filteredRequests.length} of {requestsData?.total || 0} requests</p>
+          <h3 className="text-xl font-semibold text-gray-900">
+            External Requests & Projects
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            {filteredRequests.length} of {requestsData?.total || 0} requests
+          </p>
         </div>
       </div>
 
@@ -599,11 +748,17 @@ function ExternalRequestsComponent() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={
-                      request.status === 'completed' ? 'default' :
-                      request.status === 'in_progress' ? 'secondary' :
-                      request.status === 'pending' ? 'outline' : 'destructive'
-                    }>
+                    <Badge
+                      variant={
+                        request.status === "completed"
+                          ? "default"
+                          : request.status === "in_progress"
+                            ? "secondary"
+                            : request.status === "pending"
+                              ? "outline"
+                              : "destructive"
+                      }
+                    >
                       {request.status}
                     </Badge>
                   </TableCell>
@@ -616,13 +771,13 @@ function ExternalRequestsComponent() {
                         Developer #{request.assigned_developer_id}
                       </Badge>
                     ) : (
-                      <span className="text-gray-400">Unassigned</span>  
+                      <span className="text-gray-400">Unassigned</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
                       <Button
-                        variant="outline" 
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setSelectedRequest(request);
@@ -633,14 +788,21 @@ function ExternalRequestsComponent() {
                       </Button>
                       <Select
                         value={request.status}
-                        onValueChange={(status) => updateStatusMutation.mutate({ id: request.id, status })}
+                        onValueChange={(status) =>
+                          updateStatusMutation.mutate({
+                            id: request.id,
+                            status,
+                          })
+                        }
                       >
                         <SelectTrigger className="w-24 h-8 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="in_progress">
+                            In Progress
+                          </SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
                         </SelectContent>
@@ -652,7 +814,9 @@ function ExternalRequestsComponent() {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  <div className="text-gray-500">No requests found matching your criteria</div>
+                  <div className="text-gray-500">
+                    No requests found matching your criteria
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -673,7 +837,9 @@ function ExternalRequestsComponent() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-semibold">Contact Information</Label>
+                  <Label className="text-sm font-semibold">
+                    Contact Information
+                  </Label>
                   <div className="mt-2 space-y-1">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-400" />
@@ -692,11 +858,18 @@ function ExternalRequestsComponent() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold">Project Details</Label>
+                  <Label className="text-sm font-semibold">
+                    Project Details
+                  </Label>
                   <div className="mt-2 space-y-1">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>Created: {new Date(selectedRequest.created_at).toLocaleDateString()}</span>
+                      <span>
+                        Created:{" "}
+                        {new Date(
+                          selectedRequest.created_at,
+                        ).toLocaleDateString()}
+                      </span>
                     </div>
                     {selectedRequest.budget && (
                       <div className="flex items-center gap-2">
@@ -707,16 +880,25 @@ function ExternalRequestsComponent() {
                     {selectedRequest.deadline && (
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-gray-400" />
-                        <span>Deadline: {new Date(selectedRequest.deadline).toLocaleDateString()}</span>
+                        <span>
+                          Deadline:{" "}
+                          {new Date(
+                            selectedRequest.deadline,
+                          ).toLocaleDateString()}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
               <div>
-                <Label className="text-sm font-semibold">Project Description</Label>
+                <Label className="text-sm font-semibold">
+                  Project Description
+                </Label>
                 <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm">{selectedRequest.project_description}</p>
+                  <p className="text-sm">
+                    {selectedRequest.project_description}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -725,7 +907,10 @@ function ExternalRequestsComponent() {
                   <Select
                     value={selectedRequest.status}
                     onValueChange={(status) => {
-                      updateStatusMutation.mutate({ id: selectedRequest.id, status });
+                      updateStatusMutation.mutate({
+                        id: selectedRequest.id,
+                        status,
+                      });
                       setSelectedRequest({ ...selectedRequest, status });
                     }}
                   >
@@ -744,7 +929,10 @@ function ExternalRequestsComponent() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDetailDialogOpen(false)}
+            >
               Close
             </Button>
           </DialogFooter>
@@ -758,15 +946,15 @@ export default function AdminDashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  
+
   // Check if user is admin, redirect if not
   useEffect(() => {
-    if (user && user.role !== 'admin') {
-      navigate('/');
+    if (user && user.role !== "admin") {
+      navigate("/");
       toast({
         title: "Access Denied",
         description: "You don't have permission to view the admin dashboard",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   }, [user, navigate, toast]);
@@ -781,7 +969,9 @@ export default function AdminDashboardPage() {
               <CardContent className="p-6 text-center">
                 <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Login Required</h2>
-                <p className="text-gray-600 mb-4">Please log in to access the admin dashboard.</p>
+                <p className="text-gray-600 mb-4">
+                  Please log in to access the admin dashboard.
+                </p>
                 <Button onClick={() => navigate("/test-login")}>Login</Button>
               </CardContent>
             </Card>
@@ -799,11 +989,15 @@ export default function AdminDashboardPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8 flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-              <p className="text-gray-600">Manage users, software, and external requests</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Admin Dashboard
+              </h1>
+              <p className="text-gray-600">
+                Manage users, software, and external requests
+              </p>
             </div>
             <Button
-              onClick={() => navigate('/admin/users/chat')}
+              onClick={() => navigate("/admin/users/chat")}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
@@ -821,7 +1015,10 @@ export default function AdminDashboardPage() {
                 <Users className="h-4 w-4" />
                 User Management
               </TabsTrigger>
-              <TabsTrigger value="external-requests" className="flex items-center gap-2">
+              <TabsTrigger
+                value="external-requests"
+                className="flex items-center gap-2"
+              >
                 <FileText className="h-4 w-4" />
                 External Requests
               </TabsTrigger>
@@ -842,7 +1039,9 @@ export default function AdminDashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-4">
-                      <p className="text-sm text-gray-600">Use the Software tab for full management capabilities</p>
+                      <p className="text-sm text-gray-600">
+                        Use the Software tab for full management capabilities
+                      </p>
                       <Button variant="outline" size="sm" className="mt-2">
                         View All Software
                       </Button>
@@ -863,11 +1062,15 @@ export default function AdminDashboardPage() {
                         <Badge>View Details</Badge>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                        <span className="text-sm font-medium">Pending Requests</span>
+                        <span className="text-sm font-medium">
+                          Pending Requests
+                        </span>
                         <Badge variant="secondary">View Details</Badge>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                        <span className="text-sm font-medium">Active Software</span>
+                        <span className="text-sm font-medium">
+                          Active Software
+                        </span>
                         <Badge variant="outline">View Details</Badge>
                       </div>
                     </CardContent>
