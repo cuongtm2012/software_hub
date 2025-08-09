@@ -98,13 +98,23 @@ class NotificationService {
 
     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // Enhanced logging for cross-user testing
+    const targetDisplay = target.userId ? `User ${target.userId}` : 
+                         target.topic === 'all_users' ? 'all_users' :
+                         target.deviceToken || target.topic || 'Unknown';
+    
     console.log(`📱 Push Notification Sent:
-      Target: ${target.userId ? `User ${target.userId}` : target.deviceToken || target.topic || 'Unknown'}
+      Target: ${targetDisplay}
       Title: ${payload.title}
       Body: ${payload.body}
       Message ID: ${messageId}
       Click Action: ${payload.clickAction || 'None'}
     `);
+
+    // For cross-user testing, show which specific user would receive this
+    if (target.userId) {
+      console.log(`   🎯 User ${target.userId} should see this notification in their browser/device`);
+    }
 
     return {
       success: true,

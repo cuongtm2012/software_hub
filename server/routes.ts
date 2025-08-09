@@ -3213,17 +3213,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
+        // Use form data from frontend or fallback to defaults
+        const { userId, senderName, messagePreview } = req.body;
+        const targetUserId = userId ? parseInt(userId) : 1;
+        const sender = senderName || "Alice Johnson";
+        const message = messagePreview || "Hey, how's your project coming along?";
+        
         const result = await notificationService.sendNewMessageNotification(
-          1, // Test user ID
-          "Alice Johnson",
-          "Hey, how's your project coming along?"
+          targetUserId,
+          sender,
+          message
         );
 
         res.json({
           success: result.success,
           messageId: result.messageId,
           testType: 'new-message',
-          message: 'new-message test notification sent successfully'
+          message: `New message notification sent successfully to User ${targetUserId}`
         });
       } catch (error: any) {
         console.error('New message notification test error:', error);
@@ -3249,17 +3255,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
+        // Use form data from frontend or fallback to defaults
+        const { userId, commenterName, contentTitle } = req.body;
+        const targetUserId = userId ? parseInt(userId) : 1;
+        const commenter = commenterName || "Bob Smith";
+        const content = contentTitle || "Your Latest Project";
+        
         const result = await notificationService.sendCommentNotification(
-          1, // Test user ID
-          "Bob Smith", 
-          "Your Latest Project"
+          targetUserId,
+          commenter,
+          content
         );
 
         res.json({
           success: result.success,
           messageId: result.messageId,
           testType: 'comment',
-          message: 'comment test notification sent successfully'
+          message: `Comment notification sent successfully to User ${targetUserId}`
         });
       } catch (error: any) {
         console.error('Comment notification test error:', error);
@@ -3355,17 +3367,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
+        // Use form data from frontend or fallback to defaults
+        const { userId, orderId, amount } = req.body;
+        const targetUserId = userId ? parseInt(userId) : 1;
+        const orderNumber = orderId || "ORD-2024-001";
+        const orderAmount = amount || "$99.99";
+        
         const result = await notificationService.sendOrderConfirmation(
-          1, // Test user ID
-          "ORD-2024-001",
-          "$99.99"
+          targetUserId,
+          orderNumber,
+          orderAmount
         );
 
         res.json({
           success: result.success,
           messageId: result.messageId,
           testType: 'order-confirmation',
-          message: 'order-confirmation test notification sent successfully'
+          message: `Order confirmation notification sent successfully to User ${targetUserId}`
         });
       } catch (error: any) {
         console.error('Order confirmation test error:', error);
