@@ -23,6 +23,7 @@ import { eq, and, ne, inArray, desc, gt, count, update } from "drizzle-orm";
 import { users } from "@shared/schema";
 import { z } from "zod";
 import emailService from "./services/emailService.js";
+import notificationService from "./services/notificationService.js";
 
 // Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -3195,6 +3196,338 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error) {
       next(error);
+    }
+  });
+
+  // PUSH NOTIFICATION TESTING ENDPOINTS
+  
+  // 1. User Activity Alerts
+  app.post("/api/notifications/test-new-message", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { userId, senderName, messagePreview } = req.body;
+      
+      if (!userId || !senderName || !messagePreview) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "userId, senderName, and messagePreview are required" 
+        });
+      }
+
+      const result = await notificationService.sendNewMessageNotification(
+        parseInt(userId), 
+        senderName, 
+        messagePreview
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('New message notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send new message notification test" 
+      });
+    }
+  });
+
+  app.post("/api/notifications/test-comment", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { userId, commenterName, contentTitle } = req.body;
+      
+      if (!userId || !commenterName || !contentTitle) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "userId, commenterName, and contentTitle are required" 
+        });
+      }
+
+      const result = await notificationService.sendCommentNotification(
+        parseInt(userId), 
+        commenterName, 
+        contentTitle
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Comment notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send comment notification test" 
+      });
+    }
+  });
+
+  // 2. System Notifications
+  app.post("/api/notifications/test-maintenance-alert", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { maintenanceTime, details } = req.body;
+      
+      if (!maintenanceTime || !details) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "maintenanceTime and details are required" 
+        });
+      }
+
+      const result = await notificationService.sendMaintenanceAlert(
+        maintenanceTime, 
+        details
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Maintenance alert test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send maintenance alert test" 
+      });
+    }
+  });
+
+  app.post("/api/notifications/test-system-update", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { version, features } = req.body;
+      
+      if (!version || !features) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "version and features are required" 
+        });
+      }
+
+      const result = await notificationService.sendSystemUpdateNotification(
+        version, 
+        features
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('System update notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send system update notification test" 
+      });
+    }
+  });
+
+  // 3. Transactional Notifications
+  app.post("/api/notifications/test-order-confirmation", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { userId, orderId, amount } = req.body;
+      
+      if (!userId || !orderId || !amount) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "userId, orderId, and amount are required" 
+        });
+      }
+
+      const result = await notificationService.sendOrderConfirmation(
+        parseInt(userId), 
+        orderId, 
+        amount
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Order confirmation notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send order confirmation notification test" 
+      });
+    }
+  });
+
+  app.post("/api/notifications/test-payment-failure", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { userId, orderId, reason } = req.body;
+      
+      if (!userId || !orderId || !reason) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "userId, orderId, and reason are required" 
+        });
+      }
+
+      const result = await notificationService.sendPaymentFailureNotification(
+        parseInt(userId), 
+        orderId, 
+        reason
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Payment failure notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send payment failure notification test" 
+      });
+    }
+  });
+
+  // 4. Reminders and Alerts
+  app.post("/api/notifications/test-event-reminder", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { userId, eventName, eventTime } = req.body;
+      
+      if (!userId || !eventName || !eventTime) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "userId, eventName, and eventTime are required" 
+        });
+      }
+
+      const result = await notificationService.sendEventReminder(
+        parseInt(userId), 
+        eventName, 
+        eventTime
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Event reminder notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send event reminder notification test" 
+      });
+    }
+  });
+
+  app.post("/api/notifications/test-subscription-renewal", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { userId, expiryDate } = req.body;
+      
+      if (!userId || !expiryDate) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "userId and expiryDate are required" 
+        });
+      }
+
+      const result = await notificationService.sendSubscriptionRenewalReminder(
+        parseInt(userId), 
+        expiryDate
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Subscription renewal notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send subscription renewal notification test" 
+      });
+    }
+  });
+
+  // 5. Marketing and Promotional
+  app.post("/api/notifications/test-promotional-offer", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { offerTitle, offerDetails, validUntil } = req.body;
+      
+      if (!offerTitle || !offerDetails || !validUntil) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "offerTitle, offerDetails, and validUntil are required" 
+        });
+      }
+
+      const result = await notificationService.sendPromotionalOffer(
+        offerTitle, 
+        offerDetails, 
+        validUntil
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Promotional offer notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send promotional offer notification test" 
+      });
+    }
+  });
+
+  // 6. Security Alerts
+  app.post("/api/notifications/test-unusual-login", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { userId, location, device } = req.body;
+      
+      if (!userId || !location || !device) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "userId, location, and device are required" 
+        });
+      }
+
+      const result = await notificationService.sendUnusualLoginNotification(
+        parseInt(userId), 
+        location, 
+        device
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Unusual login notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send unusual login notification test" 
+      });
+    }
+  });
+
+  app.post("/api/notifications/test-password-change", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "userId is required" 
+        });
+      }
+
+      const result = await notificationService.sendPasswordChangeConfirmation(
+        parseInt(userId)
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Password change notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send password change notification test" 
+      });
+    }
+  });
+
+  // Bulk notification testing
+  app.post("/api/notifications/test-bulk", hasRole(['admin']), async (req: Request, res: Response) => {
+    try {
+      const { title, body, userIds, clickAction } = req.body;
+      
+      if (!title || !body || !userIds || !Array.isArray(userIds)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "title, body, and userIds array are required" 
+        });
+      }
+
+      const targets = userIds.map((id: number) => ({ userId: id }));
+      const payload = { 
+        title, 
+        body, 
+        clickAction: clickAction || '/dashboard',
+        data: { type: 'bulk_test' }
+      };
+
+      const result = await notificationService.sendBulkNotifications(payload, targets);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Bulk notification test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to send bulk notification test" 
+      });
     }
   });
 

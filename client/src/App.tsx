@@ -57,6 +57,7 @@ import AdminUsersPage from "@/pages/admin/users-page";
 import AdminUsersChatPage from "@/pages/admin/users-chat-page";
 import AdminSoftwareManagementPage from "@/pages/admin/software-management-page";
 import EmailTestPage from "@/pages/admin/email-test-page";
+import PushNotificationTestPage from "@/pages/admin/push-notification-test-page";
 import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
@@ -82,6 +83,7 @@ function Router() {
       <ProtectedRoute path="/admin/users/chat" component={AdminUsersChatPage} roles={['admin']} />
       <ProtectedRoute path="/admin/software" component={AdminSoftwareManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/email-tests" component={EmailTestPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/push-notifications" component={PushNotificationTestPage} roles={['admin']} />
       
       {/* Phase 2: Code Service & Product Build Module */}
       <Route path="/it-services" component={() => {

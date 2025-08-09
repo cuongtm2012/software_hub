@@ -71,6 +71,7 @@ import {
   Edit,
   MessageCircle,
   TestTube,
+  Bell,
 } from "lucide-react";
 import SoftwareManagement from "@/pages/admin/software-management";
 import {
@@ -1012,6 +1013,14 @@ export default function AdminDashboardPage() {
               >
                 <TestTube className="h-4 w-4 mr-2" />
                 Email Testing
+              </Button>
+              <Button
+                onClick={() => navigate("/admin/push-notifications")}
+                variant="outline"
+                className="border-purple-600 text-purple-600 hover:bg-purple-50"
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                Push Notifications
               </Button>
             </div>
           </div>
