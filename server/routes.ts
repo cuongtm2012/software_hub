@@ -3203,8 +3203,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Generic proxy function for notification test endpoints
   const proxyToNotificationService = (endpoint: string) => {
-    return hasRole(['admin'])(async (req: Request, res: Response) => {
+    return async (req: Request, res: Response) => {
       try {
+        // Check admin role first
+        if (!req.session?.userId || !req.session?.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        
+        const userRole = req.session.user.role;
+        if (!userRole || userRole !== 'admin') {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+
         const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3003';
         const response = await fetch(`${notificationServiceUrl}${endpoint}`, {
           method: 'POST',
@@ -3221,7 +3231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: `Failed to send notification test: ${error instanceof Error ? error.message : 'Unknown error'}` 
         });
       }
-    });
+    };
   };
 
   // Map all notification test endpoints to the microservice
@@ -3243,6 +3253,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register all notification test endpoints
   notificationTestEndpoints.forEach(endpoint => {
     app.post(endpoint, proxyToNotificationService(endpoint));
+  });
+
+  // EMAIL MICROSERVICE PROXY ENDPOINTS
+  const proxyToEmailService = (endpoint: string) => {
+    return async (req: Request, res: Response) => {
+      try {
+        // Check admin role first
+        if (!req.session?.userId || !req.session?.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        
+        const userRole = req.session.user.role;
+        if (!userRole || userRole !== 'admin') {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+
+        const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://localhost:3001';
+        const response = await fetch(`${emailServiceUrl}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(req.body)
+        });
+        
+        const result = await response.json();
+        res.status(response.status).json(result);
+      } catch (error) {
+        console.error(`Email test error for ${endpoint}:`, error);
+        res.status(500).json({ 
+          success: false, 
+          error: `Failed to send email test: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        });
+      }
+    };
+  };
+
+  // Map all email test endpoints to the microservice
+  const emailTestEndpoints = [
+    '/api/email/test-welcome',
+    '/api/email/test-activation',
+    '/api/email/test-password-reset',
+    '/api/email/test-order-confirmation',
+    '/api/email/test-project-notification',
+    '/api/email/test-newsletter-confirmation',
+    '/api/email/test-account-deactivation',
+    '/api/email/test-account-reactivation',
+    '/api/email/test-marketing',
+    '/api/email/test-support-notification',
+    '/api/email/test-bulk'
+  ];
+
+  // Register all email test endpoints
+  emailTestEndpoints.forEach(endpoint => {
+    const microserviceEndpoint = endpoint.replace('/api/email/', '/api/');
+    app.post(endpoint, proxyToEmailService(microserviceEndpoint));
   });
 
   // WebSocket integration for real-time chat

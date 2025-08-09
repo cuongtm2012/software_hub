@@ -1022,6 +1022,14 @@ export default function AdminDashboardPage() {
                 <Bell className="h-4 w-4 mr-2" />
                 Push Notifications
               </Button>
+              <Button
+                onClick={() => navigate("/admin/end-to-end-tests")}
+                variant="outline"
+                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                End-to-End Tests
+              </Button>
             </div>
           </div>
 
