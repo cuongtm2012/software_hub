@@ -19,15 +19,32 @@ class SendGridService {
     console.log('SendGrid service initialized with API key format:', apiKey.startsWith('SG.') ? 'Valid (SG.*)' : 'Invalid (not SG.*)');
   }
 
-  async sendEmail({ to, from, subject, text, html }) {
+  async sendEmail(emailContent) {
     try {
       const msg = {
-        to,
-        from,
-        subject,
-        text,
-        html
+        to: emailContent.to,
+        from: emailContent.from,
+        subject: emailContent.subject,
+        text: emailContent.text,
+        html: emailContent.html
       };
+
+      // Add optional fields if they exist
+      if (emailContent.replyTo) {
+        msg.replyTo = emailContent.replyTo;
+      }
+      
+      if (emailContent.headers) {
+        msg.headers = emailContent.headers;
+      }
+      
+      if (emailContent.categories) {
+        msg.categories = emailContent.categories;
+      }
+      
+      if (emailContent.customArgs) {
+        msg.customArgs = emailContent.customArgs;
+      }
 
       const result = await sgMail.send(msg);
       
@@ -63,6 +80,8 @@ class SendGridService {
       
       console.error('Email that failed - FROM:', emailContent.from);
       console.error('Email that failed - TO:', emailContent.to);
+      console.error('Email that failed - SUBJECT:', emailContent.subject);
+      console.error('Full email content keys:', Object.keys(emailContent));
       console.error('=== END SENDGRID ERROR DEBUG ===');
       
       // More specific error messages

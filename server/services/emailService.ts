@@ -56,7 +56,28 @@ class EmailService {
         messageId: result[0].headers['x-message-id'] as string
       };
     } catch (error: any) {
-      console.error('SendGrid email error:', error);
+      console.error('=== SENDGRID EMAIL ERROR DEBUG ===');
+      console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      
+      if (error.response && error.response.body) {
+        console.error('Response body:', JSON.stringify(error.response.body, null, 2));
+        
+        if (error.response.body.errors) {
+          console.error('SENDGRID ERRORS:');
+          error.response.body.errors.forEach((err: any, i: number) => {
+            console.error(`[${i}] Message:`, err.message || 'No message');
+            console.error(`[${i}] Field:`, err.field || 'No field');  
+            console.error(`[${i}] Help:`, err.help || 'No help');
+          });
+        }
+      }
+      
+      console.error('Email parameters:');
+      console.error('- TO:', params.to);
+      console.error('- FROM:', params.from);
+      console.error('- SUBJECT:', params.subject);
+      console.error('=== END DEBUG ===');
+      
       return {
         success: false,
         error: error.message || 'Failed to send email'
@@ -158,10 +179,11 @@ class EmailService {
       'completed': 'Your project has been completed! Please review the deliverables.',
       'cancelled': 'Your project has been cancelled. Please contact support for details.'
     };
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
 
     return this.sendEmail({
       to: userEmail,
-      from: 'projects@softwarehub.com',
+      from: senderEmail,
       subject: `Project Update: ${projectTitle}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -177,9 +199,11 @@ class EmailService {
   }
 
   async sendAdminNotification(adminEmail: string, subject: string, message: string) {
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
+    
     return this.sendEmail({
       to: adminEmail,
-      from: 'system@softwarehub.com',
+      from: senderEmail,
       subject: `[ADMIN] ${subject}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -196,10 +220,11 @@ class EmailService {
 
   async sendPasswordResetEmail(userEmail: string, resetToken: string) {
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5000'}/reset-password?token=${resetToken}`;
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
     
     return this.sendEmail({
       to: userEmail,
-      from: process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev',
+      from: senderEmail,
       subject: 'Password Reset Request',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -225,10 +250,11 @@ class EmailService {
 
   async sendAccountActivationEmail(userEmail: string, userName: string, activationToken: string) {
     const activationUrl = `${process.env.CLIENT_URL || 'http://localhost:5000'}/activate-account?token=${activationToken}`;
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
     
     return this.sendEmail({
       to: userEmail,
-      from: process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev',
+      from: senderEmail,
       subject: 'Activate Your SoftwareHub Account',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -252,9 +278,11 @@ class EmailService {
   }
 
   async sendOrderConfirmationEmail(userEmail: string, userName: string, orderDetails: any) {
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
+    
     return this.sendEmail({
       to: userEmail,
-      from: process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev',
+      from: senderEmail,
       subject: `Order Confirmation #${orderDetails.orderId}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -279,9 +307,11 @@ class EmailService {
   }
 
   async sendSupportNotification(supportEmail: string, userEmail: string, subject: string, message: string) {
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
+    
     return this.sendEmail({
       to: supportEmail,
-      from: process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev',
+      from: senderEmail,
       subject: `[SUPPORT REQUEST] ${subject}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -304,9 +334,11 @@ class EmailService {
   }
 
   async sendNewsletterSubscriptionConfirmation(userEmail: string, userName: string) {
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
+    
     return this.sendEmail({
       to: userEmail,
-      from: process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev',
+      from: senderEmail,
       subject: 'Newsletter Subscription Confirmed',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -324,9 +356,11 @@ class EmailService {
   }
 
   async sendAccountDeactivationNotice(userEmail: string, userName: string) {
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
+    
     return this.sendEmail({
       to: userEmail,
-      from: process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev',
+      from: senderEmail,
       subject: 'Account Deactivation Notice',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -345,9 +379,11 @@ class EmailService {
   }
 
   async sendAccountReactivationNotice(userEmail: string, userName: string) {
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
+    
     return this.sendEmail({
       to: userEmail,
-      from: process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev',
+      from: senderEmail,
       subject: 'Welcome Back! Account Reactivated',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -371,10 +407,11 @@ class EmailService {
 
   async sendMarketingEmail(userEmail: string, userName: string, campaignData: any) {
     const unsubscribeUrl = `${process.env.CLIENT_URL || 'http://localhost:5000'}/unsubscribe?email=${encodeURIComponent(userEmail)}`;
+    const senderEmail = process.env.VERIFIED_SENDER_EMAIL || 'cuongeurovnn@gmail.com';
     
     return this.sendEmail({
       to: userEmail,
-      from: process.env.VERIFIED_SENDER_EMAIL || 'noreply@replit.dev',
+      from: senderEmail,
       subject: campaignData.subject || 'Special Offer from SoftwareHub',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
