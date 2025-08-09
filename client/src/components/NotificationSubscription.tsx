@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, BellOff } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Bell, BellOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { requestNotificationPermission, setupForegroundMessageListener, storeFCMToken } from '@/lib/firebase-messaging';
-import { VapidKeySetup } from './VapidKeySetup';
 
 interface NotificationSubscriptionProps {
   userId: number;
@@ -14,7 +14,7 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
-  const [hasVapidKey, setHasVapidKey] = useState(false);
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -26,11 +26,9 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
     
     // Check if user is already subscribed
     const stored = localStorage.getItem('fcm-subscribed');
+    const storedToken = localStorage.getItem('fcm-token');
     setIsSubscribed(stored === 'true');
-    
-    // Check if VAPID key is configured
-    const vapidKey = localStorage.getItem('fcm-vapid-key');
-    setHasVapidKey(!!vapidKey);
+    setFcmToken(storedToken);
   }, []);
 
   const handleSubscribe = async () => {
@@ -81,6 +79,7 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
 
   const handleUnsubscribe = () => {
     setIsSubscribed(false);
+    setFcmToken(null);
     localStorage.removeItem('fcm-subscribed');
     localStorage.removeItem('fcm-token');
     
@@ -112,11 +111,6 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
     }
   };
 
-  // Show VAPID key setup if not configured
-  if (!hasVapidKey) {
-    return <VapidKeySetup />;
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -130,11 +124,25 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium">Notification Status</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="font-medium">Notification Status</p>
+              <Badge variant={isSubscribed ? "default" : "secondary"}>
+                {isSubscribed ? (
+                  <><CheckCircle className="h-3 w-3 mr-1" /> Active</>
+                ) : (
+                  <><AlertCircle className="h-3 w-3 mr-1" /> Inactive</>
+                )}
+              </Badge>
+            </div>
             <p className={`text-sm ${getStatusColor()}`}>
               {getStatusText()}
             </p>
+            {fcmToken && (
+              <p className="text-xs text-gray-500 mt-1 font-mono">
+                Token: {fcmToken.substring(0, 20)}...
+              </p>
+            )}
           </div>
           
           {permissionStatus === 'denied' ? (
@@ -163,6 +171,16 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
               {isLoading ? 'Enabling...' : 'Enable Notifications'}
             </Button>
           )}
+        </div>
+        
+        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+          <div className="flex items-start gap-2">
+            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-green-800">VAPID Key Configured</p>
+              <p className="text-green-700">Firebase push notifications are ready to use.</p>
+            </div>
+          </div>
         </div>
         
         {permissionStatus === 'denied' && (
