@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Bell, BellOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { requestNotificationPermission, setupForegroundMessageListener, storeFCMToken } from '@/lib/firebase-messaging';
+import { VapidKeySetup } from './VapidKeySetup';
 
 interface NotificationSubscriptionProps {
   userId: number;
@@ -13,6 +14,7 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
+  const [hasVapidKey, setHasVapidKey] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,9 +24,13 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
     // Setup foreground message listener
     setupForegroundMessageListener();
     
-    // Check if user is already subscribed (you could store this in localStorage or check server)
+    // Check if user is already subscribed
     const stored = localStorage.getItem('fcm-subscribed');
     setIsSubscribed(stored === 'true');
+    
+    // Check if VAPID key is configured
+    const vapidKey = localStorage.getItem('fcm-vapid-key');
+    setHasVapidKey(!!vapidKey);
   }, []);
 
   const handleSubscribe = async () => {
@@ -105,6 +111,11 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
         return 'text-gray-600';
     }
   };
+
+  // Show VAPID key setup if not configured
+  if (!hasVapidKey) {
+    return <VapidKeySetup />;
+  }
 
   return (
     <Card>

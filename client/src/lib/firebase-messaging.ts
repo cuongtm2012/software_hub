@@ -12,7 +12,8 @@ const firebaseConfig = {
   measurementId: "G-ZDBVWVQ4Y1"
 };
 
-// VAPID key for web push - Get this from Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates
+// VAPID key for web push - IMPORTANT: Replace this placeholder with your real VAPID key from Firebase Console
+// Go to: Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates -> Generate Key Pair
 const VAPID_KEY = "BH8Q_C-z8QfQjOw4GpgGjQbHJ8CuDXJqL2QLZBjIYLOLqHY2gCfKXWVgMYyMdO9FHLOe5-2DvfDdGq7BhZLYrxQ";
 
 // Initialize Firebase
@@ -43,9 +44,12 @@ export async function requestNotificationPermission(): Promise<string | null> {
         console.log('Service Worker registered:', registration);
       }
 
+      // Get VAPID key from localStorage or use default
+      const userVapidKey = localStorage.getItem('fcm-vapid-key') || VAPID_KEY;
+      
       // Get FCM token
       const token = await getToken(messaging, {
-        vapidKey: VAPID_KEY
+        vapidKey: userVapidKey
       });
 
       if (token) {
@@ -61,6 +65,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
     }
   } catch (error) {
     console.error('Error getting notification permission:', error);
+    console.error('This might be due to an invalid VAPID key. Please generate a new VAPID key in Firebase Console.');
     return null;
   }
 }
