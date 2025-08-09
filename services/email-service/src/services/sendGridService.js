@@ -39,7 +39,9 @@ class SendGridService {
     } catch (error) {
       console.error('SendGrid error:', error);
       console.error('SendGrid response body:', error.response?.body);
+      console.error('SendGrid response body errors:', JSON.stringify(error.response?.body?.errors, null, 2));
       console.error('SendGrid status code:', error.code);
+      console.error('Email content being sent:', JSON.stringify(emailContent, null, 2));
       
       // More specific error messages
       let errorMessage = 'SendGrid send failed';

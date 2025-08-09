@@ -372,7 +372,19 @@ class EmailController {
               </a>
             </div>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['order-confirmation', 'transactional'],
+        customArgs: {
+          orderId: order.id,
+          campaignType: 'order-confirmation'
+        }
       };
 
       const result = await retryUtil.withRetry(
@@ -516,7 +528,19 @@ class EmailController {
               You can unsubscribe at any time by clicking the link in our emails.
             </p>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['newsletter', 'marketing'],
+        customArgs: {
+          userId: 'test_user',
+          campaignType: 'newsletter-confirmation'
+        }
       };
 
       const result = await retryUtil.withRetry(
@@ -581,7 +605,19 @@ class EmailController {
               We're sorry to see you go! If you have feedback, please let us know.
             </p>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['account-management', 'transactional'],
+        customArgs: {
+          userId: 'test_user',
+          campaignType: 'account-deactivation'
+        }
       };
 
       const result = await retryUtil.withRetry(
@@ -647,7 +683,19 @@ class EmailController {
               Thank you for coming back! We're excited to have you with us again.
             </p>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['account-management', 'transactional'],
+        customArgs: {
+          userId: 'test_user',
+          campaignType: 'account-reactivation'
+        }
       };
 
       const result = await retryUtil.withRetry(
@@ -719,7 +767,19 @@ class EmailController {
               </a>
             </p>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['marketing', 'promotional'],
+        customArgs: {
+          campaignId: 'promo_2025_winter',
+          campaignType: 'marketing'
+        }
       };
 
       const result = await retryUtil.withRetry(
@@ -784,7 +844,19 @@ class EmailController {
               This is an automated notification from the SoftwareHub support system.
             </p>
           </div>
-        `
+        `,
+        // Anti-spam headers
+        headers: {
+          'List-Unsubscribe': `<mailto:unsubscribe@softwarehub.com>, <${process.env.FRONTEND_URL || 'http://localhost:5000'}/unsubscribe>`,
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal'
+        },
+        categories: ['support', 'notifications'],
+        customArgs: {
+          ticketType: 'support-request',
+          campaignType: 'support-notification'
+        }
       };
 
       const result = await retryUtil.withRetry(
