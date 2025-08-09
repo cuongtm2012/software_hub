@@ -173,12 +173,16 @@ export function NotificationSubscription({ userId }: NotificationSubscriptionPro
           )}
         </div>
         
-        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
           <div className="flex items-start gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+            <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-green-800">VAPID Key Configured</p>
-              <p className="text-green-700">Firebase push notifications are ready to use.</p>
+              <p className="font-medium text-blue-800">Firebase Console Explanation</p>
+              <p className="text-blue-700">
+                Firebase shows "No data" because no browsers are subscribed yet. 
+                Messages are being sent successfully (check server logs for message IDs).
+                Click "Enable Notifications" to subscribe and see data in Firebase Console.
+              </p>
             </div>
           </div>
         </div>
