@@ -37,8 +37,9 @@ export default function TestLoginPage() {
   });
 
   const handleTestLogin = (email: string, role: string) => {
-    setCredentials({ email, password: "testpassword" });
-    loginMutation.mutate({ email, password: "testpassword" });
+    const password = email === "cuongeurovnn@gmail.com" ? "abcd@1234" : "testpassword";
+    setCredentials({ email, password });
+    loginMutation.mutate({ email, password });
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -77,7 +78,7 @@ export default function TestLoginPage() {
                   Login as Test Buyer
                 </Button>
                 <Button 
-                  onClick={() => handleTestLogin("admin@gmail.com", "admin")}
+                  onClick={() => handleTestLogin("cuongeurovnn@gmail.com", "admin")}
                   disabled={loginMutation.isPending}
                   className="w-full bg-red-600 hover:bg-red-700"
                 >
@@ -147,7 +148,7 @@ export default function TestLoginPage() {
               </div>
               <div>
                 <strong>Admin Account:</strong><br />
-                Email: admin@gmail.com<br />
+                Email: cuongeurovnn@gmail.com<br />
                 Password: abcd@1234<br />
                 Role: admin (full system access)
               </div>

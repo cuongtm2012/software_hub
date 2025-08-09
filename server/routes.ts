@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isValidPassword = 
         (email === "seller@test.com" && password === "testpassword") ||
         (email === "buyer@test.com" && password === "testpassword") ||
-        (email === "admin@gmail.com" && password === "abcd@1234");
+        (email === "cuongeurovnn@gmail.com" && password === "abcd@1234");
       
       if (!isValidPassword) {
         return res.status(401).json({ message: "Invalid credentials" });

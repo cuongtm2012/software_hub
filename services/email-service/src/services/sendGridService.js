@@ -39,7 +39,15 @@ class SendGridService {
     } catch (error) {
       console.error('SendGrid error:', error);
       console.error('SendGrid response body:', error.response?.body);
-      console.error('SendGrid response body errors:', JSON.stringify(error.response?.body?.errors, null, 2));
+      
+      // Log the actual error details
+      if (error.response?.body?.errors) {
+        console.error('SendGrid specific errors:');
+        error.response.body.errors.forEach((err, index) => {
+          console.error(`Error ${index + 1}:`, JSON.stringify(err, null, 2));
+        });
+      }
+      
       console.error('SendGrid status code:', error.code);
       console.error('Email content being sent:', JSON.stringify(emailContent, null, 2));
       
