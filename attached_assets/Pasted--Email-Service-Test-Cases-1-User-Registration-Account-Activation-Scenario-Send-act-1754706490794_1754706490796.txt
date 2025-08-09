@@ -1,0 +1,100 @@
+# Email Service Test Cases
+
+## 1. User Registration / Account Activation
+
+### Scenario: Send activation email after user registration
+**Given** a new user registers with a valid email  
+**When** the registration is successful  
+**Then** an activation email should be sent to the user’s email address  
+**And** the email should contain a valid activation link  
+
+### Scenario: Fail to send activation email with invalid email
+**Given** a new user registers with an invalid email address  
+**When** the registration is submitted  
+**Then** the system should display an error message about invalid email  
+**And** no activation email should be sent  
+
+---
+
+## 2. Password Reset / Recovery
+
+### Scenario: Send password reset email with valid email
+**Given** a user requests a password reset with a registered email  
+**When** the request is processed  
+**Then** a password reset email with a reset link should be sent to the user  
+
+### Scenario: Handle password reset request with unregistered email
+**Given** a user requests password reset with an unregistered email  
+**When** the request is submitted  
+**Then** the system should display a message indicating the email is not found  
+**And** no email should be sent  
+
+---
+
+## 3. Notification Emails
+
+### Scenario: Send notification email on important event
+**Given** an event triggers a notification (e.g., transaction success)  
+**When** the event occurs  
+**Then** a notification email should be sent to the user  
+
+### Scenario: Verify email content for notification
+**Given** a notification email is sent  
+**When** the user receives the email  
+**Then** the email should contain correct and relevant details about the event  
+
+---
+
+## 4. Marketing / Promotional Emails
+
+### Scenario: Send marketing email to subscribed users
+**Given** a marketing campaign is launched  
+**When** the campaign starts  
+**Then** marketing emails should be sent to all subscribed users  
+
+### Scenario: Unsubscribe from marketing emails
+**Given** a user receives a marketing email  
+**When** the user clicks the unsubscribe link  
+**Then** the user should be removed from the mailing list  
+**And** no further marketing emails should be sent to that user  
+
+---
+
+## 7. Order Confirmation / Receipts
+
+### Scenario: Send order confirmation email after purchase
+**Given** a user completes an order  
+**When** the payment is successful  
+**Then** an order confirmation email with order details should be sent to the user  
+
+---
+
+## 8. Support / Contact Form
+
+### Scenario: Send notification email to support team
+**Given** a user submits a contact/support form  
+**When** the form is submitted  
+**Then** an email notification should be sent to the support team  
+
+---
+
+## 9. Newsletter Subscription
+
+### Scenario: Send subscription confirmation email
+**Given** a user subscribes to the newsletter  
+**When** the subscription is confirmed  
+**Then** a confirmation email should be sent to the user  
+
+---
+
+## 10. Account Deactivation / Reactivation Notices
+
+### Scenario: Send account deactivation email
+**Given** a user deactivates their account  
+**When** the deactivation is processed  
+**Then** an email notification should be sent to the user  
+
+### Scenario: Send account reactivation email
+**Given** a user reactivates their account  
+**When** the reactivation is processed  
+**Then** an email notification should be sent to the user  

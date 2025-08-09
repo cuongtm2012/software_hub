@@ -2767,6 +2767,437 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Password Reset Email
+  app.post("/api/email/password-reset", async (req, res, next) => {
+    try {
+      const { userEmail } = req.body;
+      
+      if (!userEmail) {
+        return res.status(400).json({ 
+          message: "Missing required field: userEmail" 
+        });
+      }
+
+      // Validate email format
+      const validation = emailService.validateEmail(userEmail);
+      if (!validation.valid) {
+        return res.status(400).json({ 
+          message: validation.error 
+        });
+      }
+
+      // Check if user exists
+      const userExists = await emailService.checkUserExists(userEmail);
+      if (!userExists) {
+        return res.status(404).json({ 
+          message: "Email not found in our records" 
+        });
+      }
+
+      // Generate reset token (in production, store this securely)
+      const resetToken = Math.random().toString(36).substring(2, 15);
+      
+      const result = await emailService.sendPasswordResetEmail(userEmail, resetToken);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send password reset email",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Password reset email sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Account Activation Email
+  app.post("/api/email/activation", adminMiddleware, async (req, res, next) => {
+    try {
+      const { userEmail, userName } = req.body;
+      
+      if (!userEmail || !userName) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userEmail, userName" 
+        });
+      }
+
+      // Validate email format
+      const validation = emailService.validateEmail(userEmail);
+      if (!validation.valid) {
+        return res.status(400).json({ 
+          message: validation.error 
+        });
+      }
+
+      // Generate activation token
+      const activationToken = Math.random().toString(36).substring(2, 15);
+      
+      const result = await emailService.sendAccountActivationEmail(userEmail, userName, activationToken);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send activation email",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Activation email sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Order Confirmation Email
+  app.post("/api/email/order-confirmation", isAuthenticated, async (req, res, next) => {
+    try {
+      const { userEmail, userName, orderDetails } = req.body;
+      
+      if (!userEmail || !userName || !orderDetails) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userEmail, userName, orderDetails" 
+        });
+      }
+      
+      const result = await emailService.sendOrderConfirmationEmail(userEmail, userName, orderDetails);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send order confirmation email",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Order confirmation email sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Support Notification Email
+  app.post("/api/email/support-notification", async (req, res, next) => {
+    try {
+      const { userEmail, subject, message } = req.body;
+      const supportEmail = process.env.SUPPORT_EMAIL || 'support@softwarehub.com';
+      
+      if (!userEmail || !subject || !message) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userEmail, subject, message" 
+        });
+      }
+      
+      const result = await emailService.sendSupportNotification(supportEmail, userEmail, subject, message);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send support notification",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Support notification sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Newsletter Subscription Confirmation
+  app.post("/api/email/newsletter-confirmation", async (req, res, next) => {
+    try {
+      const { userEmail, userName } = req.body;
+      
+      if (!userEmail || !userName) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userEmail, userName" 
+        });
+      }
+
+      // Validate email format
+      const validation = emailService.validateEmail(userEmail);
+      if (!validation.valid) {
+        return res.status(400).json({ 
+          message: validation.error 
+        });
+      }
+      
+      const result = await emailService.sendNewsletterSubscriptionConfirmation(userEmail, userName);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send newsletter confirmation",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Newsletter confirmation sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Account Deactivation Notice
+  app.post("/api/email/account-deactivation", adminMiddleware, async (req, res, next) => {
+    try {
+      const { userEmail, userName } = req.body;
+      
+      if (!userEmail || !userName) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userEmail, userName" 
+        });
+      }
+      
+      const result = await emailService.sendAccountDeactivationNotice(userEmail, userName);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send deactivation notice",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Deactivation notice sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Account Reactivation Notice
+  app.post("/api/email/account-reactivation", adminMiddleware, async (req, res, next) => {
+    try {
+      const { userEmail, userName } = req.body;
+      
+      if (!userEmail || !userName) {
+        return res.status(400).json({ 
+          message: "Missing required fields: userEmail, userName" 
+        });
+      }
+      
+      const result = await emailService.sendAccountReactivationNotice(userEmail, userName);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send reactivation notice",
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: "Reactivation notice sent successfully" 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Marketing Email Campaign
+  app.post("/api/email/marketing-campaign", adminMiddleware, async (req, res, next) => {
+    try {
+      const { recipients, campaignData } = req.body;
+      
+      if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
+        return res.status(400).json({ 
+          message: "Missing or invalid recipients array" 
+        });
+      }
+
+      if (!campaignData) {
+        return res.status(400).json({ 
+          message: "Missing campaignData" 
+        });
+      }
+
+      const results = [];
+      let successCount = 0;
+      let failCount = 0;
+
+      // Send to each recipient
+      for (const recipient of recipients) {
+        try {
+          const result = await emailService.sendMarketingEmail(
+            recipient.email, 
+            recipient.name, 
+            campaignData
+          );
+          
+          results.push({
+            email: recipient.email,
+            success: result.success,
+            messageId: result.messageId,
+            error: result.error
+          });
+
+          if (result.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error: any) {
+          results.push({
+            email: recipient.email,
+            success: false,
+            error: error.message
+          });
+          failCount++;
+        }
+      }
+      
+      res.json({ 
+        success: true,
+        summary: {
+          total: recipients.length,
+          successful: successCount,
+          failed: failCount
+        },
+        results: results,
+        message: `Marketing campaign completed. ${successCount} emails sent successfully, ${failCount} failed.`
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Email Testing Endpoint
+  app.post("/api/email/test", adminMiddleware, async (req, res, next) => {
+    try {
+      const { testType, userEmail, userName, ...additionalData } = req.body;
+      
+      if (!testType || !userEmail) {
+        return res.status(400).json({ 
+          message: "Missing required fields: testType, userEmail" 
+        });
+      }
+
+      let result;
+      
+      switch (testType) {
+        case 'welcome':
+          result = await emailService.sendWelcomeEmail(userEmail, userName || 'Test User');
+          break;
+        
+        case 'activation':
+          const activationToken = 'test-activation-token';
+          result = await emailService.sendAccountActivationEmail(userEmail, userName || 'Test User', activationToken);
+          break;
+        
+        case 'password-reset':
+          const resetToken = 'test-reset-token';
+          result = await emailService.sendPasswordResetEmail(userEmail, resetToken);
+          break;
+        
+        case 'order-confirmation':
+          const orderDetails = {
+            orderId: 'TEST-001',
+            productName: 'Test Product',
+            amount: '29.99',
+            status: 'confirmed',
+            ...additionalData.orderDetails
+          };
+          result = await emailService.sendOrderConfirmationEmail(userEmail, userName || 'Test User', orderDetails);
+          break;
+        
+        case 'project-notification':
+          result = await emailService.sendProjectNotification(
+            userEmail, 
+            userName || 'Test User', 
+            additionalData.projectTitle || 'Test Project',
+            additionalData.status || 'completed'
+          );
+          break;
+        
+        case 'newsletter-confirmation':
+          result = await emailService.sendNewsletterSubscriptionConfirmation(userEmail, userName || 'Test User');
+          break;
+        
+        case 'account-deactivation':
+          result = await emailService.sendAccountDeactivationNotice(userEmail, userName || 'Test User');
+          break;
+        
+        case 'account-reactivation':
+          result = await emailService.sendAccountReactivationNotice(userEmail, userName || 'Test User');
+          break;
+        
+        case 'marketing':
+          const campaignData = {
+            subject: 'Test Marketing Email',
+            title: 'Special Test Offer',
+            content: '<p>This is a test marketing email with special offers!</p>',
+            ctaText: 'Shop Now',
+            ctaUrl: 'https://example.com/shop',
+            ...additionalData.campaignData
+          };
+          result = await emailService.sendMarketingEmail(userEmail, userName || 'Test User', campaignData);
+          break;
+        
+        case 'support-notification':
+          const supportEmail = process.env.SUPPORT_EMAIL || 'support@softwarehub.com';
+          result = await emailService.sendSupportNotification(
+            supportEmail,
+            userEmail,
+            additionalData.subject || 'Test Support Request',
+            additionalData.message || 'This is a test support request message.'
+          );
+          break;
+        
+        default:
+          return res.status(400).json({ 
+            message: `Invalid test type: ${testType}. Supported types: welcome, activation, password-reset, order-confirmation, project-notification, newsletter-confirmation, account-deactivation, account-reactivation, marketing, support-notification` 
+          });
+      }
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: `Failed to send ${testType} test email`,
+          error: result.error
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        testType,
+        message: `${testType} test email sent successfully to ${userEmail}` 
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // WebSocket integration for real-time chat
   const server = createServer(app);
   const { Server } = await import('socket.io');

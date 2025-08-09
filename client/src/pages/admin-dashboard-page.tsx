@@ -70,6 +70,7 @@ import {
   Trash2,
   Edit,
   MessageCircle,
+  TestTube,
 } from "lucide-react";
 import SoftwareManagement from "@/pages/admin/software-management";
 import {
@@ -996,13 +997,23 @@ export default function AdminDashboardPage() {
                 Manage users, software, and external requests
               </p>
             </div>
-            <Button
-              onClick={() => navigate("/admin/users/chat")}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              User Chat Management
-            </Button>
+            <div className="space-x-2">
+              <Button
+                onClick={() => navigate("/admin/users/chat")}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                User Chat Management
+              </Button>
+              <Button
+                onClick={() => navigate("/admin/email-tests")}
+                variant="outline"
+                className="border-green-600 text-green-600 hover:bg-green-50"
+              >
+                <TestTube className="h-4 w-4 mr-2" />
+                Email Testing
+              </Button>
+            </div>
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
