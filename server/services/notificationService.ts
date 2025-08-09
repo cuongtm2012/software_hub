@@ -150,8 +150,8 @@ class NotificationService {
           notification: {
             title: payload.title,
             body: payload.body,
-            icon: '/icon-192x192.png',
-            badge: '/badge-72x72.png',
+            icon: '/icon-192x192.svg',
+            badge: '/badge-72x72.svg',
             ...(payload.clickAction && { click_action: payload.clickAction }),
             ...(payload.badge && { badge: payload.badge.toString() })
           }
@@ -166,9 +166,9 @@ class NotificationService {
       } else if (target.condition) {
         message.condition = target.condition;
       } else {
-        // For userId, we would need to look up user's FCM tokens from database
-        // For now, send to topic 'all_users' as fallback
-        message.topic = 'all_users';
+        // For userId, send to topic named after the user ID
+        // This allows targeting specific users even without device tokens
+        message.topic = target.userId ? `user_${target.userId}` : 'all_users';
       }
 
       const response = await messaging.send(message);

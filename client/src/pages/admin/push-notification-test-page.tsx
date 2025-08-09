@@ -28,6 +28,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import { NotificationSubscription } from '@/components/NotificationSubscription';
 
 interface NotificationResult {
   success: boolean;
@@ -220,6 +221,11 @@ export default function PushNotificationTestPage() {
             >
               Clear Logs ({testLogs.length})
             </Button>
+          </div>
+
+          {/* Notification Subscription */}
+          <div className="mb-6">
+            <NotificationSubscription userId={user.id} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

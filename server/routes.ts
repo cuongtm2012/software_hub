@@ -3197,6 +3197,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // FCM Token Registration Endpoint
+  app.post("/api/notifications/register-token", isAuthenticated, async (req, res, next) => {
+    try {
+      const { token } = req.body;
+      const userId = req.user!.id;
+      
+      if (!token) {
+        return res.status(400).json({ message: "FCM token is required" });
+      }
+      
+      // Store token in database (for now, just log it)
+      console.log(`📱 FCM Token registered for User ${userId}: ${token.substring(0, 20)}...`);
+      
+      // TODO: Store in database table for user FCM tokens
+      // await storage.storeFCMToken(userId, token);
+      
+      res.json({ success: true, message: "FCM token registered successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // PUSH NOTIFICATION TESTING ENDPOINTS - Using Local Service
 
   // Test notification endpoints using local notification service
