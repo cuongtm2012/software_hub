@@ -143,13 +143,15 @@ export function Header() {
                       >
                         <span className="flex-1">Your Profile</span>
                       </DropdownMenuItem>
-                      {/* Conditionally render User Dashboard if not an admin */}
+                      {/* Dashboard - unified for all users including sellers */}
                       {user.role !== "admin" && (
                         <DropdownMenuItem
                           onClick={() => navigate("/dashboard")}
                           className="flex items-center gap-2 py-2 cursor-pointer"
                         >
-                          <span className="flex-1">User Dashboard</span>
+                          <span className="flex-1">
+                            {user.role === "seller" ? "Dashboard (Products & Projects)" : "Dashboard"}
+                          </span>
                         </DropdownMenuItem>
                       )}
 
@@ -171,7 +173,7 @@ export function Header() {
                         </>
                       )}
 
-                      {/* Seller Registration/Dashboard */}
+                      {/* Seller Registration */}
                       {user.role !== "seller" && user.role !== "admin" && (
                         <DropdownMenuItem
                           onClick={() => navigate("/seller/registration")}
@@ -179,16 +181,6 @@ export function Header() {
                         >
                           <Store className="h-4 w-4" />
                           <span className="flex-1">Become a Seller</span>
-                        </DropdownMenuItem>
-                      )}
-                      
-                      {user.role === "seller" && (
-                        <DropdownMenuItem
-                          onClick={() => navigate("/seller/dashboard")}
-                          className="flex items-center gap-2 py-2 cursor-pointer"
-                        >
-                          <Store className="h-4 w-4" />
-                          <span className="flex-1">Seller Dashboard</span>
                         </DropdownMenuItem>
                       )}
 

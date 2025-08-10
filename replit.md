@@ -61,6 +61,14 @@ The application is composed of several independent services:
 
 ## Recent Changes (August 2025)
 
+### Seller Dashboard Integration - COMPLETED ✅  
+- **Architecture Change**: Merged seller dashboard functionality into main dashboard Products tab
+- **Unified Experience**: Sellers now access all features through single dashboard with Products and Projects tabs
+- **Routing Updated**: `/seller` and `/seller/dashboard` routes now redirect to unified dashboard
+- **Navigation Streamlined**: Header menu shows "Dashboard (Products & Projects)" for sellers instead of separate "Seller Dashboard"
+- **User Experience**: Eliminated need for separate seller dashboard page, creating cleaner unified interface
+- **Role Integration**: Products tab only visible to users with "seller" role, maintaining security
+
 ### Cloudflare R2 Storage Integration - COMPLETED ✅
 - **Feature Added**: Comprehensive Cloudflare R2 storage system for file uploads
 - **Implementation**: Created R2StorageService with full CRUD operations and presigned URL generation
