@@ -95,6 +95,19 @@ function Router() {
         const { user, isLoading } = useAuth();
         const [, navigate] = useLocation();
         
+        if (isLoading) {
+          return (
+            <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+              <Header />
+              <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
+                </div>
+              </main>
+            </div>
+          );
+        }
+        
         return (
           <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
             <Header />
@@ -106,11 +119,7 @@ function Router() {
                   receive quotes, and collaborate securely through our platform.
                 </p>
                 
-                {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
-                  </div>
-                ) : user ? (
+                {user ? (
                   <div className="space-y-6 max-w-lg mx-auto">
                     <div className="bg-[#f0f7ff] p-6 rounded-lg border border-[#004080]/20">
                       <h2 className="text-lg font-medium text-[#004080] mb-2">Welcome, {user.name}!</h2>
@@ -484,7 +493,6 @@ function Router() {
         }
         return <ProjectsPage />;
       }} />
-      <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/projects/new" roles={['client', 'admin']} component={ProjectNewPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/portfolios" roles={['developer', 'admin']} component={PortfolioPage} />
@@ -525,10 +533,10 @@ function Router() {
                 <div className="flex justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
                 </div>
-              ) : portfolios?.portfolios && Array.isArray(portfolios.portfolios) && portfolios.portfolios.length > 0 ? (
+              ) : portfolios && Array.isArray(portfolios) && portfolios.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {(portfolios.portfolios as any[]).map((portfolio: any) => (
+                    {(portfolios as any[]).map((portfolio: any) => (
                       <Card key={portfolio.id} className="bg-white hover:shadow-md transition-shadow">
                         <div className="relative pt-[60%] bg-gray-100">
                           {portfolio.images && portfolio.images[0] ? (

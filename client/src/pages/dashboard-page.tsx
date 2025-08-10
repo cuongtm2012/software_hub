@@ -176,7 +176,18 @@ export default function DashboardPage() {
   // Redirect admins to admin dashboard
   if (user.role === 'admin') {
     navigate('/admin');
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <Header />
+        <main className="pt-16 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-[#004080] mx-auto mb-4" />
+            <p className="text-gray-600">Redirecting to admin dashboard...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   const products = sellerProducts?.products || [];

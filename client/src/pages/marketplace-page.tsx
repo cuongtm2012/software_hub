@@ -160,10 +160,10 @@ export default function MarketplacePage() {
             {filteredStores.map((store: Product) => (
               <Card key={store.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="relative h-48 bg-gray-100">
-                  {store.image_url ? (
+                  {store.images && store.images.length > 0 ? (
                     <img
-                      src={store.image_url}
-                      alt={store.name}
+                      src={store.images[0]}
+                      alt={store.title}
                       className="w-full h-full object-contain p-4"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "https://via.placeholder.com/200x150?text=No+Image";
@@ -182,13 +182,13 @@ export default function MarketplacePage() {
                 </div>
                 
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-lg">{store.name}</CardTitle>
+                  <CardTitle className="text-lg">{store.title}</CardTitle>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center">
                       <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span className="text-sm text-gray-600">4.5</span>
+                      <span className="text-sm text-gray-600">{store.avg_rating || "No rating"}</span>
                     </div>
-                    <span className="text-xs text-gray-500">by {store.seller_name || "Seller"}</span>
+                    <span className="text-xs text-gray-500">by Seller</span>
                   </div>
                 </CardHeader>
                 
