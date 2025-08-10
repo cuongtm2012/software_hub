@@ -47,6 +47,7 @@ export function R2DocumentUploader({
   className = ""
 }: R2DocumentUploaderProps) {
   const [files, setFiles] = useState<DocumentFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -55,6 +56,7 @@ export function R2DocumentUploader({
       const fileId = Date.now().toString() + Math.random().toString(36).substring(7);
       
       // Add file to state with uploading status
+      setIsUploading(true);
       setFiles(prev => [...prev, {
         file,
         id: fileId,
@@ -157,6 +159,7 @@ export function R2DocumentUploader({
             fileKey: uploadResponse.fileKey
           } : f
         ));
+        setIsUploading(false);
 
         return {
           fileKey: uploadResponse.fileKey,
@@ -169,6 +172,7 @@ export function R2DocumentUploader({
         setFiles(prev => prev.map(f => 
           f.id === fileId ? { ...f, status: 'failed' } : f
         ));
+        setIsUploading(false);
         throw error;
       }
     },
