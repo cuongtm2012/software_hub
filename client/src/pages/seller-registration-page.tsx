@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,6 +6,19 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+// @ts-ignore - vietqr doesn't have TypeScript definitions
+import { VietQR } from 'vietqr';
+
+interface Bank {
+  id: number;
+  name: string;
+  code: string;
+  bin: string;
+  shortName: string;
+  logo: string;
+  transferSupported: number;
+  lookupSupported: number;
+}
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +55,7 @@ const sellerRegistrationSchema = z.object({
   contact_email: z.string().email("Valid Contact Email is required"),
   business_address: z.string().min(10, "Business Address is required"),
   tax_id: z.string().min(1, "Tax ID / Registration Number is required"),
+  bank_code: z.string().min(1, "Bank selection is required"),
   bank_name: z.string().min(2, "Bank Name is required"),
   account_number: z.string().min(5, "Account Number is required"),
   account_holder_name: z.string().min(2, "Account Holder Name is required"),
@@ -52,12 +66,20 @@ const sellerRegistrationSchema = z.object({
 
 type SellerRegistrationForm = z.infer<typeof sellerRegistrationSchema>;
 
+// Initialize VietQR client
+const vietQR = new VietQR({
+  clientID: '27f69663-48e7-430e-88a5-c5f4ae1fbbe5',
+  apiKey: '64c1060c-098a-4b19-b272-d56f12e70583',
+});
+
 export default function SellerRegistrationPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [isLoadingBanks, setIsLoadingBanks] = useState(true);
 
   const form = useForm<SellerRegistrationForm>({
     resolver: zodResolver(sellerRegistrationSchema),
@@ -67,12 +89,44 @@ export default function SellerRegistrationPage() {
       contact_email: user?.email || "",
       business_address: "",
       tax_id: "",
+      bank_code: "",
       bank_name: "",
       account_number: "",
       account_holder_name: "",
       terms_accepted: false,
     },
   });
+
+  // Load banks from VietQR API
+  useEffect(() => {
+    const loadBanks = async () => {
+      try {
+        setIsLoadingBanks(true);
+        const banksList = await vietQR.getBanks();
+        setBanks((banksList as any).data || []);
+      } catch (error) {
+        console.error('Error loading banks:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load banks list. Please refresh the page.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingBanks(false);
+      }
+    };
+
+    loadBanks();
+  }, [toast]);
+
+  // Handle bank selection
+  const handleBankSelect = (bankCode: string) => {
+    const selectedBank = banks.find(bank => bank.code === bankCode);
+    if (selectedBank) {
+      form.setValue('bank_code', bankCode);
+      form.setValue('bank_name', selectedBank.shortName);
+    }
+  };
 
   // Check if user already has a seller profile
   const { data: sellerProfile, isLoading: profileLoading } = useQuery({
@@ -82,19 +136,17 @@ export default function SellerRegistrationPage() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: SellerRegistrationForm) => {
-      return apiRequest("/api/seller/register", {
-        method: "POST",
-        body: JSON.stringify({
-          business_name: data.business_name,
-          contact_phone: data.contact_phone,
-          contact_email: data.contact_email,
-          business_address: data.business_address,
-          tax_id: data.tax_id,
-          bank_name: data.bank_name,
-          account_number: data.account_number,
-          account_holder_name: data.account_holder_name,
-          verification_documents: uploadedFiles,
-        }),
+      return apiRequest("/api/seller/register", "POST", {
+        business_name: data.business_name,
+        contact_phone: data.contact_phone,
+        contact_email: data.contact_email,
+        business_address: data.business_address,
+        tax_id: data.tax_id,
+        bank_code: data.bank_code,
+        bank_name: data.bank_name,
+        account_number: data.account_number,
+        account_holder_name: data.account_holder_name,
+        verification_documents: uploadedFiles,
       });
     },
     onSuccess: () => {
@@ -124,9 +176,7 @@ export default function SellerRegistrationPage() {
 
   const handleGetUploadParameters = async () => {
     try {
-      const response = await apiRequest("/api/objects/upload", {
-        method: "POST",
-      });
+      const response = await apiRequest("/api/objects/upload", "POST", {}) as { uploadURL: string };
       return {
         method: "PUT" as const,
         url: response.uploadURL,
@@ -137,11 +187,11 @@ export default function SellerRegistrationPage() {
   };
 
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    const newFiles = result.successful.map(file => file.uploadURL || "");
+    const newFiles = result.successful?.map(file => file.uploadURL || "") || [];
     setUploadedFiles(prev => [...prev, ...newFiles]);
     toast({
       title: "Upload Complete",
-      description: `${result.successful.length} file(s) uploaded successfully.`,
+      description: `${result.successful?.length || 0} file(s) uploaded successfully.`,
     });
   };
 
@@ -198,8 +248,8 @@ export default function SellerRegistrationPage() {
   }
 
   // If user already has a seller profile, show status
-  if (sellerProfile?.seller_profile) {
-    const profile = sellerProfile.seller_profile;
+  if ((sellerProfile as any)?.seller_profile) {
+    const profile = (sellerProfile as any).seller_profile;
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">
@@ -395,7 +445,42 @@ export default function SellerRegistrationPage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
                   </div>
 
-                  {/* Bank Name */}
+                  {/* Bank Selection */}
+                  <FormField
+                    control={form.control}
+                    name="bank_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Select Bank</FormLabel>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          handleBankSelect(value);
+                        }} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="border-gray-300">
+                              <SelectValue placeholder={isLoadingBanks ? "Loading banks..." : "Select your bank"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="max-h-60">
+                            {isLoadingBanks ? (
+                              <SelectItem value="loading" disabled>Loading banks...</SelectItem>
+                            ) : banks.length > 0 ? (
+                              banks.map((bank) => (
+                                <SelectItem key={bank.code} value={bank.code}>
+                                  {bank.shortName} - {bank.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>No banks available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Bank Name (Auto-filled) */}
                   <FormField
                     control={form.control}
                     name="bank_name"
@@ -403,7 +488,12 @@ export default function SellerRegistrationPage() {
                       <FormItem>
                         <FormLabel className="text-base font-medium">Bank Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} className="border-gray-300" />
+                          <Input 
+                            placeholder="Bank name will be auto-filled" 
+                            {...field} 
+                            className="border-gray-300 bg-gray-50" 
+                            readOnly
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
