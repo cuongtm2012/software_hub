@@ -155,7 +155,9 @@ export function Header() {
                           className="flex items-center gap-2 py-2 cursor-pointer"
                         >
                           <span className="flex-1">
-                            {user.role === "seller" ? "Dashboard (Products & Projects)" : "Dashboard"}
+                            {user.role === "seller"
+                              ? "Dashboard Full"
+                              : "Dashboard"}
                           </span>
                         </DropdownMenuItem>
                       )}

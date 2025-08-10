@@ -1,60 +1,93 @@
-import { useState } from "react";
-import { useParams, useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Layout } from "@/components/layout";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  ArrowLeft,
-  Star,
-  Shield,
-  Clock,
-  Users,
-  ShoppingCart,
-  CreditCard,
-  Eye,
-  Tag,
-  Download,
-  Heart
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, ShoppingCart, Plus, Star, MessageCircle, Shield, Clock, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  seller_id: number;
+  seller_name: string;
+  status: "active" | "inactive";
+  stock_quantity: number;
+  image_url?: string;
+  features?: string[];
+  warranty_period?: string;
+  created_at: string;
+}
+
+interface Comment {
+  id: number;
+  user_name: string;
+  comment: string;
+  rating: number;
+  created_at: string;
+  is_buyer: boolean;
+}
 
 export default function ProductDetailPage() {
-  const { id } = useParams();
-  const [, setLocation] = useLocation();
+  const [, params] = useRoute("/product/:id");
+  const [location, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
   const [quantity, setQuantity] = useState(1);
-  const [selectedTab, setSelectedTab] = useState("description");
+  const [newComment, setNewComment] = useState("");
+  const [newRating, setNewRating] = useState(5);
+
+  const productId = params?.id;
 
   // Fetch product details
-  const { data: product, isLoading } = useQuery({
-    queryKey: [`/api/marketplace/products/${id}`],
-    enabled: !!id,
+  const { data: product, isLoading } = useQuery<Product>({
+    queryKey: ["/api/products", productId],
+    enabled: !!productId,
+  });
+
+  // Fetch product comments
+  const { data: comments = [] } = useQuery<Comment[]>({
+    queryKey: ["/api/products", productId, "reviews"],
+    enabled: !!productId,
   });
 
   // Purchase mutation
   const purchaseMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", `/api/products/${id}/purchase`, {
-        quantity, 
-        payment_method: "credit_card"
+    mutationFn: async (data: { productId: number; quantity: number }) => {
+      const response = await fetch(`/api/products/${data.productId}/purchase`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ quantity: data.quantity }),
       });
-      return await response.json();
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to purchase product");
+      }
+
+      return response.json();
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       toast({
         title: "Purchase Successful!",
-        description: `Your order has been completed. Total: ${formatPrice(response.total_amount)}`,
+        description: "Your order has been placed successfully. Check your email for confirmation.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/marketplace/products/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/marketplace/products"] });
+      navigate("/dashboard");
     },
     onError: (error: any) => {
       toast({
@@ -65,324 +98,373 @@ export default function ProductDetailPage() {
     },
   });
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
-  };
+  // Comment submission mutation
+  const commentMutation = useMutation({
+    mutationFn: async (data: { productId: number; comment: string; rating: number }) => {
+      const response = await fetch(`/api/products/${data.productId}/reviews`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ comment: data.comment, rating: data.rating }),
+      });
 
-  const handleBuyNow = () => {
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to submit review");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Review Added",
+        description: "Your review has been posted successfully.",
+      });
+      setNewComment("");
+      setNewRating(5);
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "reviews"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePurchase = () => {
     if (!user) {
       toast({
         title: "Login Required",
-        description: "Please log in to purchase products.",
+        description: "Please login to purchase products.",
         variant: "destructive",
       });
+      navigate("/auth");
       return;
     }
-    
-    purchaseMutation.mutate();
-  };
 
-  const handleAddToCart = () => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to add items to cart.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Added to Cart",
-      description: `${product?.title} has been added to your cart.`,
+    if (!productId) return;
+
+    purchaseMutation.mutate({
+      productId: parseInt(productId),
+      quantity,
     });
+  };
+
+  const handleSubmitComment = () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to leave a comment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newComment.trim()) {
+      toast({
+        title: "Comment Required",
+        description: "Please enter a comment before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!productId) return;
+
+    commentMutation.mutate({
+      productId: parseInt(productId),
+      comment: newComment.trim(),
+      rating: newRating,
+    });
+  };
+
+  const calculateDiscount = () => {
+    if (!product?.originalPrice || !product?.price) return 0;
+    return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+  };
+
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`w-4 h-4 ${
+          i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+        }`}
+      />
+    ));
   };
 
   if (isLoading) {
     return (
-      <Layout>
-        <div className="container mx-auto px-4 py-6">
-          <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded mb-4 w-32"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-2">
-                <div className="aspect-square bg-gray-200 rounded-lg"></div>
-              </div>
-              <div className="lg:col-span-3 space-y-4">
-                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="h-96 bg-gray-200 rounded"></div>
+              <div className="space-y-4">
+                <div className="h-8 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
               </div>
             </div>
           </div>
         </div>
-      </Layout>
+        <Footer />
+      </div>
     );
   }
 
   if (!product) {
     return (
-      <Layout>
-        <div className="container mx-auto px-4 py-6">
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
-            <p className="text-gray-600 mb-6">The product you're looking for doesn't exist.</p>
-            <Button onClick={() => setLocation("/marketplace")}>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
+            <p className="text-gray-600 mb-8">The product you're looking for doesn't exist.</p>
+            <Button onClick={() => navigate("/marketplace")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Marketplace
             </Button>
           </div>
         </div>
-      </Layout>
+        <Footer />
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-8">
         {/* Back Button */}
-        <Button 
-          variant="ghost" 
-          onClick={() => setLocation("/marketplace")}
-          className="mb-6"
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/marketplace")}
+          className="mb-6 text-[#004080] hover:text-[#003366]"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Marketplace
         </Button>
 
-        {/* Main Product Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
-          {/* Left Column - Product Image (40%) */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardContent className="p-0">
-                <div className="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <Download className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-                    <p className="text-lg font-semibold text-gray-700">{product.title}</p>
-                    <p className="text-sm text-gray-500">Digital Product</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Product Info (60%) */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Product Title & Rating */}
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className={`w-5 h-5 ${i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                    />
-                  ))}
-                  <span className="ml-2 text-sm text-gray-600">4.9 (494 Reviews)</span>
-                </div>
-                <Separator orientation="vertical" className="h-4" />
-                <div className="flex items-center text-sm text-gray-600">
-                  <Users className="w-4 h-4 mr-1" />
-                  Sold: {product.total_sales || 0} units
-                </div>
-              </div>
-
-              {/* Seller Info */}
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-sm text-gray-600">Seller:</span>
-                <Badge variant="outline" className="text-blue-600">
-                  <Shield className="w-3 h-3 mr-1" />
-                  Verified Seller
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  <Clock className="w-4 h-4 inline mr-1" />
-                  Online 2 hours ago
-                </span>
-              </div>
-            </div>
-
-            {/* Price & Stock */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-3xl font-bold text-blue-600 mb-2">
-                {formatPrice(parseInt(product.price))}
-              </div>
-              <div className="text-sm text-gray-600">
-                Stock: <span className="font-medium text-green-600">{product.stock_quantity || 1} units</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              {!user ? (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800 mb-2">Please log in to purchase this product</p>
-                  <Button onClick={() => setLocation("/test-login")} className="w-full">
-                    Login / Register
-                  </Button>
-                </div>
+        {/* Product Details */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Product Image */}
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+              {product.image_url ? (
+                <img 
+                  src={product.image_url} 
+                  alt={product.name}
+                  className="w-full h-full object-cover rounded-lg"
+                />
               ) : (
-                <>
-                  <Button 
-                    onClick={handleAddToCart}
-                    variant="outline" 
-                    className="w-full"
-                    size="lg"
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart
-                  </Button>
-                  <Button 
-                    onClick={handleBuyNow}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    size="lg"
-                    disabled={purchaseMutation.isPending}
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    {purchaseMutation.isPending ? "Processing..." : "Buy Now"}
-                  </Button>
-                </>
+                <div className="text-6xl text-gray-400">📦</div>
               )}
             </div>
+            <div className="text-center">
+              <h2 className="text-lg font-semibold text-gray-900">{product.name}</h2>
+            </div>
+          </div>
 
-            {/* Product Tags */}
+          {/* Product Info */}
+          <div className="space-y-6">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Product Tags:</h3>
-              <div className="flex flex-wrap gap-2">
-                {['Digital Product', 'Instant Download', 'Software'].map((tag) => (
-                  <Badge key={tag} variant="secondary">
-                    <Tag className="w-3 h-3 mr-1" />
-                    {tag}
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant={product.stock_quantity > 0 ? "default" : "destructive"}>
+                  {product.stock_quantity > 0 ? "🟢 In Stock" : "🔴 Out of Stock"}
+                </Badge>
+                <Badge variant="outline">{product.category}</Badge>
+              </div>
+              
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+              
+              <div className="flex items-center gap-4 mb-4">
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <span className="text-lg text-gray-500 line-through">
+                    ${product.originalPrice.toFixed(2)}
+                  </span>
+                )}
+                <span className="text-3xl font-bold text-[#004080]">
+                  ${product.price.toFixed(2)}
+                </span>
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <Badge variant="destructive">
+                    -{calculateDiscount()}%
                   </Badge>
-                ))}
+                )}
+              </div>
+
+              <p className="text-gray-600 mb-6">{product.description}</p>
+
+              {/* Seller Info */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-gray-900 mb-2">Seller Information</h3>
+                <p className="text-gray-600">Sold by: <span className="font-medium">{product.seller_name}</span></p>
+              </div>
+
+              {/* Purchase Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700">Quantity:</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max={product.stock_quantity}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock_quantity, parseInt(e.target.value) || 1)))}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-gray-500">
+                    ({product.stock_quantity} available)
+                  </span>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button
+                    onClick={handlePurchase}
+                    disabled={product.stock_quantity === 0 || purchaseMutation.isPending}
+                    className="flex-1 bg-[#004080] hover:bg-[#003366]"
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    {purchaseMutation.isPending ? "Processing..." : "Buy Now"}
+                  </Button>
+                  <Button variant="outline" className="flex-1">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add to Cart
+                  </Button>
+                </div>
               </div>
             </div>
-
-            {/* Warranty & Support */}
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Warranty & Support
-                </h3>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• First login warranty: 3 days</li>
-                  <li>• 24/7 customer support</li>
-                  <li>• Money-back guarantee</li>
-                  <li>• Contact shop for support</li>
-                </ul>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
-        {/* Tabbed Content */}
+        {/* Product Features */}
+        {product.features && product.features.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Product Features</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {product.features.map((feature, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Warranty Information */}
+        {product.warranty_period && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Warranty Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#004080]" />
+                <span>Warranty Period: {product.warranty_period}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Comments Section */}
         <Card>
           <CardHeader>
-            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="reviews">Reviews (494)</TabsTrigger>
-                <TabsTrigger value="documentation">Documentation</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              Customer Reviews ({comments.length})
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <TabsContent value="description" className="mt-0">
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 leading-relaxed mb-4">
-                    {product.description || "High-quality digital product with instant download availability."}
-                  </p>
-                  <h4 className="font-semibold mb-2">Product Features:</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-gray-600">
-                    <li>High-quality digital content</li>
-                    <li>Instant download after purchase</li>
-                    <li>24/7 customer support</li>
-                    <li>Regular updates included</li>
-                    <li>Money-back guarantee</li>
-                  </ul>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="reviews" className="mt-0">
+            {/* Add Comment Form */}
+            {user && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold mb-3">Leave a Review</h4>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Customer Reviews</h3>
-                    <Button variant="outline" size="sm">Write a Review</Button>
-                  </div>
-                  
-                  {/* Sample Reviews */}
-                  {[1, 2, 3].map((i) => (
-                    <Card key={i} className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600">U{i}</span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">User {i}</span>
-                            <div className="flex">
-                              {[...Array(5)].map((_, j) => (
-                                <Star key={j} className="w-4 h-4 text-yellow-400 fill-current" />
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-600">Great product! Works exactly as described. Highly recommended.</p>
-                          <span className="text-xs text-gray-400">2 days ago</span>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="documentation" className="mt-0">
-                <div className="prose max-w-none">
-                  <h3 className="text-lg font-semibold mb-4">Product Documentation</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium mb-2">Installation Instructions:</h4>
-                    <ol className="list-decimal pl-6 space-y-2 text-sm text-gray-600">
-                      <li>Download the product files after purchase</li>
-                      <li>Extract the files to your desired location</li>
-                      <li>Follow the included setup guide</li>
-                      <li>Contact support if you need assistance</li>
-                    </ol>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* Related Products */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Related Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Card key={i} className="cursor-pointer hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                      <Download className="w-8 h-8 text-gray-400" />
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Rating</label>
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setNewRating(i + 1)}
+                          className="p-1"
+                        >
+                          <Star
+                            className={`w-5 h-5 ${
+                              i < newRating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                            }`}
+                          />
+                        </button>
+                      ))}
                     </div>
-                    <h4 className="font-medium text-sm mb-1">Related Product {i}</h4>
-                    <p className="text-blue-600 font-medium">{formatPrice(50000 * i)}</p>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                  <Textarea
+                    placeholder="Share your experience with this product..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    rows={4}
+                  />
+                  <Button
+                    onClick={handleSubmitComment}
+                    disabled={commentMutation.isPending || !newComment.trim()}
+                  >
+                    {commentMutation.isPending ? "Submitting..." : "Submit Review"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Comments List */}
+            <div className="space-y-4">
+              {comments.length > 0 ? (
+                comments.map((comment) => (
+                  <div key={comment.id} className="border-b pb-4 last:border-b-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{comment.user_name}</span>
+                        {comment.is_buyer && (
+                          <Badge variant="outline" className="text-xs">
+                            Verified Buyer
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex">{renderStars(comment.rating)}</div>
+                        <span className="text-sm text-gray-500">
+                          {new Date(comment.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-gray-700">{comment.comment}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  No reviews yet. Be the first to review this product!
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
-      </div>
-    </Layout>
+      </main>
+
+      <Footer />
+    </div>
   );
 }
