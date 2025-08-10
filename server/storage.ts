@@ -1325,6 +1325,56 @@ export class DatabaseStorage implements IStorage {
     return { products: productList, total: count };
   }
 
+  async getProducts(params?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ products: Product[], total: number }> {
+    let query = db.select().from(products);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(products);
+    
+    // Apply filters
+    const conditions = [];
+    
+    if (params?.category) {
+      conditions.push(eq(products.category, params.category));
+    }
+    
+    if (params?.search) {
+      conditions.push(
+        or(
+          ilike(products.title, `%${params.search}%`),
+          ilike(products.description, `%${params.search}%`),
+          ilike(products.category, `%${params.search}%`)
+        )
+      );
+    }
+    
+    if (conditions.length > 0) {
+      const whereCondition = conditions.length === 1 ? conditions[0] : and(...conditions);
+      query = query.where(whereCondition);
+      countQuery = countQuery.where(whereCondition);
+    }
+    
+    // Get total count
+    const [countResult] = await countQuery;
+    const total = countResult?.count || 0;
+    
+    // Apply pagination and ordering
+    query = query.orderBy(desc(products.created_at));
+    
+    if (params?.limit) {
+      query = query.limit(params.limit);
+      
+      if (params?.offset) {
+        query = query.offset(params.offset);
+      }
+    }
+    
+    const productsList = await query;
+    
+    return {
+      products: productsList,
+      total: Number(total)
+    };
+  }
+
   async searchProducts(search: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }> {
     let query = db.select().from(products).where(
       or(
