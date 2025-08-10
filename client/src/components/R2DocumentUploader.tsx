@@ -64,12 +64,25 @@ export function R2DocumentUploader({
 
       try {
         // Get upload URL from server
-        const uploadData = await apiRequest("/api/r2/upload-url", "POST", {
-          fileName: file.name,
-          contentType: file.type,
-          uploadType: 'verification-documents'
+        const response = await fetch("/api/r2/upload-url", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Important for session cookies
+          body: JSON.stringify({
+            fileName: file.name,
+            contentType: file.type,
+            uploadType: 'verification-documents'
+          }),
         });
-        const uploadResponse = await uploadData.json() as { uploadUrl: string; fileKey: string };
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const uploadResponse = await response.json() as { uploadUrl: string; fileKey: string };
 
         // Update progress
         setFiles(prev => prev.map(f => 
@@ -95,10 +108,23 @@ export function R2DocumentUploader({
         ));
 
         // Get download URL
-        const downloadData = await apiRequest("/api/r2/download-url", "POST", {
-          fileKey: uploadResponse.fileKey
+        const downloadResp = await fetch("/api/r2/download-url", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Important for session cookies
+          body: JSON.stringify({
+            fileKey: uploadResponse.fileKey
+          }),
         });
-        const downloadResponse = await downloadData.json() as { downloadUrl: string };
+
+        if (!downloadResp.ok) {
+          const errorData = await downloadResp.json();
+          throw new Error(errorData.error || `HTTP ${downloadResp.status}: ${downloadResp.statusText}`);
+        }
+
+        const downloadResponse = await downloadResp.json() as { downloadUrl: string };
 
         // Update file with completed status
         setFiles(prev => prev.map(f => 

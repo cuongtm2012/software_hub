@@ -193,7 +193,7 @@ export default function SellerRegistrationPage() {
   const handleGetUploadParameters = async () => {
     try {
       console.log('Requesting upload URL...');
-      const data = await apiRequest("/api/objects/upload", "POST", {});
+      const data = await apiRequest("POST", "/api/objects/upload", {});
       const response = await data.json() as { uploadURL: string };
       console.log('Upload URL received:', response.uploadURL);
       return {
