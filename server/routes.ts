@@ -2109,8 +2109,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allUsers = await storage.getAllUsers();
       const totalUsers = allUsers.users ? allUsers.users.length : 0;
       
-      // Get software statistics
-      const allSoftware = await storage.getAllSoftware({ page: 1, limit: 1000 });
+      // Get software statistics using getSoftwareList
+      const allSoftware = await storage.getSoftwareList({ 
+        limit: 1000, 
+        offset: 0 
+      });
       const totalSoftware = allSoftware.softwares.length;
       const activeSoftware = allSoftware.softwares.filter(s => s.status === 'approved').length;
       
@@ -2121,15 +2124,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         new Date(s.created_at) >= sevenDaysAgo
       ).length;
       
-      // Get product statistics
-      const allProducts = await storage.getAllProducts({ page: 1, limit: 1000 });
+      // Get product statistics using getProducts
+      const allProducts = await storage.getProducts({ 
+        limit: 1000, 
+        offset: 0 
+      });
       const totalProducts = allProducts.products.length;
       const activeProducts = allProducts.products.filter(p => p.status === 'active').length;
       
       // Get project statistics (external requests)
       const allRequests = await storage.getAllExternalRequests({ 
-        page: 1, 
         limit: 1000,
+        offset: 0,
         status: '',
         search: '' 
       });
