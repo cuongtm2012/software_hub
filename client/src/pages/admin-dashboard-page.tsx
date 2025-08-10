@@ -1034,7 +1034,7 @@ export default function AdminDashboardPage() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
                 Overview
@@ -1053,6 +1053,10 @@ export default function AdminDashboardPage() {
               <TabsTrigger value="software" className="flex items-center gap-2">
                 <Package className="h-4 w-4" />
                 Software
+              </TabsTrigger>
+              <TabsTrigger value="sellers" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Seller Approvals
               </TabsTrigger>
             </TabsList>
 
@@ -1118,10 +1122,57 @@ export default function AdminDashboardPage() {
             <TabsContent value="software">
               <SoftwareManagement />
             </TabsContent>
+
+            <TabsContent value="sellers">
+              <SellersManagementComponent />
+            </TabsContent>
           </Tabs>
         </div>
       </main>
       <Footer />
+    </div>
+  );
+}
+
+function SellersManagementComponent() {
+  const [, navigate] = useLocation();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-xl font-semibold text-gray-900">
+            Seller Approvals
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Review and approve seller registration requests
+          </p>
+        </div>
+        <Button onClick={() => navigate("/admin/seller-approvals")}>
+          Open Seller Approvals
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-medium text-gray-900 mb-2">
+              Seller Verification & Approval
+            </h4>
+            <p className="text-gray-500 mb-4 max-w-sm mx-auto">
+              Review pending seller registrations, verify documents, and manage seller approvals through our comprehensive verification system.
+            </p>
+            <Button
+              onClick={() => navigate("/admin/seller-approvals")}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Review Sellers
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

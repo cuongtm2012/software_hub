@@ -1741,12 +1741,20 @@ export class DatabaseStorage implements IStorage {
     return updatedProfile;
   }
 
-  async getAllSellersForVerification(): Promise<SellerProfile[]> {
-    return db
-      .select()
+  async getAllSellersForVerification(): Promise<any[]> {
+    const sellersWithUsers = await db
+      .select({
+        sellerProfile: sellerProfiles,
+        user: users
+      })
       .from(sellerProfiles)
-      .where(eq(sellerProfiles.verification_status, 'pending'))
-      .orderBy(sellerProfiles.created_at);
+      .innerJoin(users, eq(sellerProfiles.user_id, users.id))
+      .orderBy(desc(sellerProfiles.created_at));
+    
+    return sellersWithUsers.map(item => ({
+      ...item.sellerProfile,
+      user: item.user
+    }));
   }
 
   // Cart Management

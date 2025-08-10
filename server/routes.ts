@@ -2070,11 +2070,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Seller Verification Routes
-  app.get("/api/admin/sellers/verification", adminMiddleware, async (req, res, next) => {
+  app.get("/api/admin/sellers", adminMiddleware, async (req, res, next) => {
     try {
+      console.log('Admin sellers endpoint called by user:', req.user?.email, 'role:', req.user?.role);
+      
       const sellers = await storage.getAllSellersForVerification();
+      
       res.json({ sellers });
     } catch (error) {
+      console.error("Admin sellers fetch error:", error);
+      next(error);
+    }
+  });
+
+  app.put("/api/admin/sellers/:userId/status", adminMiddleware, async (req, res, next) => {
+    try {
+      console.log('Admin seller status update called by user:', req.user?.email, 'role:', req.user?.role);
+      
+      const { userId } = req.params;
+      const { status, notes } = req.body;
+      
+      if (!['pending', 'verified', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be pending, verified, or rejected" });
+      }
+      
+      const updatedProfile = await storage.updateSellerVerificationStatus(parseInt(userId), status);
+      
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "Seller profile not found" });
+      }
+      
+      // TODO: Send notification email to seller about status change
+      console.log(`Seller ${userId} status updated to ${status} by admin ${req.user?.email}`);
+      if (notes) {
+        console.log(`Admin notes: ${notes}`);
+      }
+      
+      res.json({ seller_profile: updatedProfile });
+    } catch (error) {
+      console.error("Admin seller status update error:", error);
       next(error);
     }
   });
@@ -3775,6 +3809,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting R2 download URL:", error);
       res.status(500).json({ error: "Failed to get R2 download URL" });
+    }
+  });
+
+  // Admin endpoint for direct document viewing (with redirect to presigned URL)
+  app.get("/api/r2/download", adminMiddleware, async (req, res, next) => {
+    try {
+      const { key } = req.query;
+      
+      if (!key) {
+        return res.status(400).json({ error: "key parameter is required" });
+      }
+
+      const r2Storage = getR2Storage();
+      if (!r2Storage) {
+        return res.status(500).json({ error: "R2 storage not configured" });
+      }
+      
+      const downloadUrl = await r2Storage.generatePresignedDownloadUrl(key as string);
+      
+      // Redirect to the presigned URL for direct download/viewing
+      res.redirect(downloadUrl);
+    } catch (error) {
+      console.error("Admin R2 download error:", error);
+      res.status(500).json({ error: "Failed to download file" });
     }
   });
 
