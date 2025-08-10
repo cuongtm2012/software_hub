@@ -639,11 +639,19 @@ function Router() {
       {/* Seller Dashboard Routes */}
       <ProtectedRoute path="/seller" component={() => {
         const SellerDashboardPage = lazy(() => import("@/pages/seller-dashboard-page"));
-        return <SellerDashboardPage />;
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <SellerDashboardPage />
+          </Suspense>
+        );
       }} roles={['seller', 'admin']} />
       <ProtectedRoute path="/seller/dashboard" component={() => {
         const SellerDashboardPage = lazy(() => import("@/pages/seller-dashboard-page"));
-        return <SellerDashboardPage />;
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <SellerDashboardPage />
+          </Suspense>
+        );
       }} roles={['seller', 'admin']} />
       <ProtectedRoute path="/seller/products/new" component={() => {
         const SellerProductNewPage = lazy(() => import("@/pages/seller-product-new-page"));
@@ -652,7 +660,7 @@ function Router() {
             <SellerProductNewPage />
           </Suspense>
         );
-      }} />
+      }} roles={['seller', 'admin']} />
       <ProtectedRoute path="/seller/products/:id/edit" component={() => {
         const MarketplaceSellerEditPage = lazy(() => import("@/pages/marketplace-seller-edit-page"));
         return (
@@ -660,7 +668,7 @@ function Router() {
             <MarketplaceSellerEditPage />
           </Suspense>
         );
-      }} />
+      }} roles={['seller', 'admin']} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
