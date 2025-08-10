@@ -20,6 +20,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 // Login form schema
 const loginSchema = z.object({
@@ -52,10 +55,20 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+// Forgot password form schema
+const forgotPasswordSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+});
+
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+
 export default function AuthPage() {
   const { user, loginMutation, registerMutation, isLoading } = useAuth();
   const [location, navigate] = useLocation();
   const [tabValue, setTabValue] = useState<string>("login");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const { toast } = useToast();
   
   // Password visibility states
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -107,6 +120,39 @@ export default function AuthPage() {
     },
   });
 
+  // Forgot password form
+  const forgotPasswordForm = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  // Forgot password mutation
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async (data: ForgotPasswordFormValues) => {
+      const response = await apiRequest("/api/forgot-password", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      setResetEmailSent(true);
+      toast({
+        title: "Reset email sent",
+        description: "If the email exists in our system, you'll receive a password reset link.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send reset email. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handle login form submission
   const onLoginSubmit = (values: LoginFormValues) => {
     loginMutation.mutate({
@@ -122,6 +168,11 @@ export default function AuthPage() {
       email: values.email,
       password: values.password,
     });
+  };
+
+  // Handle forgot password form submission
+  const onForgotPasswordSubmit = (values: ForgotPasswordFormValues) => {
+    forgotPasswordMutation.mutate(values);
   };
 
   // Update URL when tab changes
@@ -226,14 +277,94 @@ export default function AuthPage() {
                 <TabsContent value="login">
                   <Card className="border-0 shadow-sm">
                     <CardHeader className="space-y-1 pb-2">
-                      <CardTitle className="text-2xl font-bold text-[#004080]">Login to your account</CardTitle>
+                      <CardTitle className="text-2xl font-bold text-[#004080]">
+                        {showForgotPassword 
+                          ? (resetEmailSent ? "Check your email" : "Reset your password")
+                          : "Login to your account"
+                        }
+                      </CardTitle>
                       <CardDescription>
-                        Enter your email and password to access your account
+                        {showForgotPassword 
+                          ? (resetEmailSent 
+                              ? "We've sent a password reset link to your email address"
+                              : "Enter your email address and we'll send you a link to reset your password"
+                            )
+                          : "Enter your email and password to access your account"
+                        }
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Form {...loginForm}>
-                        <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                      {/* Forgot Password State - Email confirmation */}
+                      {showForgotPassword && resetEmailSent ? (
+                        <div className="text-center space-y-4">
+                          <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <p className="text-gray-600">
+                            If your email address exists in our system, you will receive a password reset link shortly.
+                          </p>
+                          <Button 
+                            onClick={() => {
+                              setShowForgotPassword(false);
+                              setResetEmailSent(false);
+                              forgotPasswordForm.reset();
+                            }}
+                            variant="outline"
+                            className="w-full border-[#004080] text-[#004080] hover:bg-[#004080]/5"
+                          >
+                            Back to Login
+                          </Button>
+                        </div>
+                      ) : showForgotPassword ? (
+                        /* Forgot Password State - Email input form */
+                        <Form {...forgotPasswordForm}>
+                          <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
+                            <FormField
+                              control={forgotPasswordForm.control}
+                              name="email"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-gray-700">Email Address</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="email" 
+                                      placeholder="Enter your email address" 
+                                      className="focus-visible:ring-[#004080]"
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <div className="space-y-3">
+                              <Button 
+                                type="submit" 
+                                className="w-full bg-gradient-to-r from-[#004080] to-[#003366] hover:from-[#003366] hover:to-[#002040] text-white"
+                                disabled={forgotPasswordMutation.isPending}
+                              >
+                                {forgotPasswordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Send Reset Link
+                              </Button>
+                              
+                              <Button 
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShowForgotPassword(false)}
+                                className="w-full border-[#004080] text-[#004080] hover:bg-[#004080]/5"
+                              >
+                                Back to Login
+                              </Button>
+                            </div>
+                          </form>
+                        </Form>
+                      ) : (
+                        /* Normal Login Form */
+                        <Form {...loginForm}>
+                          <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                           <FormField
                             control={loginForm.control}
                             name="email"
@@ -304,7 +435,12 @@ export default function AuthPage() {
                                 </FormItem>
                               )}
                             />
-                            <Button variant="link" className="p-0 h-auto text-[#004080] hover:text-[#003366]">
+                            <Button 
+                              variant="link" 
+                              type="button"
+                              onClick={() => setShowForgotPassword(true)}
+                              className="p-0 h-auto text-[#004080] hover:text-[#003366]"
+                            >
                               Forgot password?
                             </Button>
                           </div>
@@ -317,8 +453,9 @@ export default function AuthPage() {
                             {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Sign in
                           </Button>
-                        </form>
-                      </Form>
+                          </form>
+                        </Form>
+                      )}
                     </CardContent>
                     <CardFooter className="flex flex-col items-center border-t pt-4">
                       <div className="text-sm text-gray-500 mb-3">

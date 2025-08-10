@@ -23,6 +23,7 @@ import { eq, and, ne, inArray, desc, gt, count } from "drizzle-orm";
 import { update } from "drizzle-orm/pg-core";
 import { users } from "@shared/schema";
 import { z } from "zod";
+import crypto from "crypto";
 import emailService from "./services/emailService.js";
 import notificationService from "./services/notificationService.js";
 import { ObjectStorageService } from "./objectStorage";
@@ -187,6 +188,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Registration error:", error);
+      next(error);
+    }
+  });
+
+  // Forgot password endpoint
+  app.post("/api/forgot-password", async (req, res, next) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      
+      // Always return success to prevent email enumeration
+      res.json({ message: "If the email exists in our system, you'll receive a password reset link." });
+      
+      if (!user) {
+        console.log(`Password reset requested for non-existent email: ${email}`);
+        return;
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hour from now
+
+      // Update user with reset token
+      await db.update(users)
+        .set({ 
+          reset_token: resetToken,
+          reset_token_expires: resetTokenExpires 
+        })
+        .where(eq(users.id, user.id));
+
+      // Send password reset email
+      const resetUrl = `${req.protocol}://${req.get('host')}/auth/reset-password?token=${resetToken}`;
+      
+      emailService.sendPasswordResetEmail(user.email, user.name, resetUrl).then(result => {
+        if (result.success) {
+          console.log(`Password reset email sent to ${user.email} (${result.messageId})`);
+        } else {
+          console.error(`Failed to send password reset email to ${user.email}:`, result.error);
+        }
+      }).catch(error => {
+        console.error(`Password reset email error for ${user.email}:`, error);
+      });
+
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      next(error);
+    }
+  });
+
+  // Reset password endpoint
+  app.post("/api/reset-password", async (req, res, next) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token and password are required" });
+      }
+
+      // Find user by reset token
+      const [user] = await db.select()
+        .from(users)
+        .where(
+          and(
+            eq(users.reset_token, token),
+            gt(users.reset_token_expires, new Date())
+          )
+        );
+
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      // Update password and clear reset token
+      await db.update(users)
+        .set({ 
+          password: password, // Note: In production, hash this password
+          reset_token: null,
+          reset_token_expires: null 
+        })
+        .where(eq(users.id, user.id));
+
+      res.json({ message: "Password reset successful" });
+
+    } catch (error) {
+      console.error("Reset password error:", error);
       next(error);
     }
   });

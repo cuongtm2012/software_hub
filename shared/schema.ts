@@ -59,6 +59,8 @@ export const users = pgTable("users", {
   phone: text("phone"),
   email_verified: boolean("email_verified").default(false).notNull(),
   phone_verified: boolean("phone_verified").default(false).notNull(),
+  reset_token: text("reset_token"),
+  reset_token_expires: timestamp("reset_token_expires"),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
@@ -665,6 +667,22 @@ export const insertUserSchema = createInsertSchema(users).omit({
   created_at: true,
   updated_at: true,
   profile_data: true,
+  reset_token: true,
+  reset_token_expires: true,
+});
+
+// Forgot password schemas
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 export const insertSoftwareSchema = createInsertSchema(softwares).omit({
