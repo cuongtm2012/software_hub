@@ -610,8 +610,8 @@ export default function DashboardPage() {
                     ) : (
                       <div className="space-y-4">
                         {/* Show unified projects (external requests + available projects) */}
-                        {displayedProjects.map((project: any) => (
-                          <div key={`recent-project-${project.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
+                        {displayedProjects.map((project: any, index) => (
+                          <div key={`recent-project-${project.id}-${index}-${project.type || 'unknown'}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
                             <div className="flex-1">
                               <h4 className="font-semibold text-gray-900">
                                 {project.title || `Project Request #${project.id}`}
@@ -818,7 +818,7 @@ export default function DashboardPage() {
                           </div>
                         ) : (
                           <div className="grid gap-4">
-                            {displayAvailableProjects.map((project: any) => {
+                            {displayAvailableProjects.map((project: any, index) => {
                               const getStatusConfig = (status: string) => {
                                 switch (status) {
                                   case 'pending':
@@ -858,7 +858,7 @@ export default function DashboardPage() {
                               
                               return (
                                 <div 
-                                  key={`all-tab-${project.id}`} 
+                                  key={`all-tab-${project.id}-${index}-${project.type || 'project'}`} 
                                   className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                   onClick={() => navigate(`/project/${project.id}`)}
                                 >
@@ -923,7 +923,7 @@ export default function DashboardPage() {
                       {/* Pending Projects Tab */}
                       <TabsContent value="pending" className="space-y-4 mt-6">
                         <div className="grid gap-4">
-                          {displayAvailableProjects?.filter((p: any) => p.status === 'pending').map((project: any) => {
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'pending').map((project: any, index) => {
                             const statusConfig = { 
                               color: 'bg-blue-100 text-blue-800 border-blue-200', 
                               icon: '🔄',
@@ -932,7 +932,7 @@ export default function DashboardPage() {
                             
                             return (
                               <div 
-                                key={`pending-${project.id}`} 
+                                key={`pending-${project.id}-${index}-${project.type || 'project'}`} 
                                 className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                 onClick={() => navigate(`/project/${project.id}`)}
                               >
@@ -997,7 +997,7 @@ export default function DashboardPage() {
                       {/* In Progress Projects Tab */}
                       <TabsContent value="in_progress" className="space-y-4 mt-6">
                         <div className="grid gap-4">
-                          {displayAvailableProjects?.filter((p: any) => p.status === 'in_progress' || p.status === 'in-progress').map((project: any) => {
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'in_progress' || p.status === 'in-progress').map((project: any, index) => {
                             const statusConfig = { 
                               color: 'bg-orange-100 text-orange-800 border-orange-200', 
                               icon: '⚡',
@@ -1006,7 +1006,7 @@ export default function DashboardPage() {
                             
                             return (
                               <div 
-                                key={`progress-${project.id}`} 
+                                key={`progress-${project.id}-${index}-${project.type || 'project'}`} 
                                 className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-orange-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                 onClick={() => navigate(`/project/${project.id}`)}
                               >
@@ -1071,7 +1071,7 @@ export default function DashboardPage() {
                       {/* Completed Projects Tab */}
                       <TabsContent value="completed" className="space-y-4 mt-6">
                         <div className="grid gap-4">
-                          {displayAvailableProjects?.filter((p: any) => p.status === 'completed').map((project: any) => {
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'completed').map((project: any, index) => {
                             const statusConfig = { 
                               color: 'bg-green-100 text-green-800 border-green-200', 
                               icon: '✅',
@@ -1080,7 +1080,7 @@ export default function DashboardPage() {
                             
                             return (
                               <div 
-                                key={`completed-${project.id}`} 
+                                key={`completed-${project.id}-${index}-${project.type || 'project'}`} 
                                 className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                 onClick={() => navigate(`/project/${project.id}`)}
                               >
@@ -1145,7 +1145,7 @@ export default function DashboardPage() {
                       {/* Cancelled Projects Tab */}
                       <TabsContent value="cancelled" className="space-y-4 mt-6">
                         <div className="grid gap-4">
-                          {displayAvailableProjects?.filter((p: any) => p.status === 'cancelled').map((project: any) => {
+                          {displayAvailableProjects?.filter((p: any) => p.status === 'cancelled').map((project: any, index) => {
                             const statusConfig = { 
                               color: 'bg-red-100 text-red-800 border-red-200', 
                               icon: '❌',
@@ -1154,7 +1154,7 @@ export default function DashboardPage() {
                             
                             return (
                               <div 
-                                key={`cancelled-${project.id}`} 
+                                key={`cancelled-${project.id}-${index}-${project.type || 'project'}`} 
                                 className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-red-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                 onClick={() => navigate(`/project/${project.id}`)}
                               >
