@@ -626,6 +626,14 @@ function Router() {
           </Suspense>
         );
       }} />
+      <Route path="/seller/registration" component={() => {
+        const SellerRegistrationPage = lazy(() => import("@/pages/seller-registration-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <SellerRegistrationPage />
+          </Suspense>
+        );
+      }} />
       <ProtectedRoute path="/seller/dashboard" component={() => {
         const SellerDashboardPage = lazy(() => import("@/pages/seller-dashboard-page"));
         return <SellerDashboardPage />;
