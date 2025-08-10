@@ -1135,44 +1135,255 @@ export default function AdminDashboardPage() {
 }
 
 function SellersManagementComponent() {
-  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const [selectedSeller, setSelectedSeller] = useState<any>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+
+  // Fetch sellers data
+  const { data: sellersData, isLoading, refetch } = useQuery({
+    queryKey: ["/api/admin/sellers"],
+  });
+
+  // Update seller status mutation
+  const updateSellerMutation = useMutation({
+    mutationFn: async ({ userId, status, notes }: { userId: number; status: string; notes?: string }) => {
+      const response = await fetch(`/api/admin/sellers/${userId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status, notes }),
+      });
+      if (!response.ok) throw new Error("Failed to update seller status");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Seller status updated successfully" });
+      refetch();
+      setIsViewDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update seller status", variant: "destructive" });
+    },
+  });
+
+  const handleViewDocuments = (seller: any) => {
+    setSelectedSeller(seller);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleApprove = () => {
+    if (selectedSeller) {
+      updateSellerMutation.mutate({
+        userId: selectedSeller.user_id,
+        status: "verified",
+        notes: "Approved by admin"
+      });
+    }
+  };
+
+  const handleReject = () => {
+    if (selectedSeller) {
+      updateSellerMutation.mutate({
+        userId: selectedSeller.user_id,
+        status: "rejected",
+        notes: "Rejected by admin"
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-20 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  const sellers = sellersData?.sellers || [];
+  const pendingSellers = sellers.filter((s: any) => s.verification_status === 'pending');
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">
-            Seller Approvals
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-900">Seller Approvals</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Review and approve seller registration requests
+            {pendingSellers.length} pending registrations
           </p>
         </div>
-        <Button onClick={() => navigate("/admin/seller-approvals")}>
-          Open Seller Approvals
-        </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
+      {pendingSellers.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
             <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">
-              Seller Verification & Approval
-            </h4>
-            <p className="text-gray-500 mb-4 max-w-sm mx-auto">
-              Review pending seller registrations, verify documents, and manage seller approvals through our comprehensive verification system.
-            </p>
+            <h4 className="text-lg font-medium text-gray-900 mb-2">No Pending Approvals</h4>
+            <p className="text-gray-500">All seller registrations have been reviewed.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="bg-white rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Business Info</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Documents</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendingSellers.map((seller: any) => (
+                <TableRow key={seller.id}>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{seller.business_name}</div>
+                      <div className="text-sm text-gray-500">{seller.business_type}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{seller.user?.name}</div>
+                      <div className="text-sm text-gray-500">{seller.user?.email}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {seller.documents_uploaded ? (
+                        <Badge variant="secondary">Documents Uploaded</Badge>
+                      ) : (
+                        <Badge variant="outline">No Documents</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{seller.verification_status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewDocuments(seller)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Review
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Review Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Seller Registration Review</DialogTitle>
+            <DialogDescription>
+              Review seller information and documents for approval
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedSeller && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-semibold">Business Name</Label>
+                  <p className="mt-1">{selectedSeller.business_name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold">Business Type</Label>
+                  <p className="mt-1">{selectedSeller.business_type}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold">Contact Person</Label>
+                  <p className="mt-1">{selectedSeller.user?.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold">Email</Label>
+                  <p className="mt-1">{selectedSeller.user?.email}</p>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-semibold">Business Description</Label>
+                <p className="mt-1 text-sm">{selectedSeller.business_description}</p>
+              </div>
+              
+              {selectedSeller.documents_uploaded && (
+                <div>
+                  <Label className="text-sm font-semibold">Documents</Label>
+                  <div className="mt-2 space-y-2">
+                    {selectedSeller.national_id_front && (
+                      <div className="flex items-center justify-between p-2 border rounded">
+                        <span className="text-sm">National ID (Front)</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`/api/r2/download?key=${selectedSeller.national_id_front}`, '_blank')}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    )}
+                    {selectedSeller.national_id_back && (
+                      <div className="flex items-center justify-between p-2 border rounded">
+                        <span className="text-sm">National ID (Back)</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`/api/r2/download?key=${selectedSeller.national_id_back}`, '_blank')}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    )}
+                    {selectedSeller.bank_account_details && (
+                      <div className="flex items-center justify-between p-2 border rounded">
+                        <span className="text-sm">Bank Account Details</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`/api/r2/download?key=${selectedSeller.bank_account_details}`, '_blank')}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button
-              onClick={() => navigate("/admin/seller-approvals")}
+              variant="destructive"
+              onClick={handleReject}
+              disabled={updateSellerMutation.isPending}
+            >
+              {updateSellerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Reject
+            </Button>
+            <Button
+              onClick={handleApprove}
+              disabled={updateSellerMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
             >
-              <Users className="h-4 w-4 mr-2" />
-              Review Sellers
+              {updateSellerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Approve
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
