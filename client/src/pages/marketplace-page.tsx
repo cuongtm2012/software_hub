@@ -15,8 +15,15 @@ export default function MarketplacePage() {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Sample marketplace store data for online shopping stores
-  const marketplaceStores = [
+  // Fetch marketplace products from API
+  const { data: marketplaceData, isLoading } = useQuery({
+    queryKey: ["/api/marketplace/products"],
+  });
+
+  const marketplaceStores = marketplaceData?.products || [];
+
+  // Sample marketplace store data for fallback (if no API data)
+  const sampleStores = [
     {
       id: 1,
       name: "Premium Gmail Accounts",
@@ -87,9 +94,9 @@ export default function MarketplacePage() {
 
   const categories = [
     { id: "all", name: "All Categories", count: marketplaceStores.length },
-    { id: "accounts", name: "Email Accounts", count: marketplaceStores.filter(s => s.category === "accounts").length },
-    { id: "software", name: "Software Licenses", count: marketplaceStores.filter(s => s.category === "software").length },
-    { id: "subscriptions", name: "Subscriptions", count: marketplaceStores.filter(s => s.category === "subscriptions").length }
+    { id: "Software", name: "Software", count: marketplaceStores.filter(s => s.category === "Software").length },
+    { id: "Digital Tools", name: "Digital Tools", count: marketplaceStores.filter(s => s.category === "Digital Tools").length },
+    { id: "Services", name: "Services", count: marketplaceStores.filter(s => s.category === "Services").length }
   ];
 
   const filteredStores = selectedCategory === "all" 
@@ -129,56 +136,84 @@ export default function MarketplacePage() {
         </div>
 
         {/* Store Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredStores.map((store) => (
-            <Card key={store.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative h-48 bg-gray-100">
-                <img
-                  src={store.image}
-                  alt={store.name}
-                  className="w-full h-full object-contain p-4"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://via.placeholder.com/200x150?text=No+Image";
-                  }}
-                />
-                <div className="absolute top-2 right-2">
-                  <Badge className="bg-green-100 text-green-800">
-                    {store.inStock} in stock
-                  </Badge>
-                </div>
-              </div>
-              
-              <CardHeader className="p-4 pb-2">
-                <CardTitle className="text-lg">{store.name}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                    <span className="text-sm text-gray-600">{store.rating}</span>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="h-48 w-full" />
+                <CardHeader className="p-4 pb-2">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-2/3" />
+                </CardContent>
+                <CardFooter className="p-4 pt-0">
+                  <Skeleton className="h-10 w-full" />
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredStores.map((store) => (
+              <Card key={store.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="relative h-48 bg-gray-100">
+                  {store.image_url ? (
+                    <img
+                      src={store.image_url}
+                      alt={store.name}
+                      className="w-full h-full object-contain p-4"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://via.placeholder.com/200x150?text=No+Image";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-6xl text-gray-400">
+                      📦
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-green-100 text-green-800">
+                      {store.stock_quantity} in stock
+                    </Badge>
                   </div>
-                  <span className="text-xs text-gray-500">by {store.seller}</span>
                 </div>
-              </CardHeader>
-              
-              <CardContent className="p-4 pt-0">
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{store.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-[#004080]">{store.price}</span>
-                  <Badge variant="outline" className="text-xs">
-                    {store.category}
-                  </Badge>
-                </div>
-              </CardContent>
-              
-              <CardFooter className="p-4 pt-0">
-                <Link to={`/marketplace/product/${store.id}`}>
-                  <Button className="w-full bg-[#004080] hover:bg-[#003366] text-white">
-                    <Box className="h-4 w-4 mr-2" />
-                    Buy Now
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
+                
+                <CardHeader className="p-4 pb-2">
+                  <CardTitle className="text-lg">{store.name}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                      <span className="text-sm text-gray-600">4.5</span>
+                    </div>
+                    <span className="text-xs text-gray-500">by {store.seller_name || "Seller"}</span>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="p-4 pt-0">
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{store.description}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl font-bold text-[#004080]">${store.price}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {store.category}
+                    </Badge>
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="p-4 pt-0">
+                  <Link to={`/marketplace/product/${store.id}`}>
+                    <Button className="w-full bg-[#004080] hover:bg-[#003366] text-white">
+                      <Box className="h-4 w-4 mr-2" />
+                      Buy Now
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
         </div>
 
         {filteredStores.length === 0 && (
