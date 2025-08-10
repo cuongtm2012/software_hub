@@ -125,7 +125,15 @@ export default function AuthPage() {
     defaultValues: {
       email: "",
     },
+    mode: "onChange",
   });
+
+  // Reset form when switching to forgot password
+  useEffect(() => {
+    if (showForgotPassword) {
+      forgotPasswordForm.reset({ email: "" });
+    }
+  }, [showForgotPassword, forgotPasswordForm]);
 
   // Forgot password mutation
   const forgotPasswordMutation = useMutation({
@@ -340,7 +348,11 @@ export default function AuthPage() {
                                       type="email" 
                                       placeholder="Enter your email address" 
                                       className="focus-visible:ring-[#004080]"
-                                      {...field} 
+                                      value={field.value || ""}
+                                      onChange={field.onChange}
+                                      onBlur={field.onBlur}
+                                      name={field.name}
+                                      ref={field.ref}
                                     />
                                   </FormControl>
                                   <FormMessage />
