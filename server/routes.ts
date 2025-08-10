@@ -2100,6 +2100,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Dashboard Statistics
+  app.get("/api/admin/statistics", adminMiddleware, async (req, res, next) => {
+    try {
+      console.log('Admin statistics endpoint called by user:', req.user?.email, 'role:', req.user?.role);
+      
+      // Get total user count
+      const allUsers = await storage.getAllUsers();
+      const totalUsers = allUsers.users ? allUsers.users.length : 0;
+      
+      // Get software statistics
+      const allSoftware = await storage.getAllSoftware({ page: 1, limit: 1000 });
+      const totalSoftware = allSoftware.softwares.length;
+      const activeSoftware = allSoftware.softwares.filter(s => s.status === 'approved').length;
+      
+      // Get new software (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const newSoftware = allSoftware.softwares.filter(s => 
+        new Date(s.created_at) >= sevenDaysAgo
+      ).length;
+      
+      // Get product statistics
+      const allProducts = await storage.getAllProducts({ page: 1, limit: 1000 });
+      const totalProducts = allProducts.products.length;
+      const activeProducts = allProducts.products.filter(p => p.status === 'active').length;
+      
+      // Get project statistics (external requests)
+      const allRequests = await storage.getAllExternalRequests({ 
+        page: 1, 
+        limit: 1000,
+        status: '',
+        search: '' 
+      });
+      const totalProjects = allRequests.requests.length;
+      const pendingProjects = allRequests.requests.filter(r => r.status === 'pending').length;
+      
+      // Get pending requests count
+      const pendingRequests = allRequests.requests.filter(r => 
+        r.status === 'pending' || r.status === 'submitted'
+      ).length;
+      
+      res.json({
+        users: {
+          total: totalUsers
+        },
+        software: {
+          total: totalSoftware,
+          active: activeSoftware,
+          newInLast7Days: newSoftware
+        },
+        products: {
+          total: totalProducts,
+          active: activeProducts
+        },
+        projects: {
+          total: totalProjects,
+          pending: pendingProjects
+        },
+        pendingRequests: pendingRequests
+      });
+    } catch (error) {
+      console.error("Admin statistics fetch error:", error);
+      next(error);
+    }
+  });
+
   app.put("/api/admin/sellers/:userId/status", adminMiddleware, async (req, res, next) => {
     try {
       console.log('Admin seller status update called by user:', req.user?.email, 'role:', req.user?.role);

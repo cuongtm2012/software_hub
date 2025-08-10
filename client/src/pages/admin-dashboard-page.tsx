@@ -114,6 +114,26 @@ interface Software {
   created_at: string;
 }
 
+interface AdminStatistics {
+  users: {
+    total: number;
+  };
+  software: {
+    total: number;
+    active: number;
+    newInLast7Days: number;
+  };
+  products: {
+    total: number;
+    active: number;
+  };
+  projects: {
+    total: number;
+    pending: number;
+  };
+  pendingRequests: number;
+}
+
 // User Management Component
 function UserManagementComponent() {
   const { toast } = useToast();
@@ -1105,199 +1125,7 @@ export default function AdminDashboardPage() {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              <div className="space-y-6">
-                {/* Header */}
-                <div className="border-b pb-4">
-                  <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard - Overview</h1>
-                </div>
-
-                {/* Software Overview */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      Software Overview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-600">Total Software</span>
-                          <span className="text-2xl font-bold text-blue-600">120</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-600">Active Software</span>
-                          <span className="text-2xl font-bold text-green-600">95</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-600">New Software (7 days)</span>
-                          <span className="text-2xl font-bold text-purple-600">8</span>
-                        </div>
-                      </div>
-                      <div className="pt-4 border-t">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                        >
-                          View All Software
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Stats */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
-                      Quick Stats
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
-                          <div>
-                            <span className="text-sm font-medium text-gray-600">Total Users</span>
-                            <p className="text-2xl font-bold text-blue-600">1,500</p>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                        <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-lg">
-                          <div>
-                            <span className="text-sm font-medium text-gray-600">Pending Requests</span>
-                            <p className="text-2xl font-bold text-yellow-600">45</p>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                        <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
-                          <div>
-                            <span className="text-sm font-medium text-gray-600">Active Software</span>
-                            <p className="text-2xl font-bold text-green-600">95</p>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Recent Activities */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="h-5 w-5" />
-                      Recent Activities
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">New user registered: john@example.com</span>
-                        </div>
-                        <span className="text-xs text-gray-500">10 min ago</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">Software "X" approved</span>
-                        </div>
-                        <span className="text-xs text-gray-500">30 min ago</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">Seller request #123 submitted</span>
-                        </div>
-                        <span className="text-xs text-gray-500">1 hour ago</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">External request #456 reviewed</span>
-                        </div>
-                        <span className="text-xs text-gray-500">3 hours ago</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2">
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">Software "Y" added to marketplace</span>
-                        </div>
-                        <span className="text-xs text-gray-500">Yesterday</span>
-                      </div>
-                      <div className="pt-4 border-t">
-                        <Button variant="outline" size="sm">
-                          View All Activities
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Notifications / Alerts */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Bell className="h-5 w-5" />
-                      Notifications / Alerts
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-yellow-800">
-                            Scheduled maintenance on Aug 15, 2025 from 01:00 AM to 03:00 AM.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <Bell className="h-5 w-5 text-blue-600 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-blue-800">
-                            New version of platform released.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-red-800">
-                            Security alert: Password reset recommended for all admins.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="pt-4 border-t">
-                        <Button variant="outline" size="sm">
-                          View All Notifications
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Footer */}
-                <div className="border-t pt-6">
-                  <p className="text-center text-sm text-gray-500">
-                    © 2025 SoftwareHub Admin Panel
-                  </p>
-                </div>
-              </div>
+              <OverviewComponent />
             </TabsContent>
 
             <TabsContent value="users">
@@ -1319,6 +1147,236 @@ export default function AdminDashboardPage() {
         </div>
       </main>
       <Footer />
+    </div>
+  );
+}
+
+// Overview Component with real data
+function OverviewComponent() {
+  const { data: statistics, isLoading } = useQuery<AdminStatistics>({
+    queryKey: ["/api/admin/statistics"],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="border-b pb-4">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard - Overview</h1>
+        </div>
+        <div className="grid gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-32 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="border-b pb-4">
+        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard - Overview</h1>
+      </div>
+
+      {/* Software Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Software Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">Total Software</span>
+                <span className="text-2xl font-bold text-blue-600">{statistics?.software.total || 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">Active Software</span>
+                <span className="text-2xl font-bold text-green-600">{statistics?.software.active || 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">New Software (7 days)</span>
+                <span className="text-2xl font-bold text-purple-600">{statistics?.software.newInLast7Days || 0}</span>
+              </div>
+            </div>
+            <div className="pt-4 border-t">
+              <Button 
+                variant="outline" 
+                size="sm"
+              >
+                View All Software
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Stats with Products & Projects */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Quick Stats
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+                <div>
+                  <span className="text-sm font-medium text-gray-600">Total Users</span>
+                  <p className="text-2xl font-bold text-blue-600">{statistics?.users.total || 0}</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                >
+                  View Details
+                </Button>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
+                <div>
+                  <span className="text-sm font-medium text-gray-600">Total Products</span>
+                  <p className="text-2xl font-bold text-green-600">{statistics?.products.total || 0}</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                >
+                  View Details
+                </Button>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
+                <div>
+                  <span className="text-sm font-medium text-gray-600">Total Projects</span>
+                  <p className="text-2xl font-bold text-purple-600">{statistics?.projects.total || 0}</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                >
+                  View Details
+                </Button>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-lg">
+                <div>
+                  <span className="text-sm font-medium text-gray-600">Pending Requests</span>
+                  <p className="text-2xl font-bold text-yellow-600">{statistics?.pendingRequests || 0}</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                >
+                  View Details
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Activities */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Recent Activities
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <div>
+                <span className="text-sm font-medium text-gray-900">New user registered: john@example.com</span>
+              </div>
+              <span className="text-xs text-gray-500">10 min ago</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <div>
+                <span className="text-sm font-medium text-gray-900">Software approved for marketplace</span>
+              </div>
+              <span className="text-xs text-gray-500">30 min ago</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <div>
+                <span className="text-sm font-medium text-gray-900">New project request submitted</span>
+              </div>
+              <span className="text-xs text-gray-500">1 hour ago</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <div>
+                <span className="text-sm font-medium text-gray-900">External request reviewed</span>
+              </div>
+              <span className="text-xs text-gray-500">3 hours ago</span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <div>
+                <span className="text-sm font-medium text-gray-900">New product added to marketplace</span>
+              </div>
+              <span className="text-xs text-gray-500">Yesterday</span>
+            </div>
+            <div className="pt-4 border-t">
+              <Button variant="outline" size="sm">
+                View All Activities
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifications / Alerts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notifications / Alerts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-yellow-800">
+                  Scheduled maintenance on Aug 15, 2025 from 01:00 AM to 03:00 AM.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <Bell className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-800">
+                  New version of platform released.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">
+                  Security alert: Password reset recommended for all admins.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 border-t">
+              <Button variant="outline" size="sm">
+                View All Notifications
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Footer */}
+      <div className="border-t pt-6">
+        <p className="text-center text-sm text-gray-500">
+          © 2025 SoftwareHub Admin Panel
+        </p>
+      </div>
     </div>
   );
 }
