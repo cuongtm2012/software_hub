@@ -1291,68 +1291,204 @@ function SellersManagementComponent() {
           
           {selectedSeller && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-semibold">Business Name</Label>
-                  <p className="mt-1">{selectedSeller.business_name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-semibold">Business Type</Label>
-                  <p className="mt-1">{selectedSeller.business_type}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-semibold">Contact Person</Label>
-                  <p className="mt-1">{selectedSeller.user?.name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-semibold">Email</Label>
-                  <p className="mt-1">{selectedSeller.user?.email}</p>
-                </div>
-              </div>
-              
+              {/* Personal Information */}
               <div>
-                <Label className="text-sm font-semibold">Business Description</Label>
-                <p className="mt-1 text-sm">{selectedSeller.business_description}</p>
+                <h4 className="text-lg font-semibold mb-3">Personal Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-600">Full Name</Label>
+                    <p className="mt-1 text-gray-900">{selectedSeller.user?.name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-600">Email Address</Label>
+                    <p className="mt-1 text-gray-900">{selectedSeller.user?.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-600">Phone Number</Label>
+                    <p className="mt-1 text-gray-900">{selectedSeller.user?.phone || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-600">Registration Date</Label>
+                    <p className="mt-1 text-gray-900">{new Date(selectedSeller.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
               </div>
+
+              {/* Business Information */}
+              <div>
+                <h4 className="text-lg font-semibold mb-3">Business Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-600">Business Name</Label>
+                    <p className="mt-1 text-gray-900">{selectedSeller.business_name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-600">Business Type</Label>
+                    <p className="mt-1 text-gray-900">{selectedSeller.business_type}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-600">Tax ID</Label>
+                    <p className="mt-1 text-gray-900">{selectedSeller.tax_id || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-600">Verification Status</Label>
+                    <div className="mt-1">
+                      <Badge variant={selectedSeller.verification_status === 'pending' ? 'secondary' : 'default'}>
+                        {selectedSeller.verification_status}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedSeller.business_address && (
+                  <div className="mt-4">
+                    <Label className="text-sm font-semibold text-gray-600">Business Address</Label>
+                    <p className="mt-1 text-gray-900">{selectedSeller.business_address}</p>
+                  </div>
+                )}
+                
+                {selectedSeller.business_description && (
+                  <div className="mt-4">
+                    <Label className="text-sm font-semibold text-gray-600">Business Description</Label>
+                    <p className="mt-1 text-gray-900 text-sm leading-relaxed">{selectedSeller.business_description}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Bank Information */}
+              {selectedSeller.bank_account && (
+                <div>
+                  <h4 className="text-lg font-semibold mb-3">Bank Information</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-1 gap-2">
+                      {(() => {
+                        try {
+                          const bankInfo = JSON.parse(selectedSeller.bank_account);
+                          return (
+                            <>
+                              <div>
+                                <Label className="text-sm font-semibold text-gray-600">Bank Name</Label>
+                                <p className="mt-1 text-gray-900">{bankInfo.bank_name}</p>
+                              </div>
+                              <div>
+                                <Label className="text-sm font-semibold text-gray-600">Account Number</Label>
+                                <p className="mt-1 text-gray-900">{bankInfo.account_number}</p>
+                              </div>
+                              <div>
+                                <Label className="text-sm font-semibold text-gray-600">Account Holder</Label>
+                                <p className="mt-1 text-gray-900">{bankInfo.account_holder_name}</p>
+                              </div>
+                            </>
+                          );
+                        } catch {
+                          return (
+                            <div>
+                              <Label className="text-sm font-semibold text-gray-600">Bank Account</Label>
+                              <p className="mt-1 text-gray-900">{selectedSeller.bank_account}</p>
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
               
+              {/* Verification Documents */}
               {selectedSeller.documents_uploaded && (
                 <div>
-                  <Label className="text-sm font-semibold">Documents</Label>
-                  <div className="mt-2 space-y-2">
+                  <h4 className="text-lg font-semibold mb-3">Verification Documents</h4>
+                  <div className="grid grid-cols-1 gap-4">
                     {selectedSeller.national_id_front && (
-                      <div className="flex items-center justify-between p-2 border rounded">
-                        <span className="text-sm">National ID (Front)</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(`/api/r2/download?key=${selectedSeller.national_id_front}`, '_blank')}
-                        >
-                          View
-                        </Button>
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="font-medium text-gray-900">National ID (Front)</h5>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/api/r2/download?key=${selectedSeller.national_id_front}`, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Full Size
+                          </Button>
+                        </div>
+                        <div className="bg-gray-100 rounded-lg p-2">
+                          <img
+                            src={`/api/r2/download?key=${selectedSeller.national_id_front}`}
+                            alt="National ID Front"
+                            className="max-w-full max-h-48 mx-auto object-contain rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling.style.display = 'block';
+                            }}
+                          />
+                          <div className="hidden text-center text-gray-500 py-8">
+                            <FileText className="h-12 w-12 mx-auto mb-2" />
+                            <p>Document preview not available</p>
+                          </div>
+                        </div>
                       </div>
                     )}
+                    
                     {selectedSeller.national_id_back && (
-                      <div className="flex items-center justify-between p-2 border rounded">
-                        <span className="text-sm">National ID (Back)</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(`/api/r2/download?key=${selectedSeller.national_id_back}`, '_blank')}
-                        >
-                          View
-                        </Button>
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="font-medium text-gray-900">National ID (Back)</h5>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/api/r2/download?key=${selectedSeller.national_id_back}`, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Full Size
+                          </Button>
+                        </div>
+                        <div className="bg-gray-100 rounded-lg p-2">
+                          <img
+                            src={`/api/r2/download?key=${selectedSeller.national_id_back}`}
+                            alt="National ID Back"
+                            className="max-w-full max-h-48 mx-auto object-contain rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling.style.display = 'block';
+                            }}
+                          />
+                          <div className="hidden text-center text-gray-500 py-8">
+                            <FileText className="h-12 w-12 mx-auto mb-2" />
+                            <p>Document preview not available</p>
+                          </div>
+                        </div>
                       </div>
                     )}
+                    
                     {selectedSeller.bank_account_details && (
-                      <div className="flex items-center justify-between p-2 border rounded">
-                        <span className="text-sm">Bank Account Details</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(`/api/r2/download?key=${selectedSeller.bank_account_details}`, '_blank')}
-                        >
-                          View
-                        </Button>
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="font-medium text-gray-900">Bank Account Details</h5>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/api/r2/download?key=${selectedSeller.bank_account_details}`, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Full Size
+                          </Button>
+                        </div>
+                        <div className="bg-gray-100 rounded-lg p-2">
+                          <img
+                            src={`/api/r2/download?key=${selectedSeller.bank_account_details}`}
+                            alt="Bank Account Details"
+                            className="max-w-full max-h-48 mx-auto object-contain rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling.style.display = 'block';
+                            }}
+                          />
+                          <div className="hidden text-center text-gray-500 py-8">
+                            <FileText className="h-12 w-12 mx-auto mb-2" />
+                            <p>Document preview not available</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
