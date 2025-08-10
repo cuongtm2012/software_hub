@@ -3813,6 +3813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoint for direct document viewing (with redirect to presigned URL)
+  // Admin R2 download endpoint for secure file access
   app.get("/api/r2/download", adminMiddleware, async (req, res, next) => {
     try {
       const { key } = req.query;
@@ -3833,6 +3834,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Admin R2 download error:", error);
       res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
+  // Get presigned URL for image viewing (for admin dashboard)
+  app.get("/api/r2/image-url", adminMiddleware, async (req, res, next) => {
+    try {
+      const { key } = req.query;
+      
+      if (!key) {
+        return res.status(400).json({ error: "key parameter is required" });
+      }
+
+      const r2Storage = getR2Storage();
+      if (!r2Storage) {
+        return res.status(500).json({ error: "R2 storage not configured" });
+      }
+      
+      // Generate presigned URL with longer expiration for image viewing
+      const imageUrl = await r2Storage.generatePresignedDownloadUrl(key as string, 7200); // 2 hours
+      
+      res.json({ url: imageUrl });
+    } catch (error) {
+      console.error("Admin R2 image URL error:", error);
+      res.status(500).json({ error: "Failed to generate image URL" });
     }
   });
 

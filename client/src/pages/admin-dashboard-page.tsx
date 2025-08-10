@@ -1138,6 +1138,7 @@ function SellersManagementComponent() {
   const { toast } = useToast();
   const [selectedSeller, setSelectedSeller] = useState<any>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [documentUrls, setDocumentUrls] = useState<Record<string, string>>({});
 
   // Fetch sellers data
   const { data: sellersData, isLoading, refetch } = useQuery({
@@ -1160,15 +1161,63 @@ function SellersManagementComponent() {
       toast({ title: "Success", description: "Seller status updated successfully" });
       refetch();
       setIsViewDialogOpen(false);
+      setDocumentUrls({});
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update seller status", variant: "destructive" });
     },
   });
 
-  const handleViewDocuments = (seller: any) => {
+  const handleViewDocuments = async (seller: any) => {
     setSelectedSeller(seller);
     setIsViewDialogOpen(true);
+    
+    // Fetch presigned URLs for documents
+    const urls: Record<string, string> = {};
+    
+    if (seller.national_id_front) {
+      try {
+        const response = await fetch(`/api/r2/image-url?key=${encodeURIComponent(seller.national_id_front)}`, {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          urls.national_id_front = data.url;
+        }
+      } catch (error) {
+        console.error('Failed to get National ID front URL:', error);
+      }
+    }
+    
+    if (seller.national_id_back) {
+      try {
+        const response = await fetch(`/api/r2/image-url?key=${encodeURIComponent(seller.national_id_back)}`, {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          urls.national_id_back = data.url;
+        }
+      } catch (error) {
+        console.error('Failed to get National ID back URL:', error);
+      }
+    }
+    
+    if (seller.bank_account_details) {
+      try {
+        const response = await fetch(`/api/r2/image-url?key=${encodeURIComponent(seller.bank_account_details)}`, {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          urls.bank_account_details = data.url;
+        }
+      } catch (error) {
+        console.error('Failed to get bank account details URL:', error);
+      }
+    }
+    
+    setDocumentUrls(urls);
   };
 
   const handleApprove = () => {
@@ -1280,7 +1329,12 @@ function SellersManagementComponent() {
       )}
 
       {/* Review Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+      <Dialog open={isViewDialogOpen} onOpenChange={(open) => {
+        setIsViewDialogOpen(open);
+        if (!open) {
+          setDocumentUrls({});
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Seller Registration Review</DialogTitle>
@@ -1413,15 +1467,22 @@ function SellersManagementComponent() {
                           </Button>
                         </div>
                         <div className="bg-gray-100 rounded-lg p-2">
-                          <img
-                            src={`/api/r2/download?key=${selectedSeller.national_id_front}`}
-                            alt="National ID Front"
-                            className="max-w-full max-h-48 mx-auto object-contain rounded"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling.style.display = 'block';
-                            }}
-                          />
+                          {documentUrls.national_id_front ? (
+                            <img
+                              src={documentUrls.national_id_front}
+                              alt="National ID Front"
+                              className="max-w-full max-h-48 mx-auto object-contain rounded"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling.style.display = 'block';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-center text-gray-500 py-8">
+                              <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin" />
+                              <p>Loading image...</p>
+                            </div>
+                          )}
                           <div className="hidden text-center text-gray-500 py-8">
                             <FileText className="h-12 w-12 mx-auto mb-2" />
                             <p>Document preview not available</p>
@@ -1444,15 +1505,22 @@ function SellersManagementComponent() {
                           </Button>
                         </div>
                         <div className="bg-gray-100 rounded-lg p-2">
-                          <img
-                            src={`/api/r2/download?key=${selectedSeller.national_id_back}`}
-                            alt="National ID Back"
-                            className="max-w-full max-h-48 mx-auto object-contain rounded"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling.style.display = 'block';
-                            }}
-                          />
+                          {documentUrls.national_id_back ? (
+                            <img
+                              src={documentUrls.national_id_back}
+                              alt="National ID Back"
+                              className="max-w-full max-h-48 mx-auto object-contain rounded"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling.style.display = 'block';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-center text-gray-500 py-8">
+                              <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin" />
+                              <p>Loading image...</p>
+                            </div>
+                          )}
                           <div className="hidden text-center text-gray-500 py-8">
                             <FileText className="h-12 w-12 mx-auto mb-2" />
                             <p>Document preview not available</p>
@@ -1475,15 +1543,22 @@ function SellersManagementComponent() {
                           </Button>
                         </div>
                         <div className="bg-gray-100 rounded-lg p-2">
-                          <img
-                            src={`/api/r2/download?key=${selectedSeller.bank_account_details}`}
-                            alt="Bank Account Details"
-                            className="max-w-full max-h-48 mx-auto object-contain rounded"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling.style.display = 'block';
-                            }}
-                          />
+                          {documentUrls.bank_account_details ? (
+                            <img
+                              src={documentUrls.bank_account_details}
+                              alt="Bank Account Details"
+                              className="max-w-full max-h-48 mx-auto object-contain rounded"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling.style.display = 'block';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-center text-gray-500 py-8">
+                              <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin" />
+                              <p>Loading image...</p>
+                            </div>
+                          )}
                           <div className="hidden text-center text-gray-500 py-8">
                             <FileText className="h-12 w-12 mx-auto mb-2" />
                             <p>Document preview not available</p>
@@ -1498,7 +1573,10 @@ function SellersManagementComponent() {
           )}
           
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setIsViewDialogOpen(false);
+              setDocumentUrls({});
+            }}>
               Cancel
             </Button>
             <Button
