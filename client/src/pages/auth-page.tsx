@@ -22,7 +22,6 @@ import { Footer } from "@/components/footer";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 // Login form schema
 const loginSchema = z.object({
@@ -131,11 +130,20 @@ export default function AuthPage() {
   // Forgot password mutation
   const forgotPasswordMutation = useMutation({
     mutationFn: async (data: ForgotPasswordFormValues) => {
-      const response = await apiRequest("/api/forgot-password", {
+      const response = await fetch("/api/forgot-password", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
-      return response;
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to send reset email");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       setResetEmailSent(true);
