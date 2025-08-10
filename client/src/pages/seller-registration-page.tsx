@@ -60,7 +60,7 @@ import {
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
-import { R2DocumentUploader } from "@/components/R2DocumentUploader";
+import { VerificationDocumentUploader } from "@/components/VerificationDocumentUploader";
 import type { UploadResult } from "@uppy/core";
 
 const sellerRegistrationSchema = z.object({
@@ -91,7 +91,7 @@ export default function SellerRegistrationPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
-  const [r2UploadedFiles, setR2UploadedFiles] = useState<
+  const [uploadedDocuments, setUploadedDocuments] = useState<
     { fileKey: string; originalName: string; downloadUrl: string }[]
   >([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -169,7 +169,7 @@ export default function SellerRegistrationPage() {
         bank_account: bankAccount,
         verification_documents: [
           ...uploadedFiles,
-          ...r2UploadedFiles.map((f) => f.fileKey),
+          ...uploadedDocuments.map((f: { fileKey: string; originalName: string; downloadUrl: string }) => f.fileKey),
         ],
       });
     },
@@ -512,33 +512,14 @@ export default function SellerRegistrationPage() {
                     )}
                   />
 
-                  {/* Upload Documents - R2 Storage Integration */}
-                  <div className="space-y-4">
-                    <div>
-                      <FormLabel className="text-base font-medium">
-                        Upload Documents
-                      </FormLabel>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Upload your business license, tax certificate, or ID
-                        proof
-                        <br />
-                        (Allowed formats: PDF, JPG, PNG • Max size: 10MB)
-                      </p>
-                    </div>
-
-                    {/* R2 Document Uploader */}
-                    <R2DocumentUploader
-                      onFilesUploaded={setR2UploadedFiles}
-                      maxFiles={5}
-                      acceptedTypes={[
-                        "image/jpeg",
-                        "image/jpg",
-                        "image/png",
-                        "application/pdf",
-                      ]}
-                      maxSizeInMB={10}
-                    />
-                  </div>
+                  {/* Verification Documents Upload */}
+                  <VerificationDocumentUploader
+                    onFilesUploaded={(files) => {
+                      console.log('Verification documents uploaded:', files);
+                      setUploadedDocuments(files);
+                    }}
+                    className="mt-4"
+                  />
 
                   <Separator className="my-6" />
 
