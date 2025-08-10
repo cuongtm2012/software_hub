@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Store, 
   Upload, 
@@ -32,16 +33,21 @@ import {
   AlertCircle
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 
 const sellerRegistrationSchema = z.object({
-  business_name: z.string().min(2, "Business name must be at least 2 characters"),
-  business_type: z.enum(["individual", "company"], {
-    required_error: "Please select a business type",
+  business_name: z.string().min(2, "Business / Store Name is required"),
+  contact_phone: z.string().min(10, "Contact Phone Number is required"),
+  contact_email: z.string().email("Valid Contact Email is required"),
+  business_address: z.string().min(10, "Business Address is required"),
+  tax_id: z.string().min(1, "Tax ID / Registration Number is required"),
+  bank_name: z.string().min(2, "Bank Name is required"),
+  account_number: z.string().min(5, "Account Number is required"),
+  account_holder_name: z.string().min(2, "Account Holder Name is required"),
+  terms_accepted: z.boolean().refine(val => val === true, {
+    message: "You must agree to the Seller Terms and Conditions"
   }),
-  tax_id: z.string().optional(),
-  business_address: z.string().min(10, "Please provide a complete business address"),
-  bank_account: z.string().min(5, "Please provide bank account details"),
-  phone: z.string().min(10, "Please provide a valid phone number"),
 });
 
 type SellerRegistrationForm = z.infer<typeof sellerRegistrationSchema>;
@@ -50,18 +56,21 @@ export default function SellerRegistrationPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(1);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const form = useForm<SellerRegistrationForm>({
     resolver: zodResolver(sellerRegistrationSchema),
     defaultValues: {
       business_name: "",
-      business_type: "individual",
-      tax_id: "",
+      contact_phone: user?.phone || "",
+      contact_email: user?.email || "",
       business_address: "",
-      bank_account: "",
-      phone: user?.phone || "",
+      tax_id: "",
+      bank_name: "",
+      account_number: "",
+      account_holder_name: "",
+      terms_accepted: false,
     },
   });
 
@@ -76,18 +85,21 @@ export default function SellerRegistrationPage() {
       return apiRequest("/api/seller/register", {
         method: "POST",
         body: JSON.stringify({
-          ...data,
+          business_name: data.business_name,
+          contact_phone: data.contact_phone,
+          contact_email: data.contact_email,
+          business_address: data.business_address,
+          tax_id: data.tax_id,
+          bank_name: data.bank_name,
+          account_number: data.account_number,
+          account_holder_name: data.account_holder_name,
           verification_documents: uploadedFiles,
         }),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/seller/profile"] });
-      toast({
-        title: "Registration Submitted",
-        description: "Your seller registration has been submitted for review. You'll be notified once verified.",
-      });
-      navigate("/seller/dashboard");
+      setIsSubmitted(true);
     },
     onError: (error: any) => {
       toast({
@@ -99,7 +111,38 @@ export default function SellerRegistrationPage() {
   });
 
   const onSubmit = (data: SellerRegistrationForm) => {
+    if (!data.terms_accepted) {
+      toast({
+        title: "Terms Required",
+        description: "Please agree to the Seller Terms and Conditions to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
     registerMutation.mutate(data);
+  };
+
+  const handleGetUploadParameters = async () => {
+    try {
+      const response = await apiRequest("/api/objects/upload", {
+        method: "POST",
+      });
+      return {
+        method: "PUT" as const,
+        url: response.uploadURL,
+      };
+    } catch (error) {
+      throw new Error("Failed to get upload URL");
+    }
+  };
+
+  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    const newFiles = result.successful.map(file => file.uploadURL || "");
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+    toast({
+      title: "Upload Complete",
+      description: `${result.successful.length} file(s) uploaded successfully.`,
+    });
   };
 
   if (!user) {
@@ -126,6 +169,29 @@ export default function SellerRegistrationPage() {
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#004080]"></div>
           </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show success message after submission
+  if (isSubmitted) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="p-8 text-center">
+              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Submitted!</h2>
+              <p className="text-gray-600 mb-6">
+                Thank you for registering as a seller. Your application is under review. 
+                We will notify you once approved.
+              </p>
+              <Button onClick={() => navigate("/dashboard")}>
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </Layout>
     );
@@ -171,20 +237,6 @@ export default function SellerRegistrationPage() {
                   <label className="text-sm font-medium text-gray-500">Business Name</label>
                   <p className="font-medium">{profile.business_name || "N/A"}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Business Type</label>
-                  <p className="font-medium capitalize">{profile.business_type || "N/A"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Total Sales</label>
-                  <p className="font-medium">${Number(profile.total_sales || 0).toFixed(2)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Rating</label>
-                  <p className="font-medium">
-                    {profile.rating ? `${Number(profile.rating).toFixed(1)} ⭐` : "No ratings yet"}
-                  </p>
-                </div>
               </div>
 
               {profile.verification_status === "verified" && (
@@ -217,272 +269,219 @@ export default function SellerRegistrationPage() {
     );
   }
 
-  const steps = [
-    { number: 1, title: "Business Information", icon: Building2 },
-    { number: 2, title: "Contact Details", icon: User },
-    { number: 3, title: "Payment & Verification", icon: CreditCard },
-  ];
-
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Become a Seller</h1>
-            <p className="text-gray-600">Join our marketplace and start selling your digital products</p>
-          </div>
-
-          {/* Progress Steps */}
-          <div className="flex items-center justify-center mb-8">
-            {steps.map((step, index) => (
-              <div key={step.number} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  currentStep >= step.number 
-                    ? "bg-[#004080] border-[#004080] text-white" 
-                    : "border-gray-300 text-gray-500"
-                }`}>
-                  <step.icon className="h-5 w-5" />
-                </div>
-                <div className="ml-3 text-sm">
-                  <div className={`font-medium ${currentStep >= step.number ? "text-[#004080]" : "text-gray-500"}`}>
-                    {step.title}
-                  </div>
-                </div>
-                {index < steps.length - 1 && (
-                  <div className={`mx-4 h-0.5 w-16 ${
-                    currentStep > step.number ? "bg-[#004080]" : "bg-gray-300"
-                  }`} />
-                )}
-              </div>
-            ))}
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Register as a Seller</h1>
           </div>
 
           {/* Registration Form */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Store className="h-5 w-5" />
-                Seller Registration
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Step 1: Business Information */}
-                  {currentStep === 1 && (
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="business_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Business Name *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter your business name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  {/* Business / Store Name */}
+                  <FormField
+                    control={form.control}
+                    name="business_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Business / Store Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="" {...field} className="border-gray-300" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                      <FormField
-                        control={form.control}
-                        name="business_type"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Business Type *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select business type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="individual">Individual/Freelancer</SelectItem>
-                                <SelectItem value="company">Company/Business</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  {/* Contact Phone Number */}
+                  <FormField
+                    control={form.control}
+                    name="contact_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Contact Phone Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="" {...field} className="border-gray-300" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                      <FormField
-                        control={form.control}
-                        name="tax_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tax ID (Optional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter tax identification number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  {/* Contact Email */}
+                  <FormField
+                    control={form.control}
+                    name="contact_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Contact Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="" {...field} className="border-gray-300" disabled />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                      <FormField
-                        control={form.control}
-                        name="business_address"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Business Address *</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Enter your complete business address" 
-                                className="min-h-[80px]"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
-
-                  {/* Step 2: Contact Details */}
-                  {currentStep === 2 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Mail className="h-5 w-5 text-green-500" />
-                        <span className="text-sm text-gray-600">Email: {user.email}</span>
-                        <Badge className="bg-green-100 text-green-800">Verified</Badge>
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <Phone className="h-4 w-4" />
-                              Phone Number *
-                            </FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter your phone number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Alert>
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          We'll send an SMS verification code to this number to verify your identity.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  )}
-
-                  {/* Step 3: Payment & Verification */}
-                  {currentStep === 3 && (
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="bank_account"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <CreditCard className="h-4 w-4" />
-                              Bank Account Information *
-                            </FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Enter your bank account details for payments" 
-                                className="min-h-[80px]"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
-                          <FileText className="h-4 w-4" />
-                          Verification Documents (Optional)
-                        </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600 mb-2">
-                            Upload business license, ID, or other verification documents
-                          </p>
-                          <input
-                            type="file"
-                            multiple
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            className="hidden"
-                            id="documents"
-                            onChange={(e) => {
-                              if (e.target.files) {
-                                const fileNames = Array.from(e.target.files).map(f => f.name);
-                                setUploadedFiles(fileNames);
-                              }
-                            }}
+                  {/* Business Address */}
+                  <FormField
+                    control={form.control}
+                    name="business_address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Business Address</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="" 
+                            className="min-h-[80px] border-gray-300"
+                            {...field} 
                           />
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => document.getElementById('documents')?.click()}
-                          >
-                            Choose Files
-                          </Button>
-                        </div>
-                        {uploadedFiles.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-sm text-gray-600">Uploaded files:</p>
-                            <ul className="text-sm text-gray-800">
-                              {uploadedFiles.map((file, index) => (
-                                <li key={index}>• {file}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Tax ID / Registration Number */}
+                  <FormField
+                    control={form.control}
+                    name="tax_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Tax ID / Registration Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="" {...field} className="border-gray-300" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Upload Documents */}
+                  <div className="space-y-2">
+                    <FormLabel className="text-base font-medium">Upload Documents</FormLabel>
+                    <ObjectUploader
+                      maxNumberOfFiles={5}
+                      maxFileSize={10485760}
+                      onGetUploadParameters={handleGetUploadParameters}
+                      onComplete={handleUploadComplete}
+                      buttonClassName="w-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    >
+                      Choose File
+                    </ObjectUploader>
+                    <p className="text-sm text-gray-500">
+                      (Allowed formats: PDF, JPG, PNG)
+                      <br />
+                      <em>Upload your business license or ID proof</em>
+                    </p>
+                    {uploadedFiles.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-green-600">
+                          {uploadedFiles.length} file(s) uploaded successfully
+                        </p>
                       </div>
+                    )}
+                  </div>
 
-                      <Alert>
-                        <Shield className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Commission Rate:</strong> We charge a 10% commission on all sales. 
-                          You'll receive 90% of each sale directly to your bank account.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  )}
+                  <Separator className="my-6" />
 
-                  {/* Navigation Buttons */}
-                  <Separator />
-                  <div className="flex justify-between">
+                  {/* Payment Details Header */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
+                  </div>
+
+                  {/* Bank Name */}
+                  <FormField
+                    control={form.control}
+                    name="bank_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Bank Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="" {...field} className="border-gray-300" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Account Number */}
+                  <FormField
+                    control={form.control}
+                    name="account_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Account Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="" {...field} className="border-gray-300" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Account Holder Name */}
+                  <FormField
+                    control={form.control}
+                    name="account_holder_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-medium">Account Holder Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="" {...field} className="border-gray-300" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Separator className="my-6" />
+
+                  {/* Terms and Conditions */}
+                  <FormField
+                    control={form.control}
+                    name="terms_accepted"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-base">
+                            I agree to the Seller Terms and Conditions
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <Separator className="my-6" />
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4">
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-                      disabled={currentStep === 1}
+                      onClick={() => navigate("/dashboard")}
+                      className="flex-1"
                     >
-                      Previous
+                      Cancel
                     </Button>
-
-                    {currentStep < 3 ? (
-                      <Button
-                        type="button"
-                        onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))}
-                        className="bg-[#004080] hover:bg-[#003366]"
-                      >
-                        Next
-                      </Button>
-                    ) : (
-                      <Button
-                        type="submit"
-                        disabled={registerMutation.isPending}
-                        className="bg-[#004080] hover:bg-[#003366]"
-                      >
-                        {registerMutation.isPending ? "Submitting..." : "Submit Registration"}
-                      </Button>
-                    )}
+                    <Button
+                      type="submit"
+                      className="flex-1"
+                      disabled={registerMutation.isPending || !form.watch("terms_accepted")}
+                    >
+                      {registerMutation.isPending ? "Submitting..." : "Submit"}
+                    </Button>
                   </div>
                 </form>
               </Form>

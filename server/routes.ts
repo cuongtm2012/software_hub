@@ -25,6 +25,7 @@ import { users } from "@shared/schema";
 import { z } from "zod";
 import emailService from "./services/emailService.js";
 import notificationService from "./services/notificationService.js";
+import { ObjectStorageService } from "./objectStorage";
 
 // Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -3682,6 +3683,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   emailTestEndpoints.forEach(endpoint => {
     const microserviceEndpoint = endpoint.replace('/api/email/', '/api/');
     app.post(endpoint, proxyToEmailService(microserviceEndpoint));
+  });
+
+  // Object Storage Routes
+  app.post("/api/objects/upload", isAuthenticated, async (req, res, next) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ error: "Failed to get upload URL" });
+    }
+  });
+
+  app.get("/objects/:objectPath(*)", async (req, res, next) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error: any) {
+      console.error("Error accessing object:", error);
+      if (error.constructor.name === "ObjectNotFoundError") {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  app.get("/public-objects/:filePath(*)", async (req, res, next) => {
+    try {
+      const filePath = req.params.filePath;
+      const objectStorageService = new ObjectStorageService();
+      const file = await objectStorageService.searchPublicObject(filePath);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error searching for public object:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
   });
 
   // WebSocket integration for real-time chat
