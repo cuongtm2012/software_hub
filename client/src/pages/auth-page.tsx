@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 // Login form schema
 const loginSchema = z.object({
@@ -56,6 +56,11 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation, isLoading } = useAuth();
   const [location, navigate] = useLocation();
   const [tabValue, setTabValue] = useState<string>("login");
+  
+  // Password visibility states
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Set active tab from URL params
   useEffect(() => {
@@ -255,12 +260,27 @@ export default function AuthPage() {
                               <FormItem>
                                 <FormLabel className="text-gray-700">Password</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="password" 
-                                    placeholder="Enter your password" 
-                                    className="focus-visible:ring-[#004080]"
-                                    {...field} 
-                                  />
+                                  <div className="relative">
+                                    <Input 
+                                      type={showLoginPassword ? "text" : "password"}
+                                      placeholder="Enter your password" 
+                                      className="focus-visible:ring-[#004080] pr-10"
+                                      {...field} 
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                                    >
+                                      {showLoginPassword ? (
+                                        <EyeOff className="h-4 w-4 text-gray-500" />
+                                      ) : (
+                                        <Eye className="h-4 w-4 text-gray-500" />
+                                      )}
+                                    </Button>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -371,12 +391,27 @@ export default function AuthPage() {
                               <FormItem>
                                 <FormLabel className="text-gray-700">Password</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="password" 
-                                    placeholder="Create a password" 
-                                    className="focus-visible:ring-[#004080]"
-                                    {...field} 
-                                  />
+                                  <div className="relative">
+                                    <Input 
+                                      type={showRegisterPassword ? "text" : "password"}
+                                      placeholder="Create a password" 
+                                      className="focus-visible:ring-[#004080] pr-10"
+                                      {...field} 
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                                    >
+                                      {showRegisterPassword ? (
+                                        <EyeOff className="h-4 w-4 text-gray-500" />
+                                      ) : (
+                                        <Eye className="h-4 w-4 text-gray-500" />
+                                      )}
+                                    </Button>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -390,12 +425,27 @@ export default function AuthPage() {
                               <FormItem>
                                 <FormLabel className="text-gray-700">Confirm Password</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="password" 
-                                    placeholder="Confirm your password" 
-                                    className="focus-visible:ring-[#004080]"
-                                    {...field} 
-                                  />
+                                  <div className="relative">
+                                    <Input 
+                                      type={showConfirmPassword ? "text" : "password"}
+                                      placeholder="Confirm your password" 
+                                      className="focus-visible:ring-[#004080] pr-10"
+                                      {...field} 
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                      {showConfirmPassword ? (
+                                        <EyeOff className="h-4 w-4 text-gray-500" />
+                                      ) : (
+                                        <Eye className="h-4 w-4 text-gray-500" />
+                                      )}
+                                    </Button>
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
