@@ -3799,8 +3799,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Server-side upload fallback for CORS issues
   app.post("/api/r2/server-upload", isAuthenticated, async (req, res, next) => {
     try {
-      const multer = require('multer');
-      const upload = multer({ storage: multer.memoryStorage() });
+      const multer = await import('multer');
+      const upload = multer.default({ storage: multer.default.memoryStorage() });
       
       upload.single('file')(req, res, async (err: any) => {
         if (err) {
@@ -3817,7 +3817,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const r2Service = new R2StorageService();
         
         // Upload directly to R2 from server
-        const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+        const { PutObjectCommand } = await import("@aws-sdk/client-s3");
         const command = new PutObjectCommand({
           Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
           Key: fileKey,
