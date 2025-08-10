@@ -24,7 +24,17 @@ export class CloudflareR2Storage {
 
   constructor() {
     // Validate required environment variables
-    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    let accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    
+    // If CLOUDFLARE_ACCOUNT_ID is missing, extract from endpoint
+    if (!accountId && process.env.CLOUDFLARE_R2_ENDPOINT) {
+      const endpointMatch = process.env.CLOUDFLARE_R2_ENDPOINT.match(/https:\/\/([a-f0-9]+)\.r2\.cloudflarestorage\.com/);
+      if (endpointMatch) {
+        accountId = endpointMatch[1];
+        console.log(`✅ Extracted Account ID from endpoint: ${accountId.slice(0,8)}...`);
+      }
+    }
+    
     let accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '';
     const secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
     this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'ocr-documents';
