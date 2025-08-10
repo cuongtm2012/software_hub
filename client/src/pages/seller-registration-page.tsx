@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 // @ts-ignore - vietqr doesn't have TypeScript definitions
-import { VietQR } from 'vietqr';
+import { VietQR } from "vietqr";
 
 interface Bank {
   id: number;
@@ -24,26 +24,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Store, 
-  Upload, 
-  CheckCircle, 
-  Clock, 
-  XCircle, 
-  Shield, 
-  User, 
-  Building2, 
-  CreditCard, 
+import {
+  Store,
+  Upload,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Shield,
+  User,
+  Building2,
+  CreditCard,
   FileText,
   Mail,
   Phone,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
@@ -60,8 +73,8 @@ const sellerRegistrationSchema = z.object({
   bank_name: z.string().min(2, "Bank Name is required"),
   account_number: z.string().min(5, "Account Number is required"),
   account_holder_name: z.string().min(2, "Account Holder Name is required"),
-  terms_accepted: z.boolean().refine(val => val === true, {
-    message: "You must agree to the Seller Terms and Conditions"
+  terms_accepted: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the Seller Terms and Conditions",
   }),
 });
 
@@ -69,8 +82,8 @@ type SellerRegistrationForm = z.infer<typeof sellerRegistrationSchema>;
 
 // Initialize VietQR client
 const vietQR = new VietQR({
-  clientID: '27f69663-48e7-430e-88a5-c5f4ae1fbbe5',
-  apiKey: '64c1060c-098a-4b19-b272-d56f12e70583',
+  clientID: "27f69663-48e7-430e-88a5-c5f4ae1fbbe5",
+  apiKey: "64c1060c-098a-4b19-b272-d56f12e70583",
 });
 
 export default function SellerRegistrationPage() {
@@ -78,7 +91,9 @@ export default function SellerRegistrationPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
-  const [r2UploadedFiles, setR2UploadedFiles] = useState<{ fileKey: string; originalName: string; downloadUrl: string }[]>([]);
+  const [r2UploadedFiles, setR2UploadedFiles] = useState<
+    { fileKey: string; originalName: string; downloadUrl: string }[]
+  >([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [banks, setBanks] = useState<Bank[]>([]);
   const [isLoadingBanks, setIsLoadingBanks] = useState(true);
@@ -107,7 +122,7 @@ export default function SellerRegistrationPage() {
         const banksList = await vietQR.getBanks();
         setBanks((banksList as any).data || []);
       } catch (error) {
-        console.error('Error loading banks:', error);
+        console.error("Error loading banks:", error);
         toast({
           title: "Error",
           description: "Failed to load banks list. Please refresh the page.",
@@ -123,10 +138,10 @@ export default function SellerRegistrationPage() {
 
   // Handle bank selection
   const handleBankSelect = (bankCode: string) => {
-    const selectedBank = banks.find(bank => bank.code === bankCode);
+    const selectedBank = banks.find((bank) => bank.code === bankCode);
     if (selectedBank) {
-      form.setValue('bank_code', bankCode);
-      form.setValue('bank_name', selectedBank.shortName);
+      form.setValue("bank_code", bankCode);
+      form.setValue("bank_name", selectedBank.shortName);
     }
   };
 
@@ -143,7 +158,7 @@ export default function SellerRegistrationPage() {
         bank_code: data.bank_code,
         bank_name: data.bank_name,
         account_number: data.account_number,
-        account_holder_name: data.account_holder_name
+        account_holder_name: data.account_holder_name,
       });
 
       return apiRequest("/api/seller/register", "POST", {
@@ -152,11 +167,14 @@ export default function SellerRegistrationPage() {
         tax_id: data.tax_id,
         business_address: data.business_address,
         bank_account: bankAccount,
-        verification_documents: [...uploadedFiles, ...r2UploadedFiles.map(f => f.fileKey)],
+        verification_documents: [
+          ...uploadedFiles,
+          ...r2UploadedFiles.map((f) => f.fileKey),
+        ],
       });
     },
     onSuccess: (data) => {
-      console.log('Registration successful:', data);
+      console.log("Registration successful:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/seller/profile"] });
       setIsSubmitted(true);
       toast({
@@ -165,55 +183,61 @@ export default function SellerRegistrationPage() {
       });
     },
     onError: (error: any) => {
-      console.error('Registration failed:', error);
+      console.error("Registration failed:", error);
       toast({
         title: "Registration Failed",
-        description: error.message || "Failed to submit registration. Please try again.",
+        description:
+          error.message || "Failed to submit registration. Please try again.",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: SellerRegistrationForm) => {
-    console.log('Form submission data:', data);
-    
+    console.log("Form submission data:", data);
+
     if (!data.terms_accepted) {
       toast({
         title: "Terms Required",
-        description: "Please agree to the Seller Terms and Conditions to continue.",
+        description:
+          "Please agree to the Seller Terms and Conditions to continue.",
         variant: "destructive",
       });
       return;
     }
-    
-    console.log('Submitting seller registration...');
+
+    console.log("Submitting seller registration...");
     registerMutation.mutate(data);
   };
 
   const handleGetUploadParameters = async () => {
     try {
-      console.log('Requesting upload URL...');
+      console.log("Requesting upload URL...");
       const data = await apiRequest("POST", "/api/objects/upload", {});
-      const response = await data.json() as { uploadURL: string };
-      console.log('Upload URL received:', response.uploadURL);
+      const response = (await data.json()) as { uploadURL: string };
+      console.log("Upload URL received:", response.uploadURL);
       return {
         method: "PUT" as const,
         url: response.uploadURL,
       };
     } catch (error) {
-      console.error('Failed to get upload URL:', error);
+      console.error("Failed to get upload URL:", error);
       toast({
         title: "Upload Error",
-        description: "Cannot upload files at the moment. You can still submit the form without uploading documents.",
+        description:
+          "Cannot upload files at the moment. You can still submit the form without uploading documents.",
         variant: "destructive",
       });
       throw new Error("Failed to get upload URL");
     }
   };
 
-  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    const newFiles = result.successful?.map(file => file.uploadURL || "") || [];
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+  const handleUploadComplete = (
+    result: UploadResult<Record<string, unknown>, Record<string, unknown>>,
+  ) => {
+    const newFiles =
+      result.successful?.map((file) => file.uploadURL || "") || [];
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
     toast({
       title: "Upload Complete",
       description: `${result.successful?.length || 0} file(s) uploaded successfully.`,
@@ -228,7 +252,9 @@ export default function SellerRegistrationPage() {
             <CardContent className="p-6 text-center">
               <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">Login Required</h2>
-              <p className="text-gray-600 mb-4">Please log in to register as a seller.</p>
+              <p className="text-gray-600 mb-4">
+                Please log in to register as a seller.
+              </p>
               <Button onClick={() => navigate("/auth")}>Login</Button>
             </CardContent>
           </Card>
@@ -257,10 +283,12 @@ export default function SellerRegistrationPage() {
           <Card className="max-w-2xl mx-auto">
             <CardContent className="p-8 text-center">
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Submitted!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Registration Submitted!
+              </h2>
               <p className="text-gray-600 mb-6">
-                Thank you for registering as a seller. Your application is under review. 
-                We will notify you once approved.
+                Thank you for registering as a seller. Your application is under
+                review. We will notify you once approved.
               </p>
               <Button onClick={() => navigate("/dashboard")}>
                 Return to Dashboard
@@ -290,32 +318,45 @@ export default function SellerRegistrationPage() {
                 {profile.verification_status === "verified" && (
                   <>
                     <CheckCircle className="h-6 w-6 text-green-500" />
-                    <Badge className="bg-green-100 text-green-800">Verified Seller</Badge>
+                    <Badge className="bg-green-100 text-green-800">
+                      Verified Seller
+                    </Badge>
                   </>
                 )}
                 {profile.verification_status === "pending" && (
                   <>
                     <Clock className="h-6 w-6 text-yellow-500" />
-                    <Badge className="bg-yellow-100 text-yellow-800">Verification Pending</Badge>
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      Verification Pending
+                    </Badge>
                   </>
                 )}
                 {profile.verification_status === "rejected" && (
                   <>
                     <XCircle className="h-6 w-6 text-red-500" />
-                    <Badge className="bg-red-100 text-red-800">Verification Rejected</Badge>
+                    <Badge className="bg-red-100 text-red-800">
+                      Verification Rejected
+                    </Badge>
                   </>
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Business Name</label>
-                  <p className="font-medium">{profile.business_name || "N/A"}</p>
+                  <label className="text-sm font-medium text-gray-500">
+                    Business Name
+                  </label>
+                  <p className="font-medium">
+                    {profile.business_name || "N/A"}
+                  </p>
                 </div>
               </div>
 
               {profile.verification_status === "verified" && (
-                <Button onClick={() => navigate("/seller/dashboard")} className="w-full">
+                <Button
+                  onClick={() => navigate("/seller/dashboard")}
+                  className="w-full"
+                >
                   Go to Seller Dashboard
                 </Button>
               )}
@@ -324,7 +365,8 @@ export default function SellerRegistrationPage() {
                 <Alert>
                   <Clock className="h-4 w-4" />
                   <AlertDescription>
-                    Your seller registration is being reviewed. This typically takes 1-2 business days.
+                    Your seller registration is being reviewed. This typically
+                    takes 1-2 business days.
                   </AlertDescription>
                 </Alert>
               )}
@@ -333,7 +375,8 @@ export default function SellerRegistrationPage() {
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Your seller registration was rejected. Please contact support for more information.
+                    Your seller registration was rejected. Please contact
+                    support for more information.
                   </AlertDescription>
                 </Alert>
               )}
@@ -350,23 +393,34 @@ export default function SellerRegistrationPage() {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Register as a Seller</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Register as a Seller
+            </h1>
           </div>
 
           {/* Registration Form */}
           <Card>
             <CardContent className="p-6">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
                   {/* Business / Store Name */}
                   <FormField
                     control={form.control}
                     name="business_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Business / Store Name</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          Business / Store Name
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} className="border-gray-300" />
+                          <Input
+                            placeholder=""
+                            {...field}
+                            className="border-gray-300"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -379,9 +433,15 @@ export default function SellerRegistrationPage() {
                     name="contact_phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Contact Phone Number</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          Contact Phone Number
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} className="border-gray-300" />
+                          <Input
+                            placeholder=""
+                            {...field}
+                            className="border-gray-300"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -394,9 +454,16 @@ export default function SellerRegistrationPage() {
                     name="contact_email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Contact Email</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          Contact Email
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} className="border-gray-300" disabled />
+                          <Input
+                            placeholder=""
+                            {...field}
+                            className="border-gray-300"
+                            disabled
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -409,12 +476,14 @@ export default function SellerRegistrationPage() {
                     name="business_address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Business Address</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          Business Address
+                        </FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="" 
+                          <Textarea
+                            placeholder=""
                             className="min-h-[80px] border-gray-300"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -428,9 +497,15 @@ export default function SellerRegistrationPage() {
                     name="tax_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Tax ID / Registration Number</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          Tax ID / Registration Number
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} className="border-gray-300" />
+                          <Input
+                            placeholder=""
+                            {...field}
+                            className="border-gray-300"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -440,76 +515,38 @@ export default function SellerRegistrationPage() {
                   {/* Upload Documents - R2 Storage Integration */}
                   <div className="space-y-4">
                     <div>
-                      <FormLabel className="text-base font-medium">Upload Documents</FormLabel>
+                      <FormLabel className="text-base font-medium">
+                        Upload Documents
+                      </FormLabel>
                       <p className="text-sm text-gray-500 mt-1">
-                        Upload your business license, tax certificate, or ID proof
+                        Upload your business license, tax certificate, or ID
+                        proof
                         <br />
                         (Allowed formats: PDF, JPG, PNG • Max size: 10MB)
                       </p>
                     </div>
-                    
+
                     {/* R2 Document Uploader */}
                     <R2DocumentUploader
                       onFilesUploaded={setR2UploadedFiles}
                       maxFiles={5}
-                      acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']}
+                      acceptedTypes={[
+                        "image/jpeg",
+                        "image/jpg",
+                        "image/png",
+                        "application/pdf",
+                      ]}
                       maxSizeInMB={10}
                     />
-                    
-                    {/* Fallback uploader if R2 is not configured */}
-                    <div className="border-t border-gray-200 pt-4">
-                      <details className="cursor-pointer">
-                        <summary className="text-sm text-gray-600 hover:text-gray-800">
-                          Alternative upload method
-                        </summary>
-                        <div className="mt-3">
-                          <ObjectUploader
-                            maxNumberOfFiles={5}
-                            maxFileSize={10485760}
-                            onGetUploadParameters={handleGetUploadParameters}
-                            onComplete={handleUploadComplete}
-                            buttonClassName="w-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                          >
-                            Choose File (Legacy)
-                          </ObjectUploader>
-                        </div>
-                      </details>
-                    </div>
-                    
-                    {/* Upload Status Display */}
-                    {(uploadedFiles.length > 0 || r2UploadedFiles.length > 0) && (
-                      <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                        <div className="flex items-center gap-2 text-green-700">
-                          <CheckCircle size={16} />
-                          <span className="text-sm font-medium">
-                            {uploadedFiles.length + r2UploadedFiles.length} document(s) uploaded successfully
-                          </span>
-                        </div>
-                        {r2UploadedFiles.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-xs text-green-600 font-medium">R2 Storage files:</p>
-                            <ul className="text-xs text-green-600 list-disc list-inside ml-2">
-                              {r2UploadedFiles.map((file, index) => (
-                                <li key={index}>{file.originalName}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {uploadedFiles.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-xs text-green-600 font-medium">Legacy storage files:</p>
-                            <p className="text-xs text-green-600 ml-2">{uploadedFiles.length} file(s)</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   <Separator className="my-6" />
 
                   {/* Payment Details Header */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Payment Details
+                    </h3>
                   </div>
 
                   {/* Bank Selection */}
@@ -518,19 +555,32 @@ export default function SellerRegistrationPage() {
                     name="bank_code"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Select Bank</FormLabel>
-                        <Select onValueChange={(value) => {
-                          field.onChange(value);
-                          handleBankSelect(value);
-                        }} value={field.value}>
+                        <FormLabel className="text-base font-medium">
+                          Select Bank
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleBankSelect(value);
+                          }}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger className="border-gray-300">
-                              <SelectValue placeholder={isLoadingBanks ? "Loading banks..." : "Select your bank"} />
+                              <SelectValue
+                                placeholder={
+                                  isLoadingBanks
+                                    ? "Loading banks..."
+                                    : "Select your bank"
+                                }
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="max-h-60">
                             {isLoadingBanks ? (
-                              <SelectItem value="loading" disabled>Loading banks...</SelectItem>
+                              <SelectItem value="loading" disabled>
+                                Loading banks...
+                              </SelectItem>
                             ) : banks.length > 0 ? (
                               banks.map((bank) => (
                                 <SelectItem key={bank.code} value={bank.code}>
@@ -538,7 +588,9 @@ export default function SellerRegistrationPage() {
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="none" disabled>No banks available</SelectItem>
+                              <SelectItem value="none" disabled>
+                                No banks available
+                              </SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -553,12 +605,14 @@ export default function SellerRegistrationPage() {
                     name="bank_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Bank Name</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          Bank Name
+                        </FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Bank name will be auto-filled" 
-                            {...field} 
-                            className="border-gray-300 bg-gray-50" 
+                          <Input
+                            placeholder="Bank name will be auto-filled"
+                            {...field}
+                            className="border-gray-300 bg-gray-50"
                             readOnly
                           />
                         </FormControl>
@@ -573,9 +627,15 @@ export default function SellerRegistrationPage() {
                     name="account_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Account Number</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          Account Number
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} className="border-gray-300" />
+                          <Input
+                            placeholder=""
+                            {...field}
+                            className="border-gray-300"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -588,9 +648,15 @@ export default function SellerRegistrationPage() {
                     name="account_holder_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-medium">Account Holder Name</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          Account Holder Name
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} className="border-gray-300" />
+                          <Input
+                            placeholder=""
+                            {...field}
+                            className="border-gray-300"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -635,7 +701,10 @@ export default function SellerRegistrationPage() {
                     <Button
                       type="submit"
                       className="flex-1"
-                      disabled={registerMutation.isPending || !form.watch("terms_accepted")}
+                      disabled={
+                        registerMutation.isPending ||
+                        !form.watch("terms_accepted")
+                      }
                     >
                       {registerMutation.isPending ? "Submitting..." : "Submit"}
                     </Button>
