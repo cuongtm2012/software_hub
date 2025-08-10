@@ -4236,5 +4236,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Notification API Routes
+  app.get("/api/notifications", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const { limit = 10, offset = 0, unreadOnly = 'false' } = req.query;
+      
+      const params = {
+        limit: Number(limit),
+        offset: Number(offset),
+        unreadOnly: unreadOnly === 'true'
+      };
+      
+      const result = await storage.getUserNotifications(userId, params);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/notifications/unread-count", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const count = await storage.getUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/notifications", isAuthenticated, async (req, res, next) => {
+    try {
+      const { title, message, type = 'info', link_url, metadata } = req.body;
+      const userId = req.user!.id;
+      
+      if (!title || !message) {
+        return res.status(400).json({ message: "Title and message are required" });
+      }
+      
+      const notification = await storage.createNotification({
+        user_id: userId,
+        title,
+        message,
+        type,
+        link_url,
+        metadata
+      });
+      
+      res.status(201).json({ notification });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/notifications/:id/read", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.id;
+      
+      const notification = await storage.markNotificationAsRead(Number(id), userId);
+      
+      if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      
+      res.json({ notification });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/notifications/mark-all-read", isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user!.id;
+      const success = await storage.markAllNotificationsAsRead(userId);
+      
+      res.json({ success });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/notifications/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.id;
+      
+      const success = await storage.deleteNotification(Number(id), userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return server;
 }

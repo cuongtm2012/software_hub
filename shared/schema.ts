@@ -938,6 +938,20 @@ export const chatMessages = pgTable("chat_messages", {
   edited_at: timestamp("edited_at"),
 });
 
+// User notifications table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").default('info').notNull(), // info, success, warning, error, system
+  is_read: boolean("is_read").default(false).notNull(),
+  link_url: text("link_url"), // Optional URL to navigate to when clicked
+  metadata: jsonb("metadata"), // Additional data for the notification
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  read_at: timestamp("read_at"),
+});
+
 // User presence table for online status
 export const userPresence = pgTable("user_presence", {
   id: serial("id").primaryKey(),
@@ -986,6 +1000,13 @@ export const userPresenceRelations = relations(userPresence, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.user_id],
+    references: [users.id],
+  }),
+}));
+
 // Chat schemas
 export const insertChatRoomSchema = createInsertSchema(chatRooms).omit({
   id: true,
@@ -1008,6 +1029,11 @@ export const insertUserPresenceSchema = createInsertSchema(userPresence).omit({
   last_seen: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  created_at: true,
+});
+
 // Chat types
 export type ChatRoom = typeof chatRooms.$inferSelect;
 export type InsertChatRoom = z.infer<typeof insertChatRoomSchema>;
@@ -1020,3 +1046,6 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
 export type UserPresence = typeof userPresence.$inferSelect;
 export type InsertUserPresence = z.infer<typeof insertUserPresenceSchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

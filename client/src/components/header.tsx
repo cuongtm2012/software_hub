@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Menu, X, Search, Store } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { NotificationBell } from "@/components/notification-bell";
 
 export function Header() {
   const { user, logoutMutation } = useAuth();
@@ -102,7 +103,7 @@ export function Header() {
             </form>
 
             {!user ? (
-              <div className="flex space-x-3 ml-4">
+              <div className="flex items-center space-x-3 ml-4">
                 <Button
                   onClick={() => navigate("/auth")}
                   variant="ghost"
@@ -110,15 +111,19 @@ export function Header() {
                 >
                   Login
                 </Button>
-                <Button
-                  onClick={() => navigate("/auth?tab=register")}
-                  className="btn-primary"
-                >
-                  Sign up
-                </Button>
+                <div className="relative">
+                  <Button
+                    onClick={() => navigate("/auth?tab=register")}
+                    className="btn-primary"
+                  >
+                    Sign up
+                  </Button>
+                  <NotificationBell className="absolute -top-1 -right-1" />
+                </div>
               </div>
             ) : (
-              <div className="ml-4 flex items-center">
+              <div className="ml-4 flex items-center space-x-3">
+                <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
