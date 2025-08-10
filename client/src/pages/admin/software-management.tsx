@@ -446,8 +446,6 @@ export default function SoftwareManagement() {
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>Software Name</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead>Vendor</TableHead>
                 <TableHead>License</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date Added</TableHead>
@@ -457,13 +455,13 @@ export default function SoftwareManagement() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8">
                     Loading software...
                   </TableCell>
                 </TableRow>
               ) : software.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8">
                     No software found
                   </TableCell>
                 </TableRow>
@@ -472,8 +470,6 @@ export default function SoftwareManagement() {
                   <TableRow key={item.id}>
                     <TableCell>{(currentPage - 1) * pageSize + index + 1}</TableCell>
                     <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>{item.version || '1.0.0'}</TableCell>
-                    <TableCell>{item.vendor || 'Unknown'}</TableCell>
                     <TableCell>{item.license || 'Free'}</TableCell>
                     <TableCell>
                       <Select

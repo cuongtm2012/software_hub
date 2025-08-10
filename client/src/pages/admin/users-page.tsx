@@ -132,6 +132,29 @@ export default function UsersPage() {
       });
     }
   });
+
+  // Handle password reset mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId }: { userId: number }) => {
+      const response = await apiRequest('POST', `/api/admin/users/${userId}/reset-password`, { 
+        newPassword: 'abcd1234' 
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password reset",
+        description: "User password has been reset to 'abcd1234'.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to reset password",
+        description: error.message || "An error occurred while resetting the password.",
+      });
+    }
+  });
   
   // Filter users based on search term
   const filteredUsers = usersData?.users?.filter((user: User) => {
@@ -157,6 +180,14 @@ export default function UsersPage() {
     updateRoleMutation.mutate({
       userId: selectedUser.id,
       role: selectedRole
+    });
+  };
+
+  const handlePasswordReset = () => {
+    if (!selectedUser) return;
+    
+    resetPasswordMutation.mutate({
+      userId: selectedUser.id
     });
   };
   
@@ -281,16 +312,16 @@ export default function UsersPage() {
           </CardContent>
         </Card>
         
-        {/* Edit Role Dialog */}
+        {/* Edit User Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Edit User Role</DialogTitle>
+              <DialogTitle>Edit User</DialogTitle>
               <DialogDescription>
-                Change the role for {selectedUser?.name}
+                Manage settings for {selectedUser?.name}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-6 py-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select
@@ -309,6 +340,27 @@ export default function UsersPage() {
                   </SelectContent>
                 </Select>
               </div>
+              
+              <div className="space-y-3">
+                <Label>Password Reset</Label>
+                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Reset to default password</span>
+                    <span className="text-xs text-muted-foreground">New password: abcd1234</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handlePasswordReset}
+                    disabled={resetPasswordMutation.isPending}
+                  >
+                    {resetPasswordMutation.isPending && (
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    )}
+                    Reset
+                  </Button>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button 
@@ -324,7 +376,7 @@ export default function UsersPage() {
                 {updateRoleMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Save Changes
+                Save Role
               </Button>
             </DialogFooter>
           </DialogContent>

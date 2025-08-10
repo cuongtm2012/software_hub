@@ -562,6 +562,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin reset user password endpoint
+  app.post("/api/admin/users/:id/reset-password", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { newPassword } = req.body;
+      
+      if (!newPassword) {
+        return res.status(400).json({ message: "New password is required" });
+      }
+      
+      await storage.resetUserPassword(parseInt(id), newPassword);
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Admin delete user endpoint
   app.delete("/api/admin/users/:id", adminMiddleware, async (req, res, next) => {
     try {

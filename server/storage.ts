@@ -49,6 +49,7 @@ export interface IStorage {
   // Admin User Management
   getAllUsers(params?: { role?: string; search?: string; limit?: number; offset?: number }): Promise<{ users: any[], total: number }>;
   deleteUser(id: number): Promise<boolean>;
+  resetUserPassword(id: number, newPassword: string): Promise<boolean>;
   
   // User Downloads
   createUserDownload(userId: number, softwareId: number, version: string): Promise<UserDownload>;
@@ -319,6 +320,20 @@ export class DatabaseStorage implements IStorage {
       return result.length > 0;
     } catch (error) {
       console.error('Error deleting user:', error);
+      return false;
+    }
+  }
+
+  async resetUserPassword(id: number, newPassword: string): Promise<boolean> {
+    try {
+      const result = await db
+        .update(users)
+        .set({ password: newPassword })
+        .where(eq(users.id, id))
+        .returning({ id: users.id });
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error resetting user password:', error);
       return false;
     }
   }
