@@ -161,7 +161,7 @@ export default function SellerRegistrationPage() {
         account_holder_name: data.account_holder_name,
       });
 
-      return apiRequest("/api/seller/register", "POST", {
+      return apiRequest("POST", "/api/seller/register", {
         business_name: data.business_name,
         business_type: "individual", // Default to individual for now
         tax_id: data.tax_id,
