@@ -36,10 +36,17 @@ export class R2StorageService {
         Bucket: this.bucketName,
         Key: fileKey,
         ContentType: contentType,
+        // Add metadata for CORS compliance
+        Metadata: {
+          'uploaded-by': 'softwarehub-app',
+          'upload-time': new Date().toISOString(),
+        },
       });
 
       const signedUrl = await getSignedUrl(r2Client, command, {
         expiresIn: 3600, // 1 hour
+        // Ensure CORS headers are included
+        signableHeaders: new Set(['content-type']),
       });
 
       return signedUrl;

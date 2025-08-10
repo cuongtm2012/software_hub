@@ -3796,6 +3796,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Server-side upload fallback for CORS issues
+  app.post("/api/r2/server-upload", isAuthenticated, async (req, res, next) => {
+    try {
+      const multer = require('multer');
+      const upload = multer({ storage: multer.memoryStorage() });
+      
+      upload.single('file')(req, res, async (err: any) => {
+        if (err) {
+          return res.status(400).json({ error: "File upload error" });
+        }
+
+        const file = req.file;
+        const { fileKey } = req.body;
+        
+        if (!file || !fileKey) {
+          return res.status(400).json({ error: "File and fileKey are required" });
+        }
+
+        const r2Service = new R2StorageService();
+        
+        // Upload directly to R2 from server
+        const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+        const command = new PutObjectCommand({
+          Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+          Key: fileKey,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          Metadata: {
+            'uploaded-by': 'softwarehub-server',
+            'original-name': file.originalname,
+          },
+        });
+
+        await r2Service.r2Client.send(command);
+        res.json({ success: true, fileKey });
+      });
+    } catch (error) {
+      console.error("Error in server-side R2 upload:", error);
+      res.status(500).json({ error: "Server-side upload failed" });
+    }
+  });
+
   app.get("/objects/:objectPath(*)", async (req, res, next) => {
     try {
       const objectStorageService = new ObjectStorageService();

@@ -31,7 +31,28 @@ CLOUDFLARE_R2_PUBLIC_ENDPOINT=https://your-custom-domain.com  # Optional: for pu
 1. Log in to your Cloudflare dashboard
 2. Go to R2 Object Storage
 3. Create a new bucket named `softwarehub-uploads` (or your preferred name)
-4. Configure CORS settings if needed for direct browser uploads
+4. **IMPORTANT**: Configure CORS settings for direct browser uploads
+
+#### CORS Configuration (Required)
+
+In your R2 bucket settings, add the following CORS configuration:
+
+```json
+[
+  {
+    "AllowedOrigins": ["*"],
+    "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+For production, replace `"*"` in AllowedOrigins with your specific domain:
+```json
+"AllowedOrigins": ["https://yourdomain.com", "https://your-replit-app.replit.app"]
+```
 
 ### 2. Generate API Credentials
 

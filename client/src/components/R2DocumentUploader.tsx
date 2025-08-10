@@ -90,16 +90,42 @@ export function R2DocumentUploader({
         ));
 
         // Upload file directly to R2
-        const uploadToR2 = await fetch(uploadResponse.uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        });
+        try {
+          const uploadToR2 = await fetch(uploadResponse.uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+              'Content-Type': file.type,
+            },
+            mode: 'cors', // Explicitly set CORS mode
+          });
 
-        if (!uploadToR2.ok) {
-          throw new Error('Failed to upload to R2');
+          if (!uploadToR2.ok) {
+            const errorText = await uploadToR2.text();
+            throw new Error(`R2 upload failed: ${uploadToR2.status} ${uploadToR2.statusText} - ${errorText}`);
+          }
+        } catch (error) {
+          console.error('R2 upload error:', error);
+          if (error instanceof TypeError && error.message.includes('fetch')) {
+            // Fall back to server-side upload for CORS issues
+            console.log('CORS issue detected, attempting server-side upload...');
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('fileKey', uploadResponse.fileKey);
+            
+            const serverUploadResp = await fetch("/api/r2/server-upload", {
+              method: "POST",
+              credentials: "include",
+              body: formData,
+            });
+
+            if (!serverUploadResp.ok) {
+              const errorData = await serverUploadResp.json();
+              throw new Error(errorData.error || 'Server-side upload failed');
+            }
+          } else {
+            throw error;
+          }
         }
 
         // Update progress
