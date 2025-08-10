@@ -180,6 +180,28 @@ function UserManagementComponent() {
     },
   });
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId }: { userId: number }) => {
+      const response = await apiRequest('POST', `/api/admin/users/${userId}/reset-password`, { 
+        newPassword: 'abcd1234' 
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password reset",
+        description: "User password has been reset to 'abcd1234'.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to reset password",
+        description: error.message || "An error occurred while resetting the password.",
+      });
+    }
+  });
+
   const allUsers = usersData?.users?.users || [];
   const uniqueUsers = deduplicateUsersByEmail(allUsers);
   const stats = getUserDuplicationStats(allUsers);
@@ -405,6 +427,27 @@ function UserManagementComponent() {
                     <SelectItem value="suspended">Suspended</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label>Password Reset</Label>
+                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Reset to default password</span>
+                    <span className="text-xs text-muted-foreground">New password: abcd1234</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => selectedUser && resetPasswordMutation.mutate({ userId: selectedUser.id })}
+                    disabled={resetPasswordMutation.isPending}
+                  >
+                    {resetPasswordMutation.isPending && (
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    )}
+                    Reset
+                  </Button>
+                </div>
               </div>
             </div>
           )}
