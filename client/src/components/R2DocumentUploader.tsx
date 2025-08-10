@@ -94,10 +94,13 @@ export function R2DocumentUploader({
         console.log('File details:', { name: file.name, type: file.type, size: file.size });
         
         try {
-          // Try upload without explicit Content-Type header first (let browser set it)
+          // Upload with explicit Content-Type header as required by AWS SDK
           const uploadToR2 = await fetch(uploadResponse.uploadUrl, {
             method: 'PUT',
             body: file,
+            headers: {
+              'Content-Type': file.type,
+            },
             mode: 'cors',
           });
 

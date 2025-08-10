@@ -26,7 +26,7 @@ import { z } from "zod";
 import emailService from "./services/emailService.js";
 import notificationService from "./services/notificationService.js";
 import { ObjectStorageService } from "./objectStorage";
-import { R2StorageService } from "./r2Storage";
+import { getR2Storage } from "./cloudflare-r2-storage-working";
 
 // Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -3712,34 +3712,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/r2/upload-url", isAuthenticated, async (req, res, next) => {
     try {
       const { fileName, contentType, uploadType = 'general' } = req.body;
-      const r2Service = new R2StorageService();
       
-      // Validate R2 configuration
-      const { valid, missingVars } = r2Service.validateConfiguration();
-      if (!valid) {
-        return res.status(500).json({ 
-          error: "R2 storage not configured", 
-          missingVars 
-        });
+      if (!fileName || !contentType) {
+        return res.status(400).json({ error: "fileName and contentType are required" });
       }
 
-      let result;
-      const fileExtension = fileName ? fileName.substring(fileName.lastIndexOf('.')) : '';
+      const r2Storage = getR2Storage();
+      if (!r2Storage) {
+        return res.status(500).json({ error: "R2 storage not configured" });
+      }
       
+      // Generate unique key based on uploadType
+      const userId = req.user?.id;
+      const timestamp = Date.now();
+      const fileExtension = fileName.includes('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
+      
+      let fileKey: string;
       switch (uploadType) {
         case 'verification-documents':
-          result = await r2Service.getVerificationDocumentUploadUrl(req.user!.id, fileExtension);
+          if (!userId) {
+            return res.status(401).json({ error: "User authentication required" });
+          }
+          fileKey = `verification-documents/${userId}/${timestamp}-${fileName}`;
           break;
         case 'product-images':
-          result = await r2Service.getProductImageUploadUrl(undefined, fileExtension);
+          fileKey = `product-images/temp/${timestamp}-${fileName}`;
           break;
         case 'documents':
         default:
-          result = await r2Service.getDocumentUploadUrl(fileExtension);
+          fileKey = `documents/${timestamp}-${fileName}`;
           break;
       }
-
-      res.json(result);
+      
+      const uploadUrl = await r2Storage.generatePresignedUploadUrl(fileKey, contentType);
+      
+      res.json({ 
+        uploadUrl,
+        fileKey 
+      });
     } catch (error) {
       console.error("Error getting R2 upload URL:", error);
       res.status(500).json({ error: "Failed to get R2 upload URL" });
