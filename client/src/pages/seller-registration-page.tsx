@@ -153,11 +153,17 @@ export default function SellerRegistrationPage() {
         verification_documents: uploadedFiles,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Registration successful:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/seller/profile"] });
       setIsSubmitted(true);
+      toast({
+        title: "Registration Submitted",
+        description: "Your seller registration has been submitted for review.",
+      });
     },
     onError: (error: any) => {
+      console.error('Registration failed:', error);
       toast({
         title: "Registration Failed",
         description: error.message || "Failed to submit registration. Please try again.",
@@ -184,12 +190,20 @@ export default function SellerRegistrationPage() {
 
   const handleGetUploadParameters = async () => {
     try {
+      console.log('Requesting upload URL...');
       const response = await apiRequest("/api/objects/upload", "POST", {}) as { uploadURL: string };
+      console.log('Upload URL received:', response.uploadURL);
       return {
         method: "PUT" as const,
         url: response.uploadURL,
       };
     } catch (error) {
+      console.error('Failed to get upload URL:', error);
+      toast({
+        title: "Upload Error",
+        description: "Cannot upload files at the moment. You can still submit the form without uploading documents.",
+        variant: "destructive",
+      });
       throw new Error("Failed to get upload URL");
     }
   };
