@@ -125,7 +125,7 @@ export default function AuthPage() {
     defaultValues: {
       email: "",
     },
-    mode: "onChange",
+    mode: "onBlur",  // Changed to 'onBlur' to trigger validation when the input loses focus
   });
 
   // Reset form when switching to forgot password
@@ -344,7 +344,7 @@ export default function AuthPage() {
                               type="email" 
                               placeholder="Enter your email address" 
                               className="focus-visible:ring-[#004080]"
-                              value={forgotPasswordForm.getValues("email") || ""}
+                              value={forgotPasswordForm.watch("email") || ""}
                               onChange={(e) => forgotPasswordForm.setValue("email", e.target.value)}
                             />
                           </div>
@@ -353,8 +353,14 @@ export default function AuthPage() {
                             <Button 
                               onClick={() => {
                                 const email = forgotPasswordForm.getValues("email");
-                                if (email) {
+                                if (email && email.includes("@")) {
                                   forgotPasswordMutation.mutate({ email });
+                                } else {
+                                  toast({
+                                    title: "Invalid Email",
+                                    description: "Please enter a valid email address.",
+                                    variant: "destructive",
+                                  });
                                 }
                               }}
                               className="w-full bg-gradient-to-r from-[#004080] to-[#003366] hover:from-[#003366] hover:to-[#002040] text-white"
@@ -367,7 +373,10 @@ export default function AuthPage() {
                             <Button 
                               type="button"
                               variant="outline"
-                              onClick={() => setShowForgotPassword(false)}
+                              onClick={() => {
+                                setShowForgotPassword(false);
+                                forgotPasswordForm.reset({ email: "" });
+                              }}
                               className="w-full border-[#004080] text-[#004080] hover:bg-[#004080]/5"
                             >
                               Back to Login
