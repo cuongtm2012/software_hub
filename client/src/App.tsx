@@ -636,20 +636,20 @@ function Router() {
           </Suspense>
         );
       }} />
-      {/* Seller Dashboard Routes */}
+      {/* Seller Dashboard Routes - Redirect to main dashboard which has integrated seller functionality */}
       <ProtectedRoute path="/seller" component={() => {
-        const SellerDashboardPage = lazy(() => import("@/pages/seller-dashboard-page"));
+        const DashboardPage = lazy(() => import("@/pages/dashboard-page"));
         return (
           <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <SellerDashboardPage />
+            <DashboardPage />
           </Suspense>
         );
       }} roles={['seller', 'admin']} />
       <ProtectedRoute path="/seller/dashboard" component={() => {
-        const SellerDashboardPage = lazy(() => import("@/pages/seller-dashboard-page"));
+        const DashboardPage = lazy(() => import("@/pages/dashboard-page"));
         return (
           <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <SellerDashboardPage />
+            <DashboardPage />
           </Suspense>
         );
       }} roles={['seller', 'admin']} />
