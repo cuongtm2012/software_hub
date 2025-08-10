@@ -91,22 +91,34 @@ export function R2DocumentUploader({
 
         // Upload file directly to R2
         console.log('Attempting direct upload to R2:', uploadResponse.uploadUrl);
-        const uploadToR2 = await fetch(uploadResponse.uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-          mode: 'cors',
-        });
+        console.log('File details:', { name: file.name, type: file.type, size: file.size });
+        
+        try {
+          // Try upload without explicit Content-Type header first (let browser set it)
+          const uploadToR2 = await fetch(uploadResponse.uploadUrl, {
+            method: 'PUT',
+            body: file,
+            mode: 'cors',
+          });
 
-        if (!uploadToR2.ok) {
-          const errorText = await uploadToR2.text();
-          console.error(`R2 upload failed: ${uploadToR2.status} ${uploadToR2.statusText}`, errorText);
-          throw new Error(`Upload failed: ${uploadToR2.status} ${uploadToR2.statusText}`);
+          console.log('Upload response status:', uploadToR2.status, uploadToR2.statusText);
+          console.log('Upload response headers:', Object.fromEntries(uploadToR2.headers.entries()));
+
+          if (!uploadToR2.ok) {
+            const errorText = await uploadToR2.text();
+            console.error(`R2 upload failed: ${uploadToR2.status} ${uploadToR2.statusText}`, errorText);
+            throw new Error(`Upload failed: ${uploadToR2.status} ${uploadToR2.statusText} - ${errorText}`);
+          }
+
+          console.log('R2 upload successful!');
+        } catch (fetchError) {
+          console.error('Fetch error details:', fetchError);
+          if (fetchError instanceof TypeError) {
+            console.error('Network or CORS error - check browser network tab for details');
+            throw new Error('Network error: Check if CORS is properly configured in R2 bucket settings');
+          }
+          throw fetchError;
         }
-
-        console.log('R2 upload successful!');
 
         // Update progress
         setFiles(prev => prev.map(f => 
