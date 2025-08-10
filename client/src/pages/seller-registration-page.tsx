@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { R2DocumentUploader } from "@/components/R2DocumentUploader";
 import type { UploadResult } from "@uppy/core";
 
 const sellerRegistrationSchema = z.object({
@@ -77,6 +78,7 @@ export default function SellerRegistrationPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [r2UploadedFiles, setR2UploadedFiles] = useState<{ fileKey: string; originalName: string; downloadUrl: string }[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [banks, setBanks] = useState<Bank[]>([]);
   const [isLoadingBanks, setIsLoadingBanks] = useState(true);
@@ -150,7 +152,7 @@ export default function SellerRegistrationPage() {
         tax_id: data.tax_id,
         business_address: data.business_address,
         bank_account: bankAccount,
-        verification_documents: uploadedFiles,
+        verification_documents: [...uploadedFiles, ...r2UploadedFiles.map(f => f.fileKey)],
       });
     },
     onSuccess: (data) => {
@@ -191,7 +193,8 @@ export default function SellerRegistrationPage() {
   const handleGetUploadParameters = async () => {
     try {
       console.log('Requesting upload URL...');
-      const response = await apiRequest("/api/objects/upload", "POST", {}) as { uploadURL: string };
+      const data = await apiRequest("/api/objects/upload", "POST", {});
+      const response = await data.json() as { uploadURL: string };
       console.log('Upload URL received:', response.uploadURL);
       return {
         method: "PUT" as const,
@@ -434,28 +437,70 @@ export default function SellerRegistrationPage() {
                     )}
                   />
 
-                  {/* Upload Documents */}
-                  <div className="space-y-2">
-                    <FormLabel className="text-base font-medium">Upload Documents</FormLabel>
-                    <ObjectUploader
-                      maxNumberOfFiles={5}
-                      maxFileSize={10485760}
-                      onGetUploadParameters={handleGetUploadParameters}
-                      onComplete={handleUploadComplete}
-                      buttonClassName="w-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                    >
-                      Choose File
-                    </ObjectUploader>
-                    <p className="text-sm text-gray-500">
-                      (Allowed formats: PDF, JPG, PNG)
-                      <br />
-                      <em>Upload your business license or ID proof</em>
-                    </p>
-                    {uploadedFiles.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-green-600">
-                          {uploadedFiles.length} file(s) uploaded successfully
-                        </p>
+                  {/* Upload Documents - R2 Storage Integration */}
+                  <div className="space-y-4">
+                    <div>
+                      <FormLabel className="text-base font-medium">Upload Documents</FormLabel>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Upload your business license, tax certificate, or ID proof
+                        <br />
+                        (Allowed formats: PDF, JPG, PNG • Max size: 10MB)
+                      </p>
+                    </div>
+                    
+                    {/* R2 Document Uploader */}
+                    <R2DocumentUploader
+                      onFilesUploaded={setR2UploadedFiles}
+                      maxFiles={5}
+                      acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']}
+                      maxSizeInMB={10}
+                    />
+                    
+                    {/* Fallback uploader if R2 is not configured */}
+                    <div className="border-t border-gray-200 pt-4">
+                      <details className="cursor-pointer">
+                        <summary className="text-sm text-gray-600 hover:text-gray-800">
+                          Alternative upload method
+                        </summary>
+                        <div className="mt-3">
+                          <ObjectUploader
+                            maxNumberOfFiles={5}
+                            maxFileSize={10485760}
+                            onGetUploadParameters={handleGetUploadParameters}
+                            onComplete={handleUploadComplete}
+                            buttonClassName="w-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                          >
+                            Choose File (Legacy)
+                          </ObjectUploader>
+                        </div>
+                      </details>
+                    </div>
+                    
+                    {/* Upload Status Display */}
+                    {(uploadedFiles.length > 0 || r2UploadedFiles.length > 0) && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                        <div className="flex items-center gap-2 text-green-700">
+                          <CheckCircle size={16} />
+                          <span className="text-sm font-medium">
+                            {uploadedFiles.length + r2UploadedFiles.length} document(s) uploaded successfully
+                          </span>
+                        </div>
+                        {r2UploadedFiles.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs text-green-600 font-medium">R2 Storage files:</p>
+                            <ul className="text-xs text-green-600 list-disc list-inside ml-2">
+                              {r2UploadedFiles.map((file, index) => (
+                                <li key={index}>{file.originalName}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {uploadedFiles.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs text-green-600 font-medium">Legacy storage files:</p>
+                            <p className="text-xs text-green-600 ml-2">{uploadedFiles.length} file(s)</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

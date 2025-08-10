@@ -26,6 +26,7 @@ import { z } from "zod";
 import emailService from "./services/emailService.js";
 import notificationService from "./services/notificationService.js";
 import { ObjectStorageService } from "./objectStorage";
+import { R2StorageService } from "./r2Storage";
 
 // Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -3704,6 +3705,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting upload URL:", error);
       res.status(500).json({ error: "Failed to get upload URL" });
+    }
+  });
+
+  // Cloudflare R2 Storage API Routes
+  app.post("/api/r2/upload-url", isAuthenticated, async (req, res, next) => {
+    try {
+      const { fileName, contentType, uploadType = 'general' } = req.body;
+      const r2Service = new R2StorageService();
+      
+      // Validate R2 configuration
+      const { valid, missingVars } = r2Service.validateConfiguration();
+      if (!valid) {
+        return res.status(500).json({ 
+          error: "R2 storage not configured", 
+          missingVars 
+        });
+      }
+
+      let result;
+      const fileExtension = fileName ? fileName.substring(fileName.lastIndexOf('.')) : '';
+      
+      switch (uploadType) {
+        case 'verification-documents':
+          result = await r2Service.getVerificationDocumentUploadUrl(req.user!.id, fileExtension);
+          break;
+        case 'product-images':
+          result = await r2Service.getProductImageUploadUrl(undefined, fileExtension);
+          break;
+        case 'documents':
+        default:
+          result = await r2Service.getDocumentUploadUrl(fileExtension);
+          break;
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error getting R2 upload URL:", error);
+      res.status(500).json({ error: "Failed to get R2 upload URL" });
+    }
+  });
+
+  app.post("/api/r2/download-url", isAuthenticated, async (req, res, next) => {
+    try {
+      const { fileKey } = req.body;
+      
+      if (!fileKey) {
+        return res.status(400).json({ error: "fileKey is required" });
+      }
+
+      const r2Service = new R2StorageService();
+      const downloadUrl = await r2Service.getDownloadUrl(fileKey);
+      
+      res.json({ downloadUrl });
+    } catch (error) {
+      console.error("Error getting R2 download URL:", error);
+      res.status(500).json({ error: "Failed to get R2 download URL" });
+    }
+  });
+
+  app.get("/api/r2/file/:fileKey(*)", isAuthenticated, async (req, res, next) => {
+    try {
+      const { fileKey } = req.params;
+      const r2Service = new R2StorageService();
+      
+      await r2Service.downloadFile(fileKey, res);
+    } catch (error) {
+      console.error("Error downloading file from R2:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to download file" });
+      }
+    }
+  });
+
+  app.delete("/api/r2/file/:fileKey(*)", isAuthenticated, async (req, res, next) => {
+    try {
+      const { fileKey } = req.params;
+      const r2Service = new R2StorageService();
+      
+      const deleted = await r2Service.deleteFile(fileKey);
+      
+      if (deleted) {
+        res.json({ success: true, message: "File deleted successfully" });
+      } else {
+        res.status(500).json({ error: "Failed to delete file" });
+      }
+    } catch (error) {
+      console.error("Error deleting file from R2:", error);
+      res.status(500).json({ error: "Failed to delete file" });
     }
   });
 
