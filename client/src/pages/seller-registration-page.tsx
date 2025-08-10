@@ -136,16 +136,20 @@ export default function SellerRegistrationPage() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: SellerRegistrationForm) => {
-      return apiRequest("/api/seller/register", "POST", {
-        business_name: data.business_name,
-        contact_phone: data.contact_phone,
-        contact_email: data.contact_email,
-        business_address: data.business_address,
-        tax_id: data.tax_id,
+      // Combine bank information into single bank_account field
+      const bankAccount = JSON.stringify({
         bank_code: data.bank_code,
         bank_name: data.bank_name,
         account_number: data.account_number,
-        account_holder_name: data.account_holder_name,
+        account_holder_name: data.account_holder_name
+      });
+
+      return apiRequest("/api/seller/register", "POST", {
+        business_name: data.business_name,
+        business_type: "individual", // Default to individual for now
+        tax_id: data.tax_id,
+        business_address: data.business_address,
+        bank_account: bankAccount,
         verification_documents: uploadedFiles,
       });
     },
@@ -163,6 +167,8 @@ export default function SellerRegistrationPage() {
   });
 
   const onSubmit = (data: SellerRegistrationForm) => {
+    console.log('Form submission data:', data);
+    
     if (!data.terms_accepted) {
       toast({
         title: "Terms Required",
@@ -171,6 +177,8 @@ export default function SellerRegistrationPage() {
       });
       return;
     }
+    
+    console.log('Submitting seller registration...');
     registerMutation.mutate(data);
   };
 

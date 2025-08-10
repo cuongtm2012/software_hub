@@ -1895,18 +1895,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seller Registration & Management Routes
   app.post("/api/seller/register", isAuthenticated, async (req, res, next) => {
     try {
+      console.log('Seller registration request received:', JSON.stringify(req.body, null, 2));
+      console.log('User:', req.user);
+      
       const insertData = insertSellerProfileSchema.parse({
         ...req.body,
         verification_status: "pending"
       });
       
+      console.log('Parsed insert data:', JSON.stringify(insertData, null, 2));
+      
       const sellerProfile = await storage.createSellerProfile(insertData, req.user!.id);
+      console.log('Seller profile created successfully:', sellerProfile);
+      
       res.status(201).json({ seller_profile: sellerProfile });
     } catch (error) {
+      console.error('Seller registration error:', error);
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
+        console.error('Validation error details:', validationError.message);
         res.status(400).json({ message: validationError.message });
       } else {
+        console.error('Unexpected error:', error);
         next(error);
       }
     }
