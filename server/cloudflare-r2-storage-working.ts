@@ -161,6 +161,25 @@ export class CloudflareR2Storage {
   }
 
   /**
+   * Generate a presigned URL for direct download
+   */
+  async generatePresignedDownloadUrl(key: string, expiresIn: number = 3600): Promise<string> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+
+      const presignedUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
+      console.log(`✅ Generated presigned download URL for: ${key}`);
+      return presignedUrl;
+    } catch (error) {
+      console.error('❌ Presigned download URL generation failed:', error);
+      throw new Error(`Failed to generate presigned download URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
    * Check if R2 connection is working
    */
   async testConnection(): Promise<boolean> {
