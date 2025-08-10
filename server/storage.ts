@@ -810,7 +810,13 @@ export class DatabaseStorage implements IStorage {
       offset?: number;
     }
   ): Promise<{ projects: any[]; total: number }> {
-    // Get user's external requests
+    // Get the user ID first to filter properly
+    const user = await this.getUserByEmail(userEmail);
+    if (!user) {
+      return { projects: [], total: 0 };
+    }
+
+    // Get user's external requests (requests they submitted)
     const userRequestsQuery = db.select({
       id: externalRequests.id,
       title: sql<string>`null`.as('title'),
@@ -823,9 +829,9 @@ export class DatabaseStorage implements IStorage {
       type: sql<string>`'external_request'`.as('type')
     }).from(externalRequests).where(eq(externalRequests.email, userEmail));
 
-    // Note: Since projects table is removed and everything is now in externalRequests,
-    // we'll use a subset of externalRequests that have proper project structure
-    const availableProjectsQuery = db.select({
+    // Only get projects assigned to THIS user (either as client or assigned developer)
+    // New users should not see any projects unless they are specifically assigned
+    const assignedProjectsQuery = db.select({
       id: externalRequests.id,
       title: externalRequests.title,
       description: sql<string>`null`.as('description'),
@@ -835,7 +841,12 @@ export class DatabaseStorage implements IStorage {
       budget: externalRequests.budget,
       deadline: externalRequests.deadline,
       type: sql<string>`'project'`.as('type')
-    }).from(externalRequests).where(sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`);
+    }).from(externalRequests).where(
+      or(
+        eq(externalRequests.client_id, user.id),
+        eq(externalRequests.assigned_developer_id, user.id)
+      )
+    );
 
     // Apply status filter if provided
     if (status && status !== 'all') {
@@ -847,9 +858,12 @@ export class DatabaseStorage implements IStorage {
       };
       const dbStatus = statusMap[status] || status;
       userRequestsQuery.where(eq(externalRequests.status, dbStatus));
-      availableProjectsQuery.where(and(
+      assignedProjectsQuery.where(and(
         eq(externalRequests.status, dbStatus),
-        sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
+        or(
+          eq(externalRequests.client_id, user.id),
+          eq(externalRequests.assigned_developer_id, user.id)
+        )
       ));
     }
 
@@ -859,12 +873,15 @@ export class DatabaseStorage implements IStorage {
       .from(externalRequests)
       .where(eq(externalRequests.email, userEmail));
 
-    const [availableProjectsCount] = await db
+    const [assignedProjectsCount] = await db
       .select({ count: sql`count(*)`.mapWith(Number) })
       .from(externalRequests)
-      .where(sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`);
+      .where(or(
+        eq(externalRequests.client_id, user.id),
+        eq(externalRequests.assigned_developer_id, user.id)
+      ));
 
-    const totalCount = userRequestsCount.count + availableProjectsCount.count;
+    const totalCount = userRequestsCount.count + assignedProjectsCount.count;
 
     // Get the combined results with pagination
     const userRequests = await userRequestsQuery
@@ -873,13 +890,13 @@ export class DatabaseStorage implements IStorage {
       .offset(options?.offset || 0);
 
     const remainingLimit = Math.max(0, (options?.limit || 10) - userRequests.length);
-    const availableProjects = remainingLimit > 0 ? await availableProjectsQuery
+    const assignedProjects = remainingLimit > 0 ? await assignedProjectsQuery
       .orderBy(desc(externalRequests.created_at))
       .limit(remainingLimit)
       .offset(Math.max(0, (options?.offset || 0) - userRequestsCount.count)) : [];
 
     // Combine and sort by created_at
-    const combinedProjects = [...userRequests, ...availableProjects]
+    const combinedProjects = [...userRequests, ...assignedProjects]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     return { projects: combinedProjects, total: totalCount };

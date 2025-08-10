@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, X, Search } from "lucide-react";
+import { Menu, X, Search, Store } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export function Header() {
@@ -169,6 +169,27 @@ export function Header() {
                             <span className="flex-1">Browse Portfolios</span>
                           </DropdownMenuItem>
                         </>
+                      )}
+
+                      {/* Seller Registration/Dashboard */}
+                      {user.role !== "seller" && user.role !== "admin" && (
+                        <DropdownMenuItem
+                          onClick={() => navigate("/seller/registration")}
+                          className="flex items-center gap-2 py-2 cursor-pointer"
+                        >
+                          <Store className="h-4 w-4" />
+                          <span className="flex-1">Become a Seller</span>
+                        </DropdownMenuItem>
+                      )}
+                      
+                      {user.role === "seller" && (
+                        <DropdownMenuItem
+                          onClick={() => navigate("/seller/dashboard")}
+                          className="flex items-center gap-2 py-2 cursor-pointer"
+                        >
+                          <Store className="h-4 w-4" />
+                          <span className="flex-1">Seller Dashboard</span>
+                        </DropdownMenuItem>
                       )}
 
                       {/* Admin-specific access */}
