@@ -16,11 +16,11 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   // Fetch marketplace products from API
-  const { data: marketplaceData, isLoading } = useQuery({
+  const { data: marketplaceData, isLoading } = useQuery<{products: Product[]}>({
     queryKey: ["/api/marketplace/products"],
   });
 
-  const marketplaceStores = marketplaceData?.products || [];
+  const marketplaceStores: Product[] = marketplaceData?.products || [];
 
   // Sample marketplace store data for fallback (if no API data)
   const sampleStores = [
@@ -94,14 +94,14 @@ export default function MarketplacePage() {
 
   const categories = [
     { id: "all", name: "All Categories", count: marketplaceStores.length },
-    { id: "Software", name: "Software", count: marketplaceStores.filter(s => s.category === "Software").length },
-    { id: "Digital Tools", name: "Digital Tools", count: marketplaceStores.filter(s => s.category === "Digital Tools").length },
-    { id: "Services", name: "Services", count: marketplaceStores.filter(s => s.category === "Services").length }
+    { id: "Software", name: "Software", count: marketplaceStores.filter((s: Product) => s.category === "Software").length },
+    { id: "Digital Tools", name: "Digital Tools", count: marketplaceStores.filter((s: Product) => s.category === "Digital Tools").length },
+    { id: "Services", name: "Services", count: marketplaceStores.filter((s: Product) => s.category === "Services").length }
   ];
 
   const filteredStores = selectedCategory === "all" 
     ? marketplaceStores 
-    : marketplaceStores.filter(store => store.category === selectedCategory);
+    : marketplaceStores.filter((store: Product) => store.category === selectedCategory);
 
   return (
     <Layout>
@@ -157,7 +157,7 @@ export default function MarketplacePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredStores.map((store) => (
+            {filteredStores.map((store: Product) => (
               <Card key={store.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="relative h-48 bg-gray-100">
                   {store.image_url ? (
