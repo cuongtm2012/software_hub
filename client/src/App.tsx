@@ -636,10 +636,15 @@ function Router() {
           </Suspense>
         );
       }} />
+      {/* Seller Dashboard Routes */}
+      <ProtectedRoute path="/seller" component={() => {
+        const SellerDashboardPage = lazy(() => import("@/pages/seller-dashboard-page"));
+        return <SellerDashboardPage />;
+      }} roles={['seller', 'admin']} />
       <ProtectedRoute path="/seller/dashboard" component={() => {
         const SellerDashboardPage = lazy(() => import("@/pages/seller-dashboard-page"));
         return <SellerDashboardPage />;
-      }} />
+      }} roles={['seller', 'admin']} />
       <ProtectedRoute path="/seller/products/new" component={() => {
         const SellerProductNewPage = lazy(() => import("@/pages/seller-product-new-page"));
         return (

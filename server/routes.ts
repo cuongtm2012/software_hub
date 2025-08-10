@@ -2100,6 +2100,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Seller profile not found" });
       }
       
+      // When seller is verified, update user role to "seller"
+      if (status === "verified") {
+        try {
+          await storage.updateUser(parseInt(userId), { role: "seller" });
+          console.log(`User ${userId} role updated to "seller" after verification`);
+        } catch (roleUpdateError) {
+          console.error(`Failed to update user role for ${userId}:`, roleUpdateError);
+          // Continue with success since seller profile was updated
+        }
+      }
+      
       // TODO: Send notification email to seller about status change
       console.log(`Seller ${userId} status updated to ${status} by admin ${req.user?.email}`);
       if (notes) {
