@@ -49,6 +49,7 @@ import SoftwareListPage from "@/pages/software-list-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
+import OrderDetailsPage from "@/pages/order-details-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
 
 // Admin
@@ -671,6 +672,7 @@ function Router() {
       }} roles={['seller', 'admin']} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
+      <Route path="/order-details/:id" component={OrderDetailsPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/seller/products" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/marketplace/seller/new" roles={['seller', 'admin']} component={MarketplaceSellerNewPage} />
