@@ -335,52 +335,45 @@ export default function AuthPage() {
                         </div>
                       ) : showForgotPassword ? (
                         /* Forgot Password State - Email input form */
-                        <Form {...forgotPasswordForm}>
-                          <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
-                            <FormField
-                              control={forgotPasswordForm.control}
-                              name="email"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-gray-700">Email Address</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="email" 
-                                      placeholder="Enter your email address" 
-                                      className="focus-visible:ring-[#004080]"
-                                      value={field.value || ""}
-                                      onChange={field.onChange}
-                                      onBlur={field.onBlur}
-                                      name={field.name}
-                                      ref={field.ref}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">
+                              Email Address
+                            </label>
+                            <Input 
+                              type="email" 
+                              placeholder="Enter your email address" 
+                              className="focus-visible:ring-[#004080]"
+                              value={forgotPasswordForm.getValues("email") || ""}
+                              onChange={(e) => forgotPasswordForm.setValue("email", e.target.value)}
                             />
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <Button 
+                              onClick={() => {
+                                const email = forgotPasswordForm.getValues("email");
+                                if (email) {
+                                  forgotPasswordMutation.mutate({ email });
+                                }
+                              }}
+                              className="w-full bg-gradient-to-r from-[#004080] to-[#003366] hover:from-[#003366] hover:to-[#002040] text-white"
+                              disabled={forgotPasswordMutation.isPending}
+                            >
+                              {forgotPasswordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Send Reset Link
+                            </Button>
                             
-                            <div className="space-y-3">
-                              <Button 
-                                type="submit" 
-                                className="w-full bg-gradient-to-r from-[#004080] to-[#003366] hover:from-[#003366] hover:to-[#002040] text-white"
-                                disabled={forgotPasswordMutation.isPending}
-                              >
-                                {forgotPasswordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Send Reset Link
-                              </Button>
-                              
-                              <Button 
-                                type="button"
-                                variant="outline"
-                                onClick={() => setShowForgotPassword(false)}
-                                className="w-full border-[#004080] text-[#004080] hover:bg-[#004080]/5"
-                              >
-                                Back to Login
-                              </Button>
-                            </div>
-                          </form>
-                        </Form>
+                            <Button 
+                              type="button"
+                              variant="outline"
+                              onClick={() => setShowForgotPassword(false)}
+                              className="w-full border-[#004080] text-[#004080] hover:bg-[#004080]/5"
+                            >
+                              Back to Login
+                            </Button>
+                          </div>
+                        </div>
                       ) : (
                         /* Normal Login Form */
                         <Form {...loginForm}>
