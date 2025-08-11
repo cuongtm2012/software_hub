@@ -602,10 +602,10 @@ Account comes with complete login credentials and detailed usage instructions.`,
                     <Button 
                       onClick={handleBuyNow}
                       disabled={displayProduct.stock_quantity === 0}
-                      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                      size="lg"
+                      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                      size="default"
                     >
-                      <ShoppingCart className="w-5 h-5 mr-3" />
+                      <ShoppingCart className="w-4 h-4 mr-2" />
                       Buy Now - {formatPrice(displayProduct.price)}
                     </Button>
                     

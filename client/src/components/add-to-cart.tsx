@@ -231,8 +231,8 @@ export function AddToCart({
       <Button
         onClick={handleAddToCart}
         disabled={addToCartMutation.isPending || stockQuantity < 1}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
-        size="lg"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5"
+        size="default"
       >
         {addToCartMutation.isPending ? (
           <>
