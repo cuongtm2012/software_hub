@@ -41,7 +41,8 @@ import {
   Calendar,
   ThumbsUp,
   ThumbsDown,
-  Send
+  Send,
+  RefreshCw
 } from "lucide-react";
 import {
   Card,
@@ -106,6 +107,30 @@ export default function ProductDetailPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Parameter validation and error handling
+  React.useEffect(() => {
+    if (!id) {
+      toast({
+        title: "Invalid Product",
+        description: "No product ID provided. Redirecting to marketplace...",
+        variant: "destructive",
+      });
+      navigate("/marketplace");
+      return;
+    }
+
+    const productId = parseInt(id);
+    if (isNaN(productId) || productId <= 0) {
+      toast({
+        title: "Invalid Product ID",
+        description: "The product ID must be a valid number. Redirecting to marketplace...",
+        variant: "destructive",
+      });
+      navigate("/marketplace");
+      return;
+    }
+  }, [id, navigate, toast]);
+
   // State
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
@@ -113,10 +138,37 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState("description");
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
 
-  // Fetch product data
-  const { data: product, isLoading } = useQuery<Product>({
-    queryKey: ['/api/products', id],
-    enabled: !!id
+  // Fetch product data with unified API
+  const { data: product, isLoading, error, refetch } = useQuery<Product>({
+    queryKey: ['/api/marketplace/products', id],
+    enabled: !!id && !isNaN(parseInt(id || "")) && parseInt(id || "") > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry for 404 or validation errors
+      if (error?.response?.status === 404 || error?.response?.status === 400) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    onError: (error: any) => {
+      console.error('Product fetch error:', error);
+      if (error?.response?.status === 404) {
+        toast({
+          title: "Product Not Found",
+          description: "This product may have been removed or is no longer available.",
+          variant: "destructive",
+        });
+        navigate("/marketplace");
+      } else if (error?.response?.status === 400) {
+        toast({
+          title: "Invalid Request",
+          description: "There was an issue with the product request.",
+          variant: "destructive",
+        });
+        navigate("/marketplace");
+      }
+    }
   });
 
   // Mock packages for display
@@ -202,9 +254,11 @@ export default function ProductDetailPage() {
     }
   });
 
+  // State management for cached product data with enhanced synchronization
   const displayProduct = useMemo(() => {
     if (!product) return null;
     
+    // Ensure data consistency with marketplace API response
     return {
       ...product,
       images: product.images || [],
@@ -213,10 +267,28 @@ export default function ProductDetailPage() {
       warranty_period: product.warranty_period || "1 year",
       refund_policy: product.refund_policy || "30-day money-back guarantee",
       processing_time: product.processing_time || "Instant delivery",
-      total_sales: product.total_sales || Math.floor(Math.random() * 500) + 100,
-      rating: product.rating || (4.0 + Math.random() * 1.0)
+      total_sales: product.total_sales || 0,
+      rating: product.rating || 0,
+      view_count: product.view_count || (1000 + product.id * 100), // Use computed views from API
     };
   }, [product]);
+
+  // Data refresh mechanism for real-time synchronization
+  const handleRefreshData = React.useCallback(async () => {
+    try {
+      await refetch();
+      toast({
+        title: "Data Refreshed",
+        description: "Product information has been updated with the latest data.",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Unable to refresh product data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [refetch, toast]);
 
   const totalPrice = selectedPackage ? selectedPackage.price * quantity : (displayProduct?.price || 0) * quantity;
 
@@ -264,14 +336,51 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Product not found
-  if (!product) {
+  // Error state - Product not found or API error
+  if (error || !displayProduct) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <div className="mx-auto w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6">
+              <AlertCircle className="w-12 h-12 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              Product Not Available
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              {error?.response?.status === 404 
+                ? "This product could not be found or may no longer be available."
+                : error?.response?.status === 400
+                ? "There was an issue with the product request."
+                : "The product you're looking for could not be loaded."
+              }
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => navigate("/marketplace")} variant="default">
+                Browse Marketplace
+              </Button>
+              <Button onClick={handleRefreshData} variant="outline" disabled={isLoading}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                {isLoading ? 'Retrying...' : 'Retry'}
+              </Button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Main product page render - Continue only with valid product data
+  if (!displayProduct) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Product Not Found</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Loading...</h1>
             <p className="text-gray-600 dark:text-gray-400 mb-8">The product you're looking for doesn't exist.</p>
             <Button onClick={() => navigate("/marketplace")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -342,9 +451,19 @@ export default function ProductDetailPage() {
                 <Share2 className="w-4 h-4" />
                 Share
               </Button>
+              <Button 
+                onClick={handleRefreshData} 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-2"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
               <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                 <Eye className="w-4 h-4" />
-                <span>{displayProduct ? (1000 + displayProduct.id * 100).toLocaleString() : '0'} views</span>
+                <span>{displayProduct?.view_count?.toLocaleString() || '0'} views</span>
               </div>
               <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                 <Users className="w-4 h-4" />
