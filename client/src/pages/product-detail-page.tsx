@@ -305,15 +305,15 @@ export default function ProductDetailPage() {
           <ChevronRight className="w-4 h-4 mx-2" />
           <button onClick={() => navigate("/marketplace")} className="hover:text-[#004080] dark:hover:text-blue-400">Marketplace</button>
           <ChevronRight className="w-4 h-4 mx-2" />
-          <span className="text-gray-900 dark:text-gray-100">{displayProduct.title}</span>
+          <span className="text-gray-900 dark:text-gray-100">{displayProduct?.title || 'Product'}</span>
         </nav>
 
         {/* Product Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
             <div className="flex flex-wrap items-center gap-3">
-              <Badge variant={displayProduct.stock_quantity > 0 ? "default" : "destructive"} className="flex items-center gap-1">
-                {displayProduct.stock_quantity > 0 ? (
+              <Badge variant={displayProduct?.stock_quantity && displayProduct.stock_quantity > 0 ? "default" : "destructive"} className="flex items-center gap-1">
+                {displayProduct?.stock_quantity && displayProduct.stock_quantity > 0 ? (
                   <>
                     <Check className="w-3 h-3" />
                     In Stock ({displayProduct.stock_quantity} available)
@@ -323,12 +323,12 @@ export default function ProductDetailPage() {
                 )}
               </Badge>
               <Badge variant="outline" className="text-xs">
-                SKU: SW-{displayProduct.id.toString().padStart(4, '0')}
+                SKU: SW-{displayProduct?.id?.toString().padStart(4, '0') || '0000'}
               </Badge>
               <div className="flex items-center gap-1">
-                {renderStars(displayProduct.rating)}
+                {renderStars(displayProduct?.rating || 0)}
                 <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">
-                  ({displayProduct.rating.toFixed(1)})
+                  ({displayProduct?.rating?.toFixed(1) || '0.0'})
                 </span>
               </div>
             </div>
@@ -344,24 +344,24 @@ export default function ProductDetailPage() {
               </Button>
               <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                 <Eye className="w-4 h-4" />
-                <span>{(1000 + displayProduct.id * 100).toLocaleString()} views</span>
+                <span>{displayProduct ? (1000 + displayProduct.id * 100).toLocaleString() : '0'} views</span>
               </div>
               <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                 <Users className="w-4 h-4" />
-                <span>{displayProduct.total_sales || 0} sold</span>
+                <span>{displayProduct?.total_sales || 0} sold</span>
               </div>
             </div>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">{displayProduct.title}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">{displayProduct?.title || 'Loading...'}</h1>
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
             <span className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              {displayProduct.processing_time}
+              {displayProduct?.processing_time || 'Instant delivery'}
             </span>
             <span className="flex items-center gap-1">
               <Shield className="w-4 h-4" />
-              {displayProduct.warranty_period} warranty
+              {displayProduct?.warranty_period || '1 year'} warranty
             </span>
             <span className="flex items-center gap-1">
               <Package className="w-4 h-4" />
@@ -379,7 +379,7 @@ export default function ProductDetailPage() {
                 {/* Main Product Image */}
                 <div className="relative group mb-6">
                   <div className="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden">
-                    {displayProduct.images && displayProduct.images[selectedImageIndex] ? (
+                    {displayProduct?.images && displayProduct.images[selectedImageIndex] ? (
                       <img 
                         src={displayProduct.images[selectedImageIndex]} 
                         alt={displayProduct.title}
@@ -394,7 +394,7 @@ export default function ProductDetailPage() {
                   </div>
                   
                   {/* Image Navigation */}
-                  {displayProduct.images && displayProduct.images.length > 1 && (
+                  {displayProduct?.images && displayProduct.images.length > 1 && (
                     <>
                       <Button
                         variant="outline"
@@ -419,7 +419,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 {/* Thumbnail Images */}
-                {displayProduct.images && displayProduct.images.length > 1 && (
+                {displayProduct?.images && displayProduct.images.length > 1 && (
                   <div className="grid grid-cols-4 gap-2">
                     {displayProduct.images.map((image, index) => (
                       <button
@@ -433,7 +433,7 @@ export default function ProductDetailPage() {
                       >
                         <img 
                           src={image} 
-                          alt={`${displayProduct.title} view ${index + 1}`}
+                          alt={`${displayProduct?.title || 'Product'} view ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
                       </button>
