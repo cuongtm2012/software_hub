@@ -143,7 +143,7 @@ export default function ProductDetailRedesign() {
         "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop"
       ],
-      price: productData.price || 99.99,
+      price: productData.price || 995000,
       description: productData.description || `Perplexity Pro is an incredibly powerful and useful AI-powered search tool. With the Pro plan, you get:
 
 • Unlimited access to advanced AI models
@@ -223,11 +223,11 @@ Account comes with complete login credentials and detailed usage instructions.`,
     });
   };
 
-  // Format price in USD
+  // Format price in VND
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'VND'
     }).format(price);
   };
 
@@ -658,7 +658,7 @@ Account comes with complete login credentials and detailed usage instructions.`,
                     ChatGPT Plus {i} Year
                   </h4>
                   <div className="text-red-600 font-bold text-lg">
-                    {formatPrice(50 + i * 10)}
+                    {formatPrice(500000 + i * 100000)}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     {renderStars(4 + Math.random())}
