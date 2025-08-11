@@ -193,6 +193,8 @@ export interface IStorage {
   // Cart Management
   addToCart(item: InsertCartItem, userId: number): Promise<CartItem>;
   getCartItems(userId: number): Promise<CartItem[]>;
+  getCartItemsWithProducts(userId: number): Promise<any[]>;
+  updateCartItemQuantity(itemId: number, quantity: number, userId: number): Promise<CartItem | undefined>;
   removeFromCart(itemId: number, userId: number): Promise<boolean>;
   clearCart(userId: number): Promise<boolean>;
   
@@ -1849,6 +1851,51 @@ export class DatabaseStorage implements IStorage {
       .from(cartItems)
       .where(eq(cartItems.user_id, userId))
       .orderBy(cartItems.created_at);
+  }
+
+  async getCartItemsWithProducts(userId: number): Promise<any[]> {
+    return db
+      .select({
+        id: cartItems.id,
+        user_id: cartItems.user_id,
+        product_id: cartItems.product_id,
+        quantity: cartItems.quantity,
+        created_at: cartItems.created_at,
+        product: {
+          id: products.id,
+          name: products.name,
+          description: products.description,
+          price: products.price,
+          image_url: products.image_url,
+          category: products.category,
+          seller_id: products.seller_id,
+          status: products.status,
+        }
+      })
+      .from(cartItems)
+      .innerJoin(products, eq(cartItems.product_id, products.id))
+      .where(
+        and(
+          eq(cartItems.user_id, userId),
+          eq(products.status, 'approved')
+        )
+      )
+      .orderBy(cartItems.created_at);
+  }
+
+  async updateCartItemQuantity(itemId: number, quantity: number, userId: number): Promise<CartItem | undefined> {
+    const [updatedItem] = await db
+      .update(cartItems)
+      .set({ quantity })
+      .where(
+        and(
+          eq(cartItems.id, itemId),
+          eq(cartItems.user_id, userId)
+        )
+      )
+      .returning();
+    
+    return updatedItem;
   }
 
   async removeFromCart(itemId: number, userId: number): Promise<boolean> {

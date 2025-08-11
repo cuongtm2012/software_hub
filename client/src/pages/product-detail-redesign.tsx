@@ -57,6 +57,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Product {
   id: number;
@@ -93,6 +95,7 @@ export default function ProductDetailRedesign() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, isLoading: authLoading } = useAuth();
 
   // Parameter validation
   React.useEffect(() => {
@@ -291,11 +294,68 @@ Account comes with complete login credentials and detailed usage instructions.`,
     }
   }, [error, toast, navigate]);
 
+  // Add to Cart mutation
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ productId, quantity }: { productId: number; quantity: number }) => {
+      const res = await apiRequest("POST", "/api/cart/add", { 
+        product_id: productId, 
+        quantity 
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      const actionText = data.action === "updated" ? "updated in" : "added to";
+      toast({
+        title: `Cart ${actionText}`,
+        description: `${quantity} item(s) ${actionText} your cart successfully!`,
+      });
+      // Invalidate cart queries to refresh cart data
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    },
+    onError: (error: Error) => {
+      console.error('Add to cart error:', error);
+      if (error.message.includes("401")) {
+        toast({
+          title: "Please log in",
+          description: "You need to log in to add items to your cart.",
+          variant: "destructive",
+        });
+        // Redirect to login page after a brief delay
+        setTimeout(() => {
+          navigate("/login");
+        }, 1000);
+      } else {
+        toast({
+          title: "Failed to add to cart",
+          description: error.message || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
   // Handle add to cart
   const handleAddToCart = () => {
-    toast({ 
-      title: "Added to cart", 
-      description: `${quantity} item(s) added to your cart.` 
+    if (!displayProduct) return;
+
+    if (!user && !authLoading) {
+      // User is not logged in
+      toast({
+        title: "Please log in",
+        description: "You need to log in to add items to your cart.",
+        variant: "destructive",
+      });
+      // Redirect to login page after a brief delay
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000);
+      return;
+    }
+
+    // User is logged in, proceed with adding to cart
+    addToCartMutation.mutate({
+      productId: displayProduct.id,
+      quantity
     });
   };
 
@@ -542,9 +602,19 @@ Account comes with complete login credentials and detailed usage instructions.`,
                     variant="outline"
                     className="flex-1 py-3"
                     size="lg"
+                    disabled={addToCartMutation.isPending || displayProduct.stock_quantity === 0 || authLoading}
                   >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Add to Cart
+                    {addToCartMutation.isPending ? (
+                      <>
+                        <div className="w-5 h-5 mr-2 border-2 border-t-transparent border-gray-400 rounded-full animate-spin"></div>
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-5 h-5 mr-2" />
+                        {!user && !authLoading ? "Login to Add" : "Add to Cart"}
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>

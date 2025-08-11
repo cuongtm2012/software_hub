@@ -4515,5 +4515,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cart Management Routes
+  app.post("/api/cart/add", isAuthenticated, async (req, res, next) => {
+    try {
+      const { product_id, quantity = 1 } = req.body;
+      
+      if (!product_id) {
+        return res.status(400).json({ message: "Product ID is required" });
+      }
+
+      // Check if product exists and is approved
+      const product = await storage.getProductById(product_id);
+      if (!product || product.status !== 'approved') {
+        return res.status(404).json({ message: "Product not found or not available" });
+      }
+
+      // Check if item already exists in cart
+      const existingItems = await storage.getCartItems(req.user!.id);
+      const existingItem = existingItems.find(item => item.product_id === product_id);
+
+      if (existingItem) {
+        // Update quantity if item already exists
+        const updatedItem = await storage.updateCartItemQuantity(
+          existingItem.id, 
+          existingItem.quantity + quantity, 
+          req.user!.id
+        );
+        return res.json({ 
+          message: "Item quantity updated in cart", 
+          cartItem: updatedItem,
+          action: "updated"
+        });
+      } else {
+        // Add new item to cart
+        const cartItem = await storage.addToCart(
+          { product_id, quantity }, 
+          req.user!.id
+        );
+        return res.status(201).json({ 
+          message: "Item added to cart", 
+          cartItem,
+          action: "added"
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/cart", isAuthenticated, async (req, res, next) => {
+    try {
+      const cartItems = await storage.getCartItemsWithProducts(req.user!.id);
+      res.json({ cartItems });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/cart/remove/:itemId", isAuthenticated, async (req, res, next) => {
+    try {
+      const { itemId } = req.params;
+      const success = await storage.removeFromCart(parseInt(itemId), req.user!.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Cart item not found" });
+      }
+      
+      res.json({ message: "Item removed from cart" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/cart/clear", isAuthenticated, async (req, res, next) => {
+    try {
+      await storage.clearCart(req.user!.id);
+      res.json({ message: "Cart cleared" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/cart/update/:itemId", isAuthenticated, async (req, res, next) => {
+    try {
+      const { itemId } = req.params;
+      const { quantity } = req.body;
+
+      if (!quantity || quantity < 1) {
+        return res.status(400).json({ message: "Valid quantity is required" });
+      }
+
+      const updatedItem = await storage.updateCartItemQuantity(
+        parseInt(itemId), 
+        quantity, 
+        req.user!.id
+      );
+
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Cart item not found" });
+      }
+
+      res.json({ 
+        message: "Cart item updated", 
+        cartItem: updatedItem 
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return server;
 }
