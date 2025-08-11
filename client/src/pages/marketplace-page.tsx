@@ -10,6 +10,7 @@ import { Loader2, Tag, Box, Star } from "lucide-react";
 import { Product } from "@shared/schema";
 import { Pagination } from "@/components/pagination";
 import { useAuth } from "@/hooks/use-auth";
+import { AddToCart } from "@/components/add-to-cart";
 
 export default function MarketplacePage() {
   const { user } = useAuth();
@@ -202,13 +203,21 @@ export default function MarketplacePage() {
                   </div>
                 </CardContent>
                 
-                <CardFooter className="p-4 pt-0">
-                  <Link to={`/marketplace/product/${store.id}`}>
+                <CardFooter className="p-4 pt-0 space-y-2">
+                  <Link to={`/marketplace/product/${store.id}`} className="block">
                     <Button className="w-full bg-[#004080] hover:bg-[#003366] text-white">
                       <Box className="h-4 w-4 mr-2" />
-                      Buy Now
+                      View Details
                     </Button>
                   </Link>
+                  <AddToCart
+                    productId={store.id}
+                    productName={store.title}
+                    price={store.price}
+                    stockQuantity={store.stock_quantity}
+                    variant="compact"
+                    className="w-full"
+                  />
                 </CardFooter>
               </Card>
             ))}

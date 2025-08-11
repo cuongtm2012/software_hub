@@ -59,6 +59,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { AddToCart } from "@/components/add-to-cart";
 
 interface Product {
   id: number;
@@ -123,7 +124,6 @@ export default function ProductDetailRedesign() {
 
   // State
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("vnpay_qr");
@@ -231,7 +231,7 @@ Account comes with complete login credentials and detailed usage instructions.`,
     
     purchaseMutation.mutate({
       productId: displayProduct.id,
-      quantity,
+      quantity: 1,
       paymentMethod: selectedPaymentMethod
     });
   };
@@ -241,11 +241,11 @@ Account comes with complete login credentials and detailed usage instructions.`,
     setIsCheckoutOpen(true);
   };
 
-  // Calculate total amount
+  // Calculate total amount (default to 1 for Buy Now)
   const totalAmount = useMemo(() => {
     if (!displayProduct) return 0;
-    return displayProduct.price * quantity;
-  }, [displayProduct, quantity]);
+    return displayProduct.price * 1;
+  }, [displayProduct]);
 
   // Payment method options
   const paymentMethods = [
@@ -294,70 +294,7 @@ Account comes with complete login credentials and detailed usage instructions.`,
     }
   }, [error, toast, navigate]);
 
-  // Add to Cart mutation
-  const addToCartMutation = useMutation({
-    mutationFn: async ({ productId, quantity }: { productId: number; quantity: number }) => {
-      const res = await apiRequest("POST", "/api/cart/add", { 
-        product_id: productId, 
-        quantity 
-      });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      const actionText = data.action === "updated" ? "updated in" : "added to";
-      toast({
-        title: `Cart ${actionText}`,
-        description: `${quantity} item(s) ${actionText} your cart successfully!`,
-      });
-      // Invalidate cart queries to refresh cart data
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-    },
-    onError: (error: Error) => {
-      console.error('Add to cart error:', error);
-      if (error.message.includes("401")) {
-        toast({
-          title: "Please log in",
-          description: "You need to log in to add items to your cart.",
-          variant: "destructive",
-        });
-        // Redirect to login page after a brief delay
-        setTimeout(() => {
-          navigate("/login");
-        }, 1000);
-      } else {
-        toast({
-          title: "Failed to add to cart",
-          description: error.message || "Something went wrong. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-  });
 
-  // Handle add to cart
-  const handleAddToCart = () => {
-    if (!displayProduct) return;
-
-    if (!user && !authLoading) {
-      // User is not logged in
-      toast({
-        title: "Please log in",
-        description: "You need to log in to add items to your cart.",
-        variant: "destructive",
-      });
-      // Redirect to login page after a brief delay
-      setTimeout(() => {
-        navigate("/login");
-      }, 1000);
-      return;
-    }
-
-    // User is logged in, proceed with adding to cart
-    addToCartMutation.mutate({
-      productId: displayProduct.id,
-      quantity
-    });
-  };
 
   // Format price in VND
   const formatPrice = (price: number) => {
@@ -559,64 +496,27 @@ Account comes with complete login credentials and detailed usage instructions.`,
                 </div>
               </div>
 
-              {/* Quantity and Actions */}
-              <div className="mb-8">
-                <div className="flex items-center gap-4 mb-4">
-                  <span className="font-medium">Quantity:</span>
-                  <div className="flex items-center border rounded-lg">
-                    <button 
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      disabled={quantity <= 1}
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="px-4 py-2 min-w-[60px] text-center">{quantity}</span>
-                    <button 
-                      onClick={() => setQuantity(Math.min(displayProduct.stock_quantity, quantity + 1))}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      disabled={quantity >= displayProduct.stock_quantity}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    ({displayProduct.stock_quantity} available)
-                  </span>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button 
-                    onClick={handleBuyNow}
-                    disabled={displayProduct.stock_quantity === 0}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3"
-                    size="lg"
-                  >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Buy Now
-                  </Button>
-                  
-                  <Button 
-                    onClick={handleAddToCart}
-                    variant="outline"
-                    className="flex-1 py-3"
-                    size="lg"
-                    disabled={addToCartMutation.isPending || displayProduct.stock_quantity === 0 || authLoading}
-                  >
-                    {addToCartMutation.isPending ? (
-                      <>
-                        <div className="w-5 h-5 mr-2 border-2 border-t-transparent border-gray-400 rounded-full animate-spin"></div>
-                        Adding...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-5 h-5 mr-2" />
-                        {!user && !authLoading ? "Login to Add" : "Add to Cart"}
-                      </>
-                    )}
-                  </Button>
-                </div>
+              {/* Purchase Actions */}
+              <div className="mb-8 space-y-4">
+                {/* Buy Now Button */}
+                <Button 
+                  onClick={handleBuyNow}
+                  disabled={displayProduct.stock_quantity === 0}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-3"
+                  size="lg"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Buy Now
+                </Button>
+                
+                {/* Add to Cart Component */}
+                <AddToCart
+                  productId={displayProduct.id}
+                  productName={displayProduct.title}
+                  price={displayProduct.price}
+                  stockQuantity={displayProduct.stock_quantity}
+                  variant="default"
+                />
               </div>
 
               {/* Contact and Share */}
@@ -840,7 +740,7 @@ Account comes with complete login credentials and detailed usage instructions.`,
                   </h3>
                   <div className="flex items-center justify-between mt-2">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Quantity: {quantity}
+                      Quantity: 1
                     </div>
                     <div className="font-medium text-red-600">
                       {formatPrice(displayProduct?.price || 0)}
