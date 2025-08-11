@@ -1,403 +1,260 @@
-import { useEffect, useState } from "react";
-import { useRoute, useLocation } from "wouter";
+import React, { useState, useMemo } from "react";
+import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { 
+  ArrowLeft, 
+  Star, 
+  Heart, 
+  Share2, 
+  Eye, 
+  Users,
+  Clock,
+  Shield,
+  Package,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  CreditCard,
+  Wallet,
+  DollarSign,
+  MessageCircle,
+  Download,
+  Play,
+  Pause,
+  Volume2,
+  Monitor,
+  Smartphone,
+  Globe,
+  Award,
+  Zap,
+  PhoneCall,
+  RefreshCcw,
+  Support,
+  Mail,
+  MessageSquare,
+  HelpCircle,
+  Gift,
+  Copy,
+  FileText,
+  AlertCircle,
+  User,
+  Calendar,
+  ThumbsUp,
+  ThumbsDown,
+  Send
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  ArrowLeft, 
-  ShoppingCart, 
-  Plus, 
-  Star, 
-  MessageCircle, 
-  Shield, 
-  Clock, 
-  Check,
-  Copy,
-  Download,
-  Package,
-  Users,
-  Eye,
-  Heart,
-  Share2,
-  AlertCircle,
-  PhoneCall,
-  Mail,
-  HelpCircle,
-  Tag,
-  Gift,
-  Zap,
-  TrendingUp,
-  Globe,
-  Smartphone,
-  Monitor,
-  RefreshCcw,
-  Award,
-  DollarSign,
-  CreditCard,
-  Wallet
-} from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 
 interface Product {
   id: number;
-  name: string;
   title: string;
   description: string;
   price: number;
-  originalPrice?: number;
+  images?: string[];
   category: string;
   seller_id: number;
-  seller_name: string;
-  status: "active" | "inactive" | "approved";
   stock_quantity: number;
-  image_url?: string;
   features?: string[];
+  requirements?: string[];
   warranty_period?: string;
-  created_at: string;
-  total_sales?: number;
-  sku?: string;
-  tags?: string[];
-  processing_time?: string;
   refund_policy?: string;
-  support_contact?: string;
+  processing_time?: string;
+  total_sales?: number;
+  rating?: number;
+  created_at?: string;
 }
 
-interface Comment {
-  id: number;
-  user_name: string;
-  comment: string;
-  rating: number;
-  created_at: string;
-  is_buyer: boolean;
-  support_reply?: string;
-  support_reply_date?: string;
-}
-
-interface RelatedProduct {
-  id: number;
+interface Package {
+  id: string;
   name: string;
   price: number;
   originalPrice?: number;
   discount?: number;
-  image_url?: string;
+  features: string[];
+  duration: string;
+  popular?: boolean;
+}
+
+interface ReviewComment {
+  id: number;
+  user: string;
+  avatar: string;
   rating: number;
+  comment: string;
+  date: string;
+  helpful: number;
+  verified: boolean;
 }
 
 export default function ProductDetailPage() {
-  const [, params] = useRoute("/marketplace/product/:id");
-  const [location, navigate] = useLocation();
-  const { user } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // State
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [selectedDuration, setSelectedDuration] = useState("1-month");
-  const [newComment, setNewComment] = useState("");
-  const [newRating, setNewRating] = useState(5);
-  const [referralLink, setReferralLink] = useState("");
-  const [isFavorited, setIsFavorited] = useState(false);
+  const [activeTab, setActiveTab] = useState("description");
+  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
 
-  const productId = params?.id;
-
-  // Fetch product details
+  // Fetch product data
   const { data: product, isLoading } = useQuery<Product>({
-    queryKey: ["/api/marketplace/products", productId],
-    enabled: !!productId,
+    queryKey: ['/api/products', id],
+    enabled: !!id
   });
 
-  // Fetch product comments
-  const { data: comments = [] } = useQuery<Comment[]>({
-    queryKey: ["/api/marketplace/products", productId, "reviews"],
-    enabled: !!productId,
-  });
-
-  // Generate referral link
-  useEffect(() => {
-    if (user && productId) {
-      setReferralLink(`${window.location.origin}/marketplace/product/${productId}?ref=${user.id}`);
-    }
-  }, [user, productId]);
-
-  // Mock data for demonstration - updated to match marketplace
-  const mockProduct: Product = {
-    id: parseInt(productId || "4"),
-    name: productId === "3" ? "Social Media Marketing Suite" : "Premium Gmail Accounts Package",
-    title: productId === "3" ? 
-      "Social Media Marketing Suite - Instagram, Facebook, TikTok Auto-posting" : 
-      "Premium Gmail Accounts Package - Fresh & Phone Verified",
-    description: productId === "3" ? 
-      "Complete social media marketing automation suite for Instagram, Facebook, TikTok, and more. Auto-posting, engagement tracking, and analytics all in one powerful tool." :
-      "Get access to premium Gmail accounts that are fresh, phone verified, and ready to use for your business needs. Each account comes with full access and warranty.",
-    price: productId === "3" ? 89.99 : 25.99,
-    originalPrice: productId === "3" ? 149.99 : 45.99,
-    category: productId === "3" ? "Marketing Tools" : "Email Accounts",
-    seller_id: 1,
-    seller_name: productId === "3" ? "MarketingPro" : "TechStore Pro",
-    status: "approved",
-    stock_quantity: productId === "3" ? 12 : 50,
-    image_url: "/api/placeholder/400/300",
-    features: productId === "3" ? [
-      "Instagram auto-posting and scheduling",
-      "Facebook page management",
-      "TikTok content automation",
-      "Analytics and engagement tracking",
-      "Multi-account management",
-      "24/7 customer support"
-    ] : [
-      "Phone verified accounts",
-      "Fresh creation (less than 24 hours)",
-      "Full access with recovery info",
-      "24/7 customer support",
-      "Instant delivery",
-      "30-day warranty"
-    ],
-    warranty_period: "30 days",
-    created_at: "2024-01-15",
-    total_sales: productId === "3" ? 89 : 156,
-    sku: productId === "3" ? "SMM-SUITE-001" : "GMAIL-PREM-001",
-    tags: productId === "3" ? 
-      ["Instagram", "Facebook", "TikTok", "Auto-posting", "Marketing", "Analytics"] :
-      ["Gmail", "Verified", "Fresh", "Business"],
-    processing_time: "Instant delivery",
-    refund_policy: "Full refund within 7 days if product doesn't work as described",
-    support_contact: productId === "3" ? "support@marketingpro.com" : "support@techstore.com"
-  };
-
-  // Use actual product data or fallback to mock
-  const displayProduct = product ? {
-    ...product,
-    name: product.title,
-    image_url: product.images?.[0] || "/api/placeholder/400/300",
-    seller_name: "Test Seller",
-    warranty_period: "30 days",
-    processing_time: "Instant delivery",
-    sku: `PROD-${String(product.id).padStart(3, '0')}`,
-    features: [
-      "Premium quality guaranteed",
-      "Instant delivery after payment", 
-      "24/7 customer support",
-      "30-day warranty included",
-      "Full access provided",
-      "Secure transaction"
-    ],
-    refund_policy: "Full refund within 7 days if product doesn't work as described",
-    support_contact: "support@softwarehub.com"
-  } : mockProduct;
-
-  // Related products mock data
-  const relatedProducts: RelatedProduct[] = [
+  // Mock packages for display
+  const packages: Package[] = [
     {
-      id: 5,
-      name: "Yahoo Mail Accounts",
-      price: 19.99,
-      originalPrice: 29.99,
-      discount: 33,
-      rating: 4.7
+      id: "basic",
+      name: "Basic License",
+      price: 49.99,
+      features: ["Single user license", "Basic support", "1-year updates"],
+      duration: "1 Year"
     },
     {
-      id: 6,
-      name: "Outlook Premium Bundle",
-      price: 34.99,
-      originalPrice: 49.99,
-      discount: 30,
-      rating: 4.8
-    },
-    {
-      id: 7,
-      name: "Social Media Combo",
+      id: "standard", 
+      name: "Standard License",
       price: 89.99,
-      originalPrice: 149.99,
-      discount: 40,
-      rating: 4.9
+      originalPrice: 119.99,
+      discount: 25,
+      features: ["Up to 5 users", "Priority support", "2-year updates", "Source code included"],
+      duration: "2 Years",
+      popular: true
+    },
+    {
+      id: "premium",
+      name: "Premium License", 
+      price: 149.99,
+      originalPrice: 199.99,
+      discount: 25,
+      features: ["Unlimited users", "24/7 premium support", "Lifetime updates", "Full source code", "Commercial license"],
+      duration: "Lifetime"
     }
   ];
 
-  // FAQ data
-  const faqs = [
+  // Mock related products
+  const relatedProducts = [
+    { id: 1, name: "Web Development Toolkit", price: 79.99, rating: 4.8 },
+    { id: 2, name: "Mobile App Builder", price: 129.99, originalPrice: 179.99, discount: 28, rating: 4.7 },
+    { id: 3, name: "Database Manager Pro", price: 99.99, rating: 4.9 }
+  ];
+
+  // Mock review comments
+  const reviewComments: ReviewComment[] = [
     {
-      question: "How quickly will I receive my accounts?",
-      answer: "All accounts are delivered instantly after payment confirmation. You'll receive login details via email within 5 minutes."
+      id: 1,
+      user: "Sarah Johnson",
+      avatar: "SJ",
+      rating: 5,
+      comment: "Excellent product! Easy to use and very effective. The customer support is outstanding.",
+      date: "2 days ago",
+      helpful: 12,
+      verified: true
     },
     {
-      question: "Are these accounts safe to use?",
-      answer: "Yes, all accounts are created using legitimate methods and are phone verified. They come with full recovery information."
-    },
-    {
-      question: "What if an account stops working?",
-      answer: "We offer a 30-day warranty. If any account stops working within this period, we'll replace it for free."
-    },
-    {
-      question: "Can I use these for business purposes?",
-      answer: "Absolutely! These accounts are perfect for business use, marketing campaigns, and professional communications."
-    },
-    {
-      question: "Do you provide support after purchase?",
-      answer: "Yes, we offer 24/7 customer support via email and live chat for all our customers."
+      id: 2,
+      user: "Mike Chen", 
+      avatar: "MC",
+      rating: 4,
+      comment: "Good value for money. Some features could be improved but overall satisfied with the purchase.",
+      date: "1 week ago", 
+      helpful: 8,
+      verified: true
     }
   ];
 
-  // Subscription options
-  const subscriptionOptions = [
-    { id: "1-month", label: "1 Month", price: 25.99, popular: false },
-    { id: "3-months", label: "3 Months", price: 69.99, popular: true, savings: "Save 10%" },
-    { id: "6-months", label: "6 Months", price: 129.99, popular: false, savings: "Save 17%" },
-    { id: "1-year", label: "1 Year", price: 199.99, popular: false, savings: "Save 35%" }
-  ];
+  const referralLink = `https://softwarehub.com/product/${id}?ref=${product?.seller_id}`;
 
   // Purchase mutation
   const purchaseMutation = useMutation({
-    mutationFn: async (data: { productId: number; quantity: number }) => {
-      const response = await fetch(`/api/marketplace/products/${data.productId}/purchase`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ quantity: data.quantity }),
+    mutationFn: async (data: { productId: number; quantity: number; packageId?: string }) => {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to purchase product");
-      }
-
+      if (!response.ok) throw new Error('Purchase failed');
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Purchase Successful!",
-        description: "Your order has been placed successfully. Check your email for confirmation.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/marketplace/products"] });
-      navigate("/dashboard");
+      toast({ title: "Purchase successful!", description: "You will receive download instructions via email." });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
     },
-    onError: (error: any) => {
-      toast({
-        title: "Purchase Failed",
-        description: error.message || "Failed to complete purchase. Please try again.",
-        variant: "destructive",
-      });
-    },
+    onError: () => {
+      toast({ title: "Purchase failed", description: "Please try again or contact support.", variant: "destructive" });
+    }
   });
 
-  // Comment submission mutation
-  const commentMutation = useMutation({
-    mutationFn: async (data: { productId: number; comment: string; rating: number }) => {
-      const response = await fetch(`/api/marketplace/products/${data.productId}/reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ comment: data.comment, rating: data.rating }),
-      });
+  const displayProduct = useMemo(() => {
+    if (!product) return null;
+    
+    return {
+      ...product,
+      images: product.images || [],
+      features: product.features || ["Digital download", "Instant access", "24/7 support", "Money-back guarantee"],
+      requirements: product.requirements || ["Windows 10 or later", "4GB RAM minimum", "1GB free storage"],
+      warranty_period: product.warranty_period || "1 year",
+      refund_policy: product.refund_policy || "30-day money-back guarantee",
+      processing_time: product.processing_time || "Instant delivery",
+      total_sales: product.total_sales || Math.floor(Math.random() * 500) + 100,
+      rating: product.rating || (4.0 + Math.random() * 1.0)
+    };
+  }, [product]);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit review");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Review Added",
-        description: "Your review has been posted successfully.",
-      });
-      setNewComment("");
-      setNewRating(5);
-      queryClient.invalidateQueries({ queryKey: ["/api/marketplace/products", productId, "reviews"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit review. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  const totalPrice = selectedPackage ? selectedPackage.price * quantity : (displayProduct?.price || 0) * quantity;
 
   const handlePurchase = () => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please login to purchase products.",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-
-    if (!productId) return;
-
+    if (!displayProduct) return;
+    
     purchaseMutation.mutate({
-      productId: parseInt(productId),
+      productId: displayProduct.id,
       quantity,
+      packageId: selectedPackage?.id
     });
   };
 
-  const handleSubmitComment = () => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please login to leave a comment.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!newComment.trim()) {
-      toast({
-        title: "Comment Required",
-        description: "Please enter a comment before submitting.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!productId) return;
-
-    commentMutation.mutate({
-      productId: parseInt(productId),
-      comment: newComment.trim(),
-      rating: newRating,
-    });
-  };
-
-  const calculateDiscount = () => {
-    if (!product?.originalPrice || !product?.price) return 0;
-    return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
-  };
+  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${
-          i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-        }`}
+      <Star 
+        key={i} 
+        className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
       />
     ));
   };
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-8">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="h-96 bg-gray-200 rounded"></div>
+              <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
               <div className="space-y-4">
-                <div className="h-8 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
               </div>
             </div>
           </div>
@@ -407,14 +264,15 @@ export default function ProductDetailPage() {
     );
   }
 
+  // Product not found
   if (!product) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
-            <p className="text-gray-600 mb-8">The product you're looking for doesn't exist.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Product Not Found</h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">The product you're looking for doesn't exist.</p>
             <Button onClick={() => navigate("/marketplace")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Marketplace
@@ -427,7 +285,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       
       <main className="container mx-auto px-4 py-8">
@@ -435,61 +293,68 @@ export default function ProductDetailPage() {
         <Button
           variant="ghost"
           onClick={() => navigate("/marketplace")}
-          className="mb-6 text-[#004080] hover:text-[#003366]"
+          className="mb-6 text-[#004080] hover:text-[#003366] dark:text-blue-400 dark:hover:text-blue-300"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Marketplace
         </Button>
 
         {/* Breadcrumb */}
-        <nav className="flex text-sm text-gray-500 mb-6">
-          <button onClick={() => navigate("/")} className="hover:text-[#004080]">Home</button>
-          <span className="mx-2">/</span>
-          <button onClick={() => navigate("/marketplace")} className="hover:text-[#004080]">Marketplace</button>
-          <span className="mx-2">/</span>
-          <span className="text-gray-900">{displayProduct.name}</span>
+        <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <button onClick={() => navigate("/")} className="hover:text-[#004080] dark:hover:text-blue-400">Home</button>
+          <ChevronRight className="w-4 h-4 mx-2" />
+          <button onClick={() => navigate("/marketplace")} className="hover:text-[#004080] dark:hover:text-blue-400">Marketplace</button>
+          <ChevronRight className="w-4 h-4 mx-2" />
+          <span className="text-gray-900 dark:text-gray-100">{displayProduct.title}</span>
         </nav>
 
         {/* Product Header */}
-        <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+            <div className="flex flex-wrap items-center gap-3">
               <Badge variant={displayProduct.stock_quantity > 0 ? "default" : "destructive"} className="flex items-center gap-1">
                 {displayProduct.stock_quantity > 0 ? (
                   <>
                     <Check className="w-3 h-3" />
-                    In Stock
+                    In Stock ({displayProduct.stock_quantity} available)
                   </>
                 ) : (
-                  <>
-                    <AlertCircle className="w-3 h-3" />
-                    Out of Stock
-                  </>
+                  "Out of Stock"
                 )}
               </Badge>
-              <Badge variant="outline">SKU: {displayProduct.sku}</Badge>
-              <Badge variant="outline">{displayProduct.category}</Badge>
+              <Badge variant="outline" className="text-xs">
+                SKU: SW-{displayProduct.id.toString().padStart(4, '0')}
+              </Badge>
+              <div className="flex items-center gap-1">
+                {renderStars(displayProduct.rating)}
+                <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">
+                  ({displayProduct.rating.toFixed(1)})
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setIsFavorited(!isFavorited)}>
-                <Heart className={`w-4 h-4 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
+            
+            <div className="flex items-center gap-4">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                Save
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Share2 className="w-4 h-4" />
+                Share
               </Button>
-              <div className="flex items-center gap-1 text-sm text-gray-500">
+              <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                 <Eye className="w-4 h-4" />
-                <span>{1000 + displayProduct.id * 100} views</span>
+                <span>{(1000 + displayProduct.id * 100).toLocaleString()} views</span>
+              </div>
+              <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                <Users className="w-4 h-4" />
+                <span>{displayProduct.total_sales || 0} sold</span>
               </div>
             </div>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{displayProduct.title}</h1>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <span className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              {displayProduct.total_sales || 0} sold
-            </span>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">{displayProduct.title}</h1>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
             <span className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
               {displayProduct.processing_time}
@@ -498,840 +363,510 @@ export default function ProductDetailPage() {
               <Shield className="w-4 h-4" />
               {displayProduct.warranty_period} warranty
             </span>
+            <span className="flex items-center gap-1">
+              <Package className="w-4 h-4" />
+              Digital delivery
+            </span>
           </div>
         </div>
 
         {/* Main Product Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          {/* Product Image & Gallery */}
-          <div className="lg:col-span-1 space-y-4">
-            <Card>
-              <CardContent className="p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Product Image Gallery */}
+          <div className="space-y-4">
+            <Card className="dark:bg-gray-800">
+              <CardContent className="p-6">
                 {/* Main Product Image */}
-                <div className="relative group mb-4">
-                  <div className="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg overflow-hidden">
-                    {displayProduct.image_url ? (
+                <div className="relative group mb-6">
+                  <div className="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden">
+                    {displayProduct.images && displayProduct.images[selectedImageIndex] ? (
                       <img 
-                        src={displayProduct.image_url} 
-                        alt={displayProduct.name}
-                        className="w-full h-full object-contain hover:scale-105 transition-transform duration-300 cursor-zoom-in"
-                        onClick={() => window.open(displayProduct.image_url, '_blank')}
+                        src={displayProduct.images[selectedImageIndex]} 
+                        alt={displayProduct.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-zoom-in"
+                        onClick={() => window.open(displayProduct.images[selectedImageIndex], '_blank')}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-16 h-16 text-blue-400" />
+                        <Package className="w-24 h-24 text-blue-400" />
                       </div>
                     )}
                   </div>
                   
-                  {/* Image Badge */}
-                  <div className="absolute top-2 left-2">
-                    <Badge className="bg-[#004080] text-white">
-                      Premium Quality
-                    </Badge>
-                  </div>
-                  
-                  {/* Zoom Hint */}
-                  {displayProduct.image_url && (
-                    <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="bg-black/75 text-white text-xs px-2 py-1 rounded">
-                        Click to enlarge
-                      </div>
-                    </div>
+                  {/* Image Navigation */}
+                  {displayProduct.images && displayProduct.images.length > 1 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))}
+                        disabled={selectedImageIndex === 0}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => setSelectedImageIndex(Math.min(displayProduct.images.length - 1, selectedImageIndex + 1))}
+                        disabled={selectedImageIndex === displayProduct.images.length - 1}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </>
                   )}
                 </div>
 
-                {/* Thumbnail Gallery (if multiple images) */}
-                <div className="grid grid-cols-4 gap-2">
-                  {[displayProduct.image_url, displayProduct.image_url, displayProduct.image_url].filter(Boolean).slice(0, 4).map((img, index) => (
-                    <div key={index} className="aspect-square bg-gray-100 rounded-md overflow-hidden cursor-pointer border-2 border-transparent hover:border-[#004080] transition-colors">
-                      <img 
-                        src={img} 
-                        alt={`${displayProduct.name} thumbnail ${index + 1}`}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Product Tags */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {displayProduct.tags?.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      <Tag className="w-3 h-3 mr-1" />
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Quick Stats */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 flex items-center gap-1">
-                      <TrendingUp className="w-4 h-4" />
-                      Sales
-                    </span>
-                    <span className="font-semibold">{displayProduct.total_sales || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 flex items-center gap-1">
-                      <Package className="w-4 h-4" />
-                      Stock
-                    </span>
-                    <span className="font-semibold text-green-600">{displayProduct.stock_quantity} available</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      Delivery
-                    </span>
-                    <span className="font-semibold text-blue-600">Instant</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Product Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Product Info & Purchase */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Product Information */}
-                  <div className="space-y-4">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">{displayProduct.title}</h2>
-                      <p className="text-gray-600 leading-relaxed">{displayProduct.description}</p>
-                    </div>
-
-                    {/* Features List */}
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-3">Key Features:</h3>
-                      <ul className="space-y-2">
-                        {displayProduct.features?.map((feature, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-gray-600">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Purchase Section */}
-                  <div className="space-y-4">
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-baseline gap-2 mb-2">
-                        {displayProduct.originalPrice && (
-                          <span className="text-lg text-gray-400 line-through">
-                            ${displayProduct.originalPrice}
-                          </span>
-                        )}
-                        <span className="text-3xl font-bold text-[#004080]">
-                          ${typeof displayProduct.price === 'string' ? parseFloat(displayProduct.price).toLocaleString() : displayProduct.price}
-                        </span>
-                        {displayProduct.originalPrice && (
-                          <Badge className="bg-red-100 text-red-700">
-                            {calculateDiscount()}% OFF
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">One-time purchase • No subscription required</p>
-                    </div>
-
-                    {/* Quantity Selector */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Quantity:</label>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          disabled={quantity <= 1}
-                        >
-                          <Plus className="w-4 h-4 rotate-45" />
-                        </Button>
-                        <span className="w-12 text-center font-medium">{quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setQuantity(Math.min(displayProduct.stock_quantity, quantity + 1))}
-                          disabled={quantity >= displayProduct.stock_quantity}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Purchase Buttons */}
-                    <div className="space-y-3">
-                      <Button
-                        onClick={handlePurchase}
-                        disabled={purchaseMutation.isPending || displayProduct.stock_quantity === 0}
-                        className="w-full bg-[#004080] hover:bg-[#003366] text-white py-3"
-                        size="lg"
+                {/* Thumbnail Images */}
+                {displayProduct.images && displayProduct.images.length > 1 && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {displayProduct.images.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedImageIndex === index 
+                            ? 'border-[#004080] ring-2 ring-[#004080]/20' 
+                            : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
+                        }`}
                       >
-                        {purchaseMutation.isPending ? (
-                          <>
-                            <Clock className="w-4 h-4 mr-2 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="w-4 h-4 mr-2" />
-                            Buy Now • ${(typeof displayProduct.price === 'string' ? parseFloat(displayProduct.price) : displayProduct.price) * quantity}
-                          </>
-                        )}
-                      </Button>
-                      
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant="outline" className="text-sm">
-                          <Heart className="w-4 h-4 mr-1" />
-                          Save for Later
-                        </Button>
-                        <Button variant="outline" className="text-sm">
-                          <MessageCircle className="w-4 h-4 mr-1" />
-                          Contact Seller
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Security Features */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-green-700 text-sm font-medium mb-1">
-                        <Shield className="w-4 h-4" />
-                        Secure Purchase
-                      </div>
-                      <ul className="text-xs text-green-600 space-y-1">
-                        <li>• Encrypted payment processing</li>
-                        <li>• {displayProduct.warranty_period} warranty included</li>
-                        <li>• Instant digital delivery</li>
-                      </ul>
-                    </div>
+                        <img 
+                          src={image} 
+                          alt={`${displayProduct.title} view ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Product Benefits */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-[#004080]" />
-                  Why Choose This Product?
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-green-100 rounded-full p-2">
-                      <Zap className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Instant Delivery</h4>
-                      <p className="text-sm text-gray-600">Get your product immediately after payment</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-blue-100 rounded-full p-2">
-                      <Shield className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Quality Guaranteed</h4>
-                      <p className="text-sm text-gray-600">All products are tested and verified</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-purple-100 rounded-full p-2">
-                      <PhoneCall className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">24/7 Support</h4>
-                      <p className="text-sm text-gray-600">Get help whenever you need it</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-orange-100 rounded-full p-2">
-                      <RefreshCcw className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Money Back Guarantee</h4>
-                      <p className="text-sm text-gray-600">{displayProduct.refund_policy}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Device Compatibility */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Monitor className="w-5 h-5 text-[#004080]" />
-                  Device Compatibility
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <Monitor className="w-8 h-8 text-gray-600" />
-                    <span className="text-sm font-medium">Desktop</span>
-                    <Check className="w-4 h-4 text-green-500" />
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <Smartphone className="w-8 h-8 text-gray-600" />
-                    <span className="text-sm font-medium">Mobile</span>
-                    <Check className="w-4 h-4 text-green-500" />
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <Globe className="w-8 h-8 text-gray-600" />
-                    <span className="text-sm font-medium">Web Browser</span>
-                    <Check className="w-4 h-4 text-green-500" />
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Purchase Panel */}
+          {/* Product Details & Purchase */}
           <div className="space-y-6">
-            {/* Pricing */}
-            <Card className="border-2 border-[#004080]">
+            {/* Pricing Section */}
+            <Card className="dark:bg-gray-800">
               <CardHeader>
-                <CardTitle className="text-center">Choose Your Package</CardTitle>
+                <CardTitle className="text-xl">Choose Your Package</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Subscription Options */}
-                <div className="space-y-3">
-                  {subscriptionOptions.map((option) => (
-                    <div 
-                      key={option.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedDuration === option.id 
-                          ? 'border-[#004080] bg-blue-50' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      } ${option.popular ? 'relative' : ''}`}
-                      onClick={() => setSelectedDuration(option.id)}
-                    >
-                      {option.popular && (
-                        <Badge className="absolute -top-2 left-4 bg-[#004080]">
-                          Most Popular
-                        </Badge>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold">{option.label}</div>
-                          {option.savings && (
-                            <div className="text-sm text-green-600">{option.savings}</div>
+                {packages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                      selectedPackage?.id === pkg.id
+                        ? 'border-[#004080] bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
+                    } ${pkg.popular ? 'relative' : ''}`}
+                    onClick={() => setSelectedPackage(pkg)}
+                  >
+                    {pkg.popular && (
+                      <Badge className="absolute -top-2 left-4 bg-[#004080] text-white">
+                        Most Popular
+                      </Badge>
+                    )}
+                    
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 border-2 rounded-full ${
+                          selectedPackage?.id === pkg.id ? 'border-[#004080] bg-[#004080]' : 'border-gray-300 dark:border-gray-600'
+                        }`}>
+                          {selectedPackage?.id === pkg.id && (
+                            <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
                           )}
                         </div>
-                        <div className="text-xl font-bold text-[#004080]">
-                          ${option.price}
+                        <h3 className="font-semibold">{pkg.name}</h3>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold text-[#004080] dark:text-blue-400">
+                            {formatPrice(pkg.price)}
+                          </span>
+                          {pkg.originalPrice && (
+                            <>
+                              <span className="text-sm text-gray-400 line-through">
+                                {formatPrice(pkg.originalPrice)}
+                              </span>
+                              {pkg.discount && (
+                                <Badge variant="destructive" className="text-xs">
+                                  -{pkg.discount}%
+                                </Badge>
+                              )}
+                            </>
+                          )}
                         </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{pkg.duration}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                <Separator />
+                    
+                    <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                      {pkg.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <Check className="w-3 h-3 text-green-500 flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
 
                 {/* Quantity Selector */}
-                <div className="flex items-center justify-between">
-                  <label className="font-medium">Quantity:</label>
+                <div className="flex items-center gap-4 pt-4 border-t dark:border-gray-700">
+                  <label className="text-sm font-medium">Quantity:</label>
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
                     >
                       -
                     </Button>
-                    <Input
-                      type="number"
-                      min="1"
-                      max={displayProduct.stock_quantity}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, Math.min(displayProduct.stock_quantity, parseInt(e.target.value) || 1)))}
-                      className="w-16 text-center"
-                    />
-                    <Button 
-                      variant="outline" 
+                    <span className="w-12 text-center font-medium">{quantity}</span>
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => setQuantity(Math.min(displayProduct.stock_quantity, quantity + 1))}
+                      disabled={quantity >= displayProduct.stock_quantity}
                     >
                       +
                     </Button>
                   </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    ({displayProduct.stock_quantity} available)
+                  </span>
                 </div>
 
-                {/* Total Price */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Total:</span>
-                    <span className="text-2xl font-bold text-[#004080]">
-                      ${(subscriptionOptions.find(o => o.id === selectedDuration)?.price || displayProduct.price * quantity).toFixed(2)}
-                    </span>
+                {/* Purchase Button */}
+                <div className="space-y-4 pt-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-[#004080] dark:text-blue-400 mb-2">
+                      Total: {formatPrice(totalPrice)}
+                    </p>
+                    {selectedPackage?.originalPrice && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        You save {formatPrice((selectedPackage.originalPrice - selectedPackage.price) * quantity)}
+                      </p>
+                    )}
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
+                  
                   <Button
                     onClick={handlePurchase}
-                    disabled={displayProduct.stock_quantity === 0 || purchaseMutation.isPending}
-                    className="w-full bg-[#004080] hover:bg-[#003366] text-white h-12 text-lg"
+                    disabled={purchaseMutation.isPending || displayProduct.stock_quantity === 0 || !selectedPackage}
+                    className="w-full h-14 text-lg bg-[#004080] hover:bg-[#003366] dark:bg-blue-600 dark:hover:bg-blue-700"
                   >
                     {purchaseMutation.isPending ? (
-                      "Processing..."
+                      <>
+                        <Clock className="w-5 h-5 mr-2 animate-spin" />
+                        Processing...
+                      </>
                     ) : (
                       <>
                         <CreditCard className="w-5 h-5 mr-2" />
-                        Buy Now - ${(subscriptionOptions.find(o => o.id === selectedDuration)?.price || displayProduct.price * quantity).toFixed(2)}
+                        Buy Now - {formatPrice(totalPrice)}
                       </>
                     )}
                   </Button>
                   
-                  <Button variant="outline" className="w-full h-12">
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Add to Cart
-                  </Button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button variant="outline" className="h-12">
+                      <Heart className="w-5 h-5 mr-2" />
+                      Add to Wishlist
+                    </Button>
+                    <Button variant="outline" className="h-12">
+                      <MessageCircle className="w-5 h-5 mr-2" />
+                      Contact Seller
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Security Features */}
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-medium mb-2">
+                    <Shield className="w-5 h-5" />
+                    Secure Purchase Guarantee
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <Check className="w-4 h-4" />
+                      Encrypted payments
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <Check className="w-4 h-4" />
+                      {displayProduct.warranty_period} warranty
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <Check className="w-4 h-4" />
+                      Instant delivery
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <Check className="w-4 h-4" />
+                      Money-back guarantee
+                    </div>
+                  </div>
                 </div>
 
                 {/* Payment Methods */}
                 <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-2">Secure payment with:</p>
-                  <div className="flex justify-center gap-2">
-                    <CreditCard className="w-6 h-6 text-gray-400" />
-                    <Wallet className="w-6 h-6 text-gray-400" />
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Secure payment with:</p>
+                  <div className="flex justify-center items-center gap-4 text-gray-400">
+                    <CreditCard className="w-8 h-8" />
+                    <Wallet className="w-8 h-8" />
+                    <DollarSign className="w-8 h-8" />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Referral Program */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gift className="w-5 h-5 text-[#004080]" />
-                  Referral Program
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-3">
-                  Share this product and earn 10% commission on each sale!
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    value={referralLink}
-                    readOnly
-                    className="text-xs"
-                  />
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(referralLink);
-                      toast({ title: "Link copied!", description: "Referral link copied to clipboard" });
-                    }}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Important Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-amber-500" />
-                  Important Notes
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-gray-500 mt-0.5" />
-                  <div>
-                    <strong>Processing Time:</strong> {displayProduct.processing_time}
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Shield className="w-4 h-4 text-gray-500 mt-0.5" />
-                  <div>
-                    <strong>Warranty:</strong> {displayProduct.warranty_period}
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <RefreshCcw className="w-4 h-4 text-gray-500 mt-0.5" />
-                  <div>
-                    <strong>Refund Policy:</strong> {displayProduct.refund_policy}
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Mail className="w-4 h-4 text-gray-500 mt-0.5" />
-                  <div>
-                    <strong>Support:</strong> 
-                    <a href={`mailto:${displayProduct.support_contact}`} className="text-[#004080] hover:underline ml-1">
-                      {displayProduct.support_contact}
-                    </a>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Contact Support */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PhoneCall className="w-5 h-5 text-[#004080]" />
-                  Need Help?
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email Support
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Live Chat
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <HelpCircle className="w-4 h-4 mr-2" />
-                  FAQ
-                </Button>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Detailed Tabs Section */}
-        <Tabs defaultValue="description" className="mb-12">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="description">Description</TabsTrigger>
-            <TabsTrigger value="features">Features</TabsTrigger>
-            <TabsTrigger value="activation">Activation</TabsTrigger>
-            <TabsTrigger value="warranty">Warranty</TabsTrigger>
-            <TabsTrigger value="faqs">FAQs</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
-          </TabsList>
+        {/* Tabbed Content Section */}
+        <div className="mb-12">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="description">Description</TabsTrigger>
+              <TabsTrigger value="features">Features</TabsTrigger>
+              <TabsTrigger value="activation">Activation</TabsTrigger>
+              <TabsTrigger value="warranty">Warranty</TabsTrigger>
+              <TabsTrigger value="faqs">FAQs</TabsTrigger>
+              <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="description" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Description</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 leading-relaxed mb-4">{displayProduct.description}</p>
-                  <h3 className="text-lg font-semibold mb-2">What You Get:</h3>
-                  <ul className="list-disc list-inside space-y-1 text-gray-700">
-                    {displayProduct.features?.map((feature, index) => (
-                      <li key={index}>{feature}</li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="features" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Features</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {displayProduct.features?.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="activation" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="w-5 h-5 text-[#004080]" />
-                  Step-by-Step Activation Guide
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="flex gap-4">
-                    <div className="bg-[#004080] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">1</div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Purchase Confirmation</h4>
-                      <p className="text-gray-600">After successful payment, you'll receive an email confirmation with your order details.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="bg-[#004080] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">2</div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Receive Activation Details</h4>
-                      <p className="text-gray-600">Within 5 minutes, you'll get another email with login credentials and activation instructions.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="bg-[#004080] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">3</div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Follow Instructions</h4>
-                      <p className="text-gray-600">Use the provided credentials to access your account(s) following the detailed guide.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="bg-[#004080] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">4</div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Support Available</h4>
-                      <p className="text-gray-600">If you encounter any issues, our 24/7 support team is ready to help.</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="warranty" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-[#004080]" />
-                  Warranty & Refund Policy
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Warranty Coverage</h3>
-                    <p className="text-gray-700 mb-4">
-                      This product comes with a {displayProduct.warranty_period} warranty from the date of purchase. 
-                      We guarantee that the product will work as described.
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-gray-700">
-                      <li>Free replacement if product stops working</li>
-                      <li>Technical support included</li>
-                      <li>No questions asked within warranty period</li>
+            <TabsContent value="description" className="mt-6">
+              <Card className="dark:bg-gray-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-[#004080]" />
+                    Product Description
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="prose dark:prose-invert max-w-none">
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {displayProduct.description}
+                  </p>
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-4">What's Included:</h3>
+                    <ul className="space-y-2">
+                      {displayProduct.features?.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Refund Policy</h3>
-                    <p className="text-gray-700 mb-4">{displayProduct.refund_policy}</p>
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="features" className="mt-6">
+              <Card className="dark:bg-gray-800">
+                <CardHeader>
+                  <CardTitle>Key Features</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {displayProduct.features?.map((feature, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-2 mt-1">
+                          <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        </div>
                         <div>
-                          <h4 className="font-semibold text-amber-800">Refund Conditions</h4>
-                          <p className="text-amber-700 text-sm">
-                            Refunds are processed within 2-3 business days. Digital products must be reported 
-                            as non-functional within the refund period.
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                            {feature}
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            High-quality implementation with modern standards
                           </p>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabsContent value="faqs" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5 text-[#004080]" />
-                  Frequently Asked Questions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {faqs.map((faq, index) => (
-                    <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0">
-                      <h4 className="font-semibold text-gray-900 mb-2 flex items-start gap-2">
-                        <span className="bg-[#004080] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center mt-0.5">
-                          Q
-                        </span>
-                        {faq.question}
-                      </h4>
-                      <p className="text-gray-700 ml-7">{faq.answer}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="reviews" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-[#004080]" />
-                    Customer Reviews ({comments.length})
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex">{renderStars(4.8)}</div>
-                    <span className="text-sm text-gray-600">4.8 out of 5</span>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Add Comment Form */}
-                {user && (
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold mb-3">Leave a Review</h4>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">Rating</label>
-                        <div className="flex gap-1">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setNewRating(i + 1)}
-                              className="p-1"
-                            >
-                              <Star
-                                className={`w-5 h-5 ${
-                                  i < newRating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                }`}
-                              />
-                            </button>
-                          ))}
+            <TabsContent value="reviews" className="mt-6">
+              <div className="space-y-6">
+                {/* Reviews Summary */}
+                <Card className="dark:bg-gray-800">
+                  <CardHeader>
+                    <CardTitle>Customer Reviews</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div className="text-center">
+                        <div className="text-4xl font-bold text-[#004080] dark:text-blue-400 mb-2">
+                          {displayProduct.rating.toFixed(1)}
                         </div>
+                        <div className="flex justify-center mb-2">
+                          {renderStars(displayProduct.rating)}
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Based on {reviewComments.length} reviews
+                        </p>
                       </div>
-                      <Textarea
-                        placeholder="Share your experience with this product..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        rows={4}
-                      />
-                      <Button
-                        onClick={handleSubmitComment}
-                        disabled={commentMutation.isPending || !newComment.trim()}
-                        className="bg-[#004080] hover:bg-[#003366]"
-                      >
-                        {commentMutation.isPending ? "Submitting..." : "Submit Review"}
-                      </Button>
+                      <div className="space-y-2">
+                        {[5, 4, 3, 2, 1].map((stars) => (
+                          <div key={stars} className="flex items-center gap-3">
+                            <span className="text-sm w-8">{stars}★</span>
+                            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              <div 
+                                className="bg-yellow-400 h-2 rounded-full" 
+                                style={{ width: `${Math.random() * 80 + 10}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-gray-500 w-8">
+                              {Math.floor(Math.random() * 20)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {/* Comments List */}
-                <div className="space-y-6">
-                  {comments.length > 0 ? (
-                    comments.map((comment) => (
-                      <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
+                    
+                    <Separator className="my-6" />
+                    
+                    {/* Individual Reviews */}
+                    <div className="space-y-6">
+                      {reviewComments.map((comment) => (
+                        <div key={comment.id} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-b-0">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                              <Users className="w-5 h-5 text-gray-500" />
+                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-semibold">{comment.avatar}</span>
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold">{comment.user_name}</span>
-                                {comment.is_buyer && (
+                                <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                                  {comment.user}
+                                </h4>
+                                {comment.verified && (
                                   <Badge variant="outline" className="text-xs">
-                                    <Check className="w-3 h-3 mr-1" />
-                                    Verified Buyer
+                                    Verified Purchase
                                   </Badge>
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="flex">{renderStars(comment.rating)}</div>
-                                <span className="text-sm text-gray-500">
-                                  {new Date(comment.created_at).toLocaleDateString()}
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  {comment.date}
                                 </span>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <p className="text-gray-700 mb-3">{comment.comment}</p>
-                        
-                        {/* Support Reply */}
-                        {comment.support_reply && (
-                          <div className="bg-blue-50 border-l-4 border-[#004080] p-3 mt-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge className="bg-[#004080] text-white text-xs">
-                                Support Team
-                              </Badge>
-                              <span className="text-sm text-gray-500">
-                                {comment.support_reply_date && new Date(comment.support_reply_date).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <p className="text-gray-700 text-sm">{comment.support_reply}</p>
+                          
+                          <p className="mt-3 text-gray-700 dark:text-gray-300">
+                            {comment.comment}
+                          </p>
+                          
+                          <div className="flex items-center gap-4 mt-3">
+                            <Button variant="ghost" size="sm" className="text-xs">
+                              <ThumbsUp className="w-3 h-3 mr-1" />
+                              Helpful ({comment.helpful})
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-xs">
+                              <ThumbsDown className="w-3 h-3 mr-1" />
+                              Not helpful
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-500 mb-2">No reviews yet</h3>
-                      <p className="text-gray-500">Be the first to review this product!</p>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  </CardContent>
+                </Card>
+
+                {/* Write Review */}
+                <Card className="dark:bg-gray-800">
+                  <CardHeader>
+                    <CardTitle>Write a Review</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Rating</label>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
+                              className="p-1"
+                            >
+                              <Star 
+                                className={`w-6 h-6 ${
+                                  star <= newReview.rating 
+                                    ? 'text-yellow-400 fill-current' 
+                                    : 'text-gray-300 dark:text-gray-600'
+                                }`} 
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Your Review</label>
+                        <Textarea
+                          placeholder="Share your experience with this product..."
+                          value={newReview.comment}
+                          onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                          rows={4}
+                        />
+                      </div>
+                      
+                      <Button className="w-full">
+                        <Send className="w-4 h-4 mr-2" />
+                        Submit Review
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
 
         {/* Related Products */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Related Products</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Related Products</h2>
             <Button variant="outline" onClick={() => navigate("/marketplace")}>
               View All Products
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {relatedProducts.map((related) => (
-              <Card key={related.id} className="group hover:shadow-lg transition-all">
+              <Card key={related.id} className="group hover:shadow-lg transition-all dark:bg-gray-800">
                 <CardContent className="p-4">
-                  <div className="aspect-video bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg mb-4 flex items-center justify-center">
+                  <div className="aspect-video bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg mb-4 flex items-center justify-center">
                     <Package className="w-12 h-12 text-gray-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{related.name}</h3>
+                    <h3 className="font-semibold text-sm mb-2 line-clamp-2">{related.name}</h3>
                     <div className="flex items-center gap-2 mb-3">
                       <div className="flex">{renderStars(related.rating)}</div>
-                      <span className="text-sm text-gray-500">({related.rating})</span>
+                      <span className="text-xs text-gray-500">({related.rating})</span>
                     </div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        {related.originalPrice && related.originalPrice > related.price && (
-                          <span className="text-sm text-gray-500 line-through">
-                            ${related.originalPrice.toFixed(2)}
-                          </span>
+                        <span className="font-bold text-[#004080] dark:text-blue-400">{formatPrice(related.price)}</span>
+                        {related.originalPrice && (
+                          <>
+                            <span className="text-sm text-gray-400 line-through">{formatPrice(related.originalPrice)}</span>
+                            <Badge className="text-xs bg-red-100 text-red-700">
+                              -{related.discount}%
+                            </Badge>
+                          </>
                         )}
-                        <span className="font-bold text-[#004080]">
-                          ${related.price.toFixed(2)}
-                        </span>
                       </div>
-                      {related.discount && (
-                        <Badge variant="destructive" className="text-xs">
-                          -{related.discount}%
-                        </Badge>
-                      )}
                     </div>
                     <Button 
                       onClick={() => navigate(`/marketplace/product/${related.id}`)} 
-                      className="w-full bg-[#004080] hover:bg-[#003366]"
+                      variant="outline"
+                      className="w-full"
                       size="sm"
                     >
-                      View Product
+                      View Details
                     </Button>
                   </div>
                 </CardContent>
@@ -1339,8 +874,8 @@ export default function ProductDetailPage() {
             ))}
           </div>
         </div>
-      </main>
 
+      </main>
       <Footer />
     </div>
   );
