@@ -180,22 +180,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             </div>
           </SheetHeader>
 
-          {!user ? (
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="text-center">
-                <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Please log in to view cart
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  You need to log in to add products to your cart
-                </p>
-                <Button onClick={() => window.location.href = "/login"}>
-                  Log In
-                </Button>
-              </div>
-            </div>
-          ) : isLoading ? (
+          {isLoading ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -361,6 +346,11 @@ export function CartTrigger() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
 
+  // Don't render if user is not logged in
+  if (!user) {
+    return null;
+  }
+
   // Fetch cart count
   const { data: cartResponse } = useQuery<{ cartItems: CartItem[] }>({
     queryKey: ["/api/cart"],
@@ -369,7 +359,6 @@ export function CartTrigger() {
   });
 
   const cartItems = cartResponse?.cartItems || [];
-
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
