@@ -487,15 +487,10 @@ export default function MarketplacePage() {
                         {/* Buy Button */}
                         <Button 
                           className="w-full bg-[#004080] hover:bg-[#003366] text-white"
-                          onClick={() => handleBuyNow(product.id)}
-                          disabled={product.stock === 0 || purchaseMutation.isPending}
+                          onClick={() => window.location.href = `/marketplace/product/${product.id}`}
+                          disabled={product.stock === 0}
                         >
-                          {purchaseMutation.isPending ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Processing...
-                            </>
-                          ) : product.stock === 0 ? (
+                          {product.stock === 0 ? (
                             "Out of Stock"
                           ) : (
                             <>

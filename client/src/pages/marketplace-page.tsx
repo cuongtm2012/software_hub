@@ -203,7 +203,7 @@ export default function MarketplacePage() {
                 </CardContent>
                 
                 <CardFooter className="p-4 pt-0">
-                  <Link to={`/order-details/${store.id}`}>
+                  <Link to={`/marketplace/product/${store.id}`}>
                     <Button className="w-full bg-[#004080] hover:bg-[#003366] text-white">
                       <Box className="h-4 w-4 mr-2" />
                       Buy Now
