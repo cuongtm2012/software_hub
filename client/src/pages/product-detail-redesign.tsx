@@ -82,8 +82,8 @@ export default function ProductDetailRedesign() {
   React.useEffect(() => {
     if (!id) {
       toast({
-        title: "Sản phẩm không hợp lệ",
-        description: "Không tìm thấy ID sản phẩm. Đang chuyển về trang marketplace...",
+        title: "Invalid Product",
+        description: "Product ID not found. Redirecting to marketplace...",
         variant: "destructive",
       });
       navigate("/marketplace");
@@ -93,8 +93,8 @@ export default function ProductDetailRedesign() {
     const productId = parseInt(id);
     if (isNaN(productId) || productId <= 0) {
       toast({
-        title: "ID sản phẩm không hợp lệ",
-        description: "ID sản phẩm phải là số hợp lệ. Đang chuyển về trang marketplace...",
+        title: "Invalid Product ID",
+        description: "Product ID must be a valid number. Redirecting to marketplace...",
         variant: "destructive",
       });
       navigate("/marketplace");
@@ -137,32 +137,32 @@ export default function ProductDetailRedesign() {
     
     return {
       ...productData,
-      title: productData.title || "Perplexity Pro 1 năm - Tài khoản",
+      title: productData.title || "Perplexity Pro 1 Year - Premium Account",
       images: productData.images?.length ? productData.images : [
         "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop"
       ],
-      price: productData.price || 995000,
-      description: productData.description || `Perplexity Pro là một công cụ AI tìm kiếm thông tin cực kỳ mạnh mẽ và hữu ích. Với gói Pro, bạn sẽ có được:
+      price: productData.price || 99.99,
+      description: productData.description || `Perplexity Pro is an incredibly powerful and useful AI-powered search tool. With the Pro plan, you get:
 
-• Truy cập không giới hạn vào mô hình AI tiên tiến
-• Tìm kiếm thông tin chính xác và cập nhật
-• Phân tích dữ liệu chuyên sâu
-• Hỗ trợ đa ngôn ngữ
-• Không có giới hạn về số lượng truy vấn
+• Unlimited access to advanced AI models
+• Accurate and up-to-date information search
+• Deep data analysis capabilities
+• Multi-language support
+• No limits on query count
 
-Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hướng dẫn sử dụng chi tiết.`,
+Account comes with complete login credentials and detailed usage instructions.`,
       features: productData.features || [
-        "Tài khoản Perplexity Pro chính hãng 1 năm",
-        "Truy cập không giới hạn tất cả tính năng Pro",
-        "Hỗ trợ đa ngôn ngữ bao gồm tiếng Việt",
-        "Tốc độ phản hồi nhanh chóng",
-        "Không giới hạn số lượng câu hỏi",
-        "Hỗ trợ 24/7 qua chat và email"
+        "Genuine Perplexity Pro account for 1 year",
+        "Unlimited access to all Pro features",
+        "Multi-language support including Vietnamese",
+        "Fast response time",
+        "No query limits",
+        "24/7 support via chat and email"
       ],
-      warranty_period: productData.warranty_period || "12 tháng",
-      processing_time: productData.processing_time || "1-5 phút",
+      warranty_period: productData.warranty_period || "12 months",
+      processing_time: productData.processing_time || "1-5 minutes",
       total_sales: productData.total_sales || 1247,
       rating: productData.rating || 4.9,
       view_count: productData.view_count || 15847,
@@ -182,11 +182,11 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Đặt hàng thành công!", description: "Bạn sẽ nhận được hướng dẫn qua email." });
+      toast({ title: "Order successful!", description: "You will receive instructions via email." });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
     },
     onError: () => {
-      toast({ title: "Đặt hàng thất bại", description: "Vui lòng thử lại hoặc liên hệ hỗ trợ.", variant: "destructive" });
+      toast({ title: "Order failed", description: "Please try again or contact support.", variant: "destructive" });
     }
   });
 
@@ -206,8 +206,8 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
       console.error('Product fetch error:', error);
       if (error?.message?.includes('404')) {
         toast({
-          title: "Không tìm thấy sản phẩm",
-          description: "Sản phẩm có thể đã bị xóa hoặc không còn khả dụng.",
+          title: "Product not found",
+          description: "This product may have been removed or is no longer available.",
           variant: "destructive",
         });
         navigate("/marketplace");
@@ -218,16 +218,16 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
   // Handle add to cart
   const handleAddToCart = () => {
     toast({ 
-      title: "Đã thêm vào giỏ hàng", 
-      description: `${quantity} sản phẩm đã được thêm vào giỏ hàng.` 
+      title: "Added to cart", 
+      description: `${quantity} item(s) added to your cart.` 
     });
   };
 
-  // Format price in VND
+  // Format price in USD
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'VND'
+      currency: 'USD'
     }).format(price);
   };
 
@@ -250,7 +250,7 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 dark:text-gray-400">Đang tải thông tin sản phẩm...</p>
+              <p className="text-gray-600 dark:text-gray-400">Loading product information...</p>
             </div>
           </div>
         </div>
@@ -268,18 +268,18 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
           <div className="text-center py-16">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              Không tìm thấy sản phẩm
+              Product Not Found
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
+              The product you're looking for doesn't exist or has been removed.
             </p>
             <div className="flex gap-4 justify-center">
               <Button onClick={() => navigate("/marketplace")} variant="default">
-                Về trang chủ
+                Back to Marketplace
               </Button>
               <Button onClick={() => refetch()} variant="outline">
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Thử lại
+                Try Again
               </Button>
             </div>
           </div>
@@ -298,11 +298,11 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
             <button onClick={() => navigate("/")} className="hover:text-blue-600">
-              Trang chủ
+              Home
             </button>
             <span className="mx-2">/</span>
             <button onClick={() => navigate("/marketplace")} className="hover:text-blue-600">
-              Sản phẩm
+              Products
             </button>
             <span className="mx-2">/</span>
             <span className="text-gray-900 dark:text-gray-100 font-medium">
@@ -374,10 +374,10 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                   </div>
                   <div className="text-sm text-gray-500">
                     <Eye className="w-4 h-4 inline mr-1" />
-                    {displayProduct.view_count.toLocaleString()} lượt xem
+                    {displayProduct.view_count.toLocaleString()} views
                   </div>
                   <div className="text-sm text-gray-500">
-                    Đã bán {displayProduct.total_sales}
+                    {displayProduct.total_sales} sold
                   </div>
                 </div>
 
@@ -389,10 +389,10 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                   <div className="flex items-center gap-4 text-sm">
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
                       <CheckCircle className="w-3 h-3 mr-1" />
-                      Còn hàng
+                      In Stock
                     </Badge>
                     <span className="text-gray-600">
-                      Kho: {displayProduct.stock_quantity} sản phẩm
+                      Stock: {displayProduct.stock_quantity} available
                     </span>
                   </div>
                 </div>
@@ -401,24 +401,24 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
               {/* Key Features */}
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                  Thông tin chính:
+                  Key Information:
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="flex items-center gap-2 text-sm">
                     <Shield className="w-4 h-4 text-green-600" />
-                    <span>Bảo hành: {displayProduct.warranty_period}</span>
+                    <span>Warranty: {displayProduct.warranty_period}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Clock className="w-4 h-4 text-blue-600" />
-                    <span>Giao hàng: {displayProduct.processing_time}</span>
+                    <span>Delivery: {displayProduct.processing_time}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Package className="w-4 h-4 text-purple-600" />
-                    <span>Tài khoản chính hãng</span>
+                    <span>Genuine account</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Award className="w-4 h-4 text-yellow-600" />
-                    <span>Hỗ trợ 24/7</span>
+                    <span>24/7 support</span>
                   </div>
                 </div>
               </div>
@@ -426,7 +426,7 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
               {/* Quantity and Actions */}
               <div className="mb-8">
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="font-medium">Số lượng:</span>
+                  <span className="font-medium">Quantity:</span>
                   <div className="flex items-center border rounded-lg">
                     <button 
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -445,7 +445,7 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                     </button>
                   </div>
                   <span className="text-sm text-gray-600">
-                    ({displayProduct.stock_quantity} có sẵn)
+                    ({displayProduct.stock_quantity} available)
                   </span>
                 </div>
 
@@ -460,12 +460,12 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                     {purchaseMutation.isPending ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Đang xử lý...
+                        Processing...
                       </>
                     ) : (
                       <>
                         <ShoppingCart className="w-5 h-5 mr-2" />
-                        Mua ngay
+                        Buy Now
                       </>
                     )}
                   </Button>
@@ -477,7 +477,7 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                     size="lg"
                   >
                     <ShoppingCart className="w-5 h-5 mr-2" />
-                    Thêm vào giỏ
+                    Add to Cart
                   </Button>
                 </div>
               </div>
@@ -487,19 +487,19 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                 <div className="flex flex-wrap gap-3">
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <MessageCircle className="w-4 h-4" />
-                    Chat ngay
+                    Chat Now
                   </Button>
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <Phone className="w-4 h-4" />
-                    Gọi điện
+                    Call
                   </Button>
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <Heart className="w-4 h-4" />
-                    Yêu thích
+                    Favorite
                   </Button>
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <Share2 className="w-4 h-4" />
-                    Chia sẻ
+                    Share
                   </Button>
                 </div>
               </div>
@@ -516,25 +516,25 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                   value="description" 
                   className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent"
                 >
-                  Mô tả sản phẩm
+                  Product Description
                 </TabsTrigger>
                 <TabsTrigger 
                   value="features"
                   className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent"
                 >
-                  Tính năng
+                  Features
                 </TabsTrigger>
                 <TabsTrigger 
                   value="reviews"
                   className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent"
                 >
-                  Đánh giá
+                  Reviews
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="description" className="p-6">
                 <div className="prose max-w-none">
-                  <h3 className="text-lg font-semibold mb-4">Chi tiết sản phẩm</h3>
+                  <h3 className="text-lg font-semibold mb-4">Product Details</h3>
                   <div className="whitespace-pre-line text-gray-700 dark:text-gray-300">
                     {displayProduct.description}
                   </div>
@@ -542,7 +542,7 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
               </TabsContent>
 
               <TabsContent value="features" className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Tính năng nổi bật</h3>
+                <h3 className="text-lg font-semibold mb-4">Key Features</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {displayProduct.features.map((feature: string, index: number) => (
                     <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -555,7 +555,7 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
 
               <TabsContent value="reviews" className="p-6">
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-4">Đánh giá khách hàng</h3>
+                  <h3 className="text-lg font-semibold mb-4">Customer Reviews</h3>
                   <div className="flex items-center gap-4 mb-6">
                     <div className="text-4xl font-bold text-yellow-600">
                       {displayProduct.rating.toFixed(1)}
@@ -565,7 +565,7 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                         {renderStars(displayProduct.rating)}
                       </div>
                       <div className="text-sm text-gray-600">
-                        Dựa trên {displayProduct.total_sales} đánh giá
+                        Based on {displayProduct.total_sales} reviews
                       </div>
                     </div>
                   </div>
@@ -576,27 +576,27 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                   <div className="border-b pb-6">
                     <div className="flex items-start gap-4">
                       <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        N
+                        J
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium">Nguyễn Văn A</span>
+                          <span className="font-medium">John Smith</span>
                           <Badge variant="secondary" className="text-xs">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Đã mua hàng
+                            Verified Purchase
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1 mb-2">
                           {renderStars(5)}
-                          <span className="text-sm text-gray-600 ml-2">2 ngày trước</span>
+                          <span className="text-sm text-gray-600 ml-2">2 days ago</span>
                         </div>
                         <p className="text-gray-700 dark:text-gray-300">
-                          Sản phẩm rất tốt, tài khoản hoạt động ổn định. Seller hỗ trợ nhiệt tình. Recommend!
+                          Excellent product! Account works perfectly and seller provides great support. Highly recommended!
                         </p>
                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
                           <button className="flex items-center gap-1 hover:text-blue-600">
                             <ThumbsUp className="w-4 h-4" />
-                            Hữu ích (12)
+                            Helpful (12)
                           </button>
                         </div>
                       </div>
@@ -606,27 +606,27 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                   <div className="border-b pb-6">
                     <div className="flex items-start gap-4">
                       <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        M
+                        S
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium">Mai Thị B</span>
+                          <span className="font-medium">Sarah Johnson</span>
                           <Badge variant="secondary" className="text-xs">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Đã mua hàng
+                            Verified Purchase
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1 mb-2">
                           {renderStars(4)}
-                          <span className="text-sm text-gray-600 ml-2">1 tuần trước</span>
+                          <span className="text-sm text-gray-600 ml-2">1 week ago</span>
                         </div>
                         <p className="text-gray-700 dark:text-gray-300">
-                          Chất lượng tốt, giá hợp lý. Giao hàng nhanh. Sẽ mua tiếp ở shop.
+                          Good quality, reasonable price. Fast delivery. Will buy again from this seller.
                         </p>
                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
                           <button className="flex items-center gap-1 hover:text-blue-600">
                             <ThumbsUp className="w-4 h-4" />
-                            Hữu ích (8)
+                            Helpful (8)
                           </button>
                         </div>
                       </div>
@@ -641,7 +641,7 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
         {/* Related Products */}
         <div className="mt-8">
           <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-            Sản phẩm liên quan
+            Related Products
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
@@ -650,15 +650,15 @@ Tài khoản được cung cấp đầy đủ thông tin đăng nhập và hư�
                   <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg mb-3 overflow-hidden">
                     <img
                       src={`https://images.unsplash.com/photo-155${i}650975-87deedd944c3?w=200&h=200&fit=crop`}
-                      alt={`Sản phẩm ${i}`}
+                      alt={`Product ${i}`}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <h4 className="font-medium text-sm mb-2 line-clamp-2">
-                    ChatGPT Plus {i} năm
+                    ChatGPT Plus {i} Year
                   </h4>
                   <div className="text-red-600 font-bold text-lg">
-                    {formatPrice(500000 + i * 100000)}
+                    {formatPrice(50 + i * 10)}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     {renderStars(4 + Math.random())}
