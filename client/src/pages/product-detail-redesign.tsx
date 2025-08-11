@@ -24,7 +24,12 @@ import {
   User,
   Calendar,
   Award,
-  CheckCircle
+  CheckCircle,
+  CreditCard,
+  Smartphone,
+  QrCode,
+  Banknote,
+  X
 } from "lucide-react";
 import {
   Card,
@@ -39,6 +44,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
@@ -106,6 +122,8 @@ export default function ProductDetailRedesign() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("vnpay_qr");
 
   // Fetch product data
   const { data: product, isLoading, error, refetch } = useQuery<Product>({
@@ -172,21 +190,35 @@ Account comes with complete login credentials and detailed usage instructions.`,
 
   // Purchase mutation
   const purchaseMutation = useMutation({
-    mutationFn: async (data: { productId: number; quantity: number }) => {
-      const response = await fetch('/api/orders', {
+    mutationFn: async (data: { productId: number; quantity: number; paymentMethod: string }) => {
+      const response = await fetch(`/api/products/${data.productId}/purchase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          quantity: data.quantity,
+          payment_method: data.paymentMethod
+        })
       });
-      if (!response.ok) throw new Error('Purchase failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Purchase failed');
+      }
       return response.json();
     },
-    onSuccess: () => {
-      toast({ title: "Order successful!", description: "You will receive instructions via email." });
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+    onSuccess: (data) => {
+      toast({ 
+        title: "Order successful!", 
+        description: `Order #${data.id} created successfully. You will receive instructions via email.` 
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/marketplace/products/${id}`] });
+      setIsCheckoutOpen(false);
     },
-    onError: () => {
-      toast({ title: "Order failed", description: "Please try again or contact support.", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ 
+        title: "Order failed", 
+        description: error.message || "Please try again or contact support.", 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -196,9 +228,53 @@ Account comes with complete login credentials and detailed usage instructions.`,
     
     purchaseMutation.mutate({
       productId: displayProduct.id,
-      quantity
+      quantity,
+      paymentMethod: selectedPaymentMethod
     });
   };
+
+  // Handle Buy Now - Open checkout modal
+  const handleBuyNow = () => {
+    setIsCheckoutOpen(true);
+  };
+
+  // Calculate total amount
+  const totalAmount = useMemo(() => {
+    if (!displayProduct) return 0;
+    return displayProduct.price * quantity;
+  }, [displayProduct, quantity]);
+
+  // Payment method options
+  const paymentMethods = [
+    {
+      id: "vnpay_qr",
+      name: "VNPay QR Code",
+      description: "Pay with VNPay QR",
+      icon: QrCode,
+      color: "bg-blue-600"
+    },
+    {
+      id: "qr_banking",
+      name: "QR Banking",
+      description: "Pay with Bank QR",
+      icon: CreditCard,
+      color: "bg-blue-700"
+    },
+    {
+      id: "momo",
+      name: "MoMo Wallet",
+      description: "Pay with MoMo",
+      icon: Smartphone,
+      color: "bg-pink-600"
+    },
+    {
+      id: "bank_transfer",
+      name: "Bank Transfer",
+      description: "Direct bank transfer",
+      icon: Banknote,
+      color: "bg-green-600"
+    }
+  ];
 
   // Handle API errors
   React.useEffect(() => {
@@ -452,22 +528,13 @@ Account comes with complete login credentials and detailed usage instructions.`,
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
-                    onClick={handlePurchase}
-                    disabled={purchaseMutation.isPending || displayProduct.stock_quantity === 0}
+                    onClick={handleBuyNow}
+                    disabled={displayProduct.stock_quantity === 0}
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3"
                     size="lg"
                   >
-                    {purchaseMutation.isPending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-5 h-5 mr-2" />
-                        Buy Now
-                      </>
-                    )}
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    Buy Now
                   </Button>
                   
                   <Button 
@@ -672,6 +739,144 @@ Account comes with complete login credentials and detailed usage instructions.`,
           </div>
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5" />
+              Checkout - Order Summary
+            </DialogTitle>
+            <DialogDescription>
+              Review your order and select payment method
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Product Summary */}
+            <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                  <img
+                    src={displayProduct?.images[0]}
+                    alt={displayProduct?.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {displayProduct?.title}
+                  </h3>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Quantity: {quantity}
+                    </div>
+                    <div className="font-medium text-red-600">
+                      {formatPrice(displayProduct?.price || 0)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="space-y-3 border rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">Order Summary</h4>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                  <span>{formatPrice(totalAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Shipping</span>
+                  <span className="text-green-600">Free</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Processing fee</span>
+                  <span>{formatPrice(0)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-medium text-lg">
+                  <span>Total</span>
+                  <span className="text-red-600">{formatPrice(totalAmount)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Methods */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">Select Payment Method</h4>
+              
+              <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                <div className="grid grid-cols-1 gap-3">
+                  {paymentMethods.map((method) => {
+                    const IconComponent = method.icon;
+                    return (
+                      <div key={method.id} className="flex items-center space-x-3">
+                        <RadioGroupItem value={method.id} id={method.id} />
+                        <Label 
+                          htmlFor={method.id} 
+                          className="flex items-center gap-3 flex-1 cursor-pointer p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <div className={`w-10 h-10 rounded-lg ${method.color} flex items-center justify-center`}>
+                            <IconComponent className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{method.name}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">{method.description}</div>
+                          </div>
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Security Notice */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <div className="font-medium text-blue-900 dark:text-blue-100">Secure Payment</div>
+                  <div className="text-blue-700 dark:text-blue-200 mt-1">
+                    Your payment information is encrypted and secure. We use industry-standard security measures to protect your data.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsCheckoutOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handlePurchase}
+              disabled={purchaseMutation.isPending}
+              className="flex-1 bg-red-600 hover:bg-red-700"
+            >
+              {purchaseMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Complete Purchase {formatPrice(totalAmount)}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
