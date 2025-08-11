@@ -29,7 +29,7 @@ import {
   Zap,
   PhoneCall,
   RefreshCcw,
-  Support,
+  HelpCircle as Support,
   Mail,
   MessageSquare,
   HelpCircle,
@@ -63,10 +63,10 @@ import { Footer } from "@/components/footer";
 interface Product {
   id: number;
   title: string;
-  description: string;
+  description?: string;
   price: number;
   images?: string[];
-  category: string;
+  category?: string;
   seller_id: number;
   stock_quantity: number;
   features?: string[];
@@ -76,6 +76,8 @@ interface Product {
   processing_time?: string;
   total_sales?: number;
   rating?: number;
+  view_count?: number;
+  status?: string;
   created_at?: string;
 }
 
@@ -138,29 +140,36 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState("description");
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
 
-  // Fetch product data with unified API
+  // Fetch product data with unified API - Fixed URL construction
   const { data: product, isLoading, error, refetch } = useQuery<Product>({
-    queryKey: ['/api/marketplace/products', id],
+    queryKey: [`/api/marketplace/products/${id}`],
+    queryFn: async (): Promise<Product> => {
+      const response = await fetch(`/api/marketplace/products/${id}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
     enabled: !!id && !isNaN(parseInt(id || "")) && parseInt(id || "") > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-    retry: (failureCount, error: any) => {
+    gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime in v5)
+    retry: (failureCount, error: Error) => {
       // Don't retry for 404 or validation errors
-      if (error?.response?.status === 404 || error?.response?.status === 400) {
+      if (error?.message?.includes('404') || error?.message?.includes('400')) {
         return false;
       }
       return failureCount < 3;
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Product fetch error:', error);
-      if (error?.response?.status === 404) {
+      if (error?.message?.includes('404')) {
         toast({
           title: "Product Not Found",
           description: "This product may have been removed or is no longer available.",
           variant: "destructive",
         });
         navigate("/marketplace");
-      } else if (error?.response?.status === 400) {
+      } else if (error?.message?.includes('400')) {
         toast({
           title: "Invalid Request",
           description: "There was an issue with the product request.",
