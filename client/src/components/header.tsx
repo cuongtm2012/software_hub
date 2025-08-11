@@ -16,6 +16,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Menu, X, Search, Store } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notification-bell";
+import { CartTrigger } from "@/components/cart-sidebar";
 
 export function Header() {
   const { user, logoutMutation } = useAuth();
@@ -123,6 +124,7 @@ export function Header() {
               </div>
             ) : (
               <div className="ml-4 flex items-center space-x-3">
+                <CartTrigger />
                 <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
