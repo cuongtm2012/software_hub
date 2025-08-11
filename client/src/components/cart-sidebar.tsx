@@ -167,7 +167,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             <div className="flex items-center justify-between">
               <SheetTitle className="text-white flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5" />
-                Giỏ hàng ({totalItems} sản phẩm)
+                Shopping Cart ({totalItems} items)
               </SheetTitle>
               <Button
                 variant="ghost"
@@ -185,13 +185,13 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               <div className="text-center">
                 <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Đăng nhập để xem giỏ hàng
+                  Please log in to view cart
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng
+                  You need to log in to add products to your cart
                 </p>
                 <Button onClick={() => window.location.href = "/login"}>
-                  Đăng nhập
+                  Log In
                 </Button>
               </div>
             </div>
@@ -199,7 +199,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">Đang tải giỏ hàng...</p>
+                <p className="text-gray-500">Loading cart...</p>
               </div>
             </div>
           ) : cartItems.length === 0 ? (
@@ -207,16 +207,16 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               <div className="text-center">
                 <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Giỏ hàng trống
+                  Your cart is empty
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  Chưa có sản phẩm nào trong giỏ hàng của bạn
+                  No products in your cart yet
                 </p>
                 <Button onClick={() => {
                   onClose();
                   window.location.href = "/marketplace";
                 }}>
-                  Tiếp tục mua sắm
+                  Continue Shopping
                 </Button>
               </div>
             </div>
@@ -282,19 +282,19 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 {/* Summary */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Tổng giá trị sản phẩm:</span>
+                    <span>Subtotal:</span>
                     <span className="font-medium">{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Tổng giá trị phí thanh toán:</span>
-                    <span className="font-medium">{formatPrice(subtotal)}</span>
+                    <span>Processing Fee:</span>
+                    <span className="font-medium">{formatPrice(0)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Số dư hiện tại:</span>
+                    <span>Current Balance:</span>
                     <span>0đ</span>
                   </div>
                   <div className="flex justify-between text-sm font-semibold border-t pt-2">
-                    <span>Số tiền cần nạp thêm:</span>
+                    <span>Total Amount:</span>
                     <span className="text-red-600">{formatPrice(subtotal)}</span>
                   </div>
                 </div>
@@ -305,7 +305,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={handleCheckout}
                   >
-                    Nạp thêm vào tài khoản
+                    Proceed to Checkout
                   </Button>
                   
                   {/* Payment Methods */}
@@ -315,7 +315,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                       className="w-full justify-start text-sm h-8 bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
                     >
                       <QrCode className="w-4 h-4 mr-2" />
-                      Mua siêu tốc với VNPay QR
+                      Pay with VNPay QR
                     </Button>
                     
                     <Button
@@ -323,7 +323,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                       className="w-full justify-start text-sm h-8 bg-blue-700 text-white border-blue-700 hover:bg-blue-800"
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Mua siêu tốc qua QR Banking
+                      Pay with QR Banking
                     </Button>
                     
                     <Button
@@ -331,7 +331,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                       className="w-full justify-start text-sm h-8 bg-pink-600 text-white border-pink-600 hover:bg-pink-700"
                     >
                       <Smartphone className="w-4 h-4 mr-2" />
-                      Mua siêu tốc với MoMo
+                      Pay with MoMo
                     </Button>
                   </div>
                 </div>
@@ -345,7 +345,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                     disabled={clearCartMutation.isPending}
                     className="w-full text-red-600 border-red-200 hover:bg-red-50"
                   >
-                    Xóa tất cả
+                    Clear All
                   </Button>
                 )}
               </div>
@@ -381,7 +381,7 @@ export function CartTrigger() {
         className="relative bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
       >
         <ShoppingCart className="w-4 h-4 mr-1" />
-        Giỏ hàng
+        Cart
         {totalItems > 0 && (
           <Badge 
             variant="destructive" 

@@ -105,6 +105,7 @@ export function Header() {
 
             {!user ? (
               <div className="flex items-center space-x-3 ml-4">
+                <CartTrigger />
                 <Button
                   onClick={() => navigate("/auth")}
                   variant="ghost"
