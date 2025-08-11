@@ -1,0 +1,61 @@
+# Add to Cart - Requirements Summary
+
+## 1. Purpose
+Enable users to add one or more products to their shopping cart for checkout.
+
+## 2. Stakeholders
+- **User:** Adds products to cart.
+- **Backend:** Validates, checks stock, updates cart.
+- **Frontend:** UI for quantity input, add action, feedback.
+
+## 3. Functional Requirements
+
+### Input
+- `user_id` (authenticated user)
+- `product_id`
+- `quantity` (positive integer ≤ available stock)
+
+### Processing
+- Validate user login, product existence, quantity limits.
+- Check stock availability.
+- Update cart: add new or update quantity (without exceeding stock).
+- Persist cart state.
+
+### Output
+- Success or error message.
+- Updated cart summary (total items, total price).
+
+## 4. Use Cases
+| Use Case                   | Description                          | Outcome                      |
+|----------------------------|------------------------------------|------------------------------|
+| Add new product            | Add product not in cart             | Product added                |
+| Increase existing quantity | Increase quantity of product in cart| Quantity updated             |
+| Exceed stock              | Add quantity beyond stock            | Error returned              |
+| Not logged in             | Add product without login            | Prompt login or temp save   |
+| Invalid product           | Add non-existent product             | Error returned              |
+
+## 5. Constraints
+- User must be logged in.
+- Quantity ≥ 1 and ≤ stock.
+- Cart linked to user and persisted.
+- Handle concurrency to avoid overselling.
+
+## 6. Frontend UI
+- Quantity input with +/- buttons limited by stock.
+- Clear "Add to Cart" button.
+- Show success/error feedback.
+- Update cart count badge on cart icon in the screen corner when adding products.
+- Clicking the cart icon opens the cart page for review and checkout.
+- Handle loading and errors gracefully.
+
+## 7. API Example
+
+**POST** `/api/cart/add`
+
+Request:
+```json
+{
+  "user_id": "string",
+  "product_id": "string",
+  "quantity": number
+}

@@ -1863,13 +1863,14 @@ export class DatabaseStorage implements IStorage {
         created_at: cartItems.created_at,
         product: {
           id: products.id,
-          name: products.name,
+          title: products.title,
           description: products.description,
           price: products.price,
-          image_url: products.image_url,
+          images: products.images,
           category: products.category,
           seller_id: products.seller_id,
           status: products.status,
+          stock_quantity: products.stock_quantity,
         }
       })
       .from(cartItems)

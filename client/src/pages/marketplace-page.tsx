@@ -211,9 +211,9 @@ export default function MarketplacePage() {
                     </Button>
                   </Link>
                   <AddToCart
-                    productId={store.id}
+                    productId={parseInt(store.id.toString())}
                     productName={store.title}
-                    price={store.price}
+                    price={parseFloat(store.price.toString())}
                     stockQuantity={store.stock_quantity}
                     variant="compact"
                     className="w-full"
