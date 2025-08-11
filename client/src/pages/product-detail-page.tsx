@@ -170,8 +170,26 @@ export default function ProductDetailPage() {
     support_contact: productId === "3" ? "support@marketingpro.com" : "support@techstore.com"
   };
 
-  // Use mock data if API doesn't return product
-  const displayProduct = product || mockProduct;
+  // Use actual product data or fallback to mock
+  const displayProduct = product ? {
+    ...product,
+    name: product.title,
+    image_url: product.images?.[0] || "/api/placeholder/400/300",
+    seller_name: "Test Seller",
+    warranty_period: "30 days",
+    processing_time: "Instant delivery",
+    sku: `PROD-${String(product.id).padStart(3, '0')}`,
+    features: [
+      "Premium quality guaranteed",
+      "Instant delivery after payment", 
+      "24/7 customer support",
+      "30-day warranty included",
+      "Full access provided",
+      "Secure transaction"
+    ],
+    refund_policy: "Full refund within 7 days if product doesn't work as described",
+    support_contact: "support@softwarehub.com"
+  } : mockProduct;
 
   // Related products mock data
   const relatedProducts: RelatedProduct[] = [
@@ -486,29 +504,216 @@ export default function ProductDetailPage() {
         {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Product Image & Gallery */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-1 space-y-4">
             <Card>
-              <CardContent className="p-6">
-                <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                  {displayProduct.image_url ? (
-                    <img 
-                      src={displayProduct.image_url} 
-                      alt={displayProduct.name}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <Package className="w-24 h-24 text-blue-400" />
+              <CardContent className="p-4">
+                {/* Main Product Image */}
+                <div className="relative group mb-4">
+                  <div className="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg overflow-hidden">
+                    {displayProduct.image_url ? (
+                      <img 
+                        src={displayProduct.image_url} 
+                        alt={displayProduct.name}
+                        className="w-full h-full object-contain hover:scale-105 transition-transform duration-300 cursor-zoom-in"
+                        onClick={() => window.open(displayProduct.image_url, '_blank')}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-16 h-16 text-blue-400" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Image Badge */}
+                  <div className="absolute top-2 left-2">
+                    <Badge className="bg-[#004080] text-white">
+                      Premium Quality
+                    </Badge>
+                  </div>
+                  
+                  {/* Zoom Hint */}
+                  {displayProduct.image_url && (
+                    <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="bg-black/75 text-white text-xs px-2 py-1 rounded">
+                        Click to enlarge
+                      </div>
+                    </div>
                   )}
+                </div>
+
+                {/* Thumbnail Gallery (if multiple images) */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[displayProduct.image_url, displayProduct.image_url, displayProduct.image_url].filter(Boolean).slice(0, 4).map((img, index) => (
+                    <div key={index} className="aspect-square bg-gray-100 rounded-md overflow-hidden cursor-pointer border-2 border-transparent hover:border-[#004080] transition-colors">
+                      <img 
+                        src={img} 
+                        alt={`${displayProduct.name} thumbnail ${index + 1}`}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ))}
                 </div>
                 
                 {/* Product Tags */}
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-4">
                   {displayProduct.tags?.map((tag, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       <Tag className="w-3 h-3 mr-1" />
                       {tag}
                     </Badge>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Quick Stats */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <TrendingUp className="w-4 h-4" />
+                      Sales
+                    </span>
+                    <span className="font-semibold">{displayProduct.total_sales || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Package className="w-4 h-4" />
+                      Stock
+                    </span>
+                    <span className="font-semibold text-green-600">{displayProduct.stock_quantity} available</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      Delivery
+                    </span>
+                    <span className="font-semibold text-blue-600">Instant</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Product Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Product Info & Purchase */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Product Information */}
+                  <div className="space-y-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">{displayProduct.title}</h2>
+                      <p className="text-gray-600 leading-relaxed">{displayProduct.description}</p>
+                    </div>
+
+                    {/* Features List */}
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-3">Key Features:</h3>
+                      <ul className="space-y-2">
+                        {displayProduct.features?.map((feature, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm text-gray-600">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Purchase Section */}
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-baseline gap-2 mb-2">
+                        {displayProduct.originalPrice && (
+                          <span className="text-lg text-gray-400 line-through">
+                            ${displayProduct.originalPrice}
+                          </span>
+                        )}
+                        <span className="text-3xl font-bold text-[#004080]">
+                          ${typeof displayProduct.price === 'string' ? parseFloat(displayProduct.price).toLocaleString() : displayProduct.price}
+                        </span>
+                        {displayProduct.originalPrice && (
+                          <Badge className="bg-red-100 text-red-700">
+                            {calculateDiscount()}% OFF
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">One-time purchase • No subscription required</p>
+                    </div>
+
+                    {/* Quantity Selector */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Quantity:</label>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                          disabled={quantity <= 1}
+                        >
+                          <Plus className="w-4 h-4 rotate-45" />
+                        </Button>
+                        <span className="w-12 text-center font-medium">{quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setQuantity(Math.min(displayProduct.stock_quantity, quantity + 1))}
+                          disabled={quantity >= displayProduct.stock_quantity}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Purchase Buttons */}
+                    <div className="space-y-3">
+                      <Button
+                        onClick={handlePurchase}
+                        disabled={purchaseMutation.isPending || displayProduct.stock_quantity === 0}
+                        className="w-full bg-[#004080] hover:bg-[#003366] text-white py-3"
+                        size="lg"
+                      >
+                        {purchaseMutation.isPending ? (
+                          <>
+                            <Clock className="w-4 h-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            Buy Now • ${(typeof displayProduct.price === 'string' ? parseFloat(displayProduct.price) : displayProduct.price) * quantity}
+                          </>
+                        )}
+                      </Button>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button variant="outline" className="text-sm">
+                          <Heart className="w-4 h-4 mr-1" />
+                          Save for Later
+                        </Button>
+                        <Button variant="outline" className="text-sm">
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          Contact Seller
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Security Features */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-green-700 text-sm font-medium mb-1">
+                        <Shield className="w-4 h-4" />
+                        Secure Purchase
+                      </div>
+                      <ul className="text-xs text-green-600 space-y-1">
+                        <li>• Encrypted payment processing</li>
+                        <li>• {displayProduct.warranty_period} warranty included</li>
+                        <li>• Instant digital delivery</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
