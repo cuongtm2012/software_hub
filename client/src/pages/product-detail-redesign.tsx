@@ -43,7 +43,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+
 import {
   Dialog,
   DialogContent,
@@ -58,6 +58,7 @@ import { Label } from "@/components/ui/label";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { AddToCart } from "@/components/add-to-cart";
 
@@ -598,25 +599,87 @@ Account comes with complete login credentials and detailed usage instructions.`,
               <div className="mb-6 lg:mb-8">
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 lg:p-6 border">
                   <div className="space-y-4">
-                    {/* Buy Now Button */}
-                    <Button 
-                      onClick={handleBuyNow}
-                      disabled={displayProduct.stock_quantity === 0}
-                      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
-                      size="default"
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Buy Now - {formatPrice(displayProduct.price)}
-                    </Button>
+                    {/* Action Buttons Row */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {/* Buy Now Button */}
+                      <Button 
+                        onClick={handleBuyNow}
+                        disabled={displayProduct.stock_quantity === 0}
+                        className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                        size="default"
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Buy Now - {formatPrice(displayProduct.price)}
+                      </Button>
+                      
+                      {/* Add to Cart Button - Inline Version */}
+                      <Button
+                        onClick={() => {
+                          if (!user) {
+                            toast({
+                              title: "Login required",
+                              description: "Please log in to add items to your cart.",
+                              variant: "destructive",
+                            });
+                            window.location.href = "/auth";
+                            return;
+                          }
+                          if (displayProduct.stock_quantity < 1) {
+                            toast({
+                              title: "Out of stock",
+                              description: "This product is currently out of stock.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          // Add to cart with quantity 1
+                          const addToCartMutation = {
+                            mutate: async ({ product_id, quantity }: { product_id: number; quantity: number }) => {
+                              try {
+                                const response = await apiRequest("POST", "/api/cart/add", { product_id, quantity });
+                                const data = await response.json();
+                                queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+                                toast({
+                                  title: "Added to cart",
+                                  description: `${quantity} x ${displayProduct.title} ${data.action === "updated" ? "updated in" : "added to"} your cart.`,
+                                });
+                              } catch (error: any) {
+                                toast({
+                                  title: "Failed to add to cart",
+                                  description: error.message,
+                                  variant: "destructive",
+                                });
+                              }
+                            }
+                          };
+                          addToCartMutation.mutate({ product_id: displayProduct.id, quantity: 1 });
+                        }}
+                        disabled={displayProduct.stock_quantity === 0}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3"
+                        size="default"
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Add to Cart
+                      </Button>
+                    </div>
                     
-                    {/* Add to Cart Component */}
-                    <AddToCart
-                      productId={displayProduct.id}
-                      productName={displayProduct.title}
-                      price={displayProduct.price}
-                      stockQuantity={displayProduct.stock_quantity}
-                      variant="default"
-                    />
+                    {/* Stock Status and Quantity Info */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        {displayProduct.stock_quantity > 0 ? (
+                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            {displayProduct.stock_quantity} in stock
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive">
+                            Out of stock
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        Free shipping • 30-day returns
+                      </div>
+                    </div>
                     
                     {/* Security Features */}
                     <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-6 pt-4 text-xs text-gray-600 dark:text-gray-400 border-t">
