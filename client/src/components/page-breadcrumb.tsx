@@ -29,7 +29,7 @@ export function PageBreadcrumb({ items, className = "" }: PageBreadcrumbProps) {
         <Breadcrumb>
           <BreadcrumbList className="text-sm text-gray-500 dark:text-gray-400">
             {items.map((item, index) => (
-              <React.Fragment key={index}>
+              <React.Fragment key={`breadcrumb-${index}`}>
                 <BreadcrumbItem>
                   {item.isCurrentPage || !item.href ? (
                     <BreadcrumbPage className="text-gray-900 dark:text-gray-100">
@@ -91,6 +91,11 @@ export const createBreadcrumbs = {
     { label: "Home", href: "/" },
     { label: "Projects", href: "/projects" },
     { label: "New Project", isCurrentPage: true },
+  ],
+  projectRequest: (): BreadcrumbItem[] => [
+    { label: "Home", href: "/" },
+    { label: "Projects", href: "/projects" },
+    { label: "Request Project", isCurrentPage: true },
   ],
   
   // Portfolio breadcrumbs

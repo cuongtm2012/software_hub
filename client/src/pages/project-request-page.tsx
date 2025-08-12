@@ -24,6 +24,7 @@ import { AlertCircle, ArrowLeft, CheckCircle2, Code, FileCog, FileCode, Loader2,
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PageBreadcrumb, createBreadcrumbs } from "@/components/page-breadcrumb";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 
@@ -172,6 +173,9 @@ Timeline: ${data.timeline || 'N/A'}
     return (
       <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
         <Header />
+        <PageBreadcrumb
+          items={createBreadcrumbs.projectRequest()}
+        />
         <main className="flex-grow">
           <div className="container py-10">
             <div className="mb-6">
@@ -225,6 +229,9 @@ Timeline: ${data.timeline || 'N/A'}
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
+      <PageBreadcrumb
+        items={createBreadcrumbs.projectRequest()}
+      />
       <main className="flex-grow bg-gray-50">
         <div className="container px-4 sm:px-6 py-12 max-w-6xl mx-auto">
           <div className="mb-8">
