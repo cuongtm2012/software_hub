@@ -138,32 +138,32 @@ export function ProductDetailEcommerce() {
     
     return {
       ...productData,
-      title: productData.title || "Perplexity Pro 1 năm - Tài khoản Premium",
+      title: productData.title || "Perplexity Pro 1 Year - Premium Account",
       images: productData.images?.length ? productData.images : [
         "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop"
       ],
       price: productData.price || 995000,
-      description: productData.description || `Perplexity Pro là công cụ tìm kiếm AI cực kỳ mạnh mẽ và hữu ích. Với gói Pro, bạn sẽ có:
+      description: productData.description || `Perplexity Pro is an incredibly powerful and useful AI-powered search tool. With the Pro plan, you get:
 
-• Truy cập không giới hạn vào các mô hình AI tiên tiến
-• Tìm kiếm thông tin chính xác và cập nhật
-• Khả năng phân tích dữ liệu sâu
-• Hỗ trợ đa ngôn ngữ
-• Không giới hạn số lượng truy vấn
+• Unlimited access to advanced AI models
+• Accurate and up-to-date information search
+• Deep data analysis capabilities
+• Multi-language support
+• No limits on query count
 
-Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng dẫn sử dụng chi tiết.`,
+Account comes with complete login credentials and detailed usage instructions.`,
       features: productData.features || [
-        "Tài khoản Perplexity Pro chính hãng 1 năm",
-        "Truy cập không giới hạn tất cả tính năng Pro",
-        "Hỗ trợ đa ngôn ngữ bao gồm tiếng Việt",
-        "Thời gian phản hồi nhanh",
-        "Không giới hạn truy vấn",
-        "Hỗ trợ 24/7 qua chat và email"
+        "Genuine Perplexity Pro account for 1 year",
+        "Unlimited access to all Pro features",
+        "Multi-language support including Vietnamese",
+        "Fast response time",
+        "No query limits",
+        "24/7 support via chat and email"
       ],
-      warranty_period: productData.warranty_period || "12 tháng",
-      processing_time: productData.processing_time || "1-5 phút",
+      warranty_period: productData.warranty_period || "12 months",
+      processing_time: productData.processing_time || "1-5 minutes",
       total_sales: productData.total_sales || 1247,
       rating: productData.rating || 4.9,
       view_count: productData.view_count || 15847,
@@ -204,8 +204,8 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
   const handleBuyNow = () => {
     if (!user) {
       toast({
-        title: "Đăng nhập để mua hàng",
-        description: "Vui lòng đăng nhập để mua sản phẩm này.",
+        title: "Login Required",
+        description: "Please log in to purchase this product.",
         variant: "destructive",
       });
       window.location.href = "/auth";
@@ -218,8 +218,8 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
   const handleAddToCart = async () => {
     if (!user) {
       toast({
-        title: "Đăng nhập để thêm vào giỏ",
-        description: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.",
+        title: "Login Required",
+        description: "Please log in to add products to your cart.",
         variant: "destructive",
       });
       window.location.href = "/auth";
@@ -228,8 +228,8 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
 
     if (!displayProduct || displayProduct.stock_quantity < 1) {
       toast({
-        title: "Hết hàng",
-        description: "Sản phẩm này hiện tại đã hết hàng.",
+        title: "Out of Stock",
+        description: "This product is currently out of stock.",
         variant: "destructive",
       });
       return;
@@ -245,16 +245,16 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       
       toast({
-        title: "Đã thêm vào giỏ hàng",
-        description: `${quantity} x ${displayProduct.title} ${data.action === "updated" ? "đã cập nhật trong" : "đã được thêm vào"} giỏ hàng.`,
+        title: "Added to Cart",
+        description: `${quantity} x ${displayProduct.title} ${data.action === "updated" ? "updated in" : "added to"} your cart.`,
       });
 
       // Reset quantity to 1 after successful add
       setQuantity(1);
     } catch (error: any) {
       toast({
-        title: "Lỗi thêm vào giỏ hàng",
-        description: error.message || "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng.",
+        title: "Failed to Add to Cart",
+        description: error.message || "An error occurred while adding the product to your cart.",
         variant: "destructive",
       });
     }
@@ -262,9 +262,9 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
 
   // Payment methods
   const paymentMethods = [
-    { id: "vnpay_qr", name: "VNPay QR", description: "Quét mã QR để thanh toán", icon: QrCode, color: "bg-blue-600" },
-    { id: "qr_banking", name: "QR Banking", description: "Chuyển khoản qua QR", icon: Banknote, color: "bg-green-600" },
-    { id: "momo", name: "MoMo", description: "Ví điện tử MoMo", icon: Smartphone, color: "bg-pink-600" },
+    { id: "vnpay_qr", name: "VNPay QR", description: "Scan QR code to pay", icon: QrCode, color: "bg-blue-600" },
+    { id: "qr_banking", name: "QR Banking", description: "Bank transfer via QR", icon: Banknote, color: "bg-green-600" },
+    { id: "momo", name: "MoMo", description: "MoMo digital wallet", icon: Smartphone, color: "bg-pink-600" },
   ];
 
   if (isLoading) {
@@ -274,7 +274,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Đang tải thông tin sản phẩm...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading product information...</p>
           </div>
         </div>
       </div>
@@ -288,9 +288,9 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Không tìm thấy sản phẩm</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Product Not Found</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Sản phẩm bạn tìm kiếm có thể đã được gỡ bỏ hoặc không tồn tại.
+              The product you're looking for may have been removed or doesn't exist.
             </p>
             <div className="flex gap-3 justify-center">
               <Button 
@@ -299,14 +299,14 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                 className="flex items-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
-                Thử lại
+                Try Again
               </Button>
               <Button 
                 onClick={() => navigate("/marketplace")}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Về Marketplace
+                Back to Marketplace
               </Button>
             </div>
           </div>
@@ -330,14 +330,14 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
               onClick={() => navigate("/")}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              Trang chủ
+              Home
             </button>
             <span>/</span>
             <button 
               onClick={() => navigate("/marketplace")}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              Thương hiệu
+              Marketplace
             </button>
             <span>/</span>
             <span className="text-gray-900 dark:text-gray-100">
@@ -388,15 +388,15 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
               <div className="flex items-center gap-4 pt-4">
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
                   <Heart className="w-4 h-4" />
-                  Yêu thích
+                  Favorite
                 </Button>
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
                   <Share2 className="w-4 h-4" />
-                  Chia sẻ
+                  Share
                 </Button>
                 <div className="flex items-center gap-1 text-sm text-gray-500">
                   <Eye className="w-4 h-4" />
-                  <span>{displayProduct.view_count} lượt xem</span>
+                  <span>{displayProduct.view_count} views</span>
                 </div>
               </div>
             </div>
@@ -414,11 +414,11 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                       {renderStars(displayProduct.rating)}
                     </div>
                     <span className="text-sm text-gray-600">
-                      {displayProduct.rating}/5 ({displayProduct.total_sales} đánh giá)
+                      {displayProduct.rating}/5 ({displayProduct.total_sales} reviews)
                     </span>
                   </div>
                   <div className="text-sm text-gray-500">
-                    Đã bán {displayProduct.total_sales}
+                    {displayProduct.total_sales} sold
                   </div>
                 </div>
               </div>
@@ -429,7 +429,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                   {formatPrice(displayProduct.price)}
                 </div>
                 <div className="text-sm text-gray-500">
-                  Giá đã bao gồm VAT
+                  Price includes VAT
                 </div>
               </div>
 
@@ -437,11 +437,11 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
               <div className="flex items-center gap-2">
                 {displayProduct.stock_quantity > 0 ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">
-                    Còn {displayProduct.stock_quantity} sản phẩm
+                    {displayProduct.stock_quantity} items in stock
                   </Badge>
                 ) : (
                   <Badge variant="destructive">
-                    Hết hàng
+                    Out of stock
                   </Badge>
                 )}
               </div>
@@ -449,7 +449,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
               {/* Quantity Selector */}
               {displayProduct.stock_quantity > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Số lượng</Label>
+                  <Label className="text-sm font-medium">Quantity</Label>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center border rounded-md">
                       <Button
@@ -480,7 +480,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                       </Button>
                     </div>
                     <span className="text-sm text-gray-500">
-                      {displayProduct.stock_quantity} sản phẩm có sẵn
+                      {displayProduct.stock_quantity} available
                     </span>
                   </div>
                 </div>
@@ -495,7 +495,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                   size="lg"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  Thêm vào giỏ
+                  Add to Cart
                 </Button>
                 <Button
                   onClick={handleBuyNow}
@@ -503,7 +503,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3"
                   size="lg"
                 >
-                  Mua ngay
+                  Buy Now
                 </Button>
               </div>
 
@@ -512,22 +512,22 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                 <div className="flex items-center gap-3">
                   <Truck className="w-5 h-5 text-green-600" />
                   <div>
-                    <div className="font-medium">Miễn phí vận chuyển</div>
-                    <div className="text-sm text-gray-500">Đơn hàng từ 500.000đ</div>
+                    <div className="font-medium">Free shipping</div>
+                    <div className="text-sm text-gray-500">Orders over 500,000₫</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Shield className="w-5 h-5 text-blue-600" />
                   <div>
-                    <div className="font-medium">Bảo hành {displayProduct.warranty_period}</div>
-                    <div className="text-sm text-gray-500">Đổi trả trong 30 ngày</div>
+                    <div className="font-medium">Warranty {displayProduct.warranty_period}</div>
+                    <div className="text-sm text-gray-500">30-day return policy</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Clock className="w-5 h-5 text-orange-600" />
                   <div>
-                    <div className="font-medium">Giao hàng nhanh</div>
-                    <div className="text-sm text-gray-500">Trong {displayProduct.processing_time}</div>
+                    <div className="font-medium">Fast delivery</div>
+                    <div className="text-sm text-gray-500">Within {displayProduct.processing_time}</div>
                   </div>
                 </div>
               </div>
@@ -539,18 +539,18 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                     <User className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="font-medium">Seller chuyên nghiệp</div>
-                    <div className="text-sm text-gray-500">Online 2 giờ trước</div>
+                    <div className="font-medium">Professional seller</div>
+                    <div className="text-sm text-gray-500">Online 2 hours ago</div>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1">
                     <MessageCircle className="w-4 h-4 mr-2" />
-                    Chat ngay
+                    Chat now
                   </Button>
                   <Button variant="outline" size="sm" className="flex-1">
                     <Phone className="w-4 h-4 mr-2" />
-                    Gọi điện
+                    Call
                   </Button>
                 </div>
               </div>
@@ -564,19 +564,19 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full justify-start bg-gray-50 dark:bg-gray-700 rounded-t-lg">
                 <TabsTrigger value="description" className="px-6 py-3">
-                  Mô tả sản phẩm
+                  Product Description
                 </TabsTrigger>
                 <TabsTrigger value="features" className="px-6 py-3">
-                  Thông số kỹ thuật
+                  Specifications
                 </TabsTrigger>
                 <TabsTrigger value="reviews" className="px-6 py-3">
-                  Đánh giá ({displayProduct.total_sales})
+                  Reviews ({displayProduct.total_sales})
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="description" className="p-6">
                 <div className="prose max-w-none">
-                  <h3 className="text-xl font-bold mb-4">Mô tả chi tiết</h3>
+                  <h3 className="text-xl font-bold mb-4">Product Details</h3>
                   <div className="whitespace-pre-line text-gray-700 dark:text-gray-300 leading-relaxed">
                     {displayProduct.description}
                   </div>
@@ -585,7 +585,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
 
               <TabsContent value="features" className="p-6">
                 <div className="space-y-4">
-                  <h3 className="text-xl font-bold mb-4">Tính năng nổi bật</h3>
+                  <h3 className="text-xl font-bold mb-4">Key Features</h3>
                   <div className="grid gap-3">
                     {displayProduct.features.map((feature: string, index: number) => (
                       <div key={index} className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -599,7 +599,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
 
               <TabsContent value="reviews" className="p-6">
                 <div className="space-y-6">
-                  <h3 className="text-xl font-bold">Đánh giá từ khách hàng</h3>
+                  <h3 className="text-xl font-bold">Customer Reviews</h3>
                   
                   {/* Rating Summary */}
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6">
@@ -612,7 +612,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                           {renderStars(displayProduct.rating)}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {displayProduct.total_sales} đánh giá
+                          {displayProduct.total_sales} reviews
                         </div>
                       </div>
                     </div>
@@ -633,7 +633,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                             </div>
                           </div>
                           <p className="text-gray-700 dark:text-gray-300">
-                            Sản phẩm tuyệt vời! Account hoạt động tốt và seller hỗ trợ rất nhiệt tình. Giao hàng nhanh và đúng như mô tả.
+                            Excellent product! Account works perfectly and seller provides great support. Fast delivery and exactly as described.
                           </p>
                         </div>
                       </div>
@@ -648,7 +648,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
         {/* Related Products */}
         <div className="mt-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h3 className="text-xl font-bold mb-6">Sản phẩm liên quan</h3>
+            <h3 className="text-xl font-bold mb-6">Related Products</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <Card key={i} className="hover:shadow-md transition-shadow cursor-pointer">
@@ -661,7 +661,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                       />
                     </div>
                     <h4 className="font-medium text-sm mb-2 line-clamp-2">
-                      Sản phẩm tương tự {i}
+                      Similar Product {i}
                     </h4>
                     <div className="text-red-600 font-bold text-lg">
                       {formatPrice(500000 + i * 100000)}
@@ -684,9 +684,9 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Thanh toán đơn hàng</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Order Checkout</DialogTitle>
             <DialogDescription>
-              Xem lại đơn hàng và chọn phương thức thanh toán
+              Review your order and select payment method
             </DialogDescription>
           </DialogHeader>
 
@@ -707,7 +707,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
                   </h3>
                   <div className="flex items-center justify-between mt-2">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Số lượng: {quantity}
+                      Quantity: {quantity}
                     </div>
                     <div className="font-medium text-red-600">
                       {formatPrice(displayProduct?.price || 0)}
@@ -719,20 +719,20 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
 
             {/* Order Summary */}
             <div className="space-y-3 border rounded-lg p-4">
-              <h4 className="font-medium">Tóm tắt đơn hàng</h4>
+              <h4 className="font-medium">Order Summary</h4>
               
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>Tạm tính</span>
+                  <span>Subtotal</span>
                   <span>{formatPrice(totalAmount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Phí vận chuyển</span>
-                  <span className="text-green-600">Miễn phí</span>
+                  <span>Shipping</span>
+                  <span className="text-green-600">Free</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-medium text-lg">
-                  <span>Tổng cộng</span>
+                  <span>Total</span>
                   <span className="text-red-600">{formatPrice(totalAmount)}</span>
                 </div>
               </div>
@@ -740,7 +740,7 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
 
             {/* Payment Methods */}
             <div className="space-y-4">
-              <h4 className="font-medium">Chọn phương thức thanh toán</h4>
+              <h4 className="font-medium">Select Payment Method</h4>
               
               <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
                 <div className="space-y-3">
@@ -770,19 +770,19 @@ Tài khoản đi kèm với thông tin đăng nhập đầy đủ và hướng d
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCheckoutOpen(false)}>
-                Hủy
+                Cancel
               </Button>
               <Button 
                 onClick={() => {
                   toast({
-                    title: "Đặt hàng thành công",
-                    description: "Đơn hàng của bạn đang được xử lý. Bạn sẽ nhận được email xác nhận sớm.",
+                    title: "Order Successful",
+                    description: "Your order is being processed. You will receive a confirmation email soon.",
                   });
                   setIsCheckoutOpen(false);
                 }}
                 className="bg-red-600 hover:bg-red-700"
               >
-                Đặt hàng • {formatPrice(totalAmount)}
+                Place Order • {formatPrice(totalAmount)}
               </Button>
             </DialogFooter>
           </div>

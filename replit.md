@@ -61,6 +61,16 @@ The application is composed of several independent services:
 
 ## Recent Changes (August 2025)
 
+### Vietnamese E-commerce Product Detail Page - COMPLETED ✅
+- **Design Implementation**: Created new ProductDetailEcommerce component matching authentic Vietnamese e-commerce layout
+- **Layout Structure**: Left side image gallery with thumbnails, right side product information and actions
+- **English Interface**: Converted all text from Vietnamese to English for international users while maintaining VND currency
+- **Horizontal Button Layout**: "Add to Cart" and "Buy Now" buttons arranged side by side as requested
+- **Vietnamese Payment Integration**: VNPay QR, QR Banking, and MoMo payment options with English descriptions
+- **Professional Features**: Product tabs (Description, Specifications, Reviews), related products section, seller info
+- **Code Cleanup**: Removed unused product detail page versions (product-detail-page.tsx, product-detail-redesign.tsx)
+- **Route Integration**: Updated marketplace product route to use new e-commerce design
+
 ### English Cart Sidebar Implementation - COMPLETED ✅
 - **Professional Cart Design**: Created comprehensive cart sidebar matching e-commerce standards
 - **English Language**: Converted all text from Vietnamese to English for international users

@@ -48,8 +48,6 @@ import MarketplacePage from "@/pages/marketplace-page";
 import SoftwareListPage from "@/pages/software-list-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
-import ProductDetailPage from "@/pages/product-detail-page";
-import ProductDetailRedesign from "@/pages/product-detail-redesign";
 import { ProductDetailEcommerce } from "@/pages/product-detail-ecommerce";
 import OrderDetailsPage from "@/pages/order-details-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
