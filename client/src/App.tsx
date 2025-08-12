@@ -50,6 +50,7 @@ import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
 import ProductDetailRedesign from "@/pages/product-detail-redesign";
+import { ProductDetailEcommerce } from "@/pages/product-detail-ecommerce";
 import OrderDetailsPage from "@/pages/order-details-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
 
@@ -680,7 +681,7 @@ function Router() {
         );
       }} roles={['seller', 'admin']} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
-      <Route path="/marketplace/product/:id" component={ProductDetailRedesign} />
+      <Route path="/marketplace/product/:id" component={ProductDetailEcommerce} />
       <Route path="/order-details/:id" component={OrderDetailsPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/seller/products" roles={['seller', 'admin']} component={MarketplaceSellerPage} />

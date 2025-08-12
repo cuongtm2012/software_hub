@@ -599,20 +599,9 @@ Account comes with complete login credentials and detailed usage instructions.`,
               <div className="mb-6 lg:mb-8">
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 lg:p-6 border">
                   <div className="space-y-4">
-                    {/* Action Buttons Row */}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      {/* Buy Now Button */}
-                      <Button 
-                        onClick={handleBuyNow}
-                        disabled={displayProduct.stock_quantity === 0}
-                        className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
-                        size="default"
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        Buy Now - {formatPrice(displayProduct.price)}
-                      </Button>
-                      
-                      {/* Add to Cart Button - Inline Version */}
+                    {/* Action Buttons Row - Horizontal Layout */}
+                    <div className="flex gap-3">
+                      {/* Add to Cart Button */}
                       <Button
                         onClick={() => {
                           if (!user) {
@@ -660,6 +649,17 @@ Account comes with complete login credentials and detailed usage instructions.`,
                       >
                         <ShoppingCart className="w-4 h-4 mr-2" />
                         Add to Cart
+                      </Button>
+                      
+                      {/* Buy Now Button */}
+                      <Button 
+                        onClick={handleBuyNow}
+                        disabled={displayProduct.stock_quantity === 0}
+                        className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                        size="default"
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Buy Now - {formatPrice(displayProduct.price)}
                       </Button>
                     </div>
                     
