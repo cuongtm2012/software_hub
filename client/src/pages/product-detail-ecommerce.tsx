@@ -56,6 +56,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PageBreadcrumb, createBreadcrumbs } from "@/components/page-breadcrumb";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -323,29 +324,9 @@ Account comes with complete login credentials and detailed usage instructions.`,
       <Header />
       
       {/* Breadcrumb */}
-      <div className="bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <button 
-              onClick={() => navigate("/")}
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              Home
-            </button>
-            <span>/</span>
-            <button 
-              onClick={() => navigate("/marketplace")}
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              Marketplace
-            </button>
-            <span>/</span>
-            <span className="text-gray-900 dark:text-gray-100">
-              {displayProduct?.title}
-            </span>
-          </div>
-        </div>
-      </div>
+      <PageBreadcrumb
+        items={createBreadcrumbs.marketplaceProduct(displayProduct?.title || "Product")}
+      />
 
       {/* Main Product Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

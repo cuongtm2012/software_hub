@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PageBreadcrumb, createBreadcrumbs } from "@/components/page-breadcrumb";
 import { 
   Package, 
   DollarSign, 
@@ -200,6 +201,9 @@ export default function SellerProductNewPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
+      <PageBreadcrumb
+        items={createBreadcrumbs.sellerProductNew()}
+      />
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">

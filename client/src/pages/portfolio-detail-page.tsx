@@ -6,6 +6,7 @@ import { useLocation, useRoute } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PageBreadcrumb, createBreadcrumbs } from "@/components/page-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -252,6 +253,9 @@ export default function PortfolioDetailPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
+      <PageBreadcrumb
+        items={createBreadcrumbs.portfolioDetail(portfolio.title)}
+      />
       
       <main className="flex-grow container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-6">

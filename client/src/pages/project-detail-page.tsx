@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PageBreadcrumb, createBreadcrumbs } from "@/components/page-breadcrumb";
 import { Loader2, ArrowLeft, Calendar, User, DollarSign, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -59,6 +60,9 @@ export default function ProjectDetailPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
+      <PageBreadcrumb
+        items={createBreadcrumbs.projectDetail(project.title)}
+      />
       <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-6">
           <Button
