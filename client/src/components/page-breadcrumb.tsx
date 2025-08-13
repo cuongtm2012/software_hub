@@ -29,7 +29,7 @@ export function PageBreadcrumb({ items, className = "" }: PageBreadcrumbProps) {
         <Breadcrumb>
           <BreadcrumbList className="text-sm text-gray-500 dark:text-gray-400">
             {items.map((item, index) => (
-              <React.Fragment key={`breadcrumb-${index}`}>
+              <div key={`breadcrumb-${index}`} className="contents">
                 <BreadcrumbItem>
                   {item.isCurrentPage || !item.href ? (
                     <BreadcrumbPage className="text-gray-900 dark:text-gray-100">
@@ -49,7 +49,7 @@ export function PageBreadcrumb({ items, className = "" }: PageBreadcrumbProps) {
                     <span>/</span>
                   </BreadcrumbSeparator>
                 )}
-              </React.Fragment>
+              </div>
             ))}
           </BreadcrumbList>
         </Breadcrumb>

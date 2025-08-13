@@ -32,6 +32,14 @@ export default function SellerDashboardPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // Format price in VND
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
 
   // Fetch seller profile and verification status
   const { data: sellerData, isLoading: profileLoading } = useQuery({
@@ -218,7 +226,7 @@ export default function SellerDashboardPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">${Number(sellerProfile.total_sales || 0).toFixed(2)}</div>
+                    <div className="text-2xl font-bold">{formatPrice(Number(sellerProfile.total_sales || 0))}</div>
                     <p className="text-xs text-muted-foreground">+20.1% from last month</p>
                   </CardContent>
                 </Card>

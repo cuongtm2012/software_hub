@@ -3,7 +3,10 @@ import { Layout } from "@/components/layout";
 import { ProductForm } from "@/components/product-form";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { PageBreadcrumb, createBreadcrumbs } from "@/components/page-breadcrumb";
+import {
+  PageBreadcrumb,
+  createBreadcrumbs,
+} from "@/components/page-breadcrumb";
 
 export default function MarketplaceSellerEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -11,17 +14,9 @@ export default function MarketplaceSellerEditPage() {
 
   return (
     <Layout>
-      <PageBreadcrumb
-        items={createBreadcrumbs.sellerProductEdit()}
-      />
+      <PageBreadcrumb items={createBreadcrumbs.sellerProductEdit()} />
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="flex items-center">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Dashboard
-            </Button>
-          </Link>
           <h1 className="text-3xl font-bold">Edit Product</h1>
         </div>
 

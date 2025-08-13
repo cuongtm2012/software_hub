@@ -77,6 +77,14 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // Format price in VND
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
   const [selectedProjectStatus, setSelectedProjectStatus] = useState<string>('all');
   
   // Product list expansion state
@@ -379,7 +387,7 @@ export default function DashboardPage() {
                                 <h4 className="font-semibold text-gray-900">{product.title}</h4>
                                 <p className="text-sm text-gray-600 mb-2">{product.description.substring(0, 100)}...</p>
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
-                                  <span className="text-green-600 font-medium">${parseFloat(product.price).toFixed(2)}</span>
+                                  <span className="text-green-600 font-medium">{formatPrice(parseFloat(product.price))}</span>
                                   <Badge variant={product.status === 'approved' ? 'default' : 'secondary'}>
                                     {product.status}
                                   </Badge>

@@ -10,19 +10,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { PageBreadcrumb, createBreadcrumbs } from "@/components/page-breadcrumb";
-import { 
-  Package, 
-  DollarSign, 
-  Tag, 
+import {
+  PageBreadcrumb,
+  createBreadcrumbs,
+} from "@/components/page-breadcrumb";
+import {
+  Package,
+  DollarSign,
+  Tag,
   AlertCircle,
   ArrowLeft,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -42,7 +58,7 @@ type ProductFormData = z.infer<typeof productSchema>;
 
 const categories = [
   "Software Licenses",
-  "Digital Tools", 
+  "Digital Tools",
   "Graphics & Design",
   "Web Development",
   "Mobile Apps",
@@ -52,7 +68,7 @@ const categories = [
   "Database",
   "AI & Machine Learning",
   "DevOps",
-  "Other"
+  "Other",
 ];
 
 export default function SellerProductNewPage() {
@@ -83,8 +99,13 @@ export default function SellerProductNewPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      const tagsArray = data.tags ? data.tags.split(",").map(tag => tag.trim()).filter(Boolean) : [];
-      
+      const tagsArray = data.tags
+        ? data.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        : [];
+
       return await apiRequest("POST", "/api/seller/products", {
         title: data.title,
         description: data.description,
@@ -102,14 +123,16 @@ export default function SellerProductNewPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
       toast({
         title: "Product Created",
-        description: "Your product has been submitted for review and will be live once approved.",
+        description:
+          "Your product has been submitted for review and will be live once approved.",
       });
       navigate("/dashboard");
     },
     onError: (error: any) => {
       toast({
         title: "Creation Failed",
-        description: error.message || "Failed to create product. Please try again.",
+        description:
+          error.message || "Failed to create product. Please try again.",
         variant: "destructive",
       });
     },
@@ -129,7 +152,9 @@ export default function SellerProductNewPage() {
               <CardContent className="p-6 text-center">
                 <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Login Required</h2>
-                <p className="text-gray-600 mb-4">Please log in to add products.</p>
+                <p className="text-gray-600 mb-4">
+                  Please log in to add products.
+                </p>
                 <Button onClick={() => navigate("/test-login")}>Login</Button>
               </CardContent>
             </Card>
@@ -157,7 +182,10 @@ export default function SellerProductNewPage() {
   }
 
   // Check if user is verified seller
-  if (!sellerData?.seller_profile || sellerData.seller_profile.verification_status !== "verified") {
+  if (
+    !sellerData?.seller_profile ||
+    sellerData.seller_profile.verification_status !== "verified"
+  ) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
@@ -172,21 +200,23 @@ export default function SellerProductNewPage() {
               </CardHeader>
               <CardContent className="text-center space-y-4">
                 <p className="text-gray-600">
-                  You must be a verified seller to add products to the marketplace.
+                  You must be a verified seller to add products to the
+                  marketplace.
                 </p>
                 {!sellerData?.seller_profile ? (
-                  <Button onClick={() => navigate("/seller/register")} className="bg-[#004080] hover:bg-[#003366]">
+                  <Button
+                    onClick={() => navigate("/seller/register")}
+                    className="bg-[#004080] hover:bg-[#003366]"
+                  >
                     Register as Seller
                   </Button>
                 ) : (
                   <div>
                     <p className="text-sm text-yellow-600 mb-4">
-                      Your seller account is {sellerData.seller_profile.verification_status}. 
-                      Please wait for verification to complete.
+                      Your seller account is{" "}
+                      {sellerData.seller_profile.verification_status}. Please
+                      wait for verification to complete.
                     </p>
-                    <Button onClick={() => navigate("/dashboard")} variant="outline">
-                      Back to Dashboard
-                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -201,9 +231,7 @@ export default function SellerProductNewPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
-      <PageBreadcrumb
-        items={createBreadcrumbs.sellerProductNew()}
-      />
+      <PageBreadcrumb items={createBreadcrumbs.sellerProductNew()} />
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
@@ -218,8 +246,12 @@ export default function SellerProductNewPage() {
                 Back
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
-                <p className="text-gray-600">Create a new product listing for the marketplace</p>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Add New Product
+                </h1>
+                <p className="text-gray-600">
+                  Create a new product listing for the marketplace
+                </p>
               </div>
             </div>
 
@@ -233,11 +265,14 @@ export default function SellerProductNewPage() {
               </CardHeader>
               <CardContent>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-6"
+                  >
                     {/* Basic Information */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Basic Information</h3>
-                      
+
                       <FormField
                         control={form.control}
                         name="title"
@@ -245,7 +280,10 @@ export default function SellerProductNewPage() {
                           <FormItem>
                             <FormLabel>Product Title *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter product title" {...field} />
+                              <Input
+                                placeholder="Enter product title"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -259,10 +297,10 @@ export default function SellerProductNewPage() {
                           <FormItem>
                             <FormLabel>Description *</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="Describe your product in detail" 
+                              <Textarea
+                                placeholder="Describe your product in detail"
                                 className="min-h-[120px]"
-                                {...field} 
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
@@ -277,7 +315,10 @@ export default function SellerProductNewPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Category *</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select category" />
@@ -306,9 +347,14 @@ export default function SellerProductNewPage() {
                                 Tags (Optional)
                               </FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g. windows, productivity, business" {...field} />
+                                <Input
+                                  placeholder="e.g. windows, productivity, business"
+                                  {...field}
+                                />
                               </FormControl>
-                              <p className="text-xs text-gray-500">Separate tags with commas</p>
+                              <p className="text-xs text-gray-500">
+                                Separate tags with commas
+                              </p>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -318,8 +364,10 @@ export default function SellerProductNewPage() {
 
                     {/* Pricing & Inventory */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Pricing & Inventory</h3>
-                      
+                      <h3 className="text-lg font-medium">
+                        Pricing & Inventory
+                      </h3>
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField
                           control={form.control}
@@ -331,13 +379,17 @@ export default function SellerProductNewPage() {
                                 Price (USD) *
                               </FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.01" 
-                                  min="0" 
-                                  placeholder="0.00" 
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0.00"
                                   {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || 0,
+                                    )
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />
@@ -351,16 +403,25 @@ export default function SellerProductNewPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Price Type</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="fixed">Fixed Price</SelectItem>
-                                  <SelectItem value="range">Price Range</SelectItem>
-                                  <SelectItem value="auction">Auction</SelectItem>
+                                  <SelectItem value="fixed">
+                                    Fixed Price
+                                  </SelectItem>
+                                  <SelectItem value="range">
+                                    Price Range
+                                  </SelectItem>
+                                  <SelectItem value="auction">
+                                    Auction
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -375,12 +436,16 @@ export default function SellerProductNewPage() {
                             <FormItem>
                               <FormLabel>Stock Quantity *</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="number" 
-                                  min="1" 
-                                  placeholder="1" 
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  placeholder="1"
                                   {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseInt(e.target.value) || 1,
+                                    )
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />
@@ -392,8 +457,10 @@ export default function SellerProductNewPage() {
 
                     {/* Optional Fields */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Additional Information</h3>
-                      
+                      <h3 className="text-lg font-medium">
+                        Additional Information
+                      </h3>
+
                       <FormField
                         control={form.control}
                         name="download_link"
@@ -401,7 +468,10 @@ export default function SellerProductNewPage() {
                           <FormItem>
                             <FormLabel>Download Link (Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="https://example.com/download" {...field} />
+                              <Input
+                                placeholder="https://example.com/download"
+                                {...field}
+                              />
                             </FormControl>
                             <p className="text-xs text-gray-500">
                               Provide a direct download link for your product
@@ -416,12 +486,14 @@ export default function SellerProductNewPage() {
                         name="license_info"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>License Information (Optional)</FormLabel>
+                            <FormLabel>
+                              License Information (Optional)
+                            </FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="Describe the license terms and conditions" 
+                              <Textarea
+                                placeholder="Describe the license terms and conditions"
                                 className="min-h-[80px]"
-                                {...field} 
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
@@ -432,15 +504,17 @@ export default function SellerProductNewPage() {
 
                     {/* Submit Button */}
                     <div className="flex justify-end pt-6">
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={createProductMutation.isPending}
                         className="bg-[#004080] hover:bg-[#003366] text-white px-8"
                       >
                         {createProductMutation.isPending && (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         )}
-                        {createProductMutation.isPending ? "Creating..." : "Create Product"}
+                        {createProductMutation.isPending
+                          ? "Creating..."
+                          : "Create Product"}
                       </Button>
                     </div>
                   </form>
