@@ -153,13 +153,13 @@ export default function SellerProductNewPage() {
     } finally {
       setUploading(false);
     }
-  }, [uploadedImages, form, toast]);
+  }, [uploadedImages, toast]);
 
-  const removeImage = (indexToRemove: number) => {
+  const removeImage = useCallback((indexToRemove: number) => {
     const newImages = uploadedImages.filter((_, index) => index !== indexToRemove);
     setUploadedImages(newImages);
     form.setValue('images', newImages);
-  };
+  }, [uploadedImages]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
