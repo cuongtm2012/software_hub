@@ -28,6 +28,23 @@ import emailService from "./services/emailService.js";
 import notificationService from "./services/notificationService.js";
 import { ObjectStorageService } from "./objectStorage";
 import { getR2Storage } from "./cloudflare-r2-storage-working";
+import multer from 'multer';
+
+// Configure multer for image uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+});
 
 // Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -131,6 +148,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(req.session.user);
     } else {
       res.status(401).json({ message: "Unauthorized" });
+    }
+  });
+
+  // Image upload endpoint
+  app.post("/api/upload/image", isAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const r2Storage = getR2Storage();
+      const fileExtension = req.file.originalname.split('.').pop() || 'jpg';
+      const fileName = `product-images/${req.session.userId}/${Date.now()}.${fileExtension}`;
+      
+      const uploadResult = await r2Storage.uploadFile(fileName, req.file.buffer, req.file.mimetype);
+      
+      res.json({ 
+        url: uploadResult.url,
+        fileName: fileName
+      });
+    } catch (error) {
+      console.error('Image upload error:', error);
+      res.status(500).json({ error: 'Failed to upload image' });
     }
   });
 

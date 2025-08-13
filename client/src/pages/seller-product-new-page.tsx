@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -39,16 +39,22 @@ import {
   AlertCircle,
   ArrowLeft,
   Loader2,
+  Upload,
+  X,
+  Plus,
+  Image as ImageIcon,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useDropzone } from "react-dropzone";
 
 const productSchema = z.object({
   title: z.string().min(3, "Product title must be at least 3 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
   category: z.string().min(1, "Please select a category"),
+  price_type: z.string().min(1, "Please specify the price type"),
   price: z.number().min(1000, "Price must be at least 1,000 VND"),
-  price_type: z.enum(["fixed", "range", "auction"]),
   stock_quantity: z.number().min(1, "Stock must be at least 1"),
+  images: z.array(z.string()).optional(),
   download_link: z.string().url().optional().or(z.literal("")),
   license_info: z.string().optional(),
   tags: z.string().optional(),
@@ -85,6 +91,8 @@ export default function SellerProductNewPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -92,13 +100,74 @@ export default function SellerProductNewPage() {
       title: "",
       description: "",
       category: "",
+      price_type: "",
       price: 100000,
-      price_type: "fixed",
       stock_quantity: 1,
+      images: [],
       download_link: "",
       license_info: "",
       tags: "",
     },
+  });
+
+  // Image upload handlers
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch('/api/upload/image', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to upload image');
+    }
+    
+    const result = await response.json();
+    return result.url;
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+    
+    setUploading(true);
+    try {
+      const uploadPromises = acceptedFiles.map(uploadImage);
+      const imageUrls = await Promise.all(uploadPromises);
+      
+      const newImages = [...uploadedImages, ...imageUrls];
+      setUploadedImages(newImages);
+      form.setValue('images', newImages);
+      
+      toast({
+        title: "Images Uploaded",
+        description: `Successfully uploaded ${acceptedFiles.length} image(s)`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload images. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  }, [uploadedImages, form, toast]);
+
+  const removeImage = (indexToRemove: number) => {
+    const newImages = uploadedImages.filter((_, index) => index !== indexToRemove);
+    setUploadedImages(newImages);
+    form.setValue('images', newImages);
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
+    },
+    multiple: true,
+    maxSize: 5 * 1024 * 1024, // 5MB
   });
 
   // Check seller verification status
@@ -122,6 +191,7 @@ export default function SellerProductNewPage() {
         category: data.category,
         price: data.price.toString(), // Convert to string for API
         price_type: data.price_type,
+        images: uploadedImages,
         stock_quantity: data.stock_quantity,
         download_link: data.download_link || null,
         license_info: data.license_info || null,
@@ -364,6 +434,84 @@ export default function SellerProductNewPage() {
                       </div>
                     </div>
 
+                    {/* Product Images */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Product Images</h3>
+                      
+                      {/* Image Upload Dropzone */}
+                      <div
+                        {...getRootProps()}
+                        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                          isDragActive
+                            ? "border-[#004080] bg-blue-50 dark:bg-blue-950/20"
+                            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                        }`}
+                      >
+                        <input {...getInputProps()} />
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="p-4 rounded-full bg-gray-100 dark:bg-gray-800">
+                            <Upload className="h-8 w-8 text-gray-600 dark:text-gray-300" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                              {isDragActive
+                                ? "Drop images here..."
+                                : "Upload Product Images"}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              Drag & drop or click to select images (JPG, PNG, GIF, WebP)
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                              Max 5MB per image
+                            </p>
+                          </div>
+                          {uploading && (
+                            <div className="flex items-center gap-2 text-[#004080]">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm">Uploading...</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Image Thumbnails */}
+                      {uploadedImages.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                          {uploadedImages.map((imageUrl, index) => (
+                            <div
+                              key={index}
+                              className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
+                            >
+                              <img
+                                src={imageUrl}
+                                alt={`Product image ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                          
+                          {/* Add More Button */}
+                          <div
+                            {...getRootProps()}
+                            className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 flex items-center justify-center cursor-pointer transition-colors"
+                          >
+                            <input {...getInputProps()} />
+                            <div className="text-center">
+                              <Plus className="h-6 w-6 text-gray-400 mx-auto mb-1" />
+                              <span className="text-xs text-gray-500">Add More</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Pricing & Inventory */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">
@@ -371,6 +519,26 @@ export default function SellerProductNewPage() {
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="price_type"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                <Tag className="h-4 w-4" />
+                                Price Type *
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="e.g. Fixed Price, Subscription, One-time"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
                         <FormField
                           control={form.control}
                           name="price"
@@ -406,38 +574,6 @@ export default function SellerProductNewPage() {
 
                         <FormField
                           control={form.control}
-                          name="price_type"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Price Type</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="fixed">
-                                    Fixed Price
-                                  </SelectItem>
-                                  <SelectItem value="range">
-                                    Price Range
-                                  </SelectItem>
-                                  <SelectItem value="auction">
-                                    Auction
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
                           name="stock_quantity"
                           render={({ field }) => (
                             <FormItem>
@@ -460,6 +596,31 @@ export default function SellerProductNewPage() {
                           )}
                         />
                       </div>
+                    </div>
+
+                    {/* Optional Download Link */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Download Link (Optional)</h3>
+                      <FormField
+                        control={form.control}
+                        name="download_link"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Direct Download URL</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="url"
+                                placeholder="https://example.com/download-link"
+                                {...field}
+                              />
+                            </FormControl>
+                            <p className="text-xs text-gray-500">
+                              Optional direct download link for digital products
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     {/* Optional Fields */}
