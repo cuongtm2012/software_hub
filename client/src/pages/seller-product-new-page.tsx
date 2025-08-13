@@ -58,6 +58,11 @@ const productSchema = z.object({
   download_link: z.string().url().optional().or(z.literal("")),
   license_info: z.string().optional(),
   tags: z.string().optional(),
+  pricing_rows: z.array(z.object({
+    price_type: z.string().min(1, "Please specify the price type"),
+    price: z.number().min(1000, "Price must be at least 1,000 VND"),
+    stock_quantity: z.number().min(1, "Stock must be at least 1"),
+  })).min(1, "At least one pricing row is required"),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -79,9 +84,9 @@ const categories = [
 
 // VND Currency formatting utility
 const formatVND = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -93,6 +98,8 @@ export default function SellerProductNewPage() {
   const { toast } = useToast();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [imageUploadRows, setImageUploadRows] = useState<number[]>([0]);
+  const [pricingRows, setPricingRows] = useState<number[]>([0]);
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -107,68 +114,116 @@ export default function SellerProductNewPage() {
       download_link: "",
       license_info: "",
       tags: "",
+      pricing_rows: [{
+        price_type: "",
+        price: 100000,
+        stock_quantity: 1,
+      }],
     },
   });
 
   // Image upload handlers
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('file', file);
-    
-    const response = await fetch('/api/upload/image', {
-      method: 'POST',
+    formData.append("file", file);
+
+    const response = await fetch("/api/upload/image", {
+      method: "POST",
       body: formData,
     });
-    
+
     if (!response.ok) {
-      throw new Error('Failed to upload image');
+      throw new Error("Failed to upload image");
     }
-    
+
     const result = await response.json();
     return result.url;
   };
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return;
-    
-    setUploading(true);
-    try {
-      const uploadPromises = acceptedFiles.map(uploadImage);
-      const imageUrls = await Promise.all(uploadPromises);
-      
-      const newImages = [...uploadedImages, ...imageUrls];
+
+
+  const removeImage = useCallback(
+    (indexToRemove: number) => {
+      const newImages = uploadedImages.filter(
+        (_, index) => index !== indexToRemove,
+      );
       setUploadedImages(newImages);
-      form.setValue('images', newImages);
-      
-      toast({
-        title: "Images Uploaded",
-        description: `Successfully uploaded ${acceptedFiles.length} image(s)`,
-      });
-    } catch (error) {
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload images. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  }, [uploadedImages, toast]);
-
-  const removeImage = useCallback((indexToRemove: number) => {
-    const newImages = uploadedImages.filter((_, index) => index !== indexToRemove);
-    setUploadedImages(newImages);
-    form.setValue('images', newImages);
-  }, [uploadedImages]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
+      form.setValue("images", newImages);
     },
-    multiple: true,
-    maxSize: 5 * 1024 * 1024, // 5MB
-  });
+    [uploadedImages],
+  );
+
+  // Image upload row management
+  const addImageUploadRow = () => {
+    const nextId = Math.max(...imageUploadRows) + 1;
+    setImageUploadRows([...imageUploadRows, nextId]);
+  };
+
+  const removeImageUploadRow = () => {
+    if (imageUploadRows.length > 1) {
+      setImageUploadRows(imageUploadRows.slice(0, -1));
+    }
+  };
+
+  // Pricing row management
+  const addPricingRow = () => {
+    const currentRows = form.getValues('pricing_rows') || [];
+    const newRow = {
+      price_type: "",
+      price: 100000,
+      stock_quantity: 1,
+    };
+    form.setValue('pricing_rows', [...currentRows, newRow]);
+    const nextId = Math.max(...pricingRows) + 1;
+    setPricingRows([...pricingRows, nextId]);
+  };
+
+  const removePricingRow = () => {
+    if (pricingRows.length > 1) {
+      const currentRows = form.getValues('pricing_rows') || [];
+      form.setValue('pricing_rows', currentRows.slice(0, -1));
+      setPricingRows(pricingRows.slice(0, -1));
+    }
+  };
+
+  // Create dropzone for each row
+  const createDropzoneForRow = (rowIndex: number) => {
+    const onDropForRow = useCallback(async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
+      
+      setUploading(true);
+      try {
+        const uploadPromises = acceptedFiles.map(uploadImage);
+        const imageUrls = await Promise.all(uploadPromises);
+        
+        const newImages = [...uploadedImages, ...imageUrls];
+        setUploadedImages(newImages);
+        form.setValue("images", newImages);
+        
+        toast({
+          title: "Images Uploaded",
+          description: `Successfully uploaded ${acceptedFiles.length} image(s)`,
+        });
+      } catch (error) {
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload images. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setUploading(false);
+      }
+    }, [uploadedImages, toast]);
+
+    return useDropzone({
+      onDrop: onDropForRow,
+      accept: {
+        "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
+      },
+      multiple: true,
+      maxSize: 5 * 1024 * 1024, // 5MB
+    });
+  };
 
   // Check seller verification status
   const { data: sellerData, isLoading: profileLoading } = useQuery<any>({
@@ -185,17 +240,25 @@ export default function SellerProductNewPage() {
             .filter(Boolean)
         : [];
 
+      // Use the first pricing row for the main product data (backward compatibility)
+      const mainPricingRow = data.pricing_rows?.[0] || {
+        price_type: data.price_type,
+        price: data.price,
+        stock_quantity: data.stock_quantity,
+      };
+
       return await apiRequest("POST", "/api/seller/products", {
         title: data.title,
         description: data.description,
         category: data.category,
-        price: data.price.toString(), // Convert to string for API
-        price_type: data.price_type,
+        price: mainPricingRow.price.toString(), // Convert to string for API
+        price_type: mainPricingRow.price_type,
         images: uploadedImages,
-        stock_quantity: data.stock_quantity,
+        stock_quantity: mainPricingRow.stock_quantity,
         download_link: data.download_link || null,
         license_info: data.license_info || null,
         tags: tagsArray,
+        pricing_rows: data.pricing_rows,
         status: "pending", // Products go for review by default
       });
     },
@@ -437,28 +500,61 @@ export default function SellerProductNewPage() {
                     {/* Product Images */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Product Images</h3>
-                      
-                      {/* Image Upload Button */}
+
+                      {/* Image Upload Rows */}
                       <div className="space-y-4">
-                        <div
-                          {...getRootProps()}
-                          className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          <input {...getInputProps()} />
-                          <div className="flex items-center gap-3">
-                            <Upload className="h-5 w-5 text-[#004080]" />
-                            <span className="text-[#004080] font-medium">Upload File</span>
-                            <span className="text-gray-500 dark:text-gray-400">
-                              {uploadedImages.length > 0 
-                                ? `${uploadedImages.length} file(s) chosen`
-                                : "No file chosen"
-                              }
-                            </span>
-                          </div>
-                          {uploading && (
-                            <Loader2 className="h-4 w-4 ml-2 animate-spin text-[#004080]" />
-                          )}
-                        </div>
+                        {imageUploadRows.map((rowId, index) => {
+                          const dropzone = createDropzoneForRow(index);
+                          return (
+                            <div key={rowId} className="flex items-center gap-3">
+                              <div
+                                {...dropzone.getRootProps()}
+                                className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-48 h-10"
+                              >
+                                <input {...dropzone.getInputProps()} />
+                                <div className="flex items-center gap-2">
+                                  <Upload className="h-3 w-3 text-[#004080]" />
+                                  <span className="text-[#004080] font-medium text-sm">
+                                    Upload File
+                                  </span>
+                                  <span className="text-gray-500 dark:text-gray-400 text-xs">
+                                    {uploadedImages.length > 0
+                                      ? `${uploadedImages.length} file(s)`
+                                      : "No file"}
+                                  </span>
+                                </div>
+                                {uploading && (
+                                  <Loader2 className="h-3 w-3 ml-2 animate-spin text-[#004080]" />
+                                )}
+                              </div>
+                              
+                              {/* Add/Remove buttons */}
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={addImageUploadRow}
+                                  className="w-8 h-8 p-0"
+                                  title="Add image upload row"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={removeImageUploadRow}
+                                  disabled={imageUploadRows.length <= 1}
+                                  className="w-8 h-8 p-0"
+                                  title="Remove image upload row"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           Supported formats: JPG, PNG, GIF, WebP (Max 5MB each)
                         </p>
@@ -502,109 +598,114 @@ export default function SellerProductNewPage() {
                         Pricing & Inventory
                       </h3>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="price_type"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center gap-2">
-                                <Tag className="h-4 w-4" />
-                                Price Type *
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="e.g. Fixed Price, Subscription, One-time"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="price"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center gap-2">
-                                <DollarSign className="h-4 w-4" />
-                                Price (VND) *
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="1000"
-                                  min="1000"
-                                  placeholder="100,000"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseInt(e.target.value) || 0,
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                              {field.value > 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                  {formatVND(field.value)}
-                                </p>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="stock_quantity"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Stock Quantity *</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  placeholder="1"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseInt(e.target.value) || 1,
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Optional Download Link */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Download Link (Optional)</h3>
-                      <FormField
-                        control={form.control}
-                        name="download_link"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Direct Download URL</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="url"
-                                placeholder="https://example.com/download-link"
-                                {...field}
+                      {/* Dynamic Pricing Rows */}
+                      <div className="space-y-4">
+                        {pricingRows.map((rowId, index) => (
+                          <div key={rowId} className="flex items-end gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                              <FormField
+                                control={form.control}
+                                name={`pricing_rows.${index}.price_type`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="flex items-center gap-2">
+                                      <Tag className="h-4 w-4" />
+                                      Price Type *
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="e.g. Fixed Price, Subscription, One-time"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
                               />
-                            </FormControl>
-                            <p className="text-xs text-gray-500">
-                              Optional direct download link for digital products
-                            </p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+
+                              <FormField
+                                control={form.control}
+                                name={`pricing_rows.${index}.price`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="flex items-center gap-2">
+                                      <DollarSign className="h-4 w-4" />
+                                      Price (VND) *
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1000"
+                                        min="1000"
+                                        placeholder="100,000"
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseInt(e.target.value) || 0,
+                                          )
+                                        }
+                                      />
+                                    </FormControl>
+                                    {field.value > 0 && (
+                                      <p className="text-sm text-muted-foreground">
+                                        {formatVND(field.value)}
+                                      </p>
+                                    )}
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`pricing_rows.${index}.stock_quantity`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Stock Quantity *</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        placeholder="1"
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseInt(e.target.value) || 1,
+                                          )
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            
+                            {/* Add/Remove buttons */}
+                            <div className="flex gap-2 pb-6">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={addPricingRow}
+                                className="w-8 h-8 p-0"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={removePricingRow}
+                                disabled={pricingRows.length <= 1}
+                                className="w-8 h-8 p-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Optional Fields */}
@@ -612,26 +713,6 @@ export default function SellerProductNewPage() {
                       <h3 className="text-lg font-medium">
                         Additional Information
                       </h3>
-
-                      <FormField
-                        control={form.control}
-                        name="download_link"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Download Link (Optional)</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="https://example.com/download"
-                                {...field}
-                              />
-                            </FormControl>
-                            <p className="text-xs text-gray-500">
-                              Provide a direct download link for your product
-                            </p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
                       <FormField
                         control={form.control}
