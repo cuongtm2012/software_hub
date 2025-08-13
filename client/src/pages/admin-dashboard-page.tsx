@@ -147,7 +147,7 @@ function UserManagementComponent() {
     data: usersData,
     isLoading,
     refetch,
-  } = useQuery<{ users: User[]; total: number }>({
+  } = useQuery<{ users: { users: User[] }; total: number }>({
     queryKey: ["/api/admin/users"],
   });
 
@@ -223,7 +223,7 @@ function UserManagementComponent() {
     }
   });
 
-  const allUsers = usersData?.users || [];
+  const allUsers = usersData?.users?.users || [];
   const uniqueUsers = deduplicateUsersByEmail(allUsers);
   const stats = getUserDuplicationStats(allUsers);
 
