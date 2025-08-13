@@ -46,7 +46,7 @@ const productSchema = z.object({
   title: z.string().min(3, "Product title must be at least 3 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
   category: z.string().min(1, "Please select a category"),
-  price: z.number().min(0.01, "Price must be at least $0.01"),
+  price: z.number().min(1000, "Price must be at least 1,000 VND"),
   price_type: z.enum(["fixed", "range", "auction"]),
   stock_quantity: z.number().min(1, "Stock must be at least 1"),
   download_link: z.string().url().optional().or(z.literal("")),
@@ -71,6 +71,16 @@ const categories = [
   "Other",
 ];
 
+// VND Currency formatting utility
+const formatVND = (amount: number): string => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
 export default function SellerProductNewPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -82,7 +92,7 @@ export default function SellerProductNewPage() {
       title: "",
       description: "",
       category: "",
-      price: 0,
+      price: 100000,
       price_type: "fixed",
       stock_quantity: 1,
       download_link: "",
@@ -237,14 +247,6 @@ export default function SellerProductNewPage() {
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/dashboard")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
                   Add New Product
@@ -376,22 +378,27 @@ export default function SellerProductNewPage() {
                             <FormItem>
                               <FormLabel className="flex items-center gap-2">
                                 <DollarSign className="h-4 w-4" />
-                                Price (USD) *
+                                Price (VND) *
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
-                                  step="0.01"
-                                  min="0"
-                                  placeholder="0.00"
+                                  step="1000"
+                                  min="1000"
+                                  placeholder="100,000"
                                   {...field}
                                   onChange={(e) =>
                                     field.onChange(
-                                      parseFloat(e.target.value) || 0,
+                                      parseInt(e.target.value) || 0,
                                     )
                                   }
                                 />
                               </FormControl>
+                              {field.value > 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                  {formatVND(field.value)}
+                                </p>
+                              )}
                               <FormMessage />
                             </FormItem>
                           )}
