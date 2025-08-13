@@ -186,44 +186,42 @@ export default function SellerProductNewPage() {
     }
   };
 
-  // Create dropzone for each row
-  const createDropzoneForRow = (rowIndex: number) => {
-    const onDropForRow = useCallback(async (acceptedFiles: File[]) => {
-      if (acceptedFiles.length === 0) return;
+  // Single dropzone for all image uploads
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+    
+    setUploading(true);
+    try {
+      const uploadPromises = acceptedFiles.map(uploadImage);
+      const imageUrls = await Promise.all(uploadPromises);
       
-      setUploading(true);
-      try {
-        const uploadPromises = acceptedFiles.map(uploadImage);
-        const imageUrls = await Promise.all(uploadPromises);
-        
-        const newImages = [...uploadedImages, ...imageUrls];
-        setUploadedImages(newImages);
-        form.setValue("images", newImages);
-        
-        toast({
-          title: "Images Uploaded",
-          description: `Successfully uploaded ${acceptedFiles.length} image(s)`,
-        });
-      } catch (error) {
-        toast({
-          title: "Upload Failed",
-          description: "Failed to upload images. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setUploading(false);
-      }
-    }, [uploadedImages, toast]);
+      const newImages = [...uploadedImages, ...imageUrls];
+      setUploadedImages(newImages);
+      form.setValue("images", newImages);
+      
+      toast({
+        title: "Images Uploaded",
+        description: `Successfully uploaded ${acceptedFiles.length} image(s)`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload images. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  }, [uploadedImages, toast]);
 
-    return useDropzone({
-      onDrop: onDropForRow,
-      accept: {
-        "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
-      },
-      multiple: true,
-      maxSize: 5 * 1024 * 1024, // 5MB
-    });
-  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
+    },
+    multiple: true,
+    maxSize: 5 * 1024 * 1024, // 5MB
+  });
 
   // Check seller verification status
   const { data: sellerData, isLoading: profileLoading } = useQuery<any>({
@@ -503,58 +501,55 @@ export default function SellerProductNewPage() {
 
                       {/* Image Upload Rows */}
                       <div className="space-y-4">
-                        {imageUploadRows.map((rowId, index) => {
-                          const dropzone = createDropzoneForRow(index);
-                          return (
-                            <div key={rowId} className="flex items-center gap-3">
-                              <div
-                                {...dropzone.getRootProps()}
-                                className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-48 h-10"
-                              >
-                                <input {...dropzone.getInputProps()} />
-                                <div className="flex items-center gap-2">
-                                  <Upload className="h-3 w-3 text-[#004080]" />
-                                  <span className="text-[#004080] font-medium text-sm">
-                                    Upload File
-                                  </span>
-                                  <span className="text-gray-500 dark:text-gray-400 text-xs">
-                                    {uploadedImages.length > 0
-                                      ? `${uploadedImages.length} file(s)`
-                                      : "No file"}
-                                  </span>
-                                </div>
-                                {uploading && (
-                                  <Loader2 className="h-3 w-3 ml-2 animate-spin text-[#004080]" />
-                                )}
+                        {imageUploadRows.map((rowId, index) => (
+                          <div key={rowId} className="flex items-center gap-3">
+                            <div
+                              {...getRootProps()}
+                              className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-48 h-10"
+                            >
+                              <input {...getInputProps()} />
+                              <div className="flex items-center gap-2">
+                                <Upload className="h-3 w-3 text-[#004080]" />
+                                <span className="text-[#004080] font-medium text-sm">
+                                  Upload File
+                                </span>
+                                <span className="text-gray-500 dark:text-gray-400 text-xs">
+                                  {uploadedImages.length > 0
+                                    ? `${uploadedImages.length} file(s)`
+                                    : "No file"}
+                                </span>
                               </div>
-                              
-                              {/* Add/Remove buttons */}
-                              <div className="flex gap-2">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={addImageUploadRow}
-                                  className="w-8 h-8 p-0"
-                                  title="Add image upload row"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={removeImageUploadRow}
-                                  disabled={imageUploadRows.length <= 1}
-                                  className="w-8 h-8 p-0"
-                                  title="Remove image upload row"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
+                              {uploading && (
+                                <Loader2 className="h-3 w-3 ml-2 animate-spin text-[#004080]" />
+                              )}
                             </div>
-                          );
-                        })}
+                            
+                            {/* Add/Remove buttons */}
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={addImageUploadRow}
+                                className="w-8 h-8 p-0"
+                                title="Add image upload row"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={removeImageUploadRow}
+                                disabled={imageUploadRows.length <= 1}
+                                className="w-8 h-8 p-0"
+                                title="Remove image upload row"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           Supported formats: JPG, PNG, GIF, WebP (Max 5MB each)
                         </p>
