@@ -223,7 +223,7 @@ function UserManagementComponent() {
     }
   });
 
-  const allUsers = usersData?.users?.users || [];
+  const allUsers = usersData?.users || [];
   const uniqueUsers = deduplicateUsersByEmail(allUsers);
   const stats = getUserDuplicationStats(allUsers);
 
@@ -1497,7 +1497,7 @@ function SellersManagementComponent() {
     );
   }
 
-  const sellers = sellersData?.sellers || [];
+  const sellers = (sellersData as any)?.sellers || [];
   const pendingSellers = sellers.filter((s: any) => s.verification_status === 'pending');
 
   return (
@@ -1721,7 +1721,10 @@ function SellersManagementComponent() {
                               className="max-w-full max-h-48 mx-auto object-contain rounded"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'block';
+                                const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (nextSibling) {
+                                  nextSibling.style.display = 'block';
+                                }
                               }}
                             />
                           ) : (
@@ -1759,7 +1762,10 @@ function SellersManagementComponent() {
                               className="max-w-full max-h-48 mx-auto object-contain rounded"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'block';
+                                const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (nextSibling) {
+                                  nextSibling.style.display = 'block';
+                                }
                               }}
                             />
                           ) : (
@@ -1797,7 +1803,10 @@ function SellersManagementComponent() {
                               className="max-w-full max-h-48 mx-auto object-contain rounded"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'block';
+                                const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (nextSibling) {
+                                  nextSibling.style.display = 'block';
+                                }
                               }}
                             />
                           ) : (
