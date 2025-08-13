@@ -2058,6 +2058,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/seller/profile", isAuthenticated, async (req, res, next) => {
     try {
       const sellerProfile = await storage.getSellerProfile(req.user!.id);
+      
+      // Set cache headers for better performance
+      res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
       res.json({ seller_profile: sellerProfile });
     } catch (error) {
       next(error);
@@ -2114,7 +2117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { 
         page = "1", 
-        limit = "50", // Default to 50 for dashboard, but supports pagination
+        limit = "10", // Reduced default limit for faster initial load
         status,
         search 
       } = req.query;
@@ -2133,6 +2136,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
       
+      // Set cache headers for better performance
+      res.set('Cache-Control', 'public, max-age=120'); // 2 minutes
       res.json(result);
     } catch (error) {
       next(error);
@@ -2180,6 +2185,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/seller/orders", isAuthenticated, async (req, res, next) => {
     try {
       const orders = await storage.getOrdersBySellerId(req.user!.id);
+      
+      // Set cache headers for better performance
+      res.set('Cache-Control', 'public, max-age=180'); // 3 minutes
       res.json({ orders });
     } catch (error) {
       next(error);

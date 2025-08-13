@@ -103,22 +103,29 @@ export default function DashboardPage() {
   const { data: sellerProfile, isLoading: isLoadingProfile } = useQuery<any>({
     queryKey: ["/api/seller/profile"],
     enabled: !!user && user.role === 'seller',
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const { data: sellerProducts, isLoading: isLoadingProducts } = useQuery<{ products: Product[]; total: number }>({
-    queryKey: ["/api/seller/products", { page: showAllProducts ? currentPage : 1, limit: showAllProducts ? productsPerPage : 50 }],
+    queryKey: ["/api/seller/products", { page: showAllProducts ? currentPage : 1, limit: showAllProducts ? productsPerPage : 10 }],
     enabled: !!user && user.role === 'seller',
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Fetch paginated products when expanded
   const { data: paginatedProducts, isLoading: isLoadingPaginated } = useQuery<{ products: Product[]; total: number }>({
     queryKey: ["/api/seller/products", { page: currentPage, limit: productsPerPage }],
     enabled: !!user && user.role === 'seller' && showAllProducts,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
   const { data: sellerOrders, isLoading: isLoadingOrders } = useQuery<{ orders: Order[] }>({
     queryKey: ["/api/seller/orders"],
     enabled: !!user && user.role === 'seller',
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Fetch projects and quotes (general dashboard)
@@ -127,27 +134,31 @@ export default function DashboardPage() {
     enabled: !!user && (user.role === 'admin' || user.role === 'client' || user.role === 'developer'),
   });
 
-  // Fetch user's own external requests (for "My Projects" section)
+  // Lazy load project data - only fetch when needed
   const { data: externalRequestsData, isLoading: isLoadingExternalRequests } = useQuery<{ requests: ExternalRequest[]; total: number }>({
     queryKey: ['/api/my-external-requests', { page: 1, limit: 5, status: selectedProjectStatus }],
-    enabled: !!user,
+    enabled: !!user && (user.role !== 'seller'), // Don't load for sellers on initial load
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 
   // Fetch paginated combined projects when expanded (includes both external requests and available projects)
   const { data: paginatedProjectsData, isLoading: isLoadingPaginatedProjects } = useQuery<{ projects: (Project | ExternalRequest)[]; total: number }>({
     queryKey: ['/api/my-combined-projects', { page: currentProjectPage, limit: projectsPerPage, status: selectedProjectStatus }],
     enabled: !!user && showAllProjects,
+    staleTime: 3 * 60 * 1000,
   });
 
   // Fetch available projects for the tabs - use the same source as combined projects for consistency
   const { data: availableProjectsData, isLoading: isLoadingAvailableProjects } = useQuery<{ projects: Project[]; total: number }>({
     queryKey: ['/api/my-combined-projects', { status: selectedProjectStatus !== 'all' ? selectedProjectStatus : undefined, limit: 100 }],
-    enabled: !!user,
+    enabled: !!user && (user.role !== 'seller'), // Only load for non-sellers initially
+    staleTime: 3 * 60 * 1000,
   });
 
   const { data: quotes, isLoading: isLoadingQuotes } = useQuery<Quote[]>({
     queryKey: ['/api/quotes'],
-    enabled: !!user,
+    enabled: !!user && (user.role !== 'seller'), // Don't load for sellers on initial load
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Redirect admin users to admin dashboard
@@ -242,11 +253,26 @@ export default function DashboardPage() {
   // Both sections now use the same data source for consistency
   const displayAvailableProjects = allCombinedProjects;
 
+  // Show loading state while critical data is loading for sellers
+  const isInitialLoading = isSeller && (isLoadingProfile || isLoadingProducts || isLoadingOrders);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
       <main className="pt-16">
         <div className="container mx-auto px-1 sm:px-4 py-2 sm:py-8 max-w-full overflow-x-hidden">
+          
+          {/* Loading State for Sellers */}
+          {isInitialLoading && (
+            <div className="text-center py-12">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+              <h2 className="text-xl font-semibold mb-2">Loading your dashboard...</h2>
+              <p className="text-gray-600">Please wait while we fetch your latest data</p>
+            </div>
+          )}
+          
+          {!isInitialLoading && (
+            <>
           {/* Welcome Header */}
           <div className="flex flex-col gap-3 mb-4 sm:mb-8 p-3 sm:p-4 lg:p-6 bg-white rounded-lg shadow-sm border">
             <div className="flex-1">
@@ -1240,6 +1266,8 @@ export default function DashboardPage() {
               </TabsContent>
             </div>
           </Tabs>
+          </>
+          )}
         </div>
       </main>
       <Footer />
