@@ -16,11 +16,12 @@ export default function TestLoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
-      return apiRequest("/api/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      });
+      try {
+        const response = await apiRequest("POST", "/api/login", data);
+        return await response.json();
+      } catch (error) {
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Logged in successfully!" });
@@ -36,15 +37,25 @@ export default function TestLoginPage() {
     }
   });
 
-  const handleTestLogin = (email: string, role: string) => {
-    const password = email === "cuongeurovnn@gmail.com" ? "abcd@1234" : "testpassword";
-    setCredentials({ email, password });
-    loginMutation.mutate({ email, password });
+  const handleTestLogin = async (email: string, role: string) => {
+    try {
+      const password = email === "cuongeurovnn@gmail.com" ? "abcd@1234" : "testpassword";
+      setCredentials({ email, password });
+      await loginMutation.mutateAsync({ email, password });
+    } catch (error) {
+      // Error is already handled by onError callback
+      console.error('Login error:', error);
+    }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    loginMutation.mutate(credentials);
+    try {
+      await loginMutation.mutateAsync(credentials);
+    } catch (error) {
+      // Error is already handled by onError callback
+      console.error('Login error:', error);
+    }
   };
 
   return (
