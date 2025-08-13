@@ -120,8 +120,13 @@ export const createBreadcrumbs = {
   ],
   sellerProductNew: (): BreadcrumbItem[] => [
     { label: "Home", href: "/" },
-    { label: "Seller Dashboard", href: "/seller" },
+    { label: "Seller Dashboard", href: "/dashboard" },
     { label: "New Product", isCurrentPage: true },
+  ],
+  sellerProductEdit: (productTitle?: string): BreadcrumbItem[] => [
+    { label: "Home", href: "/" },
+    { label: "Seller Dashboard", href: "/dashboard" },
+    { label: productTitle || "Edit Product", isCurrentPage: true },
   ],
   
   // Admin breadcrumbs
