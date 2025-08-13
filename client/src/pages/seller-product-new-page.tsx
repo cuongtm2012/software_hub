@@ -438,75 +438,59 @@ export default function SellerProductNewPage() {
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Product Images</h3>
                       
-                      {/* Image Upload Dropzone */}
-                      <div
-                        {...getRootProps()}
-                        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                          isDragActive
-                            ? "border-[#004080] bg-blue-50 dark:bg-blue-950/20"
-                            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-                        }`}
-                      >
-                        <input {...getInputProps()} />
-                        <div className="flex flex-col items-center gap-4">
-                          <div className="p-4 rounded-full bg-gray-100 dark:bg-gray-800">
-                            <Upload className="h-8 w-8 text-gray-600 dark:text-gray-300" />
-                          </div>
-                          <div>
-                            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                              {isDragActive
-                                ? "Drop images here..."
-                                : "Upload Product Images"}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              Drag & drop or click to select images (JPG, PNG, GIF, WebP)
-                            </p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                              Max 5MB per image
-                            </p>
+                      {/* Image Upload Button */}
+                      <div className="space-y-4">
+                        <div
+                          {...getRootProps()}
+                          className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <input {...getInputProps()} />
+                          <div className="flex items-center gap-3">
+                            <Upload className="h-5 w-5 text-[#004080]" />
+                            <span className="text-[#004080] font-medium">Upload File</span>
+                            <span className="text-gray-500 dark:text-gray-400">
+                              {uploadedImages.length > 0 
+                                ? `${uploadedImages.length} file(s) chosen`
+                                : "No file chosen"
+                              }
+                            </span>
                           </div>
                           {uploading && (
-                            <div className="flex items-center gap-2 text-[#004080]">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              <span className="text-sm">Uploading...</span>
-                            </div>
+                            <Loader2 className="h-4 w-4 ml-2 animate-spin text-[#004080]" />
                           )}
                         </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Supported formats: JPG, PNG, GIF, WebP (Max 5MB each)
+                        </p>
                       </div>
 
                       {/* Image Thumbnails */}
                       {uploadedImages.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                          {uploadedImages.map((imageUrl, index) => (
-                            <div
-                              key={index}
-                              className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
-                            >
-                              <img
-                                src={imageUrl}
-                                alt={`Product image ${index + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeImage(index)}
-                                className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Uploaded Images ({uploadedImages.length})
+                          </h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            {uploadedImages.map((imageUrl, index) => (
+                              <div
+                                key={index}
+                                className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
                               >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ))}
-                          
-                          {/* Add More Button */}
-                          <div
-                            {...getRootProps()}
-                            className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 flex items-center justify-center cursor-pointer transition-colors"
-                          >
-                            <input {...getInputProps()} />
-                            <div className="text-center">
-                              <Plus className="h-6 w-6 text-gray-400 mx-auto mb-1" />
-                              <span className="text-xs text-gray-500">Add More</span>
-                            </div>
+                                <img
+                                  src={imageUrl}
+                                  alt={`Product image ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeImage(index)}
+                                  className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                  title="Remove image"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
