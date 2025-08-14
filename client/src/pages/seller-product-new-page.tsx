@@ -589,8 +589,8 @@ export default function SellerProductNewPage() {
                             key={rowId}
                             className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
                           >
-                            {/* First row: Price Type and Price */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Horizontal row: Price Type, Price (VND), and Stock Quantity */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <FormField
                                 control={form.control}
                                 name={`pricing_rows.${index}.price_type`}
@@ -680,7 +680,7 @@ export default function SellerProductNewPage() {
                               />
                             </div>
 
-                            {/* Second row: Stock Quantity and License Information */}
+                            {/* License Information row */}
                             <div className="flex gap-4 items-end">
                               <div className="flex-1">
                                 <FormField
@@ -690,10 +690,11 @@ export default function SellerProductNewPage() {
                                     <FormItem>
                                       <FormLabel>License Information</FormLabel>
                                       <FormControl>
-                                        <textarea
+                                        <Textarea
                                           placeholder="Enter license details, terms, or restrictions..."
-                                          className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                                          {...field}
+                                          className="min-h-[80px] resize-none"
+                                          value={field.value || ""}
+                                          onChange={field.onChange}
                                         />
                                       </FormControl>
                                       <FormMessage />
