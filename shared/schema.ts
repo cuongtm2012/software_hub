@@ -214,6 +214,7 @@ export const products = pgTable("products", {
   images: text("images").array(),
   tags: text("tags").array(),
   license_info: text("license_info"),
+  pricing_rows: jsonb("pricing_rows"), // Array of pricing/inventory rows with detailed options
   status: productStatusEnum("status").default('draft').notNull(),
   featured: boolean("featured").default(false).notNull(),
   total_sales: integer("total_sales").default(0).notNull(),
