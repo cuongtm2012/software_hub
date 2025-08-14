@@ -579,6 +579,10 @@ export default function SellerProductNewPage() {
                                   src={imageUrl}
                                   alt={`Product image ${index + 1}`}
                                   className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback for broken images
+                                    e.currentTarget.src = "data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%236b7280'%3EImage%3C/text%3E%3C/svg%3E";
+                                  }}
                                 />
                                 <button
                                   type="button"
