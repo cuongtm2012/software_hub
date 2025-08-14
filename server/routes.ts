@@ -2250,6 +2250,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clone product endpoint
+  app.post("/api/seller/products/:id/clone", isAuthenticated, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const productId = parseInt(id);
+      
+      // Allow cloning regardless of seller verification status (matching edit functionality)
+      
+      // Get the original product and verify ownership
+      const [originalProduct] = await db
+        .select()
+        .from(products)
+        .where(and(eq(products.id, productId), eq(products.seller_id, req.user!.id)))
+        .limit(1);
+      
+      if (!originalProduct) {
+        return res.status(404).json({ message: "Product not found or you don't have permission to clone it" });
+      }
+      
+      // Prepare cloned product data
+      const clonedProductData = {
+        seller_id: req.user!.id,
+        title: `CLONE ${originalProduct.title}`,
+        description: originalProduct.description,
+        category: originalProduct.category,
+        price: originalProduct.price,
+        price_type: originalProduct.price_type,
+        stock_quantity: originalProduct.stock_quantity,
+        download_link: originalProduct.download_link,
+        product_files: originalProduct.product_files,
+        images: originalProduct.images,
+        tags: originalProduct.tags,
+        license_info: originalProduct.license_info,
+        status: 'draft', // Cloned products start as draft
+        featured: false,
+      };
+      
+      // Create the cloned product
+      const [clonedProduct] = await db
+        .insert(products)
+        .values(clonedProductData)
+        .returning();
+      
+      res.status(201).json({ 
+        product: clonedProduct,
+        message: "Product cloned successfully"
+      });
+    } catch (error) {
+      console.error('Clone product error:', error);
+      next(error);
+    }
+  });
+
   // Seller Orders & Analytics
   app.get("/api/seller/orders", isAuthenticated, async (req, res, next) => {
     try {

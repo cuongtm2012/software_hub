@@ -10,7 +10,7 @@ import {
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
   Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp, 
-  ChevronLeft, ChevronRight, Edit3, CalendarDays, MessageCircle
+  ChevronLeft, ChevronRight, Edit3, CalendarDays, MessageCircle, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -86,6 +86,27 @@ export default function DashboardPage() {
     }).format(price);
   };
   const [selectedProjectStatus, setSelectedProjectStatus] = useState<string>('all');
+
+  // Product clone mutation
+  const cloneProductMutation = useMutation({
+    mutationFn: async (productId: number) => {
+      return apiRequest('POST', `/api/seller/products/${productId}/clone`);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
+      toast({
+        title: "Product Cloned Successfully",
+        description: `Your product has been cloned with ID ${data.product.id}. You can now edit the clone.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Clone Failed",
+        description: error.message || "Failed to clone product. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
   
   // Product list expansion state
   const [showAllProducts, setShowAllProducts] = useState(false);
@@ -435,6 +456,24 @@ export default function DashboardPage() {
                                 >
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 sm:flex-none text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  onClick={() => {
+                                    if (window.confirm(`Clone this product? A duplicate will be created with "CLONE " added to the title.`)) {
+                                      cloneProductMutation.mutate(product.id);
+                                    }
+                                  }}
+                                  disabled={cloneProductMutation.isPending}
+                                >
+                                  {cloneProductMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Copy className="h-4 w-4 mr-2" />
+                                  )}
+                                  Clone
                                 </Button>
                                 <Button
                                   variant="outline"
