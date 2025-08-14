@@ -101,7 +101,7 @@ const formatVNDInput = (value: string): string => {
   // Remove non-numeric characters
   const numericValue = value.replace(/[^\d]/g, "");
   if (!numericValue) return "";
-  
+
   // Format with thousand separators
   return new Intl.NumberFormat("vi-VN").format(parseInt(numericValue));
 };
@@ -585,7 +585,10 @@ export default function SellerProductNewPage() {
                       {/* Dynamic Pricing Rows */}
                       <div className="space-y-4">
                         {pricingRows.map((rowId, index) => (
-                          <div key={rowId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
+                          <div
+                            key={rowId}
+                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
+                          >
                             {/* First row: Price Type and Price */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <FormField
@@ -613,7 +616,7 @@ export default function SellerProductNewPage() {
                                 name={`pricing_rows.${index}.price`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="flex items-center gap-2">
+                                    <FormLabel className="flex items-center gap-1">
                                       <DollarSign className="h-4 w-4" />
                                       Price (VND) *
                                     </FormLabel>
@@ -621,10 +624,22 @@ export default function SellerProductNewPage() {
                                       <div className="relative">
                                         <Input
                                           placeholder="100,000 ₫"
-                                          value={field.value ? formatVNDInput(field.value.toString()) : ""}
+                                          value={
+                                            field.value
+                                              ? formatVNDInput(
+                                                  field.value.toString(),
+                                                )
+                                              : ""
+                                          }
                                           onChange={(e) => {
-                                            const numericValue = e.target.value.replace(/[^\d]/g, "");
-                                            field.onChange(parseInt(numericValue) || 0);
+                                            const numericValue =
+                                              e.target.value.replace(
+                                                /[^\d]/g,
+                                                "",
+                                              );
+                                            field.onChange(
+                                              parseInt(numericValue) || 0,
+                                            );
                                           }}
                                           className="pr-8"
                                         />
@@ -643,7 +658,9 @@ export default function SellerProductNewPage() {
                                 name={`pricing_rows.${index}.stock_quantity`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Stock Quantity *</FormLabel>
+                                    <FormLabel className="flex items-center gap-1">
+                                      Stock Quantity *
+                                    </FormLabel>
                                     <FormControl>
                                       <Input
                                         type="number"
@@ -729,9 +746,19 @@ export default function SellerProductNewPage() {
                                   variant="outline"
                                   onClick={() => {
                                     if (pricingRows.length > 1) {
-                                      const currentRows = form.getValues("pricing_rows") || [];
-                                      form.setValue("pricing_rows", currentRows.filter((_, i) => i !== index));
-                                      setPricingRows(pricingRows.filter((_, i) => i !== index));
+                                      const currentRows =
+                                        form.getValues("pricing_rows") || [];
+                                      form.setValue(
+                                        "pricing_rows",
+                                        currentRows.filter(
+                                          (_, i) => i !== index,
+                                        ),
+                                      );
+                                      setPricingRows(
+                                        pricingRows.filter(
+                                          (_, i) => i !== index,
+                                        ),
+                                      );
                                     }
                                   }}
                                   disabled={pricingRows.length <= 1}
@@ -746,8 +773,6 @@ export default function SellerProductNewPage() {
                         ))}
                       </div>
                     </div>
-
-
 
                     {/* Submit Button */}
                     <div className="flex justify-end pt-6">
