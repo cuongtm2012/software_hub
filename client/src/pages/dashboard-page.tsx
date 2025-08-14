@@ -106,8 +106,10 @@ export default function DashboardPage() {
       });
       toast({
         title: "Product Cloned Successfully",
-        description: `Your product has been cloned with ID ${data.product.id}. You can now edit the clone.`,
+        description: `Opening edit page for the cloned product...`,
       });
+      // Navigate to edit page with the cloned product
+      navigate(`/seller/products/${data.product.id}/edit`);
     },
     onError: (error: any) => {
       console.error('Clone error:', error);
@@ -500,17 +502,36 @@ export default function DashboardPage() {
                                       const deleteProduct = async () => {
                                         try {
                                           await apiRequest('DELETE', `/api/seller/products/${product.id}`);
-                                          queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
+                                          queryClient.invalidateQueries({ 
+                                            predicate: (query) => {
+                                              const key = query.queryKey[0];
+                                              return typeof key === 'string' && key.includes('/api/seller/products');
+                                            }
+                                          });
                                           toast({
                                             title: "Success",
                                             description: "Product deleted successfully"
                                           });
                                         } catch (error: any) {
-                                          toast({
-                                            title: "Error", 
-                                            description: error.message || "Failed to delete product",
-                                            variant: "destructive"
-                                          });
+                                          if (error.message?.includes('404') || error.message?.includes('not found')) {
+                                            // Product was already deleted, refresh the list
+                                            queryClient.invalidateQueries({ 
+                                              predicate: (query) => {
+                                                const key = query.queryKey[0];
+                                                return typeof key === 'string' && key.includes('/api/seller/products');
+                                              }
+                                            });
+                                            toast({
+                                              title: "Product Already Removed",
+                                              description: "This product was already deleted. Refreshing the list."
+                                            });
+                                          } else {
+                                            toast({
+                                              title: "Error", 
+                                              description: error.message || "Failed to delete product",
+                                              variant: "destructive"
+                                            });
+                                          }
                                         }
                                       };
                                       deleteProduct();
