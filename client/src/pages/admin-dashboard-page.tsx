@@ -2201,7 +2201,7 @@ function ProductApprovalsComponent() {
 
                 {/* Action Buttons */}
                 {selectedProduct.status === 'pending' || selectedProduct.status === 'draft' ? (
-                  <div className="space-y-3 pt-4 border-t">
+                  <div className="pt-4 border-t">
                     <div className="flex gap-2">
                       <Button
                         onClick={() => handleProductAction('approve')}
@@ -2218,15 +2218,15 @@ function ProductApprovalsComponent() {
                         <XCircle className="h-4 w-4 mr-2" />
                         Reject
                       </Button>
+                      <Button
+                        onClick={() => handleProductAction('request_changes')}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Request Changes
+                      </Button>
                     </div>
-                    <Button
-                      onClick={() => handleProductAction('request_changes')}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Request Changes
-                    </Button>
                   </div>
                 ) : (
                   <div className="pt-4 border-t">
