@@ -240,6 +240,8 @@ export default function SellerProductNewPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
+      console.log("Mutation started with data:", data);
+      
       const tagsArray = data.tags
         ? data.tags
             .split(",")
@@ -254,7 +256,7 @@ export default function SellerProductNewPage() {
         stock_quantity: data.stock_quantity,
       };
 
-      return await apiRequest("POST", "/api/seller/products", {
+      const payload = {
         title: data.title,
         description: data.description,
         category: data.category,
@@ -267,7 +269,18 @@ export default function SellerProductNewPage() {
         tags: tagsArray,
         pricing_rows: data.pricing_rows,
         status: "pending", // Products go for review by default
-      });
+      };
+      
+      console.log("API payload:", payload);
+      
+      try {
+        const result = await apiRequest("POST", "/api/seller/products", payload);
+        console.log("API response:", result);
+        return result;
+      } catch (error) {
+        console.error("API error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
@@ -289,6 +302,9 @@ export default function SellerProductNewPage() {
   });
 
   const onSubmit = (data: ProductFormData) => {
+    console.log("Form submission triggered with data:", data);
+    console.log("Form errors:", form.formState.errors);
+    console.log("Uploaded images:", uploadedImages);
     createProductMutation.mutate(data);
   };
 
