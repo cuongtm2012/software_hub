@@ -90,16 +90,27 @@ export default function DashboardPage() {
   // Product clone mutation
   const cloneProductMutation = useMutation({
     mutationFn: async (productId: number) => {
-      return apiRequest('POST', `/api/seller/products/${productId}/clone`);
+      console.log('Cloning product with ID:', productId);
+      const response = await apiRequest('POST', `/api/seller/products/${productId}/clone`);
+      console.log('Clone response:', response);
+      return response;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
+      console.log('Clone success, invalidating queries');
+      // Invalidate all seller product queries to refresh the list
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.includes('/api/seller/products');
+        }
+      });
       toast({
         title: "Product Cloned Successfully",
         description: `Your product has been cloned with ID ${data.product.id}. You can now edit the clone.`,
       });
     },
     onError: (error: any) => {
+      console.error('Clone error:', error);
       toast({
         title: "Clone Failed",
         description: error.message || "Failed to clone product. Please try again.",
@@ -462,8 +473,12 @@ export default function DashboardPage() {
                                   size="sm"
                                   className="flex-1 sm:flex-none text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                   onClick={() => {
+                                    console.log('Clone button clicked for product:', product);
                                     if (window.confirm(`Clone this product? A duplicate will be created with "CLONE " added to the title.`)) {
+                                      console.log('User confirmed, starting clone mutation');
                                       cloneProductMutation.mutate(product.id);
+                                    } else {
+                                      console.log('User cancelled clone operation');
                                     }
                                   }}
                                   disabled={cloneProductMutation.isPending}
