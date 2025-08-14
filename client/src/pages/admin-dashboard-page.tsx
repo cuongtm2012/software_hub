@@ -1918,13 +1918,23 @@ function ProductApprovalsComponent() {
       const status = action === 'approve' ? 'published' : action === 'reject' ? 'rejected' : 'draft';
       const response = await apiRequest('PUT', `/api/products/${productId}`, { status });
       
-      return response;
+      return { ...response, newStatus: status };
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast({
         title: "Success",
         description: "Product status updated successfully"
       });
+      
+      // Update the selected product's status immediately for instant UI feedback
+      if (selectedProduct && selectedProduct.id === variables.productId) {
+        setSelectedProduct({
+          ...selectedProduct,
+          status: data.newStatus
+        });
+      }
+      
+      // Refresh the products list
       refetch();
       setShowActionDialog(false);
       setActionComment("");
