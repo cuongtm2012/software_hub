@@ -284,8 +284,6 @@ export default function MarketplaceSellerEditPage() {
 
   const updateProductMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      console.log("Update mutation started with data:", data);
-      
       const tagsArray = data.tags
         ? data.tags
             .split(",")
@@ -314,16 +312,7 @@ export default function MarketplaceSellerEditPage() {
         pricing_rows: data.pricing_rows,
       };
       
-      console.log("API payload:", payload);
-      
-      try {
-        const result = await apiRequest("PUT", `/api/seller/products/${productId}`, payload);
-        console.log("API response:", result);
-        return result;
-      } catch (error) {
-        console.error("API error:", error);
-        throw error;
-      }
+      return await apiRequest("PUT", `/api/products/${productId}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
@@ -344,26 +333,10 @@ export default function MarketplaceSellerEditPage() {
   });
 
   const onSubmit = (data: ProductFormData) => {
-    console.log("Form submission triggered with data:", data);
-    console.log("Form errors:", form.formState.errors);
-    console.log("Uploaded images:", uploadedImages);
-    
-    // Check if there are validation errors
-    if (Object.keys(form.formState.errors).length > 0) {
-      console.log("Form has validation errors, not submitting");
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors in the form before submitting.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     updateProductMutation.mutate(data);
   };
 
   const onError = (errors: any) => {
-    console.log("Form validation failed:", errors);
     toast({
       title: "Form Validation Failed",
       description: "Please check all required fields and fix any errors.",
