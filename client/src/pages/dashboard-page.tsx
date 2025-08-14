@@ -96,20 +96,27 @@ export default function DashboardPage() {
       return response;
     },
     onSuccess: (data) => {
-      console.log('Clone success, invalidating queries');
-      // Invalidate all seller product queries to refresh the list
+      console.log('Clone success, refreshing product list');
+      // Immediately refresh all seller product queries to show the new clone
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           const key = query.queryKey[0];
           return typeof key === 'string' && key.includes('/api/seller/products');
         }
       });
+      
+      // Refetch data immediately to show the cloned product in the list
+      queryClient.refetchQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.includes('/api/seller/products');
+        }
+      });
+      
       toast({
         title: "Product Cloned Successfully",
-        description: `Opening edit page for the cloned product...`,
+        description: `Clone "${data.product.title}" has been added to your product list.`,
       });
-      // Navigate to edit page with the cloned product
-      navigate(`/seller/products/${data.product.id}/edit`);
     },
     onError: (error: any) => {
       console.error('Clone error:', error);
@@ -477,12 +484,9 @@ export default function DashboardPage() {
                                   className="flex-1 sm:flex-none text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                   onClick={() => {
                                     console.log('Clone button clicked for product:', product);
-                                    if (window.confirm(`Clone this product? A duplicate will be created with "CLONE " added to the title.`)) {
-                                      console.log('User confirmed, starting clone mutation');
-                                      cloneProductMutation.mutate(product.id);
-                                    } else {
-                                      console.log('User cancelled clone operation');
-                                    }
+                                    // Immediate clone without confirmation for faster workflow
+                                    console.log('Starting clone mutation');
+                                    cloneProductMutation.mutate(product.id);
                                   }}
                                   disabled={cloneProductMutation.isPending}
                                 >
@@ -491,7 +495,7 @@ export default function DashboardPage() {
                                   ) : (
                                     <Copy className="h-4 w-4 mr-2" />
                                   )}
-                                  Clone
+                                  {cloneProductMutation.isPending ? 'Cloning...' : 'Clone'}
                                 </Button>
                                 <Button
                                   variant="outline"

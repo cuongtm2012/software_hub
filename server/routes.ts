@@ -2269,7 +2269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Product not found or you don't have permission to clone it" });
       }
       
-      // Prepare cloned product data
+      // Prepare cloned product data - copy ALL fields from original
       const clonedProductData = {
         seller_id: req.user!.id,
         title: `CLONE ${originalProduct.title}`,
@@ -2283,8 +2283,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         images: originalProduct.images,
         tags: originalProduct.tags,
         license_info: originalProduct.license_info,
-        status: 'draft', // Cloned products start as draft
-        featured: false,
+        status: 'draft', // Cloned products start as draft for editing
+        featured: false, // Reset featured status
+        // Copy additional fields that might exist
+        software_compatibility: originalProduct.software_compatibility,
+        version: originalProduct.version,
+        file_size: originalProduct.file_size,
+        installation_guide: originalProduct.installation_guide,
+        demo_url: originalProduct.demo_url,
+        system_requirements: originalProduct.system_requirements,
+        support_info: originalProduct.support_info,
+        update_notes: originalProduct.update_notes,
+        // Reset stats for the clone
+        total_sales: 0,
+        view_count: 0,
+        avg_rating: null,
       };
       
       // Create the cloned product
