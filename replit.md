@@ -105,8 +105,8 @@ The application is composed of several independent services:
 - **Clone API**: Implemented `/api/seller/products/:id/clone` endpoint that duplicates products with "CLONE " prefix
 - **Direct Navigation**: Clone button now automatically redirects to edit page of cloned product with pre-filled data
 - **Error Handling**: Enhanced delete functionality to handle 404 errors gracefully when products are already removed
-- **Cache Management**: Improved query invalidation to ensure UI updates properly after clone/delete operations
-- **User Experience**: Streamlined workflow - clone creates duplicate and immediately opens it for editing
+- **Page Refresh**: Delete operations now automatically refresh the page to show updated product list
+- **User Experience**: Streamlined workflow - clone creates duplicate and immediately opens it for editing, delete refreshes dashboard
 
 ### Cloudflare R2 Storage Integration - COMPLETED ✅
 - **Feature Added**: Comprehensive Cloudflare R2 storage system for file uploads

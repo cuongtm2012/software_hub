@@ -502,29 +502,20 @@ export default function DashboardPage() {
                                       const deleteProduct = async () => {
                                         try {
                                           await apiRequest('DELETE', `/api/seller/products/${product.id}`);
-                                          queryClient.invalidateQueries({ 
-                                            predicate: (query) => {
-                                              const key = query.queryKey[0];
-                                              return typeof key === 'string' && key.includes('/api/seller/products');
-                                            }
-                                          });
                                           toast({
                                             title: "Success",
                                             description: "Product deleted successfully"
                                           });
+                                          // Refresh the page after successful deletion
+                                          window.location.reload();
                                         } catch (error: any) {
                                           if (error.message?.includes('404') || error.message?.includes('not found')) {
-                                            // Product was already deleted, refresh the list
-                                            queryClient.invalidateQueries({ 
-                                              predicate: (query) => {
-                                                const key = query.queryKey[0];
-                                                return typeof key === 'string' && key.includes('/api/seller/products');
-                                              }
-                                            });
+                                            // Product was already deleted, refresh the page
                                             toast({
                                               title: "Product Already Removed",
-                                              description: "This product was already deleted. Refreshing the list."
+                                              description: "This product was already deleted. Refreshing the page."
                                             });
+                                            window.location.reload();
                                           } else {
                                             toast({
                                               title: "Error", 
