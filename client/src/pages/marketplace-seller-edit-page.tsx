@@ -150,38 +150,54 @@ export default function MarketplaceSellerEditPage() {
   // Update form when product data is loaded
   useEffect(() => {
     if (product) {
-      const tagsString = Array.isArray(product.tags) ? product.tags.join(", ") : "";
+      console.log('Product data loaded:', product); // Debug log
       
-      form.reset({
+      const tagsString = Array.isArray(product.tags) ? product.tags.join(", ") : "";
+      const productPrice = typeof product.price === 'string' ? parseInt(product.price) : product.price || 100000;
+      
+      // Create pricing rows from existing product data
+      const pricingRowsData = product.pricing_rows && product.pricing_rows.length > 0 
+        ? product.pricing_rows.map((row: any) => ({
+            price_type: row.price_type || "",
+            price: typeof row.price === 'string' ? parseInt(row.price) : row.price || 100000,
+            stock_quantity: row.stock_quantity || 1,
+            license_info: row.license_info || "",
+          }))
+        : [
+            {
+              price_type: product.price_type || "",
+              price: productPrice,
+              stock_quantity: product.stock_quantity || 1,
+              license_info: product.license_info || "",
+            },
+          ];
+      
+      const formData = {
         title: product.title || "",
         description: product.description || "",
         category: product.category || "",
         price_type: product.price_type || "",
-        price: parseInt(product.price) || 100000,
+        price: productPrice,
         stock_quantity: product.stock_quantity || 1,
         images: product.images || [],
         download_link: product.download_link || "",
         license_info: product.license_info || "",
         tags: tagsString,
-        pricing_rows: product.pricing_rows && product.pricing_rows.length > 0 
-          ? product.pricing_rows 
-          : [
-              {
-                price_type: product.price_type || "",
-                price: parseInt(product.price) || 100000,
-                stock_quantity: product.stock_quantity || 1,
-                license_info: product.license_info || "",
-              },
-            ],
-      });
+        pricing_rows: pricingRowsData,
+      };
+      
+      console.log('Form data to be set:', formData); // Debug log
+      
+      // Reset the form with the new data
+      form.reset(formData);
 
+      // Set images state
       if (product.images && product.images.length > 0) {
         setUploadedImages(product.images);
       }
 
-      if (product.pricing_rows && product.pricing_rows.length > 0) {
-        setPricingRows(product.pricing_rows.map((_: any, index: number) => index));
-      }
+      // Set pricing rows state
+      setPricingRows(pricingRowsData.map((_: any, index: number) => index));
     }
   }, [product, form]);
 
