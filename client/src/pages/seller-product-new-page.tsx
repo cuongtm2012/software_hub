@@ -682,32 +682,6 @@ export default function SellerProductNewPage() {
 
                             {/* Second row: Stock Quantity and License Information */}
                             <div className="flex gap-4 items-end">
-                              <div className="w-48 flex-shrink-0">
-                                <FormField
-                                  control={form.control}
-                                  name={`pricing_rows.${index}.stock_quantity`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Stock Quantity *</FormLabel>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          min="1"
-                                          placeholder="1"
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(
-                                              parseInt(e.target.value) || 1,
-                                            )
-                                          }
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-
                               <div className="flex-1">
                                 <FormField
                                   control={form.control}
