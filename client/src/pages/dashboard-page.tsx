@@ -96,27 +96,15 @@ export default function DashboardPage() {
       return response;
     },
     onSuccess: (data) => {
-      console.log('Clone success, refreshing product list');
-      // Immediately refresh all seller product queries to show the new clone
-      queryClient.invalidateQueries({ 
-        predicate: (query) => {
-          const key = query.queryKey[0];
-          return typeof key === 'string' && key.includes('/api/seller/products');
-        }
-      });
-      
-      // Refetch data immediately to show the cloned product in the list
-      queryClient.refetchQueries({
-        predicate: (query) => {
-          const key = query.queryKey[0];
-          return typeof key === 'string' && key.includes('/api/seller/products');
-        }
-      });
+      console.log('Clone success, navigating to edit page');
       
       toast({
         title: "Product Cloned Successfully",
-        description: `Clone "${data.product.title}" has been added to your product list.`,
+        description: `Clone "${data.product.title}" created. Redirecting to edit page...`,
       });
+      
+      // Navigate to the edit page of the newly cloned product
+      navigate(`/seller/products/${data.product.id}/edit`);
     },
     onError: (error: any) => {
       console.error('Clone error:', error);
