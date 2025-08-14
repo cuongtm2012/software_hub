@@ -180,17 +180,6 @@ export default function SellerProductNewPage() {
     }
   };
 
-  // Image upload row management
-  const addImageUploadRow = () => {
-    setImageUploadRows([...imageUploadRows, imageUploadRows.length]);
-  };
-
-  const removeImageUploadRow = () => {
-    if (imageUploadRows.length > 1) {
-      setImageUploadRows(imageUploadRows.slice(0, -1));
-    }
-  };
-
   // Single dropzone for all image uploads
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -510,7 +499,7 @@ export default function SellerProductNewPage() {
                       {/* Image Upload Rows */}
                       <div className="space-y-4">
                         {imageUploadRows.map((rowId, index) => (
-                          <div key={rowId} className="flex items-center gap-3">
+                          <div key={rowId} className="flex items-center">
                             <div
                               {...getRootProps()}
                               className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-48 h-10"
@@ -530,31 +519,6 @@ export default function SellerProductNewPage() {
                               {uploading && (
                                 <Loader2 className="h-3 w-3 ml-2 animate-spin text-[#004080]" />
                               )}
-                            </div>
-                            
-                            {/* Add/Remove buttons */}
-                            <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={addImageUploadRow}
-                                className="w-8 h-8 p-0"
-                                title="Add image upload row"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={removeImageUploadRow}
-                                disabled={imageUploadRows.length <= 1}
-                                className="w-8 h-8 p-0"
-                                title="Remove image upload row"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
                             </div>
                           </div>
                         ))}
