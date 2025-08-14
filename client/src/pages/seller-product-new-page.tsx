@@ -64,6 +64,7 @@ const productSchema = z.object({
         price_type: z.string().min(1, "Please specify the price type"),
         price: z.number().min(1000, "Price must be at least 1,000 VND"),
         stock_quantity: z.number().min(1, "Stock must be at least 1"),
+        license_info: z.string().optional(),
       }),
     )
     .min(1, "At least one pricing row is required"),
@@ -86,7 +87,7 @@ const categories = [
   "Other",
 ];
 
-// VND Currency formatting utility
+// VND Currency formatting utilities
 const formatVND = (amount: number): string => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -94,6 +95,15 @@ const formatVND = (amount: number): string => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
+};
+
+const formatVNDInput = (value: string): string => {
+  // Remove non-numeric characters
+  const numericValue = value.replace(/[^\d]/g, "");
+  if (!numericValue) return "";
+  
+  // Format with thousand separators
+  return new Intl.NumberFormat("vi-VN").format(parseInt(numericValue));
 };
 
 export default function SellerProductNewPage() {
@@ -123,6 +133,7 @@ export default function SellerProductNewPage() {
           price_type: "",
           price: 100000,
           stock_quantity: 1,
+          license_info: "",
         },
       ],
     },
@@ -166,6 +177,7 @@ export default function SellerProductNewPage() {
       price_type: "",
       price: 100000,
       stock_quantity: 1,
+      license_info: "",
     };
     form.setValue("pricing_rows", [...currentRows, newRow]);
     const nextId = Math.max(...pricingRows) + 1;
@@ -545,7 +557,8 @@ export default function SellerProductNewPage() {
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
                                     // Fallback for broken images
-                                    e.currentTarget.src = "data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%236b7280'%3EImage%3C/text%3E%3C/svg%3E";
+                                    e.currentTarget.src =
+                                      "data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%236b7280'%3EImage%3C/text%3E%3C/svg%3E";
                                   }}
                                 />
                                 <button
@@ -572,8 +585,9 @@ export default function SellerProductNewPage() {
                       {/* Dynamic Pricing Rows */}
                       <div className="space-y-4">
                         {pricingRows.map((rowId, index) => (
-                          <div key={rowId} className="flex items-end gap-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                          <div key={rowId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
+                            {/* First row: Price Type and Price */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <FormField
                                 control={form.control}
                                 name={`pricing_rows.${index}.price_type`}
@@ -604,24 +618,21 @@ export default function SellerProductNewPage() {
                                       Price (VND) *
                                     </FormLabel>
                                     <FormControl>
-                                      <Input
-                                        type="number"
-                                        step="1000"
-                                        min="1000"
-                                        placeholder="100,000"
-                                        {...field}
-                                        onChange={(e) =>
-                                          field.onChange(
-                                            parseInt(e.target.value) || 0,
-                                          )
-                                        }
-                                      />
+                                      <div className="relative">
+                                        <Input
+                                          placeholder="100,000 ₫"
+                                          value={field.value ? formatVNDInput(field.value.toString()) : ""}
+                                          onChange={(e) => {
+                                            const numericValue = e.target.value.replace(/[^\d]/g, "");
+                                            field.onChange(parseInt(numericValue) || 0);
+                                          }}
+                                          className="pr-8"
+                                        />
+                                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                                          ₫
+                                        </span>
+                                      </div>
                                     </FormControl>
-                                    {field.value > 0 && (
-                                      <p className="text-sm text-muted-foreground">
-                                        {formatVND(field.value)}
-                                      </p>
-                                    )}
                                     <FormMessage />
                                   </FormItem>
                                 )}
@@ -652,59 +663,91 @@ export default function SellerProductNewPage() {
                               />
                             </div>
 
-                            {/* Add/Remove buttons */}
-                            <div className="flex gap-2 pb-6">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={addPricingRow}
-                                className="w-8 h-8 p-0"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={removePricingRow}
-                                disabled={pricingRows.length <= 1}
-                                className="w-8 h-8 p-0"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
+                            {/* Second row: Stock Quantity and License Information */}
+                            <div className="flex gap-4 items-end">
+                              <div className="w-48 flex-shrink-0">
+                                <FormField
+                                  control={form.control}
+                                  name={`pricing_rows.${index}.stock_quantity`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Stock Quantity *</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          min="1"
+                                          placeholder="1"
+                                          {...field}
+                                          onChange={(e) =>
+                                            field.onChange(
+                                              parseInt(e.target.value) || 1,
+                                            )
+                                          }
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              <div className="flex-1">
+                                <FormField
+                                  control={form.control}
+                                  name={`pricing_rows.${index}.license_info`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>License Information</FormLabel>
+                                      <FormControl>
+                                        <textarea
+                                          placeholder="Enter license details, terms, or restrictions..."
+                                          className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              {/* Add/Remove buttons */}
+                              <div className="flex gap-2 pb-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={addPricingRow}
+                                  className="w-8 h-8 p-0"
+                                  title="Add pricing row"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (pricingRows.length > 1) {
+                                      const currentRows = form.getValues("pricing_rows") || [];
+                                      form.setValue("pricing_rows", currentRows.filter((_, i) => i !== index));
+                                      setPricingRows(pricingRows.filter((_, i) => i !== index));
+                                    }
+                                  }}
+                                  disabled={pricingRows.length <= 1}
+                                  className="w-8 h-8 p-0"
+                                  title="Remove this pricing row"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Optional Fields */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">
-                        Additional Information
-                      </h3>
 
-                      <FormField
-                        control={form.control}
-                        name="license_info"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              License Information (Optional)
-                            </FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Describe the license terms and conditions"
-                                className="min-h-[80px]"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
 
                     {/* Submit Button */}
                     <div className="flex justify-end pt-6">
