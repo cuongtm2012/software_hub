@@ -144,15 +144,16 @@ export default function DashboardPage() {
   const { data: sellerProducts, isLoading: isLoadingProducts } = useQuery<{ products: Product[]; total: number }>({
     queryKey: ["/api/seller/products", { page: showAllProducts ? currentPage : 1, limit: showAllProducts ? productsPerPage : 10 }],
     enabled: !!user && user.role === 'seller',
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 30 * 1000, // Only cache for 30 seconds
   });
 
   // Fetch paginated products when expanded
   const { data: paginatedProducts, isLoading: isLoadingPaginated } = useQuery<{ products: Product[]; total: number }>({
     queryKey: ["/api/seller/products", { page: currentPage, limit: productsPerPage }],
     enabled: !!user && user.role === 'seller' && showAllProducts,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 30 * 1000, // Only cache for 30 seconds
   });
 
   const { data: sellerOrders, isLoading: isLoadingOrders } = useQuery<{ orders: Order[] }>({
@@ -506,16 +507,22 @@ export default function DashboardPage() {
                                             title: "Success",
                                             description: "Product deleted successfully"
                                           });
-                                          // Refresh the page after successful deletion
-                                          window.location.reload();
+                                          // Clear all caches and force refresh
+                                          queryClient.clear();
+                                          setTimeout(() => {
+                                            window.location.reload();
+                                          }, 500);
                                         } catch (error: any) {
                                           if (error.message?.includes('404') || error.message?.includes('not found')) {
-                                            // Product was already deleted, refresh the page
+                                            // Product was already deleted, clear cache and refresh
                                             toast({
                                               title: "Product Already Removed",
                                               description: "This product was already deleted. Refreshing the page."
                                             });
-                                            window.location.reload();
+                                            queryClient.clear();
+                                            setTimeout(() => {
+                                              window.location.reload();
+                                            }, 500);
                                           } else {
                                             toast({
                                               title: "Error", 
