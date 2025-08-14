@@ -51,9 +51,9 @@ const productSchema = z.object({
   title: z.string().min(3, "Product title must be at least 3 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
   category: z.string().min(1, "Please select a category"),
-  price_type: z.string().min(1, "Please specify the price type"),
-  price: z.number().min(1000, "Price must be at least 1,000 VND"),
-  stock_quantity: z.number().min(1, "Stock must be at least 1"),
+  price_type: z.string().optional(), // Legacy field, not required
+  price: z.number().optional(), // Legacy field, not required
+  stock_quantity: z.number().optional(), // Legacy field, not required
   images: z.array(z.string()).optional(),
   download_link: z.string().url().optional().or(z.literal("")),
   license_info: z.string().optional(),
@@ -305,7 +305,28 @@ export default function SellerProductNewPage() {
     console.log("Form submission triggered with data:", data);
     console.log("Form errors:", form.formState.errors);
     console.log("Uploaded images:", uploadedImages);
+    
+    // Check if there are validation errors
+    if (Object.keys(form.formState.errors).length > 0) {
+      console.log("Form has validation errors, not submitting");
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createProductMutation.mutate(data);
+  };
+
+  const onError = (errors: any) => {
+    console.log("Form validation failed:", errors);
+    toast({
+      title: "Form Validation Failed",
+      description: "Please check all required fields and fix any errors.",
+      variant: "destructive",
+    });
   };
 
   if (!user) {
@@ -424,7 +445,7 @@ export default function SellerProductNewPage() {
               <CardContent>
                 <Form {...form}>
                   <form
-                    onSubmit={form.handleSubmit(onSubmit)}
+                    onSubmit={form.handleSubmit(onSubmit, onError)}
                     className="space-y-6"
                   >
                     {/* Basic Information */}
