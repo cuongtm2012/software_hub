@@ -58,11 +58,15 @@ const productSchema = z.object({
   download_link: z.string().url().optional().or(z.literal("")),
   license_info: z.string().optional(),
   tags: z.string().optional(),
-  pricing_rows: z.array(z.object({
-    price_type: z.string().min(1, "Please specify the price type"),
-    price: z.number().min(1000, "Price must be at least 1,000 VND"),
-    stock_quantity: z.number().min(1, "Stock must be at least 1"),
-  })).min(1, "At least one pricing row is required"),
+  pricing_rows: z
+    .array(
+      z.object({
+        price_type: z.string().min(1, "Please specify the price type"),
+        price: z.number().min(1000, "Price must be at least 1,000 VND"),
+        stock_quantity: z.number().min(1, "Stock must be at least 1"),
+      }),
+    )
+    .min(1, "At least one pricing row is required"),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -98,7 +102,7 @@ export default function SellerProductNewPage() {
   const { toast } = useToast();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [imageUploadRows, setImageUploadRows] = useState<number[]>([0]);
+
   const [pricingRows, setPricingRows] = useState<number[]>([0]);
 
   const form = useForm<ProductFormData>({
@@ -114,11 +118,13 @@ export default function SellerProductNewPage() {
       download_link: "",
       license_info: "",
       tags: "",
-      pricing_rows: [{
-        price_type: "",
-        price: 100000,
-        stock_quantity: 1,
-      }],
+      pricing_rows: [
+        {
+          price_type: "",
+          price: 100000,
+          stock_quantity: 1,
+        },
+      ],
     },
   });
 
@@ -140,8 +146,6 @@ export default function SellerProductNewPage() {
     return result.url;
   };
 
-
-
   const removeImage = useCallback(
     (indexToRemove: number) => {
       const newImages = uploadedImages.filter(
@@ -153,66 +157,59 @@ export default function SellerProductNewPage() {
     [uploadedImages],
   );
 
-  // Image upload row management
-  const addImageUploadRow = () => {
-    const nextId = Math.max(...imageUploadRows) + 1;
-    setImageUploadRows([...imageUploadRows, nextId]);
-  };
-
-  const removeImageUploadRow = () => {
-    if (imageUploadRows.length > 1) {
-      setImageUploadRows(imageUploadRows.slice(0, -1));
-    }
-  };
+  // Remove image upload row functionality - now using single multi-file upload
 
   // Pricing row management
   const addPricingRow = () => {
-    const currentRows = form.getValues('pricing_rows') || [];
+    const currentRows = form.getValues("pricing_rows") || [];
     const newRow = {
       price_type: "",
       price: 100000,
       stock_quantity: 1,
     };
-    form.setValue('pricing_rows', [...currentRows, newRow]);
+    form.setValue("pricing_rows", [...currentRows, newRow]);
     const nextId = Math.max(...pricingRows) + 1;
     setPricingRows([...pricingRows, nextId]);
   };
 
   const removePricingRow = () => {
     if (pricingRows.length > 1) {
-      const currentRows = form.getValues('pricing_rows') || [];
-      form.setValue('pricing_rows', currentRows.slice(0, -1));
+      const currentRows = form.getValues("pricing_rows") || [];
+      form.setValue("pricing_rows", currentRows.slice(0, -1));
       setPricingRows(pricingRows.slice(0, -1));
     }
   };
 
   // Single dropzone for all image uploads
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return;
-    
-    setUploading(true);
-    try {
-      const uploadPromises = acceptedFiles.map(uploadImage);
-      const imageUrls = await Promise.all(uploadPromises);
-      
-      const newImages = [...uploadedImages, ...imageUrls];
-      setUploadedImages(newImages);
-      form.setValue("images", newImages);
-      
-      toast({
-        title: "Images Uploaded",
-        description: `Successfully uploaded ${acceptedFiles.length} image(s)`,
-      });
-    } catch (error) {
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload images. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  }, [uploadedImages, toast]);
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
+
+      setUploading(true);
+      try {
+        const uploadPromises = acceptedFiles.map(uploadImage);
+        const imageUrls = await Promise.all(uploadPromises);
+
+        const newImages = [...uploadedImages, ...imageUrls];
+        setUploadedImages(newImages);
+        form.setValue("images", newImages);
+
+        toast({
+          title: "Images Uploaded",
+          description: `Successfully uploaded ${acceptedFiles.length} image(s)`,
+        });
+      } catch (error) {
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload images. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setUploading(false);
+      }
+    },
+    [uploadedImages, toast],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -501,57 +498,35 @@ export default function SellerProductNewPage() {
 
                       {/* Image Upload Rows */}
                       <div className="space-y-4">
-                        {imageUploadRows.map((rowId, index) => (
-                          <div key={rowId} className="flex items-center gap-3">
-                            <div
-                              {...getRootProps()}
-                              className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-48 h-10"
-                            >
-                              <input {...getInputProps()} />
+                        <div
+                          {...getRootProps()}
+                          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                            isDragActive
+                              ? "border-[#004080] bg-blue-50 dark:bg-blue-950/20"
+                              : "border-gray-300 dark:border-gray-600 hover:border-[#004080] hover:bg-gray-50 dark:hover:bg-gray-800"
+                          }`}
+                        >
+                          <input {...getInputProps()} />
+                          <div className="flex flex-col items-center gap-3">
+                            <Upload className="h-8 w-8 text-[#004080]" />
+                            <div>
+                              <p className="text-[#004080] font-medium">
+                                {isDragActive ? "Drop files here" : "Upload Product Images"}
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Drag & drop files here or click to browse
+                              </p>
+                            </div>
+                            {uploading && (
                               <div className="flex items-center gap-2">
-                                <Upload className="h-3 w-3 text-[#004080]" />
-                                <span className="text-[#004080] font-medium text-sm">
-                                  Upload File
-                                </span>
-                                <span className="text-gray-500 dark:text-gray-400 text-xs">
-                                  {uploadedImages.length > 0
-                                    ? `${uploadedImages.length} file(s)`
-                                    : "No file"}
-                                </span>
+                                <Loader2 className="h-4 w-4 animate-spin text-[#004080]" />
+                                <span className="text-sm text-[#004080]">Uploading...</span>
                               </div>
-                              {uploading && (
-                                <Loader2 className="h-3 w-3 ml-2 animate-spin text-[#004080]" />
-                              )}
-                            </div>
-                            
-                            {/* Add/Remove buttons */}
-                            <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={addImageUploadRow}
-                                className="w-8 h-8 p-0"
-                                title="Add image upload row"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={removeImageUploadRow}
-                                disabled={imageUploadRows.length <= 1}
-                                className="w-8 h-8 p-0"
-                                title="Remove image upload row"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            )}
                           </div>
-                        ))}
+                        </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Supported formats: JPG, PNG, GIF, WebP (Max 5MB each)
+                          Supported formats: JPG, PNG, GIF, WebP (Max 5MB each) • Multiple files allowed
                         </p>
                       </div>
 
@@ -675,7 +650,7 @@ export default function SellerProductNewPage() {
                                 )}
                               />
                             </div>
-                            
+
                             {/* Add/Remove buttons */}
                             <div className="flex gap-2 pb-6">
                               <Button
