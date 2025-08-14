@@ -102,7 +102,7 @@ export default function SellerProductNewPage() {
   const { toast } = useToast();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-
+  const [imageUploadRows, setImageUploadRows] = useState<number[]>([0]);
   const [pricingRows, setPricingRows] = useState<number[]>([0]);
 
   const form = useForm<ProductFormData>({
@@ -177,6 +177,17 @@ export default function SellerProductNewPage() {
       const currentRows = form.getValues("pricing_rows") || [];
       form.setValue("pricing_rows", currentRows.slice(0, -1));
       setPricingRows(pricingRows.slice(0, -1));
+    }
+  };
+
+  // Image upload row management
+  const addImageUploadRow = () => {
+    setImageUploadRows([...imageUploadRows, imageUploadRows.length]);
+  };
+
+  const removeImageUploadRow = () => {
+    if (imageUploadRows.length > 1) {
+      setImageUploadRows(imageUploadRows.slice(0, -1));
     }
   };
 
@@ -498,35 +509,57 @@ export default function SellerProductNewPage() {
 
                       {/* Image Upload Rows */}
                       <div className="space-y-4">
-                        <div
-                          {...getRootProps()}
-                          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                            isDragActive
-                              ? "border-[#004080] bg-blue-50 dark:bg-blue-950/20"
-                              : "border-gray-300 dark:border-gray-600 hover:border-[#004080] hover:bg-gray-50 dark:hover:bg-gray-800"
-                          }`}
-                        >
-                          <input {...getInputProps()} />
-                          <div className="flex flex-col items-center gap-3">
-                            <Upload className="h-8 w-8 text-[#004080]" />
-                            <div>
-                              <p className="text-[#004080] font-medium">
-                                {isDragActive ? "Drop files here" : "Upload Product Images"}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                Drag & drop files here or click to browse
-                              </p>
-                            </div>
-                            {uploading && (
+                        {imageUploadRows.map((rowId, index) => (
+                          <div key={rowId} className="flex items-center gap-3">
+                            <div
+                              {...getRootProps()}
+                              className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-48 h-10"
+                            >
+                              <input {...getInputProps()} />
                               <div className="flex items-center gap-2">
-                                <Loader2 className="h-4 w-4 animate-spin text-[#004080]" />
-                                <span className="text-sm text-[#004080]">Uploading...</span>
+                                <Upload className="h-3 w-3 text-[#004080]" />
+                                <span className="text-[#004080] font-medium text-sm">
+                                  Upload File
+                                </span>
+                                <span className="text-gray-500 dark:text-gray-400 text-xs">
+                                  {uploadedImages.length > 0
+                                    ? `${uploadedImages.length} file(s)`
+                                    : "No file"}
+                                </span>
                               </div>
-                            )}
+                              {uploading && (
+                                <Loader2 className="h-3 w-3 ml-2 animate-spin text-[#004080]" />
+                              )}
+                            </div>
+                            
+                            {/* Add/Remove buttons */}
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={addImageUploadRow}
+                                className="w-8 h-8 p-0"
+                                title="Add image upload row"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={removeImageUploadRow}
+                                disabled={imageUploadRows.length <= 1}
+                                className="w-8 h-8 p-0"
+                                title="Remove image upload row"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        ))}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Supported formats: JPG, PNG, GIF, WebP (Max 5MB each) • Multiple files allowed
+                          Supported formats: JPG, PNG, GIF, WebP (Max 5MB each)
                         </p>
                       </div>
 
