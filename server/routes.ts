@@ -2271,7 +2271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prepare cloned product data - copy ALL fields from original
       const clonedProductData = {
         seller_id: req.user!.id,
-        title: `CLONE ${originalProduct.title}`,
+        title: originalProduct.title,
         description: originalProduct.description,
         category: originalProduct.category,
         price: originalProduct.price,

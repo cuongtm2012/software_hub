@@ -172,8 +172,14 @@ export default function MarketplaceSellerEditPage() {
             },
           ];
       
+      // Check if this is a recently cloned product (draft status within 5 minutes)
+      const isRecentlyCloned = product.status === 'draft' && 
+        new Date(product.created_at).getTime() > Date.now() - (5 * 60 * 1000);
+      
       const formData = {
-        title: product.title || "",
+        title: isRecentlyCloned && !product.title.startsWith('CLONE ') 
+          ? `CLONE ${product.title}` 
+          : product.title || "",
         description: product.description || "",
         category: product.category || "",
         price_type: product.price_type || "",
@@ -323,7 +329,7 @@ export default function MarketplaceSellerEditPage() {
         images: uploadedImages,
         stock_quantity: mainPricingRow.stock_quantity,
         download_link: data.download_link || null,
-        license_info: data.license_info || null,
+        license_info: mainPricingRow.license_info || data.license_info || null,
         tags: tagsArray,
         pricing_rows: data.pricing_rows,
       };
