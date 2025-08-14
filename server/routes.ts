@@ -20,7 +20,6 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, ne, inArray, desc, gt, count } from "drizzle-orm";
-import { update } from "drizzle-orm/pg-core";
 import { users } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
