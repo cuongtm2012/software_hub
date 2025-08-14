@@ -433,34 +433,7 @@ export default function MarketplaceSellerEditPage() {
     );
   }
 
-  // Check if user is verified seller
-  if (
-    !sellerData?.seller_profile ||
-    sellerData.seller_profile.verification_status !== "approved"
-  ) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <Header />
-        <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
-            <Card className="max-w-md mx-auto">
-              <CardContent className="p-6 text-center">
-                <AlertCircle className="h-12 w-12 text-orange-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">
-                  Seller Verification Required
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  You need to be a verified seller to edit products. Please
-                  wait for verification to complete.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  // Allow editing regardless of seller verification status
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
