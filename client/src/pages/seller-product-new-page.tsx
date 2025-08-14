@@ -302,26 +302,10 @@ export default function SellerProductNewPage() {
   });
 
   const onSubmit = (data: ProductFormData) => {
-    console.log("Form submission triggered with data:", data);
-    console.log("Form errors:", form.formState.errors);
-    console.log("Uploaded images:", uploadedImages);
-    
-    // Check if there are validation errors
-    if (Object.keys(form.formState.errors).length > 0) {
-      console.log("Form has validation errors, not submitting");
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors in the form before submitting.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     createProductMutation.mutate(data);
   };
 
   const onError = (errors: any) => {
-    console.log("Form validation failed:", errors);
     toast({
       title: "Form Validation Failed",
       description: "Please check all required fields and fix any errors.",
