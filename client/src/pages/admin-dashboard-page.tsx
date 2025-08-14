@@ -1916,10 +1916,7 @@ function ProductApprovalsComponent() {
     }) => {
       // Update product status
       const status = action === 'approve' ? 'published' : action === 'reject' ? 'rejected' : 'draft';
-      const response = await apiRequest(`/api/products/${productId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status })
-      });
+      const response = await apiRequest('PUT', `/api/products/${productId}`, { status });
       
       return response;
     },
@@ -1969,10 +1966,10 @@ function ProductApprovalsComponent() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      draft: { variant: "secondary" as const, text: "Draft" },
-      pending: { variant: "default" as const, text: "Pending" },
+      draft: { variant: "secondary" as const, text: "Draft", className: "" },
+      pending: { variant: "default" as const, text: "Pending", className: "" },
       approved: { variant: "default" as const, text: "Approved", className: "bg-green-100 text-green-800" },
-      rejected: { variant: "destructive" as const, text: "Rejected" },
+      rejected: { variant: "destructive" as const, text: "Rejected", className: "" },
       published: { variant: "default" as const, text: "Published", className: "bg-blue-100 text-blue-800" }
     };
     
