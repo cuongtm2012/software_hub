@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useLocation, useParams } from "wouter";
 import { insertProjectSchema, InsertProject } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,11 +29,28 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Edit } from "lucide-react";
 
 export default function ProjectNewPage() {
   const [, navigate] = useLocation();
+  const { id } = useParams();
   const { toast } = useToast();
+  const isEditing = Boolean(id);
+  
+  // Fetch existing project data for editing
+  const { data: existingProject, isLoading: isLoadingProject } = useQuery({
+    queryKey: [`/api/external-requests/${id}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/external-requests/${id}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch project details');
+      }
+      return response.json();
+    },
+    enabled: isEditing,
+  });
   
   // Create validation schema
   const formSchema = insertProjectSchema.extend({
@@ -58,28 +76,63 @@ export default function ProjectNewPage() {
       deadline: undefined,
     },
   });
+
+  // Update form with existing data when editing
+  useEffect(() => {
+    if (isEditing && existingProject) {
+      form.reset({
+        title: existingProject.title || "",
+        description: existingProject.project_description || "",
+        requirements: existingProject.requirements || "",
+        budget: existingProject.budget ? parseFloat(existingProject.budget) : undefined,
+        deadline: existingProject.deadline ? new Date(existingProject.deadline).toISOString().split('T')[0] : undefined,
+      });
+    }
+  }, [existingProject, isEditing, form]);
   
-  // Submit mutation
-  const createProjectMutation = useMutation({
+  // Submit mutation (handles both create and update)
+  const saveProjectMutation = useMutation({
     mutationFn: async (data: InsertProject) => {
-      const res = await apiRequest("POST", "/api/projects", data);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to create project");
+      if (isEditing) {
+        // Update existing external request
+        const updateData = {
+          title: data.title,
+          project_description: data.description,
+          requirements: data.requirements,
+          budget: data.budget?.toString(),
+          deadline: data.deadline,
+        };
+        const res = await apiRequest("PUT", `/api/external-requests/${id}`, updateData);
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || "Failed to update project");
+        }
+        return res.json();
+      } else {
+        // Create new project
+        const res = await apiRequest("POST", "/api/projects", data);
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || "Failed to create project");
+        }
+        return res.json();
       }
-      return res.json();
     },
     onSuccess: () => {
       toast({
-        title: "Project created successfully",
-        description: "Developers can now view your project and submit quotes.",
+        title: isEditing ? "Project updated successfully" : "Project created successfully",
+        description: isEditing 
+          ? "The project information has been updated." 
+          : "Developers can now view your project and submit quotes.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/projects/client'] });
-      navigate('/projects');
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/external-requests'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/external-requests/${id}`] });
+      navigate(isEditing ? '/admin' : '/projects');
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to create project",
+        title: isEditing ? "Failed to update project" : "Failed to create project",
         description: error.message,
         variant: "destructive",
       });
@@ -88,35 +141,77 @@ export default function ProjectNewPage() {
   
   // Form submission handler
   const onSubmit = (data: InsertProject) => {
-    createProjectMutation.mutate(data);
+    saveProjectMutation.mutate(data);
   };
   
+  // Show loading state while fetching existing project
+  if (isEditing && isLoadingProject) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+        <Header />
+        <main className="flex-grow container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
+      <PageBreadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          ...(isEditing 
+            ? [{ label: "Admin Dashboard", href: "/admin" }]
+            : [{ label: "Projects", href: "/projects" }]
+          ),
+          { 
+            label: isEditing ? "Edit Project" : "Create Project", 
+            isCurrentPage: true 
+          },
+        ]}
+      />
       
       <main className="flex-grow container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate(isEditing ? '/admin' : '/projects')}
             className="mb-4 text-gray-500 hover:text-gray-700"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Projects
+            {isEditing ? 'Back to Admin Dashboard' : 'Back to Projects'}
           </Button>
           
-          <h1 className="text-2xl font-bold text-gray-900">Create New Project</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEditing 
+              ? `Edit Project: ${existingProject?.title || `Request #${existingProject?.id}`}` 
+              : 'Create New Project'
+            }
+          </h1>
           <p className="text-gray-500 mt-1">
-            Describe your project in detail to attract the best developers
+            {isEditing 
+              ? 'Update the project information and requirements'
+              : 'Describe your project in detail to attract the best developers'
+            }
           </p>
         </div>
         
         <Card className="bg-white shadow-sm">
           <CardHeader>
-            <CardTitle>Project Details</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              {isEditing ? <Edit className="h-5 w-5" /> : null}
+              {isEditing ? 'Edit Project Details' : 'Project Details'}
+            </CardTitle>
             <CardDescription>
-              Provide complete information to help developers understand your requirements
+              {isEditing 
+                ? 'Update the project information and requirements'
+                : 'Provide complete information to help developers understand your requirements'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -231,20 +326,35 @@ export default function ProjectNewPage() {
                 </div>
                 
                 <CardFooter className="px-0 pb-0 pt-6">
-                  <Button
-                    type="submit"
-                    className="w-full bg-[#004080] hover:bg-[#003366] text-white"
-                    disabled={createProjectMutation.isPending}
-                  >
-                    {createProjectMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                        Creating Project...
-                      </>
-                    ) : (
-                      "Create Project"
+                  <div className="flex gap-4 w-full">
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-[#004080] hover:bg-[#003366] text-white"
+                      disabled={saveProjectMutation.isPending}
+                    >
+                      {saveProjectMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                          {isEditing ? 'Updating...' : 'Creating...'}
+                        </>
+                      ) : (
+                        <>
+                          {isEditing ? <Save className="mr-2 h-4 w-4" /> : null}
+                          {isEditing ? 'Update Project' : 'Create Project'}
+                        </>
+                      )}
+                    </Button>
+                    {isEditing && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate('/admin')}
+                        disabled={saveProjectMutation.isPending}
+                      >
+                        Cancel
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </CardFooter>
               </form>
             </Form>

@@ -801,7 +801,10 @@ function ExternalRequestsComponent() {
                 <TableRow key={request.id}>
                   <TableCell>
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div 
+                        className="font-medium text-gray-900 hover:text-[#004080] cursor-pointer transition-colors"
+                        onClick={() => navigate(`/projects/${request.id}/edit`)}
+                      >
                         {request.title || `Request #${request.id}`}
                       </div>
                       <div className="text-sm text-gray-500 line-clamp-2">
@@ -866,7 +869,7 @@ function ExternalRequestsComponent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/projects/${request.id}/edit`)}
+                        onClick={() => navigate(`/projects/${request.id}/edit`)}
                         className="text-xs"
                       >
                         <Edit className="h-3 w-3 mr-1" />

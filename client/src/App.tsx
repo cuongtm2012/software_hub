@@ -93,6 +93,8 @@ function Router() {
       <ProtectedRoute path="/admin/push-notifications" component={PushNotificationTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/end-to-end-tests" component={EndToEndTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/projects/:id/edit" component={ProjectEditPage} roles={['admin']} />
+      <ProtectedRoute path="/projects/new" component={ProjectNewPage} />
+      <ProtectedRoute path="/projects/:id/edit" component={ProjectNewPage} roles={['admin']} />
       
       {/* Phase 2: Code Service & Product Build Module */}
       <Route path="/it-services" component={() => {
