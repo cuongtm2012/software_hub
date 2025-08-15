@@ -1,20 +1,28 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package.json & package-lock.json to install dependencies
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Copy package files and install dependencies
 COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-RUN npm install --production
-
-# Copy all source code
+# Copy source code
 COPY . .
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && adduser -S emailservice -u 1001
+RUN chown -R emailservice:nodejs /app
+USER emailservice
 
 # Set production environment
 ENV NODE_ENV=production
 
-# Expose default port
 EXPOSE 3001
 
-# Start main app
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
 CMD ["node", "src/app.js"]

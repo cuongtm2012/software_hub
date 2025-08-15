@@ -1,3 +1,4 @@
+const express = require('express');
 const emailWorker = require('./workers/emailWorker');
 const notificationWorker = require('./workers/notificationWorker');
 const chatWorker = require('./workers/chatWorker');
@@ -7,6 +8,26 @@ class WorkerService {
   constructor() {
     this.workers = [];
     this.isRunning = false;
+    this.app = express();
+    this.setupHealthEndpoint();
+  }
+
+  setupHealthEndpoint() {
+    this.app.use(express.json());
+    
+    // Health check endpoint
+    this.app.get('/health', (req, res) => {
+      res.json({ 
+        status: 'ok', 
+        service: 'worker-service',
+        ...this.getStatus()
+      });
+    });
+    
+    // Status endpoint
+    this.app.get('/status', (req, res) => {
+      res.json(this.getStatus());
+    });
   }
 
   async start() {
@@ -31,6 +52,12 @@ class WorkerService {
       this.isRunning = true;
       console.log('All workers started successfully');
       
+      // Start HTTP server for health checks
+      const PORT = process.env.PORT || 3004;
+      this.server = this.app.listen(PORT, () => {
+        console.log(`Worker service health endpoint running on port ${PORT}`);
+      });
+      
       // Graceful shutdown handling
       process.on('SIGINT', () => this.shutdown());
       process.on('SIGTERM', () => this.shutdown());
@@ -54,6 +81,11 @@ class WorkerService {
       
       // Close Redis connection
       await redisService.disconnect();
+      
+      // Close HTTP server
+      if (this.server) {
+        this.server.close();
+      }
       
       this.isRunning = false;
       console.log('Worker Service shut down successfully');

@@ -4,27 +4,57 @@ services:
   # Main SoftwareHub Application
   softwarehub-app:
     build: .
+    container_name: softwarehub-main
     ports:
       - "5000:5000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/softwarehub
+      - REDIS_URL=redis://redis:6379
       - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+      - CLOUDFLARE_R2_ACCESS_KEY_ID=${CLOUDFLARE_R2_ACCESS_KEY_ID}
+      - CLOUDFLARE_R2_SECRET_ACCESS_KEY=${CLOUDFLARE_R2_SECRET_ACCESS_KEY}
+      - CLOUDFLARE_R2_ENDPOINT=${CLOUDFLARE_R2_ENDPOINT}
+      - CLOUDFLARE_R2_BUCKET=${CLOUDFLARE_R2_BUCKET}
       - EMAIL_SERVICE_URL=http://email-service:3001
       - CHAT_SERVICE_URL=http://chat-service:3002
       - NOTIFICATION_SERVICE_URL=http://notification-service:3003
+      - WORKER_SERVICE_URL=http://worker-service:3004
     depends_on:
-      - postgres
-      - redis
-      - email-service
-      - chat-service
-      - notification-service
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      email-service:
+        condition: service_healthy
+      chat-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      worker-service:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+      - ./shared:/app/shared
     networks:
       - softwarehub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # Email Service
   email-service:
     build: ./services/email-service
+    container_name: softwarehub-email
     ports:
       - "3001:3001"
     environment:
@@ -32,10 +62,18 @@ services:
       - SENDGRID_API_KEY=${SENDGRID_API_KEY}
     networks:
       - softwarehub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # Chat Service
   chat-service:
     build: ./services/chat-service
+    container_name: softwarehub-chat
     ports:
       - "3002:3002"
     environment:
@@ -44,64 +82,115 @@ services:
       - REDIS_URL=redis://redis:6379
       - MONGODB_URL=mongodb://mongo:27017/softwarehub-chat
     depends_on:
-      - redis
-      - mongo
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
     networks:
       - softwarehub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # Notification Service
   notification-service:
     build: ./services/notification-service
+    container_name: softwarehub-notification
     ports:
       - "3003:3003"
     environment:
       - NODE_ENV=production
-      - FCM_SERVER_KEY=${FCM_SERVER_KEY}
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
     networks:
       - softwarehub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # Worker Service
   worker-service:
     build: ./services/worker-service
+    container_name: softwarehub-worker
+    ports:
+      - "3004:3004"
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://redis:6379
       - EMAIL_SERVICE_URL=http://email-service:3001
       - NOTIFICATION_SERVICE_URL=http://notification-service:3003
     depends_on:
-      - redis
-      - email-service
-      - notification-service
+      redis:
+        condition: service_healthy
+      email-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
     networks:
       - softwarehub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
+    container_name: softwarehub-postgres
     environment:
       - POSTGRES_DB=softwarehub
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./shared/data-dumps:/docker-entrypoint-initdb.d/data-dumps:ro
     ports:
       - "5432:5432"
     networks:
       - softwarehub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d softwarehub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Redis for caching and message queue
   redis:
     image: redis:7-alpine
+    container_name: softwarehub-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - softwarehub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
 
   # MongoDB for chat history
   mongo:
     image: mongo:6
+    container_name: softwarehub-mongo
     environment:
       - MONGO_INITDB_DATABASE=softwarehub-chat
     volumes:
@@ -110,6 +199,13 @@ services:
       - "27017:27017"
     networks:
       - softwarehub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
   # Nginx Load Balancer (optional)
   nginx:

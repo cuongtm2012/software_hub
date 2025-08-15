@@ -36,10 +36,12 @@ The application is composed of several independent services:
 
 ### System Design
 - **Inter-service Communication**: Primarily uses REST APIs and Redis-based message queues for asynchronous processing.
-- **Docker Orchestration**: Utilizes Docker Compose for service networking, load balancing, environment variable management, and volume persistence.
+- **Docker Orchestration**: Complete microservices architecture with Docker containers for all services, including health checks, security hardening, and volume persistence.
+- **Containerization Features**: Multi-stage Docker builds, non-root users, health monitoring, network isolation, and production-ready security configurations.
 - **UI/UX Decisions**: Emphasizes a modern, component-based design using Shadcn/UI and Tailwind CSS for a consistent and responsive user experience. The dashboard is organized with clear sections, visual themes, and role-based features. Page breadcrumbs are consistently implemented.
 - **Development Guidelines**: Focus on modern web application patterns, maximizing frontend functionality, minimizing backend complexity, using Drizzle ORM, implementing proper error handling and validation, and maintaining separation between client and server code.
 - **Product Management Features**: Includes JIRA-style product cloning with immediate duplication, unified API for product details, and integrated seller dashboard functionality. Cloudflare R2 is integrated for file storage.
+- **Deployment Strategy**: Full Docker containerization with production and development environments, automated deployment scripts, and comprehensive monitoring.
 
 ### Key Features
 - **Software Catalog and Downloads**: Core functionality for software distribution.
@@ -60,3 +62,30 @@ The application is composed of several independent services:
 - **MongoDB**: NoSQL database.
 - **Nginx**: Used as a reverse proxy for Docker orchestration.
 - **Cloudflare R2**: For file storage.
+
+## Docker Infrastructure
+
+### Container Architecture
+- **Multi-stage builds** for optimized production images with security hardening
+- **Health checks** and automatic restart policies for all services
+- **Non-root users** and proper permission management
+- **Network isolation** with custom Docker networks
+- **Volume persistence** for data storage with backup integration
+
+### Deployment Configuration
+- **Production deployment**: Automated via `./scripts/docker-deploy.sh`
+- **Development environment**: Hot reloading via `./scripts/docker-dev.sh` 
+- **Cleanup operations**: Comprehensive cleanup via `./scripts/docker-clean.sh`
+- **Environment management**: Template-based configuration with `.env.docker`
+- **Data migration**: Automatic database initialization from `shared/data-dumps/`
+
+### Service Ports
+- Main Application: 5000
+- Email Service: 3001
+- Chat Service: 3002  
+- Notification Service: 3003
+- Worker Service: 3004
+- PostgreSQL: 5432
+- Redis: 6379
+- MongoDB: 27017
+- Nginx: 80/443
