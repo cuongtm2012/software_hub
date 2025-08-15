@@ -129,24 +129,22 @@ export default function AddFundsPage() {
 
     try {
       // Call the payment initiation API
-      const response = await apiRequest("/api/payment/initiate", {
-        method: "POST",
-        body: JSON.stringify({
-          amount: parseInt(amount),
-          payment_method: selectedMethod,
-          user_info: {
-            buyer_fullname: "Customer", // Will be filled by backend with user data
-            buyer_email: "customer@example.com",
-            buyer_mobile: "0123456789",
-          },
-        }),
+      const response = await apiRequest("POST", "/api/payment/initiate", {
+        amount: parseInt(amount),
+        payment_method: selectedMethod,
+        user_info: {
+          buyer_fullname: "Customer", // Will be filled by backend with user data
+          buyer_email: "customer@example.com",
+          buyer_mobile: "0123456789",
+        },
       });
 
-      if (response.success) {
-        setPaymentInfo(response.payment_info);
+      const data = await response.json();
+      if (data.success) {
+        setPaymentInfo(data.payment_info);
         setShowPaymentForm(true);
       } else {
-        throw new Error(response.message || "Payment initiation failed");
+        throw new Error(data.message || "Payment initiation failed");
       }
     } catch (error) {
       toast({
