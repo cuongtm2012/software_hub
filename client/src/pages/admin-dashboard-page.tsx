@@ -849,29 +849,17 @@ function ExternalRequestsComponent() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRequest(request);
-                          setIsDetailDialogOpen(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRequest(request);
-                          setIsDetailDialogOpen(true);
-                        }}
-                        className="text-xs"
-                      >
-                        Change Status
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedRequest(request);
+                        setIsDetailDialogOpen(true);
+                      }}
+                      className="text-xs"
+                    >
+                      Change Status
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
