@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, X, Search, Store } from "lucide-react";
+import { Menu, X, Search, Store, Wallet } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notification-bell";
 import { CartTrigger } from "@/components/cart-sidebar";
@@ -201,6 +201,15 @@ export function Header() {
                           <span className="flex-1">Admin Dashboard</span>
                         </DropdownMenuItem>
                       )}
+
+                      {/* Add Funds */}
+                      <DropdownMenuItem
+                        onClick={() => navigate("/add-funds")}
+                        className="flex items-center gap-2 py-2 cursor-pointer"
+                      >
+                        <Wallet className="h-4 w-4" />
+                        <span className="flex-1">Add Funds</span>
+                      </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
