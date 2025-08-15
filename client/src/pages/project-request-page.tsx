@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { format } from "date-fns";
 import {
   ExternalRequest,
   InsertExternalRequest,
@@ -22,6 +23,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -40,6 +47,7 @@ import {
   Loader2,
   HelpCircle,
   Plus,
+  CalendarIcon,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Header } from "@/components/header";
@@ -55,9 +63,35 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 // Phone number regex for international format (including Vietnam +84 with leading 0)
 const phoneRegex = /^[\+]?[0-9][\d\s\-\(\)]{6,18}$/;
+
+// VND currency formatting functions
+const formatVND = (amount: number): string => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+const formatVNDInput = (value: string): string => {
+  // Remove non-numeric characters
+  const numericValue = value.replace(/[^\d]/g, "");
+  if (!numericValue) return "";
+
+  // Format with thousand separators
+  return new Intl.NumberFormat("vi-VN").format(parseInt(numericValue));
+};
+
+const parseVNDInput = (value: string): number => {
+  // Remove non-numeric characters and parse
+  const numericValue = value.replace(/[^\d]/g, "");
+  return numericValue ? parseInt(numericValue) : 0;
+};
 
 // Project request form schema
 const projectRequestSchema = z.object({
@@ -77,7 +111,7 @@ const projectRequestSchema = z.object({
     .string()
     .min(10, "Requirements must be at least 10 characters"),
   budget: z.string().optional(),
-  timeline: z.string().optional(),
+  timeline: z.date().optional(),
 });
 
 // Popular technology suggestions
@@ -113,6 +147,7 @@ export default function ProjectRequestPage() {
   const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>(
     [],
   );
+  const [budgetDisplay, setBudgetDisplay] = useState("");
 
   // Get current user data
   const { data: user } = useQuery({
@@ -132,7 +167,7 @@ export default function ProjectRequestPage() {
       description: "",
       requirements: "",
       budget: "",
-      timeline: "",
+      timeline: undefined,
     },
   });
 
@@ -185,6 +220,16 @@ export default function ProjectRequestPage() {
   // Create external request mutation
   const createExternalRequestMutation = useMutation({
     mutationFn: async (data: ProjectRequestFormValues) => {
+      // Format budget display
+      const budgetFormatted = data.budget && parseVNDInput(data.budget) > 0 
+        ? formatVND(parseVNDInput(data.budget))
+        : "N/A";
+      
+      // Format timeline display
+      const timelineFormatted = data.timeline 
+        ? format(data.timeline, "PPP")
+        : "N/A";
+
       const response = await apiRequest("POST", "/api/external-requests", {
         name: data.name,
         email: data.email,
@@ -195,8 +240,8 @@ Project Name: ${data.project_name}
 Company: ${data.company || "N/A"}
 Description: ${data.description}
 Requirements: ${data.requirements}
-Budget: ${data.budget || "N/A"}
-Timeline: ${data.timeline || "N/A"}
+Budget: ${budgetFormatted}
+Timeline: ${timelineFormatted}
         `.trim(),
         status: "pending",
       });
@@ -491,16 +536,28 @@ Timeline: ${data.timeline || "N/A"}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-gray-700">
-                                Estimated Budget
+                                Estimated Budget (VND)
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Your budget range"
+                                  placeholder="Enter budget amount"
                                   className="border-gray-300 focus-visible:ring-[#004080]"
-                                  {...field}
+                                  value={budgetDisplay}
+                                  onChange={(e) => {
+                                    const formatted = formatVNDInput(e.target.value);
+                                    setBudgetDisplay(formatted);
+                                    // Store the raw numeric value for the form
+                                    const numericValue = parseVNDInput(formatted);
+                                    field.onChange(numericValue.toString());
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
+                              {budgetDisplay && (
+                                <p className="text-sm text-gray-500 mt-1">
+                                  {formatVND(parseVNDInput(budgetDisplay))}
+                                </p>
+                              )}
                             </FormItem>
                           )}
                         />
@@ -509,17 +566,41 @@ Timeline: ${data.timeline || "N/A"}
                           control={form.control}
                           name="timeline"
                           render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="flex flex-col">
                               <FormLabel className="text-gray-700">
-                                Expected Timeline
+                                Expected Deadline
                               </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="When do you need this completed?"
-                                  className="border-gray-300 focus-visible:ring-[#004080]"
-                                  {...field}
-                                />
-                              </FormControl>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      className={cn(
+                                        "pl-3 text-left font-normal border-gray-300 focus-visible:ring-[#004080]",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        format(field.value, "PPP")
+                                      ) : (
+                                        <span>Pick a deadline</span>
+                                      )}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                      date < new Date()
+                                    }
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
                               <FormMessage />
                             </FormItem>
                           )}
