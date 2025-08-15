@@ -2060,6 +2060,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Full update endpoint for external requests (admin)
+  app.put("/api/external-requests/:id", adminMiddleware, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      // Validate required fields
+      if (!updateData.name || !updateData.email || !updateData.project_description) {
+        return res.status(400).json({ 
+          message: "Name, email, and project description are required" 
+        });
+      }
+
+      const updatedRequest = await storage.updateExternalRequest(parseInt(id), updateData);
+      
+      if (!updatedRequest) {
+        return res.status(404).json({ message: "External request not found" });
+      }
+      
+      res.json(updatedRequest);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.put("/api/external-requests/:id/status", adminMiddleware, async (req, res, next) => {
     try {
       const { id } = req.params;

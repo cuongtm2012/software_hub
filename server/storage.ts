@@ -691,6 +691,18 @@ export class DatabaseStorage implements IStorage {
       
     return request;
   }
+
+  async updateExternalRequest(id: number, updateData: Partial<InsertExternalRequest>): Promise<ExternalRequest | undefined> {
+    const [updatedRequest] = await db
+      .update(externalRequests)
+      .set({
+        ...updateData,
+        updated_at: new Date()
+      })
+      .where(eq(externalRequests.id, id))
+      .returning();
+    return updatedRequest;
+  }
   
   async convertExternalRequestToProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest> {
     // Update the external request with project data and change status

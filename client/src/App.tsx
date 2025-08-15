@@ -61,6 +61,7 @@ import EmailTestPage from "@/pages/admin/email-test-page";
 import PushNotificationTestPage from "@/pages/admin/push-notification-test-page";
 import EndToEndTestPage from "@/pages/admin/end-to-end-test-page";
 import { SellerApprovalPage } from "@/pages/admin/seller-approval-page";
+import ProjectEditPage from "@/pages/admin/project-edit-page";
 import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
@@ -91,6 +92,7 @@ function Router() {
       <ProtectedRoute path="/admin/email-tests" component={EmailTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/push-notifications" component={PushNotificationTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/end-to-end-tests" component={EndToEndTestPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/projects/:id/edit" component={ProjectEditPage} roles={['admin']} />
       
       {/* Phase 2: Code Service & Product Build Module */}
       <Route path="/it-services" component={() => {
