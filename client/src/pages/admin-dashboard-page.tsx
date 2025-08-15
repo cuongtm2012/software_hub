@@ -73,6 +73,8 @@ import {
   MessageCircle,
   TestTube,
   Bell,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import SoftwareManagement from "@/pages/admin/software-management";
 import {
@@ -147,7 +149,7 @@ function UserManagementComponent() {
     data: usersData,
     isLoading,
     refetch,
-  } = useQuery<{ users: User[]; total: number }>({
+  } = useQuery<{ users: { users: User[] }; total: number }>({
     queryKey: ["/api/admin/users"],
   });
 
@@ -619,6 +621,9 @@ function ExternalRequestsComponent() {
   const [selectedRequest, setSelectedRequest] =
     useState<ExternalRequest | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusReason, setStatusReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     data: requestsData,
@@ -629,8 +634,8 @@ function ExternalRequestsComponent() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      console.log("Updating external request status:", { id, status });
+    mutationFn: async ({ id, status, reason }: { id: number; status: string; reason: string }) => {
+      console.log("Updating external request status:", { id, status, reason });
       const response = await fetch(
         `/api/admin/external-requests/${id}/status`,
         {
@@ -639,7 +644,7 @@ function ExternalRequestsComponent() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({ status, reason }),
         },
       );
       console.log("External request status update response:", response.status);
@@ -658,6 +663,10 @@ function ExternalRequestsComponent() {
         description: "Request status updated successfully",
       });
       refetch();
+      setIsDetailDialogOpen(false);
+      setStatusReason("");
+      setNewStatus("");
+      setIsSubmitting(false);
     },
     onError: () => {
       toast({
@@ -665,6 +674,7 @@ function ExternalRequestsComponent() {
         description: "Failed to update request status",
         variant: "destructive",
       });
+      setIsSubmitting(false);
     },
   });
 
@@ -841,39 +851,17 @@ function ExternalRequestsComponent() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRequest(request);
-                          setIsDetailDialogOpen(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Select
-                        value={request.status}
-                        onValueChange={(status) =>
-                          updateStatusMutation.mutate({
-                            id: request.id,
-                            status,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="w-24 h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">
-                            In Progress
-                          </SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedRequest(request);
+                        setIsDetailDialogOpen(true);
+                      }}
+                      className="text-xs"
+                    >
+                      Change Status
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -890,9 +878,17 @@ function ExternalRequestsComponent() {
         </Table>
       </div>
 
-      {/* Request Detail Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* Enhanced Request Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={(open) => {
+        setIsDetailDialogOpen(open);
+        if (!open) {
+          setNewStatus("");
+          setStatusReason("");
+        } else if (selectedRequest) {
+          setNewStatus(selectedRequest.status);
+        }
+      }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Request Details</DialogTitle>
             <DialogDescription>
@@ -900,96 +896,184 @@ function ExternalRequestsComponent() {
             </DialogDescription>
           </DialogHeader>
           {selectedRequest && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-semibold">
-                    Contact Information
-                  </Label>
-                  <div className="mt-2 space-y-1">
+            <div className="space-y-6">
+              {/* Project Description with Enhanced Formatting */}
+              <div className="bg-white border rounded-lg p-6">
+                <div className="space-y-4">
+                  {selectedRequest.title && (
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Project Name:</h4>
+                      <p className="text-gray-700">{selectedRequest.title}</p>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900 mb-2">Company/Contact:</h4>
+                    <p className="text-gray-700">{selectedRequest.name}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900 mb-2">Description:</h4>
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {selectedRequest.project_description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedRequest.requirements && (
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Requirements:</h4>
+                      <div className="bg-gray-50 p-4 rounded-md">
+                        <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                          {selectedRequest.requirements}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(selectedRequest.budget || selectedRequest.budget_range) && (
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Budget:</h4>
+                      <p className="text-green-600 font-medium">
+                        {selectedRequest.budget || selectedRequest.budget_range}
+                      </p>
+                    </div>
+                  )}
+
+                  {(selectedRequest.timeline || selectedRequest.deadline) && (
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Timeline:</h4>
+                      <p className="text-gray-700">
+                        {selectedRequest.timeline || 
+                         (selectedRequest.deadline && `Deadline: ${new Date(selectedRequest.deadline).toLocaleDateString()}`)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-lg text-gray-900 mb-3">Contact Information</h4>
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-400" />
-                      <span>{selectedRequest.name}</span>
+                      <span className="text-gray-700">{selectedRequest.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-gray-400" />
-                      <span>{selectedRequest.email}</span>
+                      <span className="text-gray-700">{selectedRequest.email}</span>
                     </div>
                     {selectedRequest.phone && (
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        <span>{selectedRequest.phone}</span>
+                        <span className="text-gray-700">{selectedRequest.phone}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                <div>
-                  <Label className="text-sm font-semibold">
-                    Project Details
-                  </Label>
-                  <div className="mt-2 space-y-1">
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-lg text-gray-900 mb-3">Project Details</h4>
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>
-                        Created:{" "}
-                        {new Date(
-                          selectedRequest.created_at,
-                        ).toLocaleDateString()}
+                      <span className="text-gray-700">
+                        Created: {new Date(selectedRequest.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    {selectedRequest.budget && (
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          selectedRequest.status === "completed"
+                            ? "default"
+                            : selectedRequest.status === "in_progress"
+                              ? "secondary"
+                              : selectedRequest.status === "pending"
+                                ? "outline"
+                                : "destructive"
+                        }
+                      >
+                        Current Status: {selectedRequest.status}
+                      </Badge>
+                    </div>
+                    {selectedRequest.assigned_developer_id && (
                       <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-gray-400" />
-                        <span>Budget: {selectedRequest.budget}</span>
-                      </div>
-                    )}
-                    {selectedRequest.deadline && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                        <span>
-                          Deadline:{" "}
-                          {new Date(
-                            selectedRequest.deadline,
-                          ).toLocaleDateString()}
-                        </span>
+                        <Badge variant="secondary">
+                          Developer #{selectedRequest.assigned_developer_id}
+                        </Badge>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-              <div>
-                <Label className="text-sm font-semibold">
-                  Project Description
-                </Label>
-                <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm">
-                    {selectedRequest.project_description}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label className="text-sm font-semibold">Status</Label>
-                  <Select
-                    value={selectedRequest.status}
-                    onValueChange={(status) => {
-                      updateStatusMutation.mutate({
-                        id: selectedRequest.id,
-                        status,
-                      });
-                      setSelectedRequest({ ...selectedRequest, status });
-                    }}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+              {/* Status Change Section */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h4 className="font-bold text-lg text-gray-900 mb-4">Change Status</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold">New Status</Label>
+                    <Select value={newStatus} onValueChange={setNewStatus}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select new status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {newStatus && newStatus !== selectedRequest.status && (
+                    <div>
+                      <Label className="text-sm font-semibold">Reason for Status Change *</Label>
+                      <textarea
+                        className="w-full mt-2 p-3 border rounded-md resize-none"
+                        rows={3}
+                        value={statusReason}
+                        onChange={(e) => setStatusReason(e.target.value)}
+                        placeholder="Please provide a reason for this status change..."
+                        required
+                      />
+                    </div>
+                  )}
+                  
+                  {newStatus && newStatus !== selectedRequest.status && (
+                    <Button
+                      onClick={() => {
+                        if (!statusReason.trim()) {
+                          toast({
+                            title: "Validation Error",
+                            description: "Please provide a reason for the status change",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setIsSubmitting(true);
+                        updateStatusMutation.mutate({
+                          id: selectedRequest.id,
+                          status: newStatus,
+                          reason: statusReason,
+                        });
+                      }}
+                      disabled={isSubmitting || updateStatusMutation.isPending}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isSubmitting || updateStatusMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Updating...
+                        </>
+                      ) : (
+                        "Submit Status Change"
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1098,7 +1182,7 @@ export default function AdminDashboardPage() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
                 Overview
@@ -1117,6 +1201,10 @@ export default function AdminDashboardPage() {
               <TabsTrigger value="software" className="flex items-center gap-2">
                 <Package className="h-4 w-4" />
                 Software
+              </TabsTrigger>
+              <TabsTrigger value="products" className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Product Approvals
               </TabsTrigger>
               <TabsTrigger value="sellers" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
@@ -1138,6 +1226,10 @@ export default function AdminDashboardPage() {
 
             <TabsContent value="software">
               <SoftwareManagement />
+            </TabsContent>
+
+            <TabsContent value="products">
+              <ProductApprovalsComponent />
             </TabsContent>
 
             <TabsContent value="sellers">
@@ -1497,7 +1589,7 @@ function SellersManagementComponent() {
     );
   }
 
-  const sellers = sellersData?.sellers || [];
+  const sellers = (sellersData as any)?.sellers || [];
   const pendingSellers = sellers.filter((s: any) => s.verification_status === 'pending');
 
   return (
@@ -1721,7 +1813,10 @@ function SellersManagementComponent() {
                               className="max-w-full max-h-48 mx-auto object-contain rounded"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'block';
+                                const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (nextSibling) {
+                                  nextSibling.style.display = 'block';
+                                }
                               }}
                             />
                           ) : (
@@ -1759,7 +1854,10 @@ function SellersManagementComponent() {
                               className="max-w-full max-h-48 mx-auto object-contain rounded"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'block';
+                                const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (nextSibling) {
+                                  nextSibling.style.display = 'block';
+                                }
                               }}
                             />
                           ) : (
@@ -1797,7 +1895,10 @@ function SellersManagementComponent() {
                               className="max-w-full max-h-48 mx-auto object-contain rounded"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'block';
+                                const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (nextSibling) {
+                                  nextSibling.style.display = 'block';
+                                }
                               }}
                             />
                           ) : (
@@ -1841,6 +1942,443 @@ function SellersManagementComponent() {
             >
               {updateSellerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Approve
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Product Approvals Component
+function ProductApprovalsComponent() {
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [actionComment, setActionComment] = useState("");
+  const [showActionDialog, setShowActionDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'approve' | 'reject' | 'request_changes' | null>(null);
+
+  // Fetch products for approval
+  const { data: productsData, isLoading, refetch } = useQuery({
+    queryKey: ['/api/products', { 
+      page: currentPage, 
+      search: searchQuery,
+      status: statusFilter,
+      category: categoryFilter
+    }],
+    queryFn: async () => {
+      // Use existing products API
+      const response = await fetch('/api/products', {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      
+      const data = await response.json();
+      return {
+        products: data.products || [],
+        total: data.products?.length || 0
+      };
+    }
+  });
+
+  // Product action mutations
+  const productActionMutation = useMutation({
+    mutationFn: async ({ productId, action, comment }: { 
+      productId: number; 
+      action: 'approve' | 'reject' | 'request_changes';
+      comment?: string;
+    }) => {
+      // Update product status
+      const status = action === 'approve' ? 'published' : action === 'reject' ? 'rejected' : 'draft';
+      const response = await apiRequest('PUT', `/api/products/${productId}`, { status });
+      
+      return { ...response, newStatus: status };
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Success",
+        description: "Product status updated successfully"
+      });
+      
+      // Update the selected product's status immediately for instant UI feedback
+      if (selectedProduct && selectedProduct.id === variables.productId) {
+        setSelectedProduct({
+          ...selectedProduct,
+          status: data.newStatus
+        });
+      }
+      
+      // Refresh the products list
+      refetch();
+      setShowActionDialog(false);
+      setActionComment("");
+      setPendingAction(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update product status",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleProductAction = (action: 'approve' | 'reject' | 'request_changes') => {
+    setPendingAction(action);
+    setShowActionDialog(true);
+  };
+
+  const confirmAction = () => {
+    if (selectedProduct && pendingAction) {
+      productActionMutation.mutate({
+        productId: selectedProduct.id,
+        action: pendingAction,
+        comment: actionComment
+      });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      draft: { variant: "secondary" as const, text: "Draft", className: "" },
+      pending: { variant: "default" as const, text: "Pending", className: "" },
+      approved: { variant: "default" as const, text: "Approved", className: "bg-green-100 text-green-800" },
+      rejected: { variant: "destructive" as const, text: "Rejected", className: "" },
+      published: { variant: "default" as const, text: "Published", className: "bg-blue-100 text-blue-800" }
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return (
+      <Badge variant={config.variant} className={config.className}>
+        {config.text}
+      </Badge>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="border-b pb-4">
+          <h1 className="text-3xl font-bold text-gray-900">Product Approvals</h1>
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-20 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const products = productsData?.products || [];
+  const filteredProducts = products.filter((product: any) => {
+    const matchesSearch = !searchQuery || 
+      product.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+    
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  const totalPages = Math.ceil(filteredProducts.length / 10);
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * 10, currentPage * 10);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="border-b pb-4">
+        <h1 className="text-3xl font-bold text-gray-900">Product Approvals</h1>
+        <p className="text-gray-600 mt-2">Review and approve marketplace products</p>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="Productivity">Productivity</SelectItem>
+                <SelectItem value="Security">Security</SelectItem>
+                <SelectItem value="Development">Development</SelectItem>
+                <SelectItem value="Design">Design</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Products List */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Products ({filteredProducts.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {paginatedProducts.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No products found
+                </div>
+              ) : (
+                paginatedProducts.map((product: any) => (
+                  <div
+                    key={product.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedProduct?.id === product.id 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => setSelectedProduct(product)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-sm">{product.title}</h3>
+                      {getStatusBadge(product.status)}
+                    </div>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p>Seller: {product.seller_id}</p>
+                      <p>Submitted: {formatDate(product.created_at)}</p>
+                      <p>Price: {parseInt(product.price).toLocaleString()} ₫</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-6">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="px-3 py-2 text-sm">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Product Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {selectedProduct ? selectedProduct.title : 'Select a Product'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {selectedProduct ? (
+              <div className="space-y-6">
+                {/* Images */}
+                {selectedProduct.images && selectedProduct.images.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Product Images</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {selectedProduct.images.slice(0, 4).map((image: string, index: number) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`Product ${index + 1}`}
+                          className="w-full h-24 object-cover rounded border"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Product Details */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Description</h4>
+                    <p className="text-sm text-gray-600">
+                      {selectedProduct.description}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium">Price</h4>
+                      <p className="text-sm text-gray-600">
+                        {parseInt(selectedProduct.price).toLocaleString()} ₫
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Stock</h4>
+                      <p className="text-sm text-gray-600">
+                        {selectedProduct.stock_quantity}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium">Status</h4>
+                    {getStatusBadge(selectedProduct.status)}
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium">Submitted by</h4>
+                    <p className="text-sm text-gray-600">
+                      Seller {selectedProduct.seller_id}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium">Submission Date</h4>
+                    <p className="text-sm text-gray-600">
+                      {formatDate(selectedProduct.created_at)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                {selectedProduct.status === 'pending' || selectedProduct.status === 'draft' ? (
+                  <div className="pt-4 border-t">
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleProductAction('approve')}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Approve
+                      </Button>
+                      <Button
+                        onClick={() => handleProductAction('reject')}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Reject
+                      </Button>
+                      <Button
+                        onClick={() => handleProductAction('request_changes')}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Request Changes
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-gray-500 text-center">
+                      Product has already been {selectedProduct.status}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Select a product to view details</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Action Confirmation Dialog */}
+      <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingAction === 'approve' && 'Approve Product'}
+              {pendingAction === 'reject' && 'Reject Product'}
+              {pendingAction === 'request_changes' && 'Request Changes'}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingAction === 'approve' && 'This product will be approved and made available in the marketplace.'}
+              {pendingAction === 'reject' && 'This product will be rejected and not published.'}
+              {pendingAction === 'request_changes' && 'The seller will be notified to make changes before resubmission.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="comment">Comment to Seller (Optional)</Label>
+              <Input
+                id="comment"
+                placeholder="Add a comment for the seller..."
+                value={actionComment}
+                onChange={(e) => setActionComment(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowActionDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmAction}
+              disabled={productActionMutation.isPending}
+              className={
+                pendingAction === 'approve' ? 'bg-green-600 hover:bg-green-700' :
+                pendingAction === 'reject' ? 'bg-red-600 hover:bg-red-700' :
+                ''
+              }
+            >
+              {productActionMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirm {pendingAction === 'approve' ? 'Approval' : pendingAction === 'reject' ? 'Rejection' : 'Request'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -21,6 +21,7 @@ export interface R2UploadResult {
 export class CloudflareR2Storage {
   private s3Client: S3Client;
   private bucketName: string;
+  private accountId: string;
 
   constructor() {
     // Validate required environment variables
@@ -56,6 +57,8 @@ export class CloudflareR2Storage {
     if (!accountId || !accessKeyId || !secretAccessKey) {
       throw new Error('Missing required Cloudflare R2 environment variables: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_R2_ACCESS_KEY_ID, CLOUDFLARE_R2_SECRET_ACCESS_KEY');
     }
+
+    this.accountId = accountId;
 
     // Initialize S3 client configured for Cloudflare R2
     this.s3Client = new S3Client({
@@ -129,9 +132,13 @@ export class CloudflareR2Storage {
 
       console.log(`✅ File uploaded successfully to R2: ${key}`);
 
+      // For R2 public access, we need to use a public domain or generate a presigned URL
+      // Since R2 buckets are private by default, we'll generate a presigned download URL
+      const publicUrl = await this.generatePresignedDownloadUrl(key, 3600 * 24 * 7); // 7 days expiry
+
       return {
         key,
-        url: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${this.bucketName}/${key}`,
+        url: publicUrl,
         metadata,
       };
     } catch (error) {

@@ -10,7 +10,7 @@ import {
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
   Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp, 
-  ChevronLeft, ChevronRight, Edit3, CalendarDays, MessageCircle
+  ChevronLeft, ChevronRight, Edit3, CalendarDays, MessageCircle, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -77,7 +77,44 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // Format price in VND
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
   const [selectedProjectStatus, setSelectedProjectStatus] = useState<string>('all');
+
+  // Product clone mutation
+  const cloneProductMutation = useMutation({
+    mutationFn: async (productId: number) => {
+      console.log('Cloning product with ID:', productId);
+      const response = await apiRequest('POST', `/api/seller/products/${productId}/clone`);
+      console.log('Clone response:', response);
+      return response;
+    },
+    onSuccess: (data) => {
+      console.log('Clone success, navigating to edit page');
+      
+      toast({
+        title: "Product Cloned Successfully",
+        description: `Clone "${data.product.title}" created. Redirecting to edit page...`,
+      });
+      
+      // Navigate to the edit page of the newly cloned product
+      navigate(`/seller/products/${data.product.id}/edit`);
+    },
+    onError: (error: any) => {
+      console.error('Clone error:', error);
+      toast({
+        title: "Clone Failed",
+        description: error.message || "Failed to clone product. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
   
   // Product list expansion state
   const [showAllProducts, setShowAllProducts] = useState(false);
@@ -95,22 +132,30 @@ export default function DashboardPage() {
   const { data: sellerProfile, isLoading: isLoadingProfile } = useQuery<any>({
     queryKey: ["/api/seller/profile"],
     enabled: !!user && user.role === 'seller',
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const { data: sellerProducts, isLoading: isLoadingProducts } = useQuery<{ products: Product[]; total: number }>({
-    queryKey: ["/api/seller/products", { page: showAllProducts ? currentPage : 1, limit: showAllProducts ? productsPerPage : 50 }],
+    queryKey: ["/api/seller/products", { page: showAllProducts ? currentPage : 1, limit: showAllProducts ? productsPerPage : 10 }],
     enabled: !!user && user.role === 'seller',
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 30 * 1000, // Only cache for 30 seconds
   });
 
   // Fetch paginated products when expanded
   const { data: paginatedProducts, isLoading: isLoadingPaginated } = useQuery<{ products: Product[]; total: number }>({
     queryKey: ["/api/seller/products", { page: currentPage, limit: productsPerPage }],
     enabled: !!user && user.role === 'seller' && showAllProducts,
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 30 * 1000, // Only cache for 30 seconds
   });
 
   const { data: sellerOrders, isLoading: isLoadingOrders } = useQuery<{ orders: Order[] }>({
     queryKey: ["/api/seller/orders"],
     enabled: !!user && user.role === 'seller',
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Fetch projects and quotes (general dashboard)
@@ -119,27 +164,31 @@ export default function DashboardPage() {
     enabled: !!user && (user.role === 'admin' || user.role === 'client' || user.role === 'developer'),
   });
 
-  // Fetch user's own external requests (for "My Projects" section)
+  // Lazy load project data - only fetch when needed
   const { data: externalRequestsData, isLoading: isLoadingExternalRequests } = useQuery<{ requests: ExternalRequest[]; total: number }>({
     queryKey: ['/api/my-external-requests', { page: 1, limit: 5, status: selectedProjectStatus }],
-    enabled: !!user,
+    enabled: !!user && (user.role !== 'seller'), // Don't load for sellers on initial load
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 
   // Fetch paginated combined projects when expanded (includes both external requests and available projects)
   const { data: paginatedProjectsData, isLoading: isLoadingPaginatedProjects } = useQuery<{ projects: (Project | ExternalRequest)[]; total: number }>({
     queryKey: ['/api/my-combined-projects', { page: currentProjectPage, limit: projectsPerPage, status: selectedProjectStatus }],
     enabled: !!user && showAllProjects,
+    staleTime: 3 * 60 * 1000,
   });
 
   // Fetch available projects for the tabs - use the same source as combined projects for consistency
   const { data: availableProjectsData, isLoading: isLoadingAvailableProjects } = useQuery<{ projects: Project[]; total: number }>({
     queryKey: ['/api/my-combined-projects', { status: selectedProjectStatus !== 'all' ? selectedProjectStatus : undefined, limit: 100 }],
-    enabled: !!user,
+    enabled: !!user && (user.role !== 'seller'), // Only load for non-sellers initially
+    staleTime: 3 * 60 * 1000,
   });
 
   const { data: quotes, isLoading: isLoadingQuotes } = useQuery<Quote[]>({
     queryKey: ['/api/quotes'],
-    enabled: !!user,
+    enabled: !!user && (user.role !== 'seller'), // Don't load for sellers on initial load
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Redirect admin users to admin dashboard
@@ -234,20 +283,54 @@ export default function DashboardPage() {
   // Both sections now use the same data source for consistency
   const displayAvailableProjects = allCombinedProjects;
 
+  // Show loading state while critical data is loading for sellers
+  const isInitialLoading = isSeller && (isLoadingProfile || isLoadingProducts || isLoadingOrders);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
       <main className="pt-16">
         <div className="container mx-auto px-1 sm:px-4 py-2 sm:py-8 max-w-full overflow-x-hidden">
+          
+          {/* Loading State for Sellers */}
+          {isInitialLoading && (
+            <div className="text-center py-12">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+              <h2 className="text-xl font-semibold mb-2">Loading your dashboard...</h2>
+              <p className="text-gray-600">Please wait while we fetch your latest data</p>
+            </div>
+          )}
+          
+          {!isInitialLoading && (
+            <>
           {/* Welcome Header */}
           <div className="flex flex-col gap-3 mb-4 sm:mb-8 p-3 sm:p-4 lg:p-6 bg-white rounded-lg shadow-sm border">
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
-                Welcome back, {user.name}!
-              </h1>
-              <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
-                Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
-              </p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+                  Welcome back, {user.name}!
+                </h1>
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
+                  Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => navigate('/add-funds')}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  size="default"
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Add Funds
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/profile')}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  View Profile
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -379,7 +462,7 @@ export default function DashboardPage() {
                                 <h4 className="font-semibold text-gray-900">{product.title}</h4>
                                 <p className="text-sm text-gray-600 mb-2">{product.description.substring(0, 100)}...</p>
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
-                                  <span className="text-green-600 font-medium">${parseFloat(product.price).toFixed(2)}</span>
+                                  <span className="text-green-600 font-medium">{formatPrice(parseFloat(product.price))}</span>
                                   <Badge variant={product.status === 'approved' ? 'default' : 'secondary'}>
                                     {product.status}
                                   </Badge>
@@ -405,6 +488,25 @@ export default function DashboardPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  className="flex-1 sm:flex-none text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  onClick={() => {
+                                    console.log('Clone button clicked for product:', product);
+                                    // Immediate clone without confirmation for faster workflow
+                                    console.log('Starting clone mutation');
+                                    cloneProductMutation.mutate(product.id);
+                                  }}
+                                  disabled={cloneProductMutation.isPending}
+                                >
+                                  {cloneProductMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Copy className="h-4 w-4 mr-2" />
+                                  )}
+                                  {cloneProductMutation.isPending ? 'Cloning...' : 'Clone'}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   className="flex-1 sm:flex-none text-red-600 hover:text-red-700 hover:bg-red-50"
                                   onClick={() => {
                                     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -412,17 +514,33 @@ export default function DashboardPage() {
                                       const deleteProduct = async () => {
                                         try {
                                           await apiRequest('DELETE', `/api/seller/products/${product.id}`);
-                                          queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
                                           toast({
                                             title: "Success",
                                             description: "Product deleted successfully"
                                           });
+                                          // Clear all caches and force refresh
+                                          queryClient.clear();
+                                          setTimeout(() => {
+                                            window.location.reload();
+                                          }, 500);
                                         } catch (error: any) {
-                                          toast({
-                                            title: "Error", 
-                                            description: error.message || "Failed to delete product",
-                                            variant: "destructive"
-                                          });
+                                          if (error.message?.includes('404') || error.message?.includes('not found')) {
+                                            // Product was already deleted, clear cache and refresh
+                                            toast({
+                                              title: "Product Already Removed",
+                                              description: "This product was already deleted. Refreshing the page."
+                                            });
+                                            queryClient.clear();
+                                            setTimeout(() => {
+                                              window.location.reload();
+                                            }, 500);
+                                          } else {
+                                            toast({
+                                              title: "Error", 
+                                              description: error.message || "Failed to delete product",
+                                              variant: "destructive"
+                                            });
+                                          }
                                         }
                                       };
                                       deleteProduct();
@@ -622,9 +740,9 @@ export default function DashboardPage() {
                       <div className="space-y-4">
                         {/* Show unified projects (external requests + available projects) */}
                         {displayedProjects.map((project: any, index) => (
-                          <div key={`recent-project-${project.id}-${index}-${project.type || 'unknown'}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4">
+                          <div key={`recent-project-${project.id}-${index}-${project.type || 'unknown'}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all duration-200 gap-3 sm:gap-4 cursor-pointer transform hover:scale-[1.02]" onClick={() => navigate(`/projects/${project.id}`)}>
                             <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900">
+                              <h4 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200">
                                 {project.title || `Project Request #${project.id}`}
                               </h4>
                               <p className="text-sm text-gray-600 mb-2">
@@ -646,17 +764,6 @@ export default function DashboardPage() {
                                   </span>
                                 )}
                               </div>
-                            </div>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full sm:w-auto"
-                                onClick={() => navigate(`/projects/${project.id}`)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                View
-                              </Button>
                             </div>
                           </div>
                         ))}
@@ -1232,6 +1339,8 @@ export default function DashboardPage() {
               </TabsContent>
             </div>
           </Tabs>
+          </>
+          )}
         </div>
       </main>
       <Footer />

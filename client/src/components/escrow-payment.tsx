@@ -33,6 +33,14 @@ export function EscrowPayment({ order, onPaymentComplete }: EscrowPaymentProps) 
   const { toast } = useToast();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   
+  // Format price in VND
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
+  
   // Create payment mutation
   const createPaymentMutation = useMutation({
     mutationFn: async () => {
@@ -129,7 +137,7 @@ export function EscrowPayment({ order, onPaymentComplete }: EscrowPaymentProps) 
                   </div>
                   <div className="flex justify-between mb-4">
                     <span className="font-medium">Amount:</span>
-                    <span className="font-bold">${order.total_amount.toFixed(2)}</span>
+                    <span className="font-bold">{formatPrice(parseFloat(order.total_amount))}</span>
                   </div>
                   
                   <div className="flex flex-col gap-3 p-4 bg-gray-50 rounded-lg mb-4">
@@ -209,7 +217,7 @@ export function EscrowPayment({ order, onPaymentComplete }: EscrowPaymentProps) 
           <CardContent>
             <div className="flex justify-between mb-2">
               <span className="text-sm text-gray-600">Amount:</span>
-              <span className="font-bold">${payment.amount.toFixed(2)}</span>
+              <span className="font-bold">{formatPrice(payment.amount)}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span className="text-sm text-gray-600">Date:</span>

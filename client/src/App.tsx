@@ -48,7 +48,7 @@ import MarketplacePage from "@/pages/marketplace-page";
 import SoftwareListPage from "@/pages/software-list-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
-import ProductDetailPage from "@/pages/product-detail-page";
+import { ProductDetailEcommerce } from "@/pages/product-detail-ecommerce";
 import OrderDetailsPage from "@/pages/order-details-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
 
@@ -66,6 +66,7 @@ import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
 import DashboardPage from "@/pages/dashboard-page";
 import ChatPage from "@/pages/chat-page";
+import AddFundsPage from "@/pages/add-funds-page";
 
 function Router() {
   return (
@@ -79,6 +80,7 @@ function Router() {
       <ProtectedRoute path="/profile" component={UserProfilePage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/chat" component={ChatPage} />
+      <ProtectedRoute path="/add-funds" component={AddFundsPage} />
       
       {/* Admin Routes - Only accessible to admin users */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
@@ -679,7 +681,7 @@ function Router() {
         );
       }} roles={['seller', 'admin']} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
-      <Route path="/marketplace/product/:id" component={ProductDetailPage} />
+      <Route path="/marketplace/product/:id" component={ProductDetailEcommerce} />
       <Route path="/order-details/:id" component={OrderDetailsPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/seller/products" roles={['seller', 'admin']} component={MarketplaceSellerPage} />

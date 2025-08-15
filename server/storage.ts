@@ -89,12 +89,13 @@ export interface IStorage {
   getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined>;
   getReviewById(id: number): Promise<Review | undefined>;
   deleteReview(id: number, userId: number): Promise<boolean>;
+  updateReview(id: number, userId: number, updates: Partial<InsertReview>): Promise<Review | undefined>;
   
   // External Project Requests
   createExternalRequest(request: InsertExternalRequest): Promise<ExternalRequest>;
   getExternalRequests(status?: string, limit?: number, offset?: number): Promise<{ requests: ExternalRequest[], total: number }>;
   getExternalRequestById(id: number): Promise<ExternalRequest | undefined>;
-  updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
+  updateExternalRequestStatus(id: number, status: string, reason?: string): Promise<ExternalRequest | undefined>;
   convertExternalRequestToProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest>;
   getAllExternalRequests(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ requests: ExternalRequest[], total: number }>;
   assignDeveloperToExternalRequest(id: number, developerId: number): Promise<ExternalRequest | undefined>;
@@ -193,6 +194,8 @@ export interface IStorage {
   // Cart Management
   addToCart(item: InsertCartItem, userId: number): Promise<CartItem>;
   getCartItems(userId: number): Promise<CartItem[]>;
+  getCartItemsWithProducts(userId: number): Promise<any[]>;
+  updateCartItemQuantity(itemId: number, quantity: number, userId: number): Promise<CartItem | undefined>;
   removeFromCart(itemId: number, userId: number): Promise<boolean>;
   clearCart(userId: number): Promise<boolean>;
   
@@ -654,10 +657,35 @@ export class DatabaseStorage implements IStorage {
     return request;
   }
   
-  async updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined> {
+  async updateExternalRequestStatus(id: number, status: string, reason?: string): Promise<ExternalRequest | undefined> {
+    // Get the current request to append to existing admin notes
+    const currentRequest = await db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.id, id))
+      .limit(1);
+
+    if (!currentRequest.length) {
+      return undefined;
+    }
+
+    // Format status change note with timestamp
+    const timestamp = new Date().toISOString();
+    const statusChangeNote = `[${timestamp}] Status changed to '${status}': ${reason || 'No reason provided'}`;
+    
+    // Append to existing admin notes or create new
+    const existingNotes = currentRequest[0].admin_notes || '';
+    const updatedNotes = existingNotes 
+      ? `${existingNotes}\n\n${statusChangeNote}`
+      : statusChangeNote;
+
     const [request] = await db
       .update(externalRequests)
-      .set({ status: status as any })
+      .set({ 
+        status: status as any,
+        admin_notes: updatedNotes,
+        updated_at: new Date()
+      })
       .where(eq(externalRequests.id, id))
       .returning();
       
@@ -1849,6 +1877,52 @@ export class DatabaseStorage implements IStorage {
       .from(cartItems)
       .where(eq(cartItems.user_id, userId))
       .orderBy(cartItems.created_at);
+  }
+
+  async getCartItemsWithProducts(userId: number): Promise<any[]> {
+    return db
+      .select({
+        id: cartItems.id,
+        user_id: cartItems.user_id,
+        product_id: cartItems.product_id,
+        quantity: cartItems.quantity,
+        created_at: cartItems.created_at,
+        product: {
+          id: products.id,
+          title: products.title,
+          description: products.description,
+          price: products.price,
+          images: products.images,
+          category: products.category,
+          seller_id: products.seller_id,
+          status: products.status,
+          stock_quantity: products.stock_quantity,
+        }
+      })
+      .from(cartItems)
+      .innerJoin(products, eq(cartItems.product_id, products.id))
+      .where(
+        and(
+          eq(cartItems.user_id, userId),
+          eq(products.status, 'approved')
+        )
+      )
+      .orderBy(cartItems.created_at);
+  }
+
+  async updateCartItemQuantity(itemId: number, quantity: number, userId: number): Promise<CartItem | undefined> {
+    const [updatedItem] = await db
+      .update(cartItems)
+      .set({ quantity })
+      .where(
+        and(
+          eq(cartItems.id, itemId),
+          eq(cartItems.user_id, userId)
+        )
+      )
+      .returning();
+    
+    return updatedItem;
   }
 
   async removeFromCart(itemId: number, userId: number): Promise<boolean> {

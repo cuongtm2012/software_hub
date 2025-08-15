@@ -1,0 +1,38 @@
+Implement a detailed product page for the marketplace that displays complete and accurate product information synchronized with the marketplace listing. The page must fetch and display live data based on the selected product, ensuring consistency and a seamless user experience.
+
+Requirements:
+
+Data Synchronization:
+
+Use a single API endpoint to fetch product data for both the marketplace listing and the detailed product page.
+When a user selects a product from the marketplace, pass the unique product identifier (e.g., product_id or slug) to the detailed product page.
+The detailed product page must call the API using this identifier to retrieve up-to-date product details.
+Avoid using cached or hardcoded data to prevent inconsistencies.
+Parameter Validation:
+
+Validate the product identifier on the detailed product page before making the API call.
+If the identifier is missing or invalid, redirect the user back to the marketplace or show a user-friendly error message.
+State Management and Caching:
+
+Implement state management (e.g., Redux, Vuex, Context API) to store product data and minimize redundant API calls.
+If caching is used, provide a mechanism to refresh data on demand or after a certain time interval.
+UI/UX Design:
+
+Follow the provided mockup layout:
+Breadcrumb navigation at the top for easy back navigation.
+Left column with a large main product image and thumbnails.
+Right column with product title, SKU, stock status, seller verification, ratings, package options with pricing and discounts, quantity selector, total price, and action buttons (Buy Now, Add to Wishlist, Contact Seller).
+Tabs below for Description, Features, Activation, Warranty, FAQs, and Reviews.
+Related products carousel or grid at the bottom.
+Display loading states and handle API errors gracefully.
+Ensure responsive design for different screen sizes.
+Security and Performance:
+
+Secure API calls and handle errors properly.
+Optimize image loading with lazy loading or placeholders.
+Deliverables:
+
+Fully functional detailed product page integrated with live backend data.
+Clean, maintainable code with comments where necessary.
+Responsive and user-friendly UI matching the mockup.
+Documentation on how data synchronization and state management are handled.

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
+import { PageBreadcrumb, createBreadcrumbs } from "@/components/page-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,14 +42,11 @@ export default function MarketplaceCategoryPage() {
 
   return (
     <Layout>
+      <PageBreadcrumb
+        items={createBreadcrumbs.category(decodedCategory)}
+      />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Link href="/marketplace">
-            <Button variant="ghost" size="sm" className="flex items-center">
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to Marketplace
-            </Button>
-          </Link>
+        <div className="mb-6">
           <h1 className="text-3xl font-bold">{decodedCategory}</h1>
         </div>
 
