@@ -83,8 +83,15 @@ const formatVNDInput = (value: string): string => {
   const numericValue = value.replace(/[^\d]/g, "");
   if (!numericValue) return "";
 
-  // Format with thousand separators
-  return new Intl.NumberFormat("vi-VN").format(parseInt(numericValue));
+  const amount = parseInt(numericValue);
+  
+  // Format with VND currency symbol and thousand separators
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 };
 
 const parseVNDInput = (value: string): number => {
@@ -110,7 +117,11 @@ const projectRequestSchema = z.object({
   requirements: z
     .string()
     .min(10, "Requirements must be at least 10 characters"),
-  budget: z.string().optional(),
+  budget: z.string().optional().refine((val) => {
+    if (!val) return true; // Optional field
+    const numericValue = parseVNDInput(val);
+    return numericValue >= 100000;
+  }, "Minimum budget is 100,000 VND"),
   timeline: z.date().optional(),
 });
 
@@ -220,10 +231,8 @@ export default function ProjectRequestPage() {
   // Create external request mutation
   const createExternalRequestMutation = useMutation({
     mutationFn: async (data: ProjectRequestFormValues) => {
-      // Format budget display
-      const budgetFormatted = data.budget && parseVNDInput(data.budget) > 0 
-        ? formatVND(parseVNDInput(data.budget))
-        : "N/A";
+      // Budget is already formatted as currency string
+      const budgetFormatted = data.budget || "N/A";
       
       // Format timeline display
       const timelineFormatted = data.timeline 
@@ -540,24 +549,21 @@ Timeline: ${timelineFormatted}
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Enter budget amount"
+                                  placeholder="₫100.000"
                                   className="border-gray-300 focus-visible:ring-[#004080]"
                                   value={budgetDisplay}
                                   onChange={(e) => {
                                     const formatted = formatVNDInput(e.target.value);
                                     setBudgetDisplay(formatted);
-                                    // Store the raw numeric value for the form
-                                    const numericValue = parseVNDInput(formatted);
-                                    field.onChange(numericValue.toString());
+                                    // Store the formatted value for the form
+                                    field.onChange(formatted);
                                   }}
                                 />
                               </FormControl>
                               <FormMessage />
-                              {budgetDisplay && (
-                                <p className="text-sm text-gray-500 mt-1">
-                                  {formatVND(parseVNDInput(budgetDisplay))}
-                                </p>
-                              )}
+                              <p className="text-sm text-gray-500 mt-1">
+                                Minimum budget: ₫100.000
+                              </p>
                             </FormItem>
                           )}
                         />
