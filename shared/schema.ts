@@ -40,7 +40,7 @@ export const serviceQuotationStatusEnum = pgEnum('service_quotation_status', ['p
 export const servicePaymentTypeEnum = pgEnum('service_payment_type', ['deposit', 'final', 'full']);
 
 // External request status enum for IT services workflow
-export const externalRequestStatusEnum = pgEnum('external_request_status', ['pending', 'in_progress', 'completed', 'cancelled', 'contacted', 'converted', 'rejected']);
+export const externalRequestStatusEnum = pgEnum('external_request_status', ['pending', 'in_progress', 'completed', 'cancelled']);
 
 // Chat message status enum
 export const messageStatusEnum = pgEnum('message_status', ['sent', 'delivered', 'read']);

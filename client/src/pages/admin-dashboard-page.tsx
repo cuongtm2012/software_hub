@@ -860,27 +860,17 @@ function ExternalRequestsComponent() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Select
-                        value={request.status}
-                        onValueChange={(status) =>
-                          updateStatusMutation.mutate({
-                            id: request.id,
-                            status,
-                          })
-                        }
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setIsDetailDialogOpen(true);
+                        }}
+                        className="text-xs"
                       >
-                        <SelectTrigger className="w-24 h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">
-                            In Progress
-                          </SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        Change Status
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1045,9 +1035,6 @@ function ExternalRequestsComponent() {
                         <SelectItem value="in_progress">In Progress</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
-                        <SelectItem value="contacted">Contacted</SelectItem>
-                        <SelectItem value="converted">Converted</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
