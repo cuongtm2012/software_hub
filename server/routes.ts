@@ -1040,24 +1040,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // First try to get as a regular project
-      let project = await storage.getProjectById(parseInt(id));
-      
-      if (project) {
-        // Check permissions for regular projects
-        if (
-          req.user?.role !== 'admin' && 
-          project.client_id !== req.user?.id && 
-          project.assigned_developer_id !== req.user?.id
-        ) {
-          return res.status(403).json({ message: "You do not have permission to view this project" });
-        }
-        
-        return res.json(project);
-      }
-      
-      // If not found as regular project, try as external request
-      const externalRequest = await storage.getExternalRequestById(parseInt(id));
+      // getProjectById actually returns external requests, not regular projects
+      const externalRequest = await storage.getProjectById(parseInt(id));
       
       if (externalRequest) {
         // Check permissions for external requests - user can view their own requests or admin can view all
@@ -1068,7 +1052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "You do not have permission to view this external request" });
         }
         
-        // Transform external request to match project interface
+        // Transform external request to match project interface expected by frontend
         const transformedProject = {
           id: externalRequest.id,
           title: `Project Request #${externalRequest.id}`,

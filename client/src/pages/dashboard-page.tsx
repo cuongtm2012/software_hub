@@ -740,9 +740,9 @@ export default function DashboardPage() {
                       <div className="space-y-4">
                         {/* Show unified projects (external requests + available projects) */}
                         {displayedProjects.map((project: any, index) => (
-                          <div key={`recent-project-${project.id}-${index}-${project.type || 'unknown'}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-4 cursor-pointer" onClick={() => navigate(`/projects/${project.id}`)}>
+                          <div key={`recent-project-${project.id}-${index}-${project.type || 'unknown'}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all duration-200 gap-3 sm:gap-4 cursor-pointer transform hover:scale-[1.02]" onClick={() => navigate(`/projects/${project.id}`)}>
                             <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+                              <h4 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200">
                                 {project.title || `Project Request #${project.id}`}
                               </h4>
                               <p className="text-sm text-gray-600 mb-2">
