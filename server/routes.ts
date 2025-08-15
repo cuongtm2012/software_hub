@@ -4597,6 +4597,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // ============ PAYMENT ROUTES ============
+  
+  // Initiate payment request
+  app.post("/api/payment/initiate", isAuthenticated, async (req, res, next) => {
+    try {
+      const { amount, payment_method, user_info } = req.body;
+      const userId = req.user!.id;
+      
+      // Validate input
+      if (!amount || amount < 1000) {
+        return res.status(400).json({ message: "Minimum amount is 1000 VND" });
+      }
+      
+      if (!payment_method) {
+        return res.status(400).json({ message: "Payment method is required" });
+      }
+
+      // Generate unique order code
+      const order_code = `ORDER_${Date.now()}_${userId}`;
+      
+      // Map frontend payment methods to NganLuong methods
+      const methodMapping: Record<string, string> = {
+        'credit-card': 'VISA',
+        'atm-balance': 'ATM_ONLINE', 
+        'vnpay-qr': 'NL',
+        'qr-bank': 'ATM_ONLINE',
+        'bank-transfer': 'NH_OFFLINE',
+        'mobile-card': 'CARD_ONLINE'
+      };
+      
+      const nlMethod = methodMapping[payment_method] || 'ATM_ONLINE';
+      
+      // Return payment information for frontend processing
+      res.json({
+        success: true,
+        payment_info: {
+          order_code,
+          amount,
+          payment_method: nlMethod,
+          user_info: user_info || {
+            buyer_fullname: req.user!.name,
+            buyer_email: req.user!.email,
+            buyer_mobile: '0123456789'
+          }
+        },
+        message: "Payment initiated successfully"
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Payment success callback
+  app.get("/api/payment/success", async (req, res, next) => {
+    try {
+      const { token, order_code } = req.query;
+      
+      // Here you would verify the payment with NganLuong API
+      // For now, we'll just redirect to success page
+      
+      res.redirect(`/add-funds?status=success&order=${order_code}&token=${token}`);
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Payment failure callback  
+  app.get("/api/payment/failure", async (req, res, next) => {
+    try {
+      const { order_code } = req.query;
+      
+      res.redirect(`/add-funds?status=failure&order=${order_code}`);
+      
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ============ NOTIFICATION ROUTES ============
+  
   // Notification API Routes
   app.get("/api/notifications", isAuthenticated, async (req, res, next) => {
     try {

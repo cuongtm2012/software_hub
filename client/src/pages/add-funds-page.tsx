@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { PaymentForm } from "@/components/payment-form";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   CreditCard,
   Smartphone,
@@ -15,6 +18,8 @@ import {
   ArrowLeft,
   DollarSign,
   Info,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -23,6 +28,33 @@ export default function AddFundsPage() {
   const [selectedMethod, setSelectedMethod] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState<any>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'failure' | null>(null);
+  const { toast } = useToast();
+
+  // Check for payment status in URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    const orderCode = urlParams.get('order');
+    const token = urlParams.get('token');
+
+    if (status === 'success') {
+      setPaymentStatus('success');
+      toast({
+        title: "Payment Successful!",
+        description: `Your payment has been processed successfully. Order: ${orderCode}`,
+      });
+    } else if (status === 'failure') {
+      setPaymentStatus('failure');
+      toast({
+        title: "Payment Failed",
+        description: `Your payment could not be processed. Order: ${orderCode}`,
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   const paymentMethods = [
     {
@@ -85,20 +117,65 @@ export default function AddFundsPage() {
 
   const handlePayment = async () => {
     if (!selectedMethod || !amount || parseInt(amount) < 1000) {
+      toast({
+        title: "Invalid Input",
+        description: "Please select a payment method and enter a minimum amount of 1,000₫",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Call the payment initiation API
+      const response = await apiRequest("/api/payment/initiate", {
+        method: "POST",
+        body: JSON.stringify({
+          amount: parseInt(amount),
+          payment_method: selectedMethod,
+          user_info: {
+            buyer_fullname: "Customer", // Will be filled by backend with user data
+            buyer_email: "customer@example.com",
+            buyer_mobile: "0123456789",
+          },
+        }),
+      });
+
+      if (response.success) {
+        setPaymentInfo(response.payment_info);
+        setShowPaymentForm(true);
+      } else {
+        throw new Error(response.message || "Payment initiation failed");
+      }
+    } catch (error) {
+      toast({
+        title: "Payment Error",
+        description: error instanceof Error ? error.message : "Failed to initiate payment",
+        variant: "destructive",
+      });
+    } finally {
       setIsProcessing(false);
-      alert(
-        `Payment of ${parseInt(amount).toLocaleString("vi-VN")}₫ initiated via ${paymentMethods.find((m) => m.id === selectedMethod)?.title}`,
-      );
-      navigate("/dashboard");
-    }, 2000);
+    }
   };
+
+  const handleCancelPayment = () => {
+    setShowPaymentForm(false);
+    setPaymentInfo(null);
+  };
+
+  // Show payment form if payment info is available
+  if (showPaymentForm && paymentInfo) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+        <Header />
+        <main className="flex-grow container max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-6 flex items-center justify-center">
+          <PaymentForm paymentInfo={paymentInfo} onCancel={handleCancelPayment} />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
@@ -125,6 +202,41 @@ export default function AddFundsPage() {
             </p>
           </div>
         </div>
+
+        {/* Payment Status Alert */}
+        {paymentStatus && (
+          <div className="mb-6">
+            <Card className={paymentStatus === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  {paymentStatus === 'success' ? (
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  ) : (
+                    <XCircle className="h-6 w-6 text-red-600" />
+                  )}
+                  <div>
+                    <h3 className={`font-medium ${paymentStatus === 'success' ? 'text-green-800' : 'text-red-800'}`}>
+                      {paymentStatus === 'success' ? 'Payment Successful!' : 'Payment Failed'}
+                    </h3>
+                    <p className={`text-sm ${paymentStatus === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                      {paymentStatus === 'success' 
+                        ? 'Your funds have been added to your account successfully.' 
+                        : 'There was an issue processing your payment. Please try again.'}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setPaymentStatus(null)}
+                    className={paymentStatus === 'success' ? 'text-green-600 hover:text-green-800' : 'text-red-600 hover:text-red-800'}
+                  >
+                    ×
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="grid gap-5 lg:grid-cols-5">
           {/* Payment Methods */}
