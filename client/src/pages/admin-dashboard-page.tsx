@@ -666,6 +666,7 @@ function ExternalRequestsComponent() {
       setIsDetailDialogOpen(false);
       setStatusReason("");
       setNewStatus("");
+      setIsSubmitting(false);
     },
     onError: () => {
       toast({
@@ -673,6 +674,7 @@ function ExternalRequestsComponent() {
         description: "Failed to update request status",
         variant: "destructive",
       });
+      setIsSubmitting(false);
     },
   });
 
