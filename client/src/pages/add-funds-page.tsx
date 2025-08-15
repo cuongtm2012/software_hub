@@ -101,7 +101,7 @@ export default function AddFundsPage() {
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
       
-      <main className="flex-grow container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-grow container max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-6">
         {/* Header Section */}
         <div className="mb-6">
           <Button 
@@ -113,17 +113,17 @@ export default function AddFundsPage() {
             Back to Dashboard
           </Button>
           
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Add Funds to Account</h1>
-            <p className="text-gray-600">
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Add Funds to Account</h1>
+            <p className="text-sm text-gray-600">
               Choose from various payment methods available below
             </p>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-5 lg:grid-cols-4">
           {/* Payment Methods */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -133,31 +133,31 @@ export default function AddFundsPage() {
               </CardHeader>
               <CardContent>
                 <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod}>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {paymentMethods.map((method) => {
                       const IconComponent = method.icon;
                       return (
                         <div key={method.id} className="relative">
                           <Label 
                             htmlFor={method.id}
-                            className="flex items-center space-x-4 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 cursor-pointer transition-all"
+                            className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 cursor-pointer transition-all"
                           >
                             <RadioGroupItem value={method.id} id={method.id} />
                             
-                            <div className={`p-3 rounded-lg ${method.iconBg}`}>
-                              <IconComponent className={`h-6 w-6 ${method.iconColor}`} />
+                            <div className={`p-2 rounded-lg ${method.iconBg}`}>
+                              <IconComponent className={`h-5 w-5 ${method.iconColor}`} />
                             </div>
                             
                             <div className="flex-grow">
                               <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-gray-900">{method.title}</h3>
+                                <h3 className="font-medium text-gray-900 text-sm">{method.title}</h3>
                                 {method.popular && (
                                   <span className="px-2 py-1 text-xs bg-orange-100 text-orange-600 rounded-full font-medium">
                                     Popular
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600">{method.description}</p>
+                              <p className="text-xs text-gray-600">{method.description}</p>
                               <p className="text-xs text-gray-500 mt-1">Fee: {method.fee}</p>
                             </div>
                           </Label>
@@ -171,18 +171,18 @@ export default function AddFundsPage() {
           </div>
 
           {/* Amount and Summary */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Amount Input */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <DollarSign className="h-4 w-4" />
                   Amount
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <div>
-                  <Label htmlFor="amount">Enter Amount (USD)</Label>
+                  <Label htmlFor="amount" className="text-sm">Enter Amount (USD)</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -191,7 +191,7 @@ export default function AddFundsPage() {
                     onChange={(e) => setAmount(e.target.value)}
                     min="1"
                     step="0.01"
-                    className="text-lg"
+                    className="text-base"
                   />
                 </div>
                 
@@ -215,31 +215,31 @@ export default function AddFundsPage() {
             {/* Payment Summary */}
             {selectedMethod && amount && parseFloat(amount) > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Payment Summary</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Payment Summary</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
+                <CardContent className="space-y-2">
+                  <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Amount:</span>
                     <span className="font-medium">${parseFloat(amount).toFixed(2)}</span>
                   </div>
                   
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Method:</span>
-                    <span className="font-medium text-sm">
+                    <span className="font-medium text-xs">
                       {paymentMethods.find(m => m.id === selectedMethod)?.title}
                     </span>
                   </div>
                   
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Fee:</span>
                     <span className="font-medium">
                       {paymentMethods.find(m => m.id === selectedMethod)?.fee}
                     </span>
                   </div>
                   
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-lg font-semibold">
+                  <div className="border-t pt-2 mt-2">
+                    <div className="flex justify-between text-base font-semibold">
                       <span>Total:</span>
                       <span>${parseFloat(amount).toFixed(2)}</span>
                     </div>
@@ -258,16 +258,16 @@ export default function AddFundsPage() {
 
             {/* Info Card */}
             <Card className="bg-blue-50">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+              <CardContent className="p-3">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-blue-600 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-blue-900 mb-1">Payment Information</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• Funds will be available immediately after successful payment</li>
-                      <li>• All transactions are secured with SSL encryption</li>
+                    <h4 className="font-medium text-blue-900 mb-1 text-sm">Payment Information</h4>
+                    <ul className="text-xs text-blue-800 space-y-1">
+                      <li>• Funds available immediately after payment</li>
+                      <li>• All transactions secured with SSL encryption</li>
                       <li>• Minimum deposit amount is $1.00</li>
-                      <li>• Contact support for any payment issues</li>
+                      <li>• Contact support for payment issues</li>
                     </ul>
                   </div>
                 </div>
@@ -277,14 +277,14 @@ export default function AddFundsPage() {
         </div>
 
         {/* Supported Payment Providers */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Supported Payment Providers</h3>
-          <div className="flex items-center justify-center gap-8 opacity-60">
+        <div className="mt-6 bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-base font-semibold text-gray-900 mb-3">Supported Payment Providers</h3>
+          <div className="flex items-center justify-center gap-6 opacity-60">
             <div className="text-sm font-medium">MoMo</div>
             <div className="text-sm font-medium text-red-600">VNPAY</div>
             <div className="text-sm font-medium text-blue-600">VISA</div>
             <div className="text-sm font-medium text-orange-600">Mastercard</div>
-            <div className="text-gray-500 text-sm">and many other payment methods</div>
+            <div className="text-gray-500 text-xs">and many other payment methods</div>
           </div>
         </div>
       </main>
