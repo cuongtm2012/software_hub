@@ -83,7 +83,7 @@ export default function AddFundsPage() {
   ];
 
   const handlePayment = async () => {
-    if (!selectedMethod || !amount || parseFloat(amount) <= 0) {
+    if (!selectedMethod || !amount || parseInt(amount) < 1000) {
       return;
     }
 
@@ -92,7 +92,7 @@ export default function AddFundsPage() {
     // Simulate payment processing
     setTimeout(() => {
       setIsProcessing(false);
-      alert(`Payment of $${amount} initiated via ${paymentMethods.find(m => m.id === selectedMethod)?.title}`);
+      alert(`Payment of ${parseInt(amount).toLocaleString('vi-VN')}₫ initiated via ${paymentMethods.find(m => m.id === selectedMethod)?.title}`);
       navigate("/dashboard");
     }, 2000);
   };
@@ -182,22 +182,22 @@ export default function AddFundsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label htmlFor="amount" className="text-sm">Enter Amount (USD)</Label>
+                  <Label htmlFor="amount" className="text-sm">Enter Amount (VND)</Label>
                   <Input
                     id="amount"
                     type="number"
-                    placeholder="0.00"
+                    placeholder="0"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    min="1"
-                    step="0.01"
+                    min="1000"
+                    step="1000"
                     className="text-base"
                   />
                 </div>
                 
                 {/* Quick Amount Buttons */}
                 <div className="grid grid-cols-3 gap-2">
-                  {["10", "50", "100"].map((quickAmount) => (
+                  {["100000", "500000", "1000000"].map((quickAmount) => (
                     <Button
                       key={quickAmount}
                       variant="outline"
@@ -205,7 +205,7 @@ export default function AddFundsPage() {
                       onClick={() => setAmount(quickAmount)}
                       className="text-sm"
                     >
-                      ${quickAmount}
+                      {parseInt(quickAmount).toLocaleString('vi-VN')}₫
                     </Button>
                   ))}
                 </div>
@@ -213,7 +213,7 @@ export default function AddFundsPage() {
             </Card>
 
             {/* Payment Summary */}
-            {selectedMethod && amount && parseFloat(amount) > 0 && (
+            {selectedMethod && amount && parseInt(amount) >= 1000 && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm">Payment Summary</CardTitle>
@@ -221,7 +221,7 @@ export default function AddFundsPage() {
                 <CardContent className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Amount:</span>
-                    <span className="font-medium">${parseFloat(amount).toFixed(2)}</span>
+                    <span className="font-medium">{parseInt(amount).toLocaleString('vi-VN')}₫</span>
                   </div>
                   
                   <div className="flex justify-between text-sm">
@@ -241,7 +241,7 @@ export default function AddFundsPage() {
                   <div className="border-t pt-2 mt-2">
                     <div className="flex justify-between text-base font-semibold">
                       <span>Total:</span>
-                      <span>${parseFloat(amount).toFixed(2)}</span>
+                      <span>{parseInt(amount).toLocaleString('vi-VN')}₫</span>
                     </div>
                   </div>
                   
@@ -266,7 +266,7 @@ export default function AddFundsPage() {
                     <ul className="text-xs text-blue-800 space-y-1">
                       <li>• Funds available immediately after payment</li>
                       <li>• All transactions secured with SSL encryption</li>
-                      <li>• Minimum deposit amount is $1.00</li>
+                      <li>• Minimum deposit amount is 1,000₫</li>
                       <li>• Contact support for payment issues</li>
                     </ul>
                   </div>
