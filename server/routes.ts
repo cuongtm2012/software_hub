@@ -1039,22 +1039,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/:id", isAuthenticated, async (req, res, next) => {
     try {
       const { id } = req.params;
-      const project = await storage.getProjectById(parseInt(id));
       
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
+      // First try to get as a regular project
+      let project = await storage.getProjectById(parseInt(id));
+      
+      if (project) {
+        // Check permissions for regular projects
+        if (
+          req.user?.role !== 'admin' && 
+          project.client_id !== req.user?.id && 
+          project.assigned_developer_id !== req.user?.id
+        ) {
+          return res.status(403).json({ message: "You do not have permission to view this project" });
+        }
+        
+        return res.json(project);
       }
       
-      // Check permissions
-      if (
-        req.user?.role !== 'admin' && 
-        project.client_id !== req.user?.id && 
-        project.assigned_developer_id !== req.user?.id
-      ) {
-        return res.status(403).json({ message: "You do not have permission to view this project" });
+      // If not found as regular project, try as external request
+      const externalRequest = await storage.getExternalRequestById(parseInt(id));
+      
+      if (externalRequest) {
+        // Check permissions for external requests - user can view their own requests or admin can view all
+        if (
+          req.user?.role !== 'admin' && 
+          externalRequest.email !== req.user?.email
+        ) {
+          return res.status(403).json({ message: "You do not have permission to view this external request" });
+        }
+        
+        // Transform external request to match project interface
+        const transformedProject = {
+          id: externalRequest.id,
+          title: `Project Request #${externalRequest.id}`,
+          description: externalRequest.project_description,
+          status: externalRequest.status,
+          created_at: externalRequest.created_at,
+          client_name: externalRequest.name,
+          client_email: externalRequest.email,
+          client_phone: externalRequest.phone,
+          type: 'external_request'
+        };
+        
+        return res.json(transformedProject);
       }
       
-      res.json(project);
+      return res.status(404).json({ message: "Project not found" });
     } catch (error) {
       next(error);
     }
