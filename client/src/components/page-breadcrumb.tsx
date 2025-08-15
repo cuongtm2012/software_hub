@@ -81,7 +81,10 @@ export const createBreadcrumbs = {
   ],
   
   // Projects breadcrumbs
-  projects: (): BreadcrumbItem => ({ label: "Projects", href: "/projects" }),
+  projects: (): BreadcrumbItem[] => [
+    { label: "Home", href: "/" },
+    { label: "Projects", isCurrentPage: true }
+  ],
   projectDetail: (projectTitle: string): BreadcrumbItem[] => [
     { label: "Home", href: "/" },
     { label: "Projects", href: "/projects" },
