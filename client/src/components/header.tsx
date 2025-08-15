@@ -60,13 +60,14 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
+            <div className="flex-shrink-0 flex items-center space-x-3">
               <Link to="/">
                 <span className="font-bold text-xl cursor-pointer">
                   <span className="text-white">Software</span>
                   <span className="text-[#ffcc00]">Hub</span>
                 </span>
               </Link>
+              {user && <NotificationBell />}
             </div>
             <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
               <Link
@@ -119,13 +120,11 @@ export function Header() {
                   >
                     Sign up
                   </Button>
-                  <NotificationBell className="absolute -top-1 -right-1" />
                 </div>
               </div>
             ) : (
               <div className="ml-4 flex items-center space-x-3">
                 <CartTrigger />
-                <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
