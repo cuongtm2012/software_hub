@@ -1,0 +1,132 @@
+{
+  "export_timestamp": "2025-08-15T13:38:00Z",
+  "description": "Comprehensive marketplace data including products, orders, and seller profiles",
+  "products": {
+    "total_records": 10,
+    "sample_data": [
+      {
+        "id": 1,
+        "seller_id": 2,
+        "title": "Updated Product Title",
+        "description": "Updated comprehensive test product description with sufficient length to meet requirements",
+        "price": 39.99,
+        "category": "Software Licenses",
+        "status": "approved",
+        "stock_quantity": 10,
+        "total_sales": 5,
+        "created_at": "2025-08-02 06:55:39.432431"
+      },
+      {
+        "id": 2,
+        "seller_id": 2,
+        "title": "Advanced Captcha Solver Tool",
+        "description": "AI-powered captcha solving tool with 99% success rate. Supports reCAPTCHA v2, v3, hCaptcha, and FunCaptcha. Includes API access and documentation.",
+        "price": 500000,
+        "category": "Captcha Solvers",
+        "status": "approved",
+        "stock_quantity": 10,
+        "total_sales": 1,
+        "created_at": "2025-08-02 06:55:39.432431"
+      },
+      {
+        "id": 3,
+        "seller_id": 2,
+        "title": "Social Media Marketing Bot",
+        "description": "Automated social media management tool for Instagram, Facebook, and TikTok. Features auto-posting, engagement automation, and analytics dashboard.",
+        "price": 1200000,
+        "category": "Marketing Tools",
+        "status": "approved",
+        "stock_quantity": 8,
+        "total_sales": 3,
+        "created_at": "2025-08-02 06:55:39.432431"
+      },
+      {
+        "id": 4,
+        "seller_id": 2,
+        "title": "Crypto Trading Bot Premium",
+        "description": "Professional cryptocurrency trading bot with AI algorithms. Supports Binance, Bybit, and other major exchanges. Includes risk management and backtesting.",
+        "price": 8000000,
+        "category": "Crypto Tools",
+        "status": "approved",
+        "stock_quantity": 4,
+        "total_sales": 7,
+        "created_at": "2025-08-02 06:55:39.432431"
+      },
+      {
+        "id": 10,
+        "seller_id": 2,
+        "title": "Gmail NEW - Live Strong - Random IP - Chưa Dịch Vụ | Live Trâu",
+        "description": "Gmail accounts with recovery email, random IP, high quality and strong security",
+        "price": 10000,
+        "category": "Software Licenses",
+        "status": "published",
+        "stock_quantity": 1,
+        "total_sales": 0,
+        "created_at": "2025-08-14 07:33:21.856406"
+      }
+    ]
+  },
+  "orders": {
+    "total_records": 10,
+    "total_revenue": 47700000,
+    "sample_data": [
+      {
+        "id": 1,
+        "buyer_id": 3,
+        "seller_id": 2,
+        "status": "completed",
+        "total_amount": 8000000,
+        "commission_amount": 400000,
+        "payment_method": "credit_card",
+        "buyer_info": {
+          "buyer_name": "Test Buyer",
+          "buyer_email": "buyer@test.com"
+        },
+        "created_at": "2025-08-10 10:18:16.093347"
+      },
+      {
+        "id": 2,
+        "buyer_id": 3,
+        "seller_id": 2,
+        "status": "completed",
+        "total_amount": 1200000,
+        "commission_amount": 60000,
+        "payment_method": "credit_card",
+        "created_at": "2025-08-10 10:18:40.226885"
+      }
+    ]
+  },
+  "seller_profiles": {
+    "total_records": 2,
+    "data": [
+      {
+        "id": 1,
+        "user_id": 2,
+        "business_name": "Test Seller Business",
+        "business_type": "individual",
+        "verification_status": "verified",
+        "commission_rate": 0.10,
+        "total_sales": 0,
+        "created_at": "2025-08-02 13:18:12.626063"
+      },
+      {
+        "id": 2,
+        "user_id": 12,
+        "business_name": "Mua ban San Pham",
+        "business_type": "individual",
+        "tax_id": "888888",
+        "business_address": "zxmzxmzxmzxmzxm",
+        "bank_account": {
+          "bank_code": "VCB",
+          "bank_name": "Vietcombank",
+          "account_number": "91293912391923",
+          "account_holder_name": "Tran Manh Cuong"
+        },
+        "verification_status": "verified",
+        "commission_rate": 0.10,
+        "total_sales": 0,
+        "created_at": "2025-08-10 07:04:58.743184"
+      }
+    ]
+  }
+}

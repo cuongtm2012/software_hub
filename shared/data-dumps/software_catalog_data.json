@@ -1,0 +1,104 @@
+{
+  "export_timestamp": "2025-08-15T13:38:00Z",
+  "table": "softwares",
+  "total_records": 93,
+  "description": "Software catalog with comprehensive collection of approved applications",
+  "categories_breakdown": {
+    "Development Tools & IDEs": 6,
+    "Office & Productivity": 5,
+    "Media Players & Editors": 7,
+    "Security & Privacy": 4,
+    "AI & Big Data Tools": 5,
+    "Web Browsers": 4,
+    "Communication & Collaboration": 5,
+    "Utilities & System Tools": 6
+  },
+  "sample_data": [
+    {
+      "id": 1,
+      "name": "Visual Studio Code",
+      "description": "A powerful code editor with IntelliSense, debugging, and Git integration.",
+      "category_id": 6,
+      "platform": [
+        "windows",
+        "mac",
+        "linux"
+      ],
+      "download_link": "https://code.visualstudio.com/download",
+      "image_url": "https://code.visualstudio.com/assets/images/code-stable.png",
+      "status": "approved",
+      "created_at": "2025-08-01 10:42:11.218774"
+    },
+    {
+      "id": 2,
+      "name": "Adobe Photoshop",
+      "description": "Professional image editing software with advanced features for digital art and photography.",
+      "category_id": 2,
+      "platform": [
+        "windows",
+        "mac"
+      ],
+      "download_link": "https://adobe.com/photoshop",
+      "image_url": "https://www.adobe.com/content/dam/acom/en/products/photoshop/pdp/photoshop-app-icon.svg",
+      "status": "approved",
+      "created_at": "2025-08-01 10:42:11.218774"
+    },
+    {
+      "id": 47,
+      "name": "TensorFlow",
+      "description": "Open-source machine learning framework for developing and training ML models",
+      "category_id": 16,
+      "platform": [
+        "windows",
+        "mac",
+        "linux"
+      ],
+      "download_link": "https://www.tensorflow.org/install",
+      "image_url": "https://www.tensorflow.org/images/tf_logo_social.png",
+      "status": "approved",
+      "created_at": "2025-08-01 16:56:59.045671"
+    },
+    {
+      "id": 77,
+      "name": "OpenGL 4.6",
+      "description": "Cross-platform graphics API for 2D and 3D rendering",
+      "category_id": 12,
+      "platform": [
+        "windows",
+        "mac",
+        "linux"
+      ],
+      "download_link": "https://www.opengl.org/",
+      "image_url": "https://www.opengl.org/img/opengl_logo.png",
+      "status": "approved",
+      "created_at": "2025-08-01 16:58:18.735829"
+    },
+    {
+      "id": 81,
+      "name": "Adobe Animate",
+      "description": "Vector animation and interactive media authoring program",
+      "category_id": 21,
+      "platform": [
+        "windows",
+        "mac"
+      ],
+      "download_link": "https://www.adobe.com/products/animate.html",
+      "image_url": "https://www.adobe.com/content/dam/cc/icons/animate.svg",
+      "status": "approved",
+      "created_at": "2025-08-01 16:58:26.449488"
+    }
+  ],
+  "platform_distribution": {
+    "windows": 85,
+    "mac": 78,
+    "linux": 65,
+    "android": 23,
+    "ios": 20,
+    "web": 15
+  },
+  "status_breakdown": {
+    "approved": 93,
+    "pending": 0,
+    "rejected": 0
+  }
+}

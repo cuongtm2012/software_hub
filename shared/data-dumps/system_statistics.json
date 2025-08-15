@@ -1,0 +1,74 @@
+{
+  "export_timestamp": "2025-08-15T13:38:00Z",
+  "description": "Comprehensive system statistics and analytics",
+  "platform_overview": {
+    "total_users": 5,
+    "active_sellers": 2,
+    "active_buyers": 1,
+    "admins": 1,
+    "verified_sellers": 2
+  },
+  "marketplace_metrics": {
+    "total_products": 10,
+    "approved_products": 6,
+    "published_products": 2,
+    "pending_products": 2,
+    "draft_products": 1,
+    "total_orders": 10,
+    "completed_orders": 10,
+    "total_revenue": 47700000,
+    "total_commission": 1327992.001,
+    "average_order_value": 4770000
+  },
+  "software_catalog_metrics": {
+    "total_software": 93,
+    "approved_software": 93,
+    "categories": 21,
+    "most_popular_category": "Development Tools & IDEs",
+    "platform_coverage": {
+      "windows": 91.4,
+      "mac": 83.9,
+      "linux": 69.9,
+      "android": 24.7,
+      "ios": 21.5,
+      "web": 16.1
+    }
+  },
+  "project_requests": {
+    "total_requests": 8,
+    "in_progress": 6,
+    "completed": 1,
+    "cancelled": 1,
+    "average_budget": 3125000,
+    "most_requested_technologies": [
+      "Node.js",
+      "Python",
+      "AWS",
+      "Docker"
+    ]
+  },
+  "user_engagement": {
+    "total_notifications": 5,
+    "notification_read_rate": 20,
+    "active_sessions": "Variable",
+    "password_resets_pending": 1
+  },
+  "financial_summary": {
+    "total_marketplace_revenue": 47700000,
+    "commission_earned": 1327992.001,
+    "commission_rate_average": 10,
+    "top_selling_product": "Crypto Trading Bot Premium",
+    "top_selling_category": "Crypto Tools"
+  },
+  "geographic_distribution": {
+    "vietnam": "Primary market (VND currency support)",
+    "international": "Global software catalog access"
+  },
+  "technical_infrastructure": {
+    "database": "PostgreSQL",
+    "storage": "Cloudflare R2",
+    "email_service": "SendGrid",
+    "payment_processing": "Stripe",
+    "notifications": "Firebase Cloud Messaging"
+  }
+}

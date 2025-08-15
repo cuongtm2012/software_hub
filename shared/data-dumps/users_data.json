@@ -1,0 +1,78 @@
+{
+  "export_timestamp": "2025-08-15T13:38:00Z",
+  "table": "users",
+  "total_records": 5,
+  "description": "User accounts data including admin, sellers, and buyers",
+  "data": [
+    {
+      "id": 1,
+      "name": "Administrator",
+      "email": "cuongeurovnn@gmail.com",
+      "role": "admin",
+      "profile_data": null,
+      "updated_at": "2025-08-01 10:38:37.709281",
+      "created_at": "2025-08-01 10:38:37.709281",
+      "phone": null,
+      "email_verified": false,
+      "phone_verified": false,
+      "reset_token": null,
+      "reset_token_expires": null
+    },
+    {
+      "id": 2,
+      "name": "Test Seller",
+      "email": "seller@test.com",
+      "role": "seller",
+      "profile_data": null,
+      "updated_at": "2025-08-02 06:54:50.055965",
+      "created_at": "2025-08-02 06:54:50.055965",
+      "phone": null,
+      "email_verified": false,
+      "phone_verified": false,
+      "reset_token": null,
+      "reset_token_expires": null
+    },
+    {
+      "id": 3,
+      "name": "Test Buyer",
+      "email": "buyer@test.com",
+      "role": "buyer",
+      "profile_data": null,
+      "updated_at": "2025-08-02 06:54:50.055965",
+      "created_at": "2025-08-02 06:54:50.055965",
+      "phone": null,
+      "email_verified": false,
+      "phone_verified": false,
+      "reset_token": null,
+      "reset_token_expires": null
+    },
+    {
+      "id": 7,
+      "name": "tran manh cuong",
+      "email": "phiyenvnn@gmail.com",
+      "role": "user",
+      "profile_data": null,
+      "updated_at": "2025-08-09 03:32:35.347637",
+      "created_at": "2025-08-09 03:32:35.347637",
+      "phone": null,
+      "email_verified": false,
+      "phone_verified": false,
+      "reset_token": "a5fe7f7fa41fc68be9524d11f94062f370e6337cef562420a48c8808f7c7c319",
+      "reset_token_expires": "2025-08-10 11:15:04.731"
+    },
+    {
+      "id": 12,
+      "name": "tran manh cuong",
+      "email": "cuongtm2012@gmail.com",
+      "role": "seller",
+      "profile_data": null,
+      "updated_at": "2025-08-10 03:50:34.486592",
+      "created_at": "2025-08-10 03:50:34.486592",
+      "phone": null,
+      "email_verified": false,
+      "phone_verified": false,
+      "reset_token": null,
+      "reset_token_expires": null
+    }
+  ]
+}

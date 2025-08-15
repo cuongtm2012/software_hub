@@ -1,0 +1,113 @@
+{
+  "export_timestamp": "2025-08-15T13:38:00Z",
+  "table": "categories",
+  "total_records": 21,
+  "description": "Software categories for organization and classification",
+  "data": [
+    {
+      "id": 1,
+      "name": "Utilities",
+      "parent_id": null
+    },
+    {
+      "id": 2,
+      "name": "Media",
+      "parent_id": null
+    },
+    {
+      "id": 3,
+      "name": "Communication",
+      "parent_id": null
+    },
+    {
+      "id": 4,
+      "name": "Business",
+      "parent_id": null
+    },
+    {
+      "id": 5,
+      "name": "Games",
+      "parent_id": null
+    },
+    {
+      "id": 6,
+      "name": "Development",
+      "parent_id": null
+    },
+    {
+      "id": 7,
+      "name": "Productivity",
+      "parent_id": null
+    },
+    {
+      "id": 8,
+      "name": "Security",
+      "parent_id": null
+    },
+    {
+      "id": 9,
+      "name": "Office & Productivity",
+      "parent_id": null
+    },
+    {
+      "id": 10,
+      "name": "Media Players & Editors",
+      "parent_id": null
+    },
+    {
+      "id": 11,
+      "name": "Compression & Archiving Tools",
+      "parent_id": null
+    },
+    {
+      "id": 12,
+      "name": "Development Tools & IDEs",
+      "parent_id": null
+    },
+    {
+      "id": 13,
+      "name": "Utilities & System Tools",
+      "parent_id": null
+    },
+    {
+      "id": 14,
+      "name": "Communication & Collaboration",
+      "parent_id": null
+    },
+    {
+      "id": 15,
+      "name": "Security & Privacy",
+      "parent_id": null
+    },
+    {
+      "id": 16,
+      "name": "AI & Big Data Tools",
+      "parent_id": null
+    },
+    {
+      "id": 17,
+      "name": "Web Browsers",
+      "parent_id": null
+    },
+    {
+      "id": 18,
+      "name": "Gaming & Entertainment",
+      "parent_id": null
+    },
+    {
+      "id": 19,
+      "name": "Cloud & Storage",
+      "parent_id": null
+    },
+    {
+      "id": 20,
+      "name": "Education & Learning Software",
+      "parent_id": null
+    },
+    {
+      "id": 21,
+      "name": "Design & Creativity",
+      "parent_id": null
+    }
+  ]
+}

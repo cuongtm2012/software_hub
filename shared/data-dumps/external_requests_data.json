@@ -1,0 +1,44 @@
+{
+  "export_timestamp": "2025-08-15T13:38:00Z",
+  "table": "external_requests",
+  "total_records": 8,
+  "description": "Project requests submitted by clients for custom development",
+  "data": [
+    {
+      "id": 1,
+      "name": "tran",
+      "email": "cuong@gmail.com",
+      "phone": "03892342342",
+      "project_description": "Project Name: lsdflasjdflasdjfas dfa sdf \nCompany: slasjdfasdf\nDescription: asdfasd dfas df á dfa \nRequirements: asdfa sd fa sdf asdf   asdf a sdf  asdf   ádf\nBudget: 1000000\nTimeline: 3 ngay",
+      "status": "in_progress",
+      "created_at": "2025-08-03 15:44:48.700399",
+      "priority": "normal",
+      "admin_notes": null,
+      "updated_at": null
+    },
+    {
+      "id": 2,
+      "name": "Test Seller",
+      "email": "seller@test.com",
+      "phone": "+843892342342",
+      "project_description": "Project Name: lsdflasjdflasdjfas dfa sdf \nCompany: N/A\nDescription: alsfjalsdfasdf asd fa sdf á df asd fa sdf á dfa sd fas dfa\nRequirements: - Next.js\n- Python\nBudget: 1000000\nTimeline: 3 ngay",
+      "status": "in_progress",
+      "created_at": "2025-08-03 16:11:03.766457",
+      "priority": "normal",
+      "admin_notes": null,
+      "updated_at": null
+    },
+    {
+      "id": 8,
+      "name": "Test Buyer",
+      "email": "buyer@test.com",
+      "phone": "0378246333",
+      "project_description": "Project Name: toi muon lam app mua ban tien so\nCompany: fpt\nDescription: lam app that dep co tinh nang giong san binance\nRequirements: - Node.js\n- Python\n- AWS\n- Docker\n- Next.js\n- Laravel\nBudget: 1.000.000 ₫\nTimeline: August 22nd, 2025",
+      "status": "in_progress",
+      "created_at": "2025-08-15 04:15:09.351002",
+      "priority": "normal",
+      "admin_notes": "[2025-08-15T04:43:22.520Z] Status changed to 'in_progress': No reason provided",
+      "updated_at": "2025-08-15 04:43:22.52"
+    }
+  ]
+}
