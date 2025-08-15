@@ -66,6 +66,7 @@ import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
 import DashboardPage from "@/pages/dashboard-page";
 import ChatPage from "@/pages/chat-page";
+import AddFundsPage from "@/pages/add-funds-page";
 
 function Router() {
   return (
@@ -79,6 +80,7 @@ function Router() {
       <ProtectedRoute path="/profile" component={UserProfilePage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/chat" component={ChatPage} />
+      <ProtectedRoute path="/add-funds" component={AddFundsPage} />
       
       {/* Admin Routes - Only accessible to admin users */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />

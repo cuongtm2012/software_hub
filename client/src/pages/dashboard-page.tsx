@@ -305,13 +305,32 @@ export default function DashboardPage() {
             <>
           {/* Welcome Header */}
           <div className="flex flex-col gap-3 mb-4 sm:mb-8 p-3 sm:p-4 lg:p-6 bg-white rounded-lg shadow-sm border">
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
-                Welcome back, {user.name}!
-              </h1>
-              <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
-                Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
-              </p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+                  Welcome back, {user.name}!
+                </h1>
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
+                  Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => navigate('/add-funds')}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  size="default"
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Add Funds
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/profile')}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  View Profile
+                </Button>
+              </div>
             </div>
           </div>
 
