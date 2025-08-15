@@ -95,7 +95,7 @@ export interface IStorage {
   createExternalRequest(request: InsertExternalRequest): Promise<ExternalRequest>;
   getExternalRequests(status?: string, limit?: number, offset?: number): Promise<{ requests: ExternalRequest[], total: number }>;
   getExternalRequestById(id: number): Promise<ExternalRequest | undefined>;
-  updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
+  updateExternalRequestStatus(id: number, status: string, reason?: string): Promise<ExternalRequest | undefined>;
   convertExternalRequestToProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest>;
   getAllExternalRequests(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ requests: ExternalRequest[], total: number }>;
   assignDeveloperToExternalRequest(id: number, developerId: number): Promise<ExternalRequest | undefined>;
@@ -657,10 +657,35 @@ export class DatabaseStorage implements IStorage {
     return request;
   }
   
-  async updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined> {
+  async updateExternalRequestStatus(id: number, status: string, reason?: string): Promise<ExternalRequest | undefined> {
+    // Get the current request to append to existing admin notes
+    const currentRequest = await db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.id, id))
+      .limit(1);
+
+    if (!currentRequest.length) {
+      return undefined;
+    }
+
+    // Format status change note with timestamp
+    const timestamp = new Date().toISOString();
+    const statusChangeNote = `[${timestamp}] Status changed to '${status}': ${reason || 'No reason provided'}`;
+    
+    // Append to existing admin notes or create new
+    const existingNotes = currentRequest[0].admin_notes || '';
+    const updatedNotes = existingNotes 
+      ? `${existingNotes}\n\n${statusChangeNote}`
+      : statusChangeNote;
+
     const [request] = await db
       .update(externalRequests)
-      .set({ status: status as any })
+      .set({ 
+        status: status as any,
+        admin_notes: updatedNotes,
+        updated_at: new Date()
+      })
       .where(eq(externalRequests.id, id))
       .returning();
       

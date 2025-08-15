@@ -621,6 +621,9 @@ function ExternalRequestsComponent() {
   const [selectedRequest, setSelectedRequest] =
     useState<ExternalRequest | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusReason, setStatusReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     data: requestsData,
@@ -631,8 +634,8 @@ function ExternalRequestsComponent() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      console.log("Updating external request status:", { id, status });
+    mutationFn: async ({ id, status, reason }: { id: number; status: string; reason: string }) => {
+      console.log("Updating external request status:", { id, status, reason });
       const response = await fetch(
         `/api/admin/external-requests/${id}/status`,
         {
@@ -641,7 +644,7 @@ function ExternalRequestsComponent() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({ status, reason }),
         },
       );
       console.log("External request status update response:", response.status);
@@ -660,6 +663,9 @@ function ExternalRequestsComponent() {
         description: "Request status updated successfully",
       });
       refetch();
+      setIsDetailDialogOpen(false);
+      setStatusReason("");
+      setNewStatus("");
     },
     onError: () => {
       toast({
@@ -892,9 +898,17 @@ function ExternalRequestsComponent() {
         </Table>
       </div>
 
-      {/* Request Detail Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* Enhanced Request Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={(open) => {
+        setIsDetailDialogOpen(open);
+        if (!open) {
+          setNewStatus("");
+          setStatusReason("");
+        } else if (selectedRequest) {
+          setNewStatus(selectedRequest.status);
+        }
+      }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Request Details</DialogTitle>
             <DialogDescription>
@@ -902,96 +916,187 @@ function ExternalRequestsComponent() {
             </DialogDescription>
           </DialogHeader>
           {selectedRequest && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-semibold">
-                    Contact Information
-                  </Label>
-                  <div className="mt-2 space-y-1">
+            <div className="space-y-6">
+              {/* Project Description with Enhanced Formatting */}
+              <div className="bg-white border rounded-lg p-6">
+                <div className="space-y-4">
+                  {selectedRequest.title && (
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Project Name:</h4>
+                      <p className="text-gray-700">{selectedRequest.title}</p>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900 mb-2">Company/Contact:</h4>
+                    <p className="text-gray-700">{selectedRequest.name}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900 mb-2">Description:</h4>
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {selectedRequest.project_description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedRequest.requirements && (
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Requirements:</h4>
+                      <div className="bg-gray-50 p-4 rounded-md">
+                        <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                          {selectedRequest.requirements}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(selectedRequest.budget || selectedRequest.budget_range) && (
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Budget:</h4>
+                      <p className="text-green-600 font-medium">
+                        {selectedRequest.budget || selectedRequest.budget_range}
+                      </p>
+                    </div>
+                  )}
+
+                  {(selectedRequest.timeline || selectedRequest.deadline) && (
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Timeline:</h4>
+                      <p className="text-gray-700">
+                        {selectedRequest.timeline || 
+                         (selectedRequest.deadline && `Deadline: ${new Date(selectedRequest.deadline).toLocaleDateString()}`)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-lg text-gray-900 mb-3">Contact Information</h4>
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-400" />
-                      <span>{selectedRequest.name}</span>
+                      <span className="text-gray-700">{selectedRequest.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-gray-400" />
-                      <span>{selectedRequest.email}</span>
+                      <span className="text-gray-700">{selectedRequest.email}</span>
                     </div>
                     {selectedRequest.phone && (
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        <span>{selectedRequest.phone}</span>
+                        <span className="text-gray-700">{selectedRequest.phone}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                <div>
-                  <Label className="text-sm font-semibold">
-                    Project Details
-                  </Label>
-                  <div className="mt-2 space-y-1">
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-lg text-gray-900 mb-3">Project Details</h4>
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>
-                        Created:{" "}
-                        {new Date(
-                          selectedRequest.created_at,
-                        ).toLocaleDateString()}
+                      <span className="text-gray-700">
+                        Created: {new Date(selectedRequest.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    {selectedRequest.budget && (
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          selectedRequest.status === "completed"
+                            ? "default"
+                            : selectedRequest.status === "in_progress"
+                              ? "secondary"
+                              : selectedRequest.status === "pending"
+                                ? "outline"
+                                : "destructive"
+                        }
+                      >
+                        Current Status: {selectedRequest.status}
+                      </Badge>
+                    </div>
+                    {selectedRequest.assigned_developer_id && (
                       <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-gray-400" />
-                        <span>Budget: {selectedRequest.budget}</span>
-                      </div>
-                    )}
-                    {selectedRequest.deadline && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                        <span>
-                          Deadline:{" "}
-                          {new Date(
-                            selectedRequest.deadline,
-                          ).toLocaleDateString()}
-                        </span>
+                        <Badge variant="secondary">
+                          Developer #{selectedRequest.assigned_developer_id}
+                        </Badge>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-              <div>
-                <Label className="text-sm font-semibold">
-                  Project Description
-                </Label>
-                <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm">
-                    {selectedRequest.project_description}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label className="text-sm font-semibold">Status</Label>
-                  <Select
-                    value={selectedRequest.status}
-                    onValueChange={(status) => {
-                      updateStatusMutation.mutate({
-                        id: selectedRequest.id,
-                        status,
-                      });
-                      setSelectedRequest({ ...selectedRequest, status });
-                    }}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+              {/* Status Change Section */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h4 className="font-bold text-lg text-gray-900 mb-4">Change Status</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold">New Status</Label>
+                    <Select value={newStatus} onValueChange={setNewStatus}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select new status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value="contacted">Contacted</SelectItem>
+                        <SelectItem value="converted">Converted</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {newStatus && newStatus !== selectedRequest.status && (
+                    <div>
+                      <Label className="text-sm font-semibold">Reason for Status Change *</Label>
+                      <textarea
+                        className="w-full mt-2 p-3 border rounded-md resize-none"
+                        rows={3}
+                        value={statusReason}
+                        onChange={(e) => setStatusReason(e.target.value)}
+                        placeholder="Please provide a reason for this status change..."
+                        required
+                      />
+                    </div>
+                  )}
+                  
+                  {newStatus && newStatus !== selectedRequest.status && (
+                    <Button
+                      onClick={() => {
+                        if (!statusReason.trim()) {
+                          toast({
+                            title: "Validation Error",
+                            description: "Please provide a reason for the status change",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setIsSubmitting(true);
+                        updateStatusMutation.mutate({
+                          id: selectedRequest.id,
+                          status: newStatus,
+                          reason: statusReason,
+                        });
+                      }}
+                      disabled={isSubmitting || updateStatusMutation.isPending}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isSubmitting || updateStatusMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Updating...
+                        </>
+                      ) : (
+                        "Submit Status Change"
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

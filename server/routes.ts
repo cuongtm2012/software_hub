@@ -2049,13 +2049,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/external-requests/:id/status", adminMiddleware, async (req, res, next) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, reason } = req.body;
       
       if (!status) {
         return res.status(400).json({ message: "Status is required" });
       }
       
-      const externalRequest = await storage.updateExternalRequestStatus(parseInt(id), status);
+      if (!reason || !reason.trim()) {
+        return res.status(400).json({ message: "Reason for status change is required" });
+      }
+      
+      const externalRequest = await storage.updateExternalRequestStatus(parseInt(id), status, reason);
       
       if (!externalRequest) {
         return res.status(404).json({ message: "External request not found" });
