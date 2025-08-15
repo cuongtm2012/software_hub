@@ -89,6 +89,7 @@ export interface IStorage {
   getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined>;
   getReviewById(id: number): Promise<Review | undefined>;
   deleteReview(id: number, userId: number): Promise<boolean>;
+  updateReview(id: number, userId: number, updates: Partial<InsertReview>): Promise<Review | undefined>;
   
   // External Project Requests
   createExternalRequest(request: InsertExternalRequest): Promise<ExternalRequest>;

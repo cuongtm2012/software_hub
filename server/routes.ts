@@ -114,12 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create session (simplified)
       
       req.session.userId = user.id;
-      req.session.user = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      };
+      req.session.user = user;
       
       res.json({ 
         id: user.id, 
