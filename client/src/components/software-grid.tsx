@@ -52,17 +52,17 @@ export function SoftwareGrid({ softwares, onSoftwareClick, isLoading = false }: 
           className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-200"
         >
           <div className="relative pb-[56.25%] bg-gray-100">
-            {software.image_url ? (
-              <img 
-                src={software.image_url} 
-                alt={`${software.name} screenshot`} 
-                className="absolute h-full w-full object-cover" 
-              />
-            ) : (
-              <div className="absolute h-full w-full flex items-center justify-center bg-gray-100">
-                <Monitor className="h-12 w-12 text-gray-400" />
-              </div>
-            )}
+            <img 
+              src={software.image_url || "https://code.visualstudio.com/assets/images/code-stable.png"} 
+              alt={`${software.name} screenshot`} 
+              className="absolute h-full w-full object-cover" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (target.src !== "https://code.visualstudio.com/assets/images/code-stable.png") {
+                  target.src = "https://code.visualstudio.com/assets/images/code-stable.png";
+                }
+              }}
+            />
             <div className="absolute top-0 right-0 mt-2 mr-2">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 Free
