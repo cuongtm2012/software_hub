@@ -58,9 +58,15 @@ export function SoftwareGrid({ softwares, onSoftwareClick, isLoading = false }: 
               className="absolute h-full w-full object-cover" 
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                if (target.src !== "https://code.visualstudio.com/assets/images/code-stable.png") {
-                  target.src = "https://code.visualstudio.com/assets/images/code-stable.png";
+                const fallbackUrl = "https://code.visualstudio.com/assets/images/code-stable.png";
+                if (target.src !== fallbackUrl) {
+                  console.log(`Image failed to load for ${software.name}: ${target.src}, switching to fallback`);
+                  target.src = fallbackUrl;
                 }
+              }}
+              onLoad={(e) => {
+                const target = e.target as HTMLImageElement;
+                console.log(`Image loaded successfully for ${software.name}: ${target.src}`);
               }}
             />
             <div className="absolute top-0 right-0 mt-2 mr-2">
@@ -73,7 +79,7 @@ export function SoftwareGrid({ softwares, onSoftwareClick, isLoading = false }: 
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-medium text-gray-900">{software.name}</h3>
               <div className="flex items-center">
-                <StarRating rating={4.5} size="sm" />
+                <StarRating value={4.5} size="sm" />
                 <span className="ml-1 text-sm text-gray-600">4.5</span>
               </div>
             </div>
