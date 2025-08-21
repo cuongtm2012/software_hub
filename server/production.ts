@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { serveStatic, log } from "./vite";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 app.use(express.json());
@@ -21,6 +22,7 @@ app.use(session({
   }
 }));
 
+// Logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -44,12 +46,35 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      console.log(`${new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      })} [express] ${logLine}`);
     }
   });
 
   next();
 });
+
+// Production static file serving (no Vite)
+function serveStatic(app: express.Express) {
+  const distPath = path.resolve(process.cwd(), "client", "dist");
+
+  if (!fs.existsSync(distPath)) {
+    throw new Error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+    );
+  }
+
+  app.use(express.static(distPath));
+
+  // fall through to index.html if the file doesn't exist
+  app.use("*", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
+  });
+}
 
 (async () => {
   const server = await registerRoutes(app);
@@ -62,24 +87,17 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  const isProduction = process.env.NODE_ENV === "production";
-  
-  if (!isProduction) {
-    // Dynamic import to avoid bundling Vite in production
-    const { setupVite } = await import("./vite");
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // Only serve static files in production (no Vite dependency)
+  serveStatic(app);
 
   // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = 5000;
   server.listen(port, () => {
-    log(`serving on port ${port}`);
+    console.log(`${new Date().toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit", 
+      second: "2-digit",
+      hour12: true,
+    })} [express] serving on port ${port}`);
   });
 })();

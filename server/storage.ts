@@ -1662,7 +1662,8 @@ export class DatabaseStorage implements IStorage {
       .values({
         user_id: userId,
         software_id: softwareId,
-        version
+        version,
+        downloaded_at: new Date()
       })
       .returning();
     return download;
@@ -1728,47 +1729,6 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedReview;
-  }
-
-  async createUserDownload(userId: number, softwareId: number, version: string): Promise<UserDownload> {
-    const [download] = await db
-      .insert(userDownloads)
-      .values({
-        user_id: userId,
-        software_id: softwareId,
-        version,
-        downloaded_at: new Date()
-      })
-      .returning();
-    return download;
-  }
-
-  async getUserDownloads(userId: number): Promise<UserDownload[]> {
-    return await db
-      .select()
-      .from(userDownloads)
-      .where(eq(userDownloads.user_id, userId))
-      .orderBy(desc(userDownloads.downloaded_at));
-  }
-
-  async getUserReviews(userId: number): Promise<Review[]> {
-    return await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.user_id, userId))
-      .orderBy(desc(reviews.created_at));
-  }
-
-  async updateReview(id: number, userId: number, reviewData: Partial<InsertReview>): Promise<Review | undefined> {
-    const [review] = await db
-      .update(reviews)
-      .set(reviewData)
-      .where(and(
-        eq(reviews.id, id),
-        eq(reviews.user_id, userId)
-      ))
-      .returning();
-    return review || undefined;
   }
 
   // Seller Profile Management
@@ -2270,6 +2230,244 @@ export class DatabaseStorage implements IStorage {
       .returning({ id: notifications.id });
     
     return result.length > 0;
+  }
+
+  // Additional missing method implementations
+  async getSoftwareReviews(softwareId: number): Promise<Review[]> {
+    return this.getReviewsBySoftwareId(softwareId);
+  }
+
+  async getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined> {
+    const [review] = await db
+      .select()
+      .from(reviews)
+      .where(
+        and(
+          eq(reviews.user_id, userId),
+          eq(reviews.target_id, softwareId),
+          eq(reviews.target_type, 'software')
+        )
+      );
+    return review;
+  }
+
+  async getReviewById(id: number): Promise<Review | undefined> {
+    const [review] = await db.select().from(reviews).where(eq(reviews.id, id));
+    return review;
+  }
+
+  async getDeveloperQuoteForProject(developerId: number, projectId: number): Promise<Quote | undefined> {
+    const [quote] = await db
+      .select()
+      .from(quotes)
+      .where(
+        and(
+          eq(quotes.developer_id, developerId),
+          eq(quotes.project_id, projectId)
+        )
+      );
+    return quote;
+  }
+
+  async getQuoteById(id: number): Promise<Quote | undefined> {
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, id));
+    return quote;
+  }
+
+  async rejectOtherQuotes(projectId: number, acceptedQuoteId: number): Promise<void> {
+    await db
+      .update(quotes)
+      .set({ status: 'rejected' })
+      .where(
+        and(
+          eq(quotes.project_id, projectId),
+          sql`${quotes.id} != ${acceptedQuoteId}`
+        )
+      );
+  }
+
+  async getDeveloperPortfolio(developerId: number): Promise<Portfolio[]> {
+    return this.getPortfoliosByDeveloperId(developerId);
+  }
+
+  async getPortfolioReviews(portfolioId: number): Promise<PortfolioReview[]> {
+    return this.getPortfolioReviewsByPortfolioId(portfolioId);
+  }
+
+  async getClientReviewForPortfolio(clientId: number, portfolioId: number): Promise<PortfolioReview | undefined> {
+    const [review] = await db
+      .select()
+      .from(portfolioReviews)
+      .where(
+        and(
+          eq(portfolioReviews.user_id, clientId),
+          eq(portfolioReviews.portfolio_id, portfolioId)
+        )
+      );
+    return review;
+  }
+
+  async getAllOrders(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ orders: Order[], total: number }> {
+    const conditions = [];
+    
+    if (params?.status && params.status !== 'all') {
+      conditions.push(eq(orders.status, params.status));
+    }
+    
+    if (params?.search) {
+      conditions.push(
+        or(
+          ilike(orders.id.toString(), `%${params.search}%`),
+          ilike(orders.total_amount.toString(), `%${params.search}%`)
+        )
+      );
+    }
+    
+    // Get total count
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+    const total = totalResult[0]?.count || 0;
+    
+    // Get orders
+    const ordersList = await db
+      .select()
+      .from(orders)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(orders.created_at))
+      .limit(params?.limit || 100)
+      .offset(params?.offset || 0);
+    
+    return {
+      orders: ordersList,
+      total: Number(total)
+    };
+  }
+
+  async getBuyerOrders(buyerId: number): Promise<Order[]> {
+    return this.getOrdersByBuyerId(buyerId);
+  }
+
+  async getSellerOrders(sellerId: number): Promise<Order[]> {
+    return this.getOrdersBySellerId(sellerId);
+  }
+
+  async getAllPayments(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ payments: Payment[], total: number }> {
+    const conditions = [];
+    
+    if (params?.status && params.status !== 'all') {
+      conditions.push(eq(payments.status, params.status));
+    }
+    
+    if (params?.search) {
+      conditions.push(
+        or(
+          ilike(payments.amount.toString(), `%${params.search}%`),
+          ilike(payments.stripe_payment_intent_id || '', `%${params.search}%`)
+        )
+      );
+    }
+    
+    // Get total count
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(payments)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+    const total = totalResult[0]?.count || 0;
+    
+    // Get payments
+    const paymentsList = await db
+      .select()
+      .from(payments)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(payments.created_at))
+      .limit(params?.limit || 100)
+      .offset(params?.offset || 0);
+    
+    return {
+      payments: paymentsList,
+      total: Number(total)
+    };
+  }
+
+  async getClientPayments(clientId: number): Promise<Payment[]> {
+    return db
+      .select()
+      .from(payments)
+      .where(eq(payments.client_id, clientId))
+      .orderBy(desc(payments.created_at));
+  }
+
+  async getDeveloperPayments(developerId: number): Promise<Payment[]> {
+    return db
+      .select()
+      .from(payments)
+      .where(eq(payments.developer_id, developerId))
+      .orderBy(desc(payments.created_at));
+  }
+
+  async getBuyerPayments(buyerId: number): Promise<Payment[]> {
+    return db
+      .select()
+      .from(payments)
+      .innerJoin(orders, eq(payments.order_id, orders.id))
+      .where(eq(orders.buyer_id, buyerId))
+      .orderBy(desc(payments.created_at))
+      .then(results => results.map(r => r.payments));
+  }
+
+  async getSellerPayments(sellerId: number): Promise<Payment[]> {
+    return db
+      .select()
+      .from(payments)
+      .innerJoin(orders, eq(payments.order_id, orders.id))
+      .innerJoin(orderItems, eq(orders.id, orderItems.order_id))
+      .innerJoin(products, eq(orderItems.product_id, products.id))
+      .where(eq(products.seller_id, sellerId))
+      .orderBy(desc(payments.created_at))
+      .then(results => results.map(r => r.payments));
+  }
+
+  async updatePaymentStatus(id: number, status: string): Promise<Payment | undefined> {
+    const [updatedPayment] = await db
+      .update(payments)
+      .set({ 
+        status: status as any,
+        updated_at: new Date()
+      })
+      .where(eq(payments.id, id))
+      .returning();
+    return updatedPayment;
+  }
+
+  async getProductReviews(productId: number): Promise<ProductReview[]> {
+    return this.getProductReviewsByProductId(productId);
+  }
+
+  async getUserReviewForProduct(userId: number, productId: number): Promise<ProductReview | undefined> {
+    const [review] = await db
+      .select()
+      .from(productReviews)
+      .where(
+        and(
+          eq(productReviews.buyer_id, userId),
+          eq(productReviews.product_id, productId)
+        )
+      );
+    return review;
+  }
+
+  async updateProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest | undefined> {
+    const [updatedProject] = await db
+      .update(externalRequests)
+      .set({
+        ...updates,
+        updated_at: new Date()
+      })
+      .where(eq(externalRequests.id, id))
+      .returning();
+    return updatedProject;
   }
 }
 
