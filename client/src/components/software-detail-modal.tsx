@@ -116,6 +116,7 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl p-0 overflow-hidden" aria-describedby="software-description">
+        <div id="software-description" className="sr-only">Software details and reviews</div>
         {software && (
           <>
             <DialogTitle className="sr-only">{software.name} Details</DialogTitle>

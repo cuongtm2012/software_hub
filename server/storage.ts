@@ -451,6 +451,11 @@ export class DatabaseStorage implements IStorage {
         );
       }
       
+      if (params.platform) {
+        // For array fields, use the @> operator to check if array contains the platform
+        conditions.push(sql`${softwares.platform} @> ${JSON.stringify([params.platform])}`);
+      }
+      
       // Get total count first
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
