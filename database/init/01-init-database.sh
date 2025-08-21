@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Starting database initialization..."
+echo "Starting database initialization with corrected data..."
 
 # Function to wait for PostgreSQL to be ready
 wait_for_postgres() {
@@ -24,29 +24,69 @@ wait_for_postgres() {
 # Wait for PostgreSQL to be ready
 wait_for_postgres
 
-echo "Creating database if it doesn't exist..."
+echo "Dropping and recreating database for clean import..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-    SELECT 'CREATE DATABASE softwarehub' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'softwarehub')\gexec
+    -- Terminate any existing connections to the softwarehub database
+    SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'softwarehub' AND pid <> pg_backend_pid();
+    
+    -- Drop the database if it exists
+    DROP DATABASE IF EXISTS softwarehub;
+    
+    -- Create fresh database
+    CREATE DATABASE softwarehub;
 EOSQL
 
 # Switch to the softwarehub database for subsequent operations
 export PGDATABASE=softwarehub
 
-echo "Database initialization completed!"
+echo "Database recreated successfully!"
 
-# Import dump files if they exist
-if [ "$(ls -A /dumps/*.sql 2>/dev/null)" ]; then
-    echo "Found SQL dump files, importing..."
-    for dump_file in /dumps/*.sql; do
-        if [ -f "$dump_file" ]; then
-            echo "Importing $dump_file..."
-            psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "softwarehub" -f "$dump_file"
-            echo "Successfully imported $dump_file"
-        fi
-    done
+# Import the corrected dump file
+echo "Importing corrected dump_data.sql..."
+if [ -f "/dumps/dump_data.sql" ]; then
+    echo "Found corrected dump file, importing..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "softwarehub" -f "/dumps/dump_data.sql"
+    echo "Successfully imported corrected dump_data.sql"
+    
+    # Fix ownership issues from the dump
+    echo "Fixing table ownership..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "softwarehub" <<-EOSQL
+        -- Change ownership of all tables, sequences, and types to postgres
+        DO \$\$
+        DECLARE
+            r RECORD;
+        BEGIN
+            -- Change table ownership
+            FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+            LOOP
+                EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO postgres';
+            END LOOP;
+            
+            -- Change sequence ownership
+            FOR r IN SELECT sequencename FROM pg_sequences WHERE schemaname = 'public'
+            LOOP
+                EXECUTE 'ALTER SEQUENCE public.' || quote_ident(r.sequencename) || ' OWNER TO postgres';
+            END LOOP;
+            
+            -- Change type ownership
+            FOR r IN SELECT typname FROM pg_type t JOIN pg_namespace n ON t.typnamespace = n.oid WHERE n.nspname = 'public' AND t.typtype = 'e'
+            LOOP
+                EXECUTE 'ALTER TYPE public.' || quote_ident(r.typname) || ' OWNER TO postgres';
+            END LOOP;
+        END
+        \$\$;
+        
+        -- Grant all privileges
+        GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;
+        GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres;
+        GRANT USAGE ON ALL TYPES IN SCHEMA public TO postgres;
+EOSQL
+    
+    echo "Table ownership fixed successfully"
+    
 else
-    echo "No SQL dump files found in /dumps directory"
-    echo "Creating basic schema using Drizzle..."
+    echo "ERROR: dump_data.sql not found in /dumps directory!"
+    echo "Creating basic schema as fallback..."
     
     # Create basic tables that are commonly needed
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "softwarehub" <<-EOSQL
@@ -91,4 +131,4 @@ EOSQL
     echo "Basic schema created successfully"
 fi
 
-echo "Database setup completed successfully!"
+echo "Database setup completed successfully with corrected data!"
