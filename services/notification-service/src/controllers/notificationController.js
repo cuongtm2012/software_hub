@@ -250,6 +250,61 @@ class NotificationController {
     }
   }
 
+  // FCM token registration
+  async registerToken(req, res) {
+    try {
+      const { userId, token, deviceType = 'web' } = req.body;
+
+      if (!userId || !token) {
+        return res.status(400).json({
+          error: 'Missing required fields: userId, token'
+        });
+      }
+
+      const result = await fcmService.registerToken(userId, token, deviceType);
+      
+      res.json({
+        success: true,
+        result,
+        message: 'FCM token registered successfully'
+      });
+
+    } catch (error) {
+      console.error('Failed to register FCM token:', error);
+      res.status(500).json({
+        error: 'Failed to register FCM token',
+        message: error.message
+      });
+    }
+  }
+
+  // Get service status
+  async getServiceStatus(req, res) {
+    try {
+      const fcmStatus = fcmService.getStatus();
+      
+      const status = {
+        service: 'notification-service',
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        fcm: fcmStatus,
+        dependencies: {
+          postgresql: !!global.pgPool,
+          redis: !!global.redisClient
+        }
+      };
+
+      res.json(status);
+
+    } catch (error) {
+      console.error('Failed to get service status:', error);
+      res.status(500).json({
+        error: 'Failed to get service status',
+        message: error.message
+      });
+    }
+  }
+
   // Test notification methods for all scenarios
 
   // 1. User Activity Alerts

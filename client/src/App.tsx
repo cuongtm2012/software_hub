@@ -8,44 +8,50 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
-import AuthPage from "@/pages/auth-page";
+import AuthPageNew from "@/pages/auth-page-new";
 import UserProfilePage from "@/pages/user-profile-page";
 import { ProtectedRoute, AdminRoute } from "@/lib/protected-route";
 import { useAuth, AuthProvider } from "@/hooks/use-auth";
+import { CartProvider } from "@/hooks/use-cart";
+import { ShoppingCartSidebar } from "@/components/shopping-cart-sidebar";
+import { FloatingChatButton } from "@/components/floating-chat-button";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { 
-  Card, 
-  CardContent, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Pagination } from "@/components/pagination";
 import { StarRating } from "@/components/ui/star-rating";
-import { 
-  Loader2, 
-  Code, 
-  ArrowRight, 
-  Monitor, 
-  BookOpen, 
-  ShoppingCart, 
+import {
+  Loader2,
+  Code,
+  ArrowRight,
+  Monitor,
+  BookOpen,
+  ShoppingCart,
   Smartphone
 } from "lucide-react";
 
-// Phase 2: Code Service & Product Build Module
 import ProjectsPage from "@/pages/projects-page";
 import ProjectNewPage from "@/pages/project-new-page";
 import ProjectDetailPage from "@/pages/project-detail-page";
 import ProjectRequestPage from "@/pages/project-request-page";
+import ProjectRequestSuccessPage from "@/pages/project-request-success-page";
 import PortfolioPage from "@/pages/portfolio-page";
 import PortfolioNewPage from "@/pages/portfolio-new-page";
 import PortfolioDetailPage from "@/pages/portfolio-detail-page";
+import ITServicesPage from "@/pages/it-services-page";
 
 // Phase 3: Marketplace & Software
 import MarketplacePage from "@/pages/marketplace-page";
 import SoftwareListPage from "@/pages/software-list-page";
+import CoursesListPage from "@/pages/courses-list-page";
+import CourseDetailPage from "@/pages/course-detail-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import { ProductDetailEcommerce } from "@/pages/product-detail-ecommerce";
@@ -54,451 +60,68 @@ import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
 
 // Admin
 import AdminDashboardPage from "@/pages/admin-dashboard-page";
+import SellerDashboardPage from "@/pages/seller-dashboard-page";
+import BuyerDashboardPage from "@/pages/buyer-dashboard-page";
 import AdminUsersPage from "@/pages/admin/users-page";
 import AdminUsersChatPage from "@/pages/admin/users-chat-page";
 import AdminSoftwareManagementPage from "@/pages/admin/software-management-page";
 import EmailTestPage from "@/pages/admin/email-test-page";
 import PushNotificationTestPage from "@/pages/admin/push-notification-test-page";
+import AdminProjectsPage from "@/pages/admin/projects-page";
 import EndToEndTestPage from "@/pages/admin/end-to-end-test-page";
 import { SellerApprovalPage } from "@/pages/admin/seller-approval-page";
-import ProjectEditPage from "@/pages/admin/project-edit-page";
+import AdminExternalRequestsPage from "@/pages/admin/external-requests-page";
 import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
 import DashboardPage from "@/pages/dashboard-page";
-import ChatPage from "@/pages/chat-page";
-import AddFundsPage from "@/pages/add-funds-page";
+// import ChatPage from "@/pages/chat-page"; // Disabled - use floating chat widget
 
 function Router() {
   return (
     <Switch>
       {/* Public Routes - Available to all users */}
       <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth" component={AuthPageNew} />
+      <Route path="/auth/set-password" component={() => {
+        const SetPasswordPage = lazy(() => import("@/pages/set-password-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <SetPasswordPage />
+          </Suspense>
+        );
+      }} />
       <Route path="/request-project" component={ProjectRequestPage} />
-      
+      <Route path="/request-project/success" component={ProjectRequestSuccessPage} />
+
       {/* Protected Routes - Available to logged-in users */}
       <ProtectedRoute path="/profile" component={UserProfilePage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
-      <ProtectedRoute path="/chat" component={ChatPage} />
-      <ProtectedRoute path="/add-funds" component={AddFundsPage} />
-      
+
+      {/* Role-Based Dashboards */}
+      <ProtectedRoute path="/seller" component={SellerDashboardPage} roles={['seller']} />
+      <ProtectedRoute path="/buyer" component={BuyerDashboardPage} roles={['buyer', 'user']} />
+      {/* Chat page disabled - use floating chat widget instead */}
+      {/* <ProtectedRoute path="/chat" component={ChatPage} /> */}
+
       {/* Admin Routes - Only accessible to admin users */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} roles={['admin']} />
       <ProtectedRoute path="/admin/users/chat" component={AdminUsersChatPage} roles={['admin']} />
       <ProtectedRoute path="/admin/software" component={AdminSoftwareManagementPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/projects" component={AdminProjectsPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/external-requests" component={AdminExternalRequestsPage} roles={['admin']} />
       <ProtectedRoute path="/admin/seller-approvals" component={SellerApprovalPage} roles={['admin']} />
       <ProtectedRoute path="/admin/email-tests" component={EmailTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/push-notifications" component={PushNotificationTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/end-to-end-tests" component={EndToEndTestPage} roles={['admin']} />
-      <ProtectedRoute path="/admin/projects/:id/edit" component={ProjectEditPage} roles={['admin']} />
-      <ProtectedRoute path="/projects/new" component={ProjectNewPage} />
-      <ProtectedRoute path="/projects/:id/edit" component={ProjectNewPage} roles={['admin']} />
-      
+
+
+
       {/* Phase 2: Code Service & Product Build Module */}
-      <Route path="/it-services" component={() => {
-        const { user, isLoading } = useAuth();
-        const [, navigate] = useLocation();
-        
-        if (isLoading) {
-          return (
-            <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
-              <Header />
-              <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
-                </div>
-              </main>
-            </div>
-          );
-        }
-        
-        return (
-          <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
-            <Header />
-            <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-              <div className="bg-white shadow-sm rounded-lg p-8 text-center">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">IT Services & Solutions</h1>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  Connect with skilled developers for your custom software projects. Submit project requests, 
-                  receive quotes, and collaborate securely through our platform.
-                </p>
-                
-                {user ? (
-                  <div className="space-y-6 max-w-lg mx-auto">
-                    <div className="bg-[#f0f7ff] p-6 rounded-lg border border-[#004080]/20">
-                      <h2 className="text-lg font-medium text-[#004080] mb-2">Welcome, {user.name}!</h2>
-                      <p className="text-gray-600 mb-4">
-                        You're logged in and ready to create a new project request. Our platform connects you 
-                        with skilled developers who can bring your ideas to life.
-                      </p>
-                      <div className="flex gap-3 flex-wrap justify-center">
-                        <Button 
-                          onClick={() => navigate('/request-project')}
-                          className="bg-[#004080] hover:bg-[#003366] text-white"
-                        >
-                          Create New Project
-                        </Button>
-                        <Button 
-                          onClick={() => navigate('/dashboard')}
-                          variant="outline"
-                          className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
-                        >
-                          My Dashboard
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-6 max-w-lg mx-auto">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h2 className="text-lg font-medium text-[#004080] mb-2">Ready to start your project?</h2>
-                      <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
-                      <div className="flex gap-3 flex-wrap justify-center">
-                        <Button 
-                          onClick={() => navigate('/auth')}
-                          className="bg-[#004080] hover:bg-[#003366] text-white"
-                        >
-                          Login to Post a Project
-                        </Button>
-                        <Button 
-                          onClick={() => navigate('/request-project')}
-                          variant="outline"
-                          className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
-                        >
-                          Submit Request as Guest
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </main>
-            
-            {/* Successful Projects Section */}
-            <div id="projects" className="py-16 bg-gray-50 scroll-mt-16">
-              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl font-bold text-[#004080] mb-3">Successful Projects</h2>
-                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Browse our showcase of completed projects from top developers in our community
-                  </p>
-                </div>
+      <Route path="/it-services" component={ITServicesPage} />
 
-                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-                  {[
-                    {
-                      id: 1,
-                      name: "Corporate Pulse",
-                      description: "A modern responsive company introduction website with interactive elements and integrated CMS.",
-                      technologies: ["React", "TypeScript", "Tailwind CSS", "Strapi CMS"],
-                      outcome: "Increased client inquiries by 47% within 3 months of launch.",
-                      icon: Monitor
-                    },
-                    {
-                      id: 2,
-                      name: "PageTurner Plus",
-                      description: "Comprehensive bookstore management system with inventory tracking, sales analytics, and customer loyalty features.",
-                      technologies: ["Node.js", "Express", "PostgreSQL", "Redis"],
-                      outcome: "Reduced inventory management time by 65% for a chain with 12 locations.",
-                      icon: BookOpen
-                    },
-                    {
-                      id: 3,
-                      name: "StyleStock",
-                      description: "Clothing store management system with barcode integration, seasonal inventory planning, and staff scheduling.",
-                      technologies: ["React", "Django", "PostgreSQL", "Docker"],
-                      outcome: "Improved stock accuracy to 99.8% and reduced overstocking by 32%.",
-                      icon: ShoppingCart
-                    },
-                    {
-                      id: 4,
-                      name: "QuickBite",
-                      description: "Fast food delivery mobile app with real-time tracking, customizable orders, and loyalty program.",
-                      technologies: ["React Native", "Firebase", "Google Maps API", "Stripe"],
-                      outcome: "Processed over 15,000 orders in first month with 4.8/5 user rating.",
-                      icon: Smartphone
-                    },
-                    {
-                      id: 5,
-                      name: "TaleScape",
-                      description: "Interactive story reading mobile app with audio narration, animations, and parental controls.",
-                      technologies: ["Flutter", "Firebase", "AWS Polly", "SVG Animation"],
-                      outcome: "Featured in App Store's \"Apps We Love\" with 250,000+ downloads.",
-                      icon: BookOpen
-                    },
-                    {
-                      id: 6,
-                      name: "CineFlix+",
-                      description: "Online movie streaming platform with personalized recommendations and social sharing features.",
-                      technologies: ["Next.js", "GraphQL", "MongoDB", "AWS S3"],
-                      outcome: "Achieved 98.5% uptime with smooth playback for 50,000+ concurrent users.",
-                      icon: Monitor
-                    },
-                    {
-                      id: 7,
-                      name: "SportsPulse",
-                      description: "Real-time sports news and scores mobile app with personalized alerts and live commentary.",
-                      technologies: ["React Native", "Socket.io", "Node.js", "MongoDB"],
-                      outcome: "Retained 78% of users after 3 months with average 22 minutes daily use.",
-                      icon: Smartphone
-                    },
-                    {
-                      id: 8,
-                      name: "VistaTour",
-                      description: "Tourism marketplace connecting travelers with local guides and unique experiences.",
-                      technologies: ["Vue.js", "Laravel", "MySQL", "Mapbox"],
-                      outcome: "Facilitated 10,000+ bookings across 45 countries in first year.",
-                      icon: Monitor
-                    }
-                  ].map((project) => {
-                    const IconComponent = project.icon || Code;
-                    return (
-                      <Card key={project.id} className="bg-white hover:shadow-lg transition-all duration-300 h-full flex flex-col">
-                        <div className="relative pt-[60%] bg-gray-50">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <IconComponent className="h-12 w-12 text-[#004080]/30" />
-                          </div>
-                          <div className="absolute top-2 right-2">
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                              Completed
-                            </span>
-                          </div>
-                        </div>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg text-[#004080]">{project.name}</CardTitle>
-                          <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
-                        </CardHeader>
-                        <CardContent className="py-2 flex-grow">
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {project.technologies.map((tech, index) => (
-                              <span 
-                                key={index} 
-                                className="inline-block px-2 py-1 text-xs rounded-full bg-[#004080]/10 text-[#004080]"
-                              >
-                                {tech}
-                              </span>
-                            ))}
-                          </div>
-                          <p className="text-sm text-gray-700 border-l-2 border-[#ffcc00] pl-3 italic">
-                            {project.outcome}
-                          </p>
-                        </CardContent>
-                        <CardFooter>
-                          <Button
-                            variant="link"
-                            className="text-[#004080] hover:text-[#003366] p-0 h-auto flex items-center gap-1"
-                            onClick={() => navigate('/request-project')}
-                          >
-                            Request Similar Project <ArrowRight className="ml-1 h-4 w-4" />
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    );
-                  })}
-                </div>
-                
 
-              </div>
-            </div>
-            
-            <Footer />
-          </div>
-        );
-      }} />
-      
-      <Route path="/projects" component={() => {
-        const { user, isLoading } = useAuth();
-        const [, navigate] = useLocation();
-        
-        if (isLoading) {
-          return (
-            <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
-              <Header />
-              <main className="flex-grow container flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
-              </main>
-              <Footer />
-            </div>
-          );
-        }
-        
-        if (!user) {
-          return (
-            <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
-              <Header />
-              <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div className="bg-white shadow-sm rounded-lg p-8 text-center">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Collaboration Platform</h1>
-                  <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                    Connect with skilled developers for your custom software projects. Submit project requests, 
-                    receive quotes, and collaborate securely through our platform.
-                  </p>
-                  <div className="space-y-6 max-w-lg mx-auto">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h2 className="text-lg font-medium text-[#004080] mb-2">For Clients</h2>
-                      <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
-                      <div className="flex gap-3 flex-wrap justify-center">
-                        <Button 
-                          onClick={() => navigate('/auth')}
-                          className="bg-[#004080] hover:bg-[#003366] text-white"
-                        >
-                          Login to Post a Project
-                        </Button>
-                        <Button 
-                          onClick={() => navigate('/request-project')}
-                          variant="outline"
-                          className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
-                        >
-                          Submit Request as Guest
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </main>
-              
-              {/* Phase 2: Code Service & Product Build Module - Portfolio Showcase */}
-              <div className="py-16 bg-gray-50">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-[#004080] mb-3">Successful Projects</h2>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                      Browse our showcase of completed projects from top developers in our community
-                    </p>
-                  </div>
-
-                  <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-                    {[
-                      {
-                        id: 1,
-                        name: "Corporate Pulse",
-                        description: "A modern responsive company introduction website with interactive elements and integrated CMS.",
-                        technologies: ["React", "TypeScript", "Tailwind CSS", "Strapi CMS"],
-                        outcome: "Increased client inquiries by 47% within 3 months of launch.",
-                        icon: Monitor
-                      },
-                      {
-                        id: 2,
-                        name: "PageTurner Plus",
-                        description: "Comprehensive bookstore management system with inventory tracking, sales analytics, and customer loyalty features.",
-                        technologies: ["Node.js", "Express", "PostgreSQL", "Redis"],
-                        outcome: "Reduced inventory management time by 65% for a chain with 12 locations.",
-                        icon: BookOpen
-                      },
-                      {
-                        id: 3,
-                        name: "StyleStock",
-                        description: "Clothing store management system with barcode integration, seasonal inventory planning, and staff scheduling.",
-                        technologies: ["React", "Django", "PostgreSQL", "Docker"],
-                        outcome: "Improved stock accuracy to 99.8% and reduced overstocking by 32%.",
-                        icon: ShoppingCart
-                      },
-                      {
-                        id: 4,
-                        name: "QuickBite",
-                        description: "Fast food delivery mobile app with real-time tracking, customizable orders, and loyalty program.",
-                        technologies: ["React Native", "Firebase", "Google Maps API", "Stripe"],
-                        outcome: "Processed over 15,000 orders in first month with 4.8/5 user rating.",
-                        icon: Smartphone
-                      },
-                      {
-                        id: 5,
-                        name: "TaleScape",
-                        description: "Interactive story reading mobile app with audio narration, animations, and parental controls.",
-                        technologies: ["Flutter", "Firebase", "AWS Polly", "SVG Animation"],
-                        outcome: "Featured in App Store's \"Apps We Love\" with 250,000+ downloads.",
-                        icon: BookOpen
-                      },
-                      {
-                        id: 6,
-                        name: "CineFlix+",
-                        description: "Online movie streaming platform with personalized recommendations and social sharing features.",
-                        technologies: ["Next.js", "GraphQL", "MongoDB", "AWS S3"],
-                        outcome: "Achieved 98.5% uptime with smooth playback for 50,000+ concurrent users.",
-                        icon: Monitor
-                      },
-                      {
-                        id: 7,
-                        name: "SportsPulse",
-                        description: "Real-time sports news and scores mobile app with personalized alerts and live commentary.",
-                        technologies: ["React Native", "Socket.io", "Node.js", "MongoDB"],
-                        outcome: "Retained 78% of users after 3 months with average 22 minutes daily use.",
-                        icon: Smartphone
-                      },
-                      {
-                        id: 8,
-                        name: "VistaTour",
-                        description: "Tourism marketplace connecting travelers with local guides and unique experiences.",
-                        technologies: ["Vue.js", "Laravel", "MySQL", "Mapbox"],
-                        outcome: "Facilitated 10,000+ bookings across 45 countries in first year.",
-                        icon: Monitor
-                      }
-                    ].map((project) => {
-                      const IconComponent = project.icon || Code;
-                      return (
-                        <Card key={project.id} className="bg-white hover:shadow-lg transition-all duration-300 h-full flex flex-col">
-                          <div className="relative pt-[60%] bg-gray-50">
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <IconComponent className="h-12 w-12 text-[#004080]/30" />
-                            </div>
-                            <div className="absolute top-2 right-2">
-                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                                Completed
-                              </span>
-                            </div>
-                          </div>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg text-[#004080]">{project.name}</CardTitle>
-                            <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
-                          </CardHeader>
-                          <CardContent className="py-2 flex-grow">
-                            <div className="flex flex-wrap gap-1 mb-3">
-                              {project.technologies.map((tech, index) => (
-                                <span 
-                                  key={index} 
-                                  className="inline-block px-2 py-1 text-xs rounded-full bg-[#004080]/10 text-[#004080]"
-                                >
-                                  {tech}
-                                </span>
-                              ))}
-                            </div>
-                            <p className="text-sm text-gray-700 border-l-2 border-[#ffcc00] pl-3 italic">
-                              {project.outcome}
-                            </p>
-                          </CardContent>
-                          <CardFooter>
-                            <Button
-                              variant="link"
-                              className="text-[#004080] hover:text-[#003366] p-0 h-auto flex items-center gap-1"
-                              onClick={() => navigate('/request-project')}
-                            >
-                              Request Similar Project <ArrowRight className="ml-1 h-4 w-4" />
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                  
-                  <div className="flex justify-center mt-8">
-                    <Button 
-                      className="bg-[#004080] hover:bg-[#003366] text-white"
-                      onClick={() => navigate('/request-project')}
-                    >
-                      Request Custom Project <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <Footer />
-            </div>
-          );
-        }
-        return <ProjectsPage />;
-      }} />
       <ProtectedRoute path="/projects/new" roles={['client', 'admin']} component={ProjectNewPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/portfolios" roles={['developer', 'admin']} component={PortfolioPage} />
@@ -511,11 +134,11 @@ function Router() {
           queryKey: ['/api/portfolios', { page, limit }],
           queryFn: undefined,
         });
-        
+
         const handlePageChange = (newPage: number) => {
           setPage(newPage);
         };
-        
+
         return (
           <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
             <Header />
@@ -527,14 +150,14 @@ function Router() {
                     Browse work samples from our skilled developers
                   </p>
                 </div>
-                <Button 
+                <Button
                   onClick={() => navigate('/auth')}
                   className="bg-[#004080] hover:bg-[#003366] text-white"
                 >
                   Login to Hire Developers
                 </Button>
               </div>
-              
+
               {isLoading ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
@@ -546,7 +169,7 @@ function Router() {
                       <Card key={portfolio.id} className="bg-white hover:shadow-md transition-shadow">
                         <div className="relative pt-[60%] bg-gray-100">
                           {portfolio.images && portfolio.images[0] ? (
-                            <img 
+                            <img
                               src={portfolio.images[0]}
                               alt={portfolio.title}
                               className="absolute inset-0 h-full w-full object-cover"
@@ -560,12 +183,12 @@ function Router() {
                         <CardHeader className="pb-2">
                           <CardTitle className="text-lg">{portfolio.title}</CardTitle>
                           <div className="flex items-center mt-1">
-                            <StarRating 
-                              value={portfolio.reviews?.length 
-                                ? portfolio.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / portfolio.reviews.length 
+                            <StarRating
+                              value={portfolio.reviews?.length
+                                ? portfolio.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / portfolio.reviews.length
                                 : 0
-                              } 
-                              size="sm" 
+                              }
+                              size="sm"
                             />
                             <span className="text-sm text-gray-500 ml-2">
                               ({portfolio.reviews?.length || 0} reviews)
@@ -588,7 +211,7 @@ function Router() {
                       </Card>
                     ))}
                   </div>
-                  
+
                   {(portfolios as any).total > limit && (
                     <Pagination
                       currentPage={page}
@@ -620,10 +243,12 @@ function Router() {
         );
       }} />
       <Route path="/portfolios/:id" component={PortfolioDetailPage} />
-      
+
       {/* Software List */}
       <Route path="/software" component={SoftwareListPage} />
-      
+      <Route path="/courses" component={CoursesListPage} />
+      <Route path="/courses/:id" component={CourseDetailPage} />
+
       {/* Phase 3: Marketplace */}
       <Route path="/marketplace" component={() => {
         const MarketplacePageNew = lazy(() => import("@/pages/marketplace-page-new"));
@@ -633,7 +258,7 @@ function Router() {
           </Suspense>
         );
       }} />
-      
+
       {/* Seller Registration & Management */}
       <Route path="/seller/register" component={() => {
         const SellerRegistrationPage = lazy(() => import("@/pages/seller-registration-page"));
@@ -685,17 +310,41 @@ function Router() {
         );
       }} roles={['seller', 'admin']} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
-      <Route path="/marketplace/product/:id" component={ProductDetailEcommerce} />
+      <Route path="/marketplace/product/:id" component={ProductDetailPage} />
+      <Route path="/marketplace/checkout" component={() => {
+        const CheckoutPageNew = lazy(() => import("@/pages/checkout-page-new"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <CheckoutPageNew />
+          </Suspense>
+        );
+      }} />
+      <Route path="/marketplace/:id" component={() => {
+        const MarketplaceDetailPage = lazy(() => import("@/pages/marketplace-detail-page"));
+        return (
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div></div>}>
+            <MarketplaceDetailPage />
+          </Suspense>
+        );
+      }} />
+      <Route path="/marketplace/order-success/:orderId" component={() => {
+        const OrderSuccessPage = lazy(() => import("@/pages/order-success-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <OrderSuccessPage />
+          </Suspense>
+        );
+      }} />
       <Route path="/order-details/:id" component={OrderDetailsPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/seller/products" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/marketplace/seller/new" roles={['seller', 'admin']} component={MarketplaceSellerNewPage} />
       <ProtectedRoute path="/marketplace/seller/edit/:id" roles={['seller', 'admin']} component={MarketplaceSellerEditPage} />
       <ProtectedRoute path="/marketplace/orders" roles={['buyer', 'admin']} component={MarketplaceOrdersPage} />
-      
+
       {/* Admin routes */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
-      
+
       {/* Test Login */}
       <Route path="/test-login" component={() => {
         const TestLoginPage = lazy(() => import("@/pages/test-login-page"));
@@ -705,7 +354,7 @@ function Router() {
           </Suspense>
         );
       }} />
-      
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -715,10 +364,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <ShoppingCartSidebar />
+            <FloatingChatButton />
+            <Router />
+          </TooltipProvider>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

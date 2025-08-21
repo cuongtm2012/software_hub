@@ -1,747 +1,484 @@
-import { useState, useEffect } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useLocation } from "wouter";
-import { format } from "date-fns";
-import {
-  ExternalRequest,
-  InsertExternalRequest,
-  insertExternalRequestSchema,
-} from "@shared/schema";
-
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  AlertCircle,
-  ArrowLeft,
-  CheckCircle2,
-  Code,
-  FileCog,
-  FileCode,
-  Loader2,
-  HelpCircle,
-  Plus,
-  CalendarIcon,
-} from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import {
-  PageBreadcrumb,
-  createBreadcrumbs,
-} from "@/components/page-breadcrumb";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+  ArrowLeft,
+  Plus,
+  X,
+  Calendar,
+  DollarSign,
+  Loader2
+} from "lucide-react";
 
-// Phone number regex for international format (including Vietnam +84 with leading 0)
-const phoneRegex = /^[\+]?[0-9][\d\s\-\(\)]{6,18}$/;
-
-// VND currency formatting functions
-const formatVND = (amount: number): string => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-const formatVNDInput = (value: string): string => {
-  // Remove non-numeric characters
-  const numericValue = value.replace(/[^\d]/g, "");
-  if (!numericValue) return "";
-
-  const amount = parseInt(numericValue);
-  
-  // Format with VND currency symbol and thousand separators
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-const parseVNDInput = (value: string): number => {
-  // Remove non-numeric characters and parse
-  const numericValue = value.replace(/[^\d]/g, "");
-  return numericValue ? parseInt(numericValue) : 0;
-};
-
-// Project request form schema
-const projectRequestSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z
-    .string()
-    .min(1, "Phone number is required")
-    .regex(
-      phoneRegex,
-      "Please enter a valid phone number (e.g., +84378246333, 0378246333, or 1234567890)",
-    ),
-  company: z.string().optional(),
-  project_name: z.string().min(3, "Project name must be at least 3 characters"),
-  description: z.string().min(20, "Description must be at least 20 characters"),
-  requirements: z
-    .string()
-    .min(10, "Requirements must be at least 10 characters"),
-  budget: z.string().optional().refine((val) => {
-    if (!val) return true; // Optional field
-    const numericValue = parseVNDInput(val);
-    return numericValue >= 100000;
-  }, "Minimum budget is 100,000 VND"),
-  timeline: z.date().optional(),
-});
-
-// Popular technology suggestions
-const techSuggestions = [
-  "React",
-  "Node.js",
-  "Python",
-  "AWS",
-  "Docker",
-  "MongoDB",
-  "PostgreSQL",
-  "TypeScript",
-  "Next.js",
-  "Express.js",
-  "Vue.js",
-  "Angular",
-  "Laravel",
-  "Django",
-  "Flask",
-  "Redis",
-  "Kubernetes",
-  "Firebase",
-  "GraphQL",
-  "REST API",
+const popularTechs = [
+  'React', 'Node.js', 'Python', 'AWS', 'Docker', 'MongoDB',
+  'Express.js', 'Vue.js', 'Angular', 'Laravel', 'Flask',
+  'Redux', 'Kubernetes', 'Firebase', 'GraphQL', 'REST API'
 ];
 
-type ProjectRequestFormValues = z.infer<typeof projectRequestSchema>;
-
 export default function ProjectRequestPage() {
-  const { toast } = useToast();
   const [, navigate] = useLocation();
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>(
-    [],
-  );
-  const [budgetDisplay, setBudgetDisplay] = useState("");
-
-  // Get current user data
-  const { data: user } = useQuery({
-    queryKey: ["/api/user"],
-    retry: false,
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    companyName: '',
+    projectName: '',
+    description: '',
+    technicalRequirements: '',
+    budget: '',
+    deliveryDate: '',
   });
 
-  // Form definition
-  const form = useForm<ProjectRequestFormValues>({
-    resolver: zodResolver(projectRequestSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      company: "",
-      project_name: "",
-      description: "",
-      requirements: "",
-      budget: "",
-      timeline: undefined,
-    },
-  });
+  const [selectedTechs, setSelectedTechs] = useState<string[]>([]);
+  const [customTech, setCustomTech] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Pre-fill user info when user data is available
-  useEffect(() => {
-    if (user && typeof user === "object" && "name" in user && "email" in user) {
-      form.setValue("name", (user as any).name || "");
-      form.setValue("email", (user as any).email || "");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Clear any previous errors
+    setError(null);
+
+    // Validate required fields
+    if (!formData.fullName.trim()) {
+      setError('Vui lòng nhập họ và tên');
+      return;
     }
-  }, [user, form]);
-
-  // Function to add technology suggestion and prevent duplicates
-  const addTechSuggestion = (tech: string) => {
-    const currentRequirements = form.getValues("requirements");
-    const currentTechs = currentRequirements
-      .split(/[,\n]/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    // Check if technology is already mentioned
-    const techExists = currentTechs.some(
-      (existing) =>
-        existing.toLowerCase().includes(tech.toLowerCase()) ||
-        tech.toLowerCase().includes(existing.toLowerCase()),
-    );
-
-    if (techExists) {
-      toast({
-        title: "Technology already mentioned",
-        description: `${tech} is already included in your requirements.`,
-        variant: "default",
-      });
+    if (!formData.email.trim()) {
+      setError('Vui lòng nhập email');
+      return;
+    }
+    if (!formData.phone.trim()) {
+      setError('Vui lòng nhập số điện thoại');
+      return;
+    }
+    if (!formData.projectName.trim()) {
+      setError('Vui lòng nhập tên dự án');
+      return;
+    }
+    if (!formData.description.trim()) {
+      setError('Vui lòng nhập mô tả dự án');
       return;
     }
 
-    // Add technology to requirements
-    const newRequirements = currentRequirements
-      ? `${currentRequirements}\n- ${tech}`
-      : `- ${tech}`;
+    // Set loading state
+    setIsSubmitting(true);
 
-    form.setValue("requirements", newRequirements);
-    setSelectedTechnologies((prev) => [...prev, tech]);
+    try {
+      // Prepare request data
+      const requestData = {
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        company_name: formData.companyName,
+        title: formData.projectName, // Add project name as title
+        project_description: formData.description,
+        requirements: `${formData.technicalRequirements}\n\nCông nghệ: ${selectedTechs.join(', ')}`,
+        budget: formData.budget || null,
+        timeline: formData.deliveryDate || null,
+        status: 'pending'
+      };
 
-    toast({
-      title: "Technology added",
-      description: `${tech} has been added to your requirements.`,
-    });
+      // Submit to API
+      const response = await fetch('/api/external-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+        credentials: 'include', // Include cookies for session
+      });
+
+      if (!response.ok) {
+        throw new Error('Không thể gửi yêu cầu. Vui lòng thử lại.');
+      }
+
+      const result = await response.json();
+      console.log('✅ Request submitted successfully:', result);
+
+      // Navigate to success page
+      navigate('/request-project/success');
+    } catch (err) {
+      console.error('❌ Error submitting request:', err);
+      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi. Vui lòng thử lại.');
+      setIsSubmitting(false);
+    }
   };
 
-  // Create external request mutation
-  const createExternalRequestMutation = useMutation({
-    mutationFn: async (data: ProjectRequestFormValues) => {
-      // Budget is already formatted as currency string
-      const budgetFormatted = data.budget || "N/A";
-      
-      // Format timeline display
-      const timelineFormatted = data.timeline 
-        ? format(data.timeline, "PPP")
-        : "N/A";
+  const toggleTech = (tech: string) => {
+    if (selectedTechs.includes(tech)) {
+      setSelectedTechs(selectedTechs.filter(t => t !== tech));
+    } else {
+      setSelectedTechs([...selectedTechs, tech]);
+    }
+  };
 
-      const response = await apiRequest("POST", "/api/external-requests", {
-        name: data.name,
-        email: data.email,
-        phone: data.phone || "",
-        // Combine all project details into the project_description field
-        project_description: `
-Project Name: ${data.project_name}
-Company: ${data.company || "N/A"}
-Description: ${data.description}
-Requirements: ${data.requirements}
-Budget: ${budgetFormatted}
-Timeline: ${timelineFormatted}
-        `.trim(),
-        status: "pending",
-      });
-
-      return await response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Project request submitted",
-        description:
-          "We have received your project request and will contact you soon.",
-      });
-      setFormSubmitted(true);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error submitting request",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Form submission handler
-  function onSubmit(data: ProjectRequestFormValues) {
-    createExternalRequestMutation.mutate(data);
-  }
-
-  if (formSubmitted) {
-    return (
-      <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
-        <Header />
-        <PageBreadcrumb items={createBreadcrumbs.projectRequest()} />
-        <main className="flex-grow">
-          <div className="container py-10">
-            <Alert className="max-w-3xl mx-auto bg-green-50 border-green-200">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <AlertTitle className="text-green-800 text-xl font-semibold">
-                Request Submitted Successfully!
-              </AlertTitle>
-              <AlertDescription className="text-green-700 mt-2">
-                <p className="mb-3">
-                  Thank you for submitting your project request. Our team will
-                  review your requirements and get back to you soon.
-                </p>
-                <p className="mb-3">
-                  Please check your email for confirmation. If you have any
-                  urgent questions, feel free to contact us directly.
-                </p>
-                <div className="flex flex-wrap gap-4 mt-4">
-                  <Button
-                    variant="outline"
-                    className="bg-white text-green-600 border-green-300 hover:bg-green-50"
-                    onClick={() => setFormSubmitted(false)}
-                  >
-                    Submit Another Request
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-white text-[#004080] border-[#004080] hover:bg-[#004080]/10"
-                    onClick={() => navigate("/dashboard")}
-                  >
-                    Return to Project Dashboard
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                    onClick={() => navigate("/")}
-                  >
-                    Return to Home
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  const addCustomTech = () => {
+    if (customTech && !selectedTechs.includes(customTech)) {
+      setSelectedTechs([...selectedTechs, customTech]);
+      setCustomTech('');
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-      <PageBreadcrumb items={createBreadcrumbs.projectRequest()} />
-      <main className="flex-grow bg-gray-50">
-        <div className="container px-4 sm:px-6 py-12 max-w-6xl mx-auto">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-8">
-              <div className="flex-1">
-                <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-gray-100 mb-6">
-                  <h1 className="text-3xl font-bold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-[#004080] to-[#0066cc]">
-                    Request a Custom Project
-                  </h1>
-                  <p className="text-gray-600 mb-6">
-                    Fill out the form below to request a custom software
-                    development project. Our team will review your requirements
-                    and contact you shortly.
-                  </p>
 
-                  <Form {...form}>
-                    <form
-                      onSubmit={form.handleSubmit(onSubmit)}
-                      className="space-y-6"
+      <main className="flex-grow py-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Về trang chủ
+          </button>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Main Form */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Yêu cầu dự án tùy chỉnh</h1>
+                <p className="text-gray-600 mb-8">
+                  Điền vào form bên dưới để yêu cầu dự án phát triển phần mềm tùy chỉnh. Team của chúng tôi sẽ xem xét yêu cầu và liên hệ với bạn sớm.
+                </p>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Personal Information */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Họ và tên <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        placeholder="Nguyễn Văn A"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Email <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="you@example.com"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Số điện thoại <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="+84 123 456 789"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Tên công ty
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.companyName}
+                        onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                        placeholder="Công ty của bạn (tùy chọn)"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Project Information */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Chi tiết dự án</h3>
+
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Tên dự án <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.projectName}
+                          onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+                          placeholder="Tên ngắn gọn cho dự án của bạn"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Mô tả dự án <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          required
+                          rows={5}
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          placeholder="Mô tả chi tiết dự án của bạn. Bạn đang cố gắng giải quyết vấn đề gì?"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Yêu cầu kỹ thuật
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={formData.technicalRequirements}
+                          onChange={(e) => setFormData({ ...formData, technicalRequirements: e.target.value })}
+                          placeholder="Liệt kê các tính năng chính, công nghệ hoặc yêu cầu cụ thể"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Công nghệ phổ biến
+                        </label>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {popularTechs.map((tech) => (
+                            <button
+                              key={tech}
+                              type="button"
+                              onClick={() => toggleTech(tech)}
+                              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedTechs.includes(tech)
+                                ? 'bg-slate-700 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                              {tech}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={customTech}
+                            onChange={(e) => setCustomTech(e.target.value)}
+                            placeholder="Thêm công nghệ khác"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTech())}
+                          />
+                          <button
+                            type="button"
+                            onClick={addCustomTech}
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                          >
+                            <Plus className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        {selectedTechs.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {selectedTechs.map((tech) => (
+                              <span
+                                key={tech}
+                                className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-sm"
+                              >
+                                {tech}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleTech(tech)}
+                                  className="hover:bg-slate-200 rounded-full p-0.5"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Ngân sách dự tính (VND)
+                          </label>
+                          <div className="relative">
+                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                              type="text"
+                              value={formData.budget}
+                              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                              placeholder="VD: 10,000,000"
+                              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Ngày giao dự kiến
+                          </label>
+                          <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                              type="date"
+                              value={formData.deliveryDate}
+                              onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
+                              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="border-t pt-6">
+                    {error && (
+                      <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-600 font-medium">{error}</p>
+                      </div>
+                    )}
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full px-8 py-4 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                      size="lg"
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700">
-                                Your Name{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Full name"
-                                  className="border-gray-300 focus-visible:ring-[#004080]"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700">
-                                Email Address{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Your email"
-                                  className="border-gray-300 focus-visible:ring-[#004080]"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700">
-                                Phone Number{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="e.g., +1234567890 or 1234567890"
-                                  className="border-gray-300 focus-visible:ring-[#004080]"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="company"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700">
-                                Company Name
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Your company (optional)"
-                                  className="border-gray-300 focus-visible:ring-[#004080]"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="project_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-700">
-                              Project Name{" "}
-                              <span className="text-red-500">*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="A brief name for your project"
-                                className="border-gray-300 focus-visible:ring-[#004080]"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-700">
-                              Project Description{" "}
-                              <span className="text-red-500">*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Describe your project in detail. What problem are you trying to solve?"
-                                className="min-h-[120px] border-gray-300 focus-visible:ring-[#004080]"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="requirements"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-700 flex items-center gap-2">
-                              Technical Requirements{" "}
-                              <span className="text-red-500">*</span>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <HelpCircle className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" />
-                                  </TooltipTrigger>
-                                  <TooltipContent className="max-w-xs">
-                                    <p>
-                                      List key features, technologies, or
-                                      specific requirements relevant to your
-                                      project.
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="List key features, technologies, or specific requirements"
-                                className="min-h-[120px] border-gray-300 focus-visible:ring-[#004080]"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-
-                            {/* Technology Suggestions */}
-                            <div className="mt-3">
-                              <p className="text-sm text-gray-600 mb-2">
-                                Popular technologies (click to add):
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {techSuggestions.map((tech) => (
-                                  <Badge
-                                    key={tech}
-                                    variant="outline"
-                                    className="cursor-pointer hover:bg-[#004080] hover:text-white transition-colors text-xs px-2 py-1"
-                                    onClick={() => addTechSuggestion(tech)}
-                                  >
-                                    <Plus className="h-3 w-3 mr-1" />
-                                    {tech}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="budget"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700">
-                                Estimated Budget (VND)
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="₫100.000"
-                                  className="border-gray-300 focus-visible:ring-[#004080]"
-                                  value={budgetDisplay}
-                                  onChange={(e) => {
-                                    const formatted = formatVNDInput(e.target.value);
-                                    setBudgetDisplay(formatted);
-                                    // Store the formatted value for the form
-                                    field.onChange(formatted);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              <p className="text-sm text-gray-500 mt-1">
-                                Minimum budget: ₫100.000
-                              </p>
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="timeline"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                              <FormLabel className="text-gray-700">
-                                Expected Deadline
-                              </FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant="outline"
-                                      className={cn(
-                                        "pl-3 text-left font-normal border-gray-300 focus-visible:ring-[#004080]",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      {field.value ? (
-                                        format(field.value, "PPP")
-                                      ) : (
-                                        <span>Pick a deadline</span>
-                                      )}
-                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                      date < new Date()
-                                    }
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="pt-6">
-                        <Button
-                          type="submit"
-                          className="w-full md:w-auto bg-gradient-to-r from-[#004080] to-[#003366] hover:from-[#003366] hover:to-[#002040] text-white py-6 px-8"
-                          disabled={createExternalRequestMutation.isPending}
-                        >
-                          {createExternalRequestMutation.isPending && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          )}
-                          Submit Project Request
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </div>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Đang gửi...
+                        </>
+                      ) : (
+                        'Gửi yêu cầu dự án'
+                      )}
+                    </Button>
+                    <p className="text-sm text-gray-500 text-center mt-3">
+                      <span className="text-red-500">*</span> Các trường bắt buộc được đánh dấu. Yêu cầu thường được xem xét trong 24-48 giờ.
+                    </p>
+                  </div>
+                </form>
               </div>
+            </div>
 
-              <div className="w-full md:w-72 lg:w-80 shrink-0 mb-8 md:mb-0">
-                <div className="sticky top-20">
-                  <div className="space-y-5">
-                    <Card className="bg-gradient-to-br from-[#f0f6ff] to-[#fafcff] border-[#e9ecef] shadow-sm">
-                      <CardHeader className="pb-2 pt-4 px-4">
-                        <CardTitle className="text-[#004080] text-lg">
-                          Why Choose Our Services?
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 pb-4 pt-0">
-                        <ul className="space-y-3">
-                          <li className="flex gap-3">
-                            <div className="p-2 rounded-full bg-[#004080]/10 h-9 w-9 flex items-center justify-center">
-                              <Code className="h-5 w-5 text-[#004080]" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-800">
-                                Expert Development Team
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Our specialists have years of experience in
-                                diverse technologies
-                              </p>
-                            </div>
-                          </li>
-                          <li className="flex gap-3">
-                            <div className="p-2 rounded-full bg-[#004080]/10 h-9 w-9 flex items-center justify-center">
-                              <FileCog className="h-5 w-5 text-[#004080]" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-800">
-                                Custom Solutions
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Tailored development to match your specific
-                                requirements
-                              </p>
-                            </div>
-                          </li>
-                          <li className="flex gap-3">
-                            <div className="p-2 rounded-full bg-[#004080]/10 h-9 w-9 flex items-center justify-center">
-                              <FileCode className="h-5 w-5 text-[#004080]" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-800">
-                                End-to-End Service
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                From planning to deployment and ongoing support
-                              </p>
-                            </div>
-                          </li>
-                        </ul>
-                      </CardContent>
-                    </Card>
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-20 space-y-6">
+                {/* Why Choose Us */}
+                <div className="bg-gradient-to-br from-slate-800 to-slate-700 text-white rounded-xl p-6 border border-slate-600">
+                  <h3 className="text-xl font-bold mb-4 text-white">Tại sao chọn chúng tôi?</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      </div>
+                      <div>
+                        <div className="font-semibold mb-1">Đội ngũ phát triển chuyên nghiệp</div>
+                        <p className="text-slate-200 text-sm">Chuyên gia của chúng tôi có nhiều năm kinh nghiệm trong các công nghệ đa dạng</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      </div>
+                      <div>
+                        <div className="font-semibold mb-1">Giải pháp tùy chỉnh</div>
+                        <p className="text-slate-200 text-sm">Phát triển phù hợp với nhu cầu cụ thể của bạn</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      </div>
+                      <div>
+                        <div className="font-semibold mb-1">Dịch vụ toàn diện</div>
+                        <p className="text-slate-200 text-sm">Từ lập kế hoạch đến triển khai và hỗ trợ liên tục</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
 
-                    <Card className="shadow-sm border-[#e9ecef]">
-                      <CardHeader className="pb-2 pt-4 px-4">
-                        <CardTitle className="text-[#004080] text-lg">
-                          Project Request Process
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 pb-4 pt-0">
-                        <ol className="space-y-3 list-decimal pl-5">
-                          <li className="text-sm">
-                            <span className="font-medium text-gray-800">
-                              Submit your request
-                            </span>
-                            <p className="text-gray-600">
-                              Fill out the form with your project details
-                            </p>
-                          </li>
-                          <li className="text-sm">
-                            <span className="font-medium text-gray-800">
-                              Initial consultation
-                            </span>
-                            <p className="text-gray-600">
-                              Our team will contact you to discuss requirements
-                            </p>
-                          </li>
-                          <li className="text-sm">
-                            <span className="font-medium text-gray-800">
-                              Proposal and quote
-                            </span>
-                            <p className="text-gray-600">
-                              Receive a detailed proposal with timeline and
-                              costs
-                            </p>
-                          </li>
-                          <li className="text-sm">
-                            <span className="font-medium text-gray-800">
-                              Development begins
-                            </span>
-                            <p className="text-gray-600">
-                              Once approved, our team starts working on your
-                              project
-                            </p>
-                          </li>
-                        </ol>
-                      </CardContent>
-                    </Card>
+                {/* Process Timeline */}
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Quy trình yêu cầu dự án</h3>
+                  <ol className="space-y-4">
+                    <li className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                          1
+                        </div>
+                        <div className="w-0.5 h-full bg-slate-200 mt-2" />
+                      </div>
+                      <div className="pb-4">
+                        <div className="font-semibold text-gray-900 mb-1">Gửi yêu cầu</div>
+                        <p className="text-sm text-gray-600">Điền form với chi tiết dự án của bạn</p>
+                      </div>
+                    </li>
+                    <li className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                          2
+                        </div>
+                        <div className="w-0.5 h-full bg-slate-200 mt-2" />
+                      </div>
+                      <div className="pb-4">
+                        <div className="font-semibold text-gray-900 mb-1">Tư vấn ban đầu</div>
+                        <p className="text-sm text-gray-600">Team chúng tôi sẽ liên hệ để thảo luận yêu cầu</p>
+                      </div>
+                    </li>
+                    <li className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                          3
+                        </div>
+                        <div className="w-0.5 h-full bg-slate-200 mt-2" />
+                      </div>
+                      <div className="pb-4">
+                        <div className="font-semibold text-gray-900 mb-1">Đề xuất & báo giá</div>
+                        <p className="text-sm text-gray-600">Nhận đề xuất chi tiết với timeline và chi phí</p>
+                      </div>
+                    </li>
+                    <li className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                          4
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900 mb-1">Bắt đầu phát triển</div>
+                        <p className="text-sm text-gray-600">Sau khi được phê duyệt, team bắt đầu làm việc</p>
+                      </div>
+                    </li>
+                  </ol>
+                </div>
 
-                    <Alert className="bg-blue-50 border-blue-200 text-blue-800 shadow-sm p-4">
-                      <AlertCircle className="h-4 w-4 text-blue-600" />
-                      <AlertTitle className="text-sm font-medium">
-                        Required fields are marked with *
-                      </AlertTitle>
-                      <AlertDescription className="text-xs text-blue-700 mt-1">
-                        The more details you provide, the better we can
-                        understand your needs.
-                      </AlertDescription>
-                    </Alert>
+                {/* Contact Info */}
+                <div className="bg-gray-100 rounded-xl p-6 border border-gray-200">
+                  <h3 className="font-bold text-gray-900 mb-3">Cần hỗ trợ?</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Team của chúng tôi sẵn sàng giúp bạn hiểu rõ hơn về quy trình.
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-gray-700">📧 hello@softwarehub.com</p>
+                    <p className="text-gray-700">📞 +84 123 456 789</p>
                   </div>
                 </div>
               </div>
@@ -749,6 +486,7 @@ Timeline: ${timelineFormatted}
           </div>
         </div>
       </main>
+
       <Footer />
     </div>
   );

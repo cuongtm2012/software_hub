@@ -1,0 +1,199 @@
+[
+  {
+    "name": "Cura",
+    "description": "The world's most advanced 3D printer software.",
+    "category": "3D Printing",
+    "subcategory": "",
+    "url": "https://ultimaker.com/software/ultimaker-cura/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/Ultimaker/Cura"
+  },
+  {
+    "name": "FreeCAD",
+    "description": "An open source parametric 3D CAD modeler.",
+    "category": "3D Printing",
+    "subcategory": "",
+    "url": "https://www.freecad.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/FreeCAD"
+  },
+  {
+    "name": "PrusaSlicer",
+    "description": "A slicer based on Slic3r by Alessandro Ranellucci and the RepRap community.",
+    "category": "3D Printing",
+    "subcategory": "",
+    "url": "https://www.prusa3d.com/page/prusaslicer_424/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/prusa3d/PrusaSlicer"
+  },
+  {
+    "name": "Slic3r",
+    "description": "Open Source toolpath generator for 3D printers.",
+    "category": "3D Printing",
+    "subcategory": "",
+    "url": "https://slic3r.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/slic3r/Slic3r"
+  },
+  {
+    "name": "Ardour",
+    "description": "Record, Edit, and Mix on Linux.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://ardour.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/Ardour/ardour"
+  },
+  {
+    "name": "Audacity",
+    "description": "Free, open source, cross-platform software for recording and editing sounds.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://www.audacityteam.org/download/linux/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/audacity/audacity"
+  },
+  {
+    "name": "Audio Recorder",
+    "description": "Simple audio recorder available in an Ubuntu PPA.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://launchpad.net/~audio-recorder",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://bazaar.launchpad.net/~audio-recorder/audio-recorder/trunk/files"
+  },
+  {
+    "name": "Bitwig",
+    "description": "DAW for music production.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://www.bitwig.com/en/download.html",
+    "isOpenSource": false,
+    "isFree": false
+  },
+  {
+    "name": "EasyEffects",
+    "description": "EasyEffects is an advanced audio manipulation tool. It includes an equalizer, limiter, compressor and a reverberation tool, just to mention a few. To complement this there is also a built in spectrum analyzer.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://github.com/wwmm/easyeffects",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/wwmm/easyeffects"
+  },
+  {
+    "name": "Helm",
+    "description": "A software synthesizer, that runs either standalone, or as an LV2, VST, VST3 or AU plugin.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://tytel.org/helm/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/mtytel/helm"
+  },
+  {
+    "name": "Hydrogen",
+    "description": "Advanced drum machine for GNU/Linux.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "http://www.hydrogen-music.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/hydrogen-music/hydrogen"
+  },
+  {
+    "name": "KxStudio",
+    "description": "A collection of applications and plugins for professional audio production.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://kx.studio/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/KXStudio/Repository"
+  },
+  {
+    "name": "LMMS",
+    "description": "Making music on your PC by creating melodies and beats, synthesizing and mixing sounds, arranging samples and much more.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://lmms.io/download/#linux",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/LMMS/lmms"
+  },
+  {
+    "name": "Mixxx",
+    "description": "Free DJ software that gives you everything you need to perform live mixes; veritable alternative to Traktor.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://www.mixxx.org/download/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/mixxxdj/mixxx"
+  },
+  {
+    "name": "MuseScore",
+    "description": "Create, play and print beautiful sheet music.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://musescore.org",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/musescore/MuseScore"
+  },
+  {
+    "name": "Ocenaudio",
+    "description": "A cross-platform, easy to use, fast and functional audio editor. It is the ideal software for people who need to edit and analyze audio files.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://www.ocenaudio.com/whatis",
+    "isOpenSource": false,
+    "isFree": true
+  },
+  {
+    "name": "Reaper",
+    "description": "Audio Production without Limits.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://www.reaper.fm/",
+    "isOpenSource": false,
+    "isFree": false
+  },
+  {
+    "name": "VCV Rack",
+    "description": "An open-source virtual modular synthesizer.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://vcvrack.com/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/VCVRack/Rack"
+  },
+  {
+    "name": "Viper4Linux",
+    "description": "An audio effect processor based on Viper4Android.",
+    "category": "Audio",
+    "subcategory": "Edit-Mix-Record",
+    "url": "https://github.com/Audio4Linux/Viper4Linux-GUI",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/Audio4Linux/Viper4Linux-GUI"
+  },
+  {
+    "name": "Amarok",
+    "description": "Amarok is a free, cross-platform, versatile, powerful and feature-rich music player and collection manager.",
+    "category": "Audio",
+    "subcategory": "Music Player",
+    "url": "https://apps.kde.org/amarok/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://invent.kde.org/multimedia/amarok"
+  }
+]

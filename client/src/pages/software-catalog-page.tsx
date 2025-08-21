@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Monitor, 
-  Download, 
-  Star, 
-  Eye, 
-  Grid, 
-  List, 
+import {
+  Monitor,
+  Download,
+  Star,
+  Eye,
+  Grid,
+  List,
   Loader2,
   Filter,
   Search,
@@ -26,7 +26,7 @@ import { StarRating } from "@/components/ui/star-rating";
 export default function SoftwareCatalogPage() {
   const [location] = useLocation();
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
-  
+
   // State from URL parameters
   const [category, setCategory] = useState(searchParams.get('category') || 'all');
   const [platform, setPlatform] = useState(searchParams.get('platform') || 'all');
@@ -43,7 +43,7 @@ export default function SoftwareCatalogPage() {
     if (platform !== 'all') params.set('platform', platform);
     if (sort !== 'name') params.set('sort', sort);
     if (page !== 1) params.set('page', page.toString());
-    
+
     const newUrl = `/marketplace${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
   }, [category, platform, sort, page]);
@@ -69,7 +69,7 @@ export default function SoftwareCatalogPage() {
       params.set('sort', sort);
       params.set('page', page.toString());
       params.set('limit', '24');
-      
+
       const response = await fetch(`/api/softwares?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch software");
       return response.json();
@@ -94,25 +94,25 @@ export default function SoftwareCatalogPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      
+
       <main className="flex-grow pt-16">
         {/* Page Header */}
         <div className="bg-white border-b border-gray-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="w-full px-[4%] py-6">
             <h1 className="text-3xl font-bold text-gray-900">Software Catalog</h1>
             <p className="mt-2 text-gray-600">Discover and download the best software for your needs</p>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full px-[4%] py-8">
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Category Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select 
-                  value={category} 
+                <select
+                  value={category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#004080] focus:border-[#004080]"
                 >
@@ -126,8 +126,8 @@ export default function SoftwareCatalogPage() {
               {/* Platform Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Platform</label>
-                <select 
-                  value={platform} 
+                <select
+                  value={platform}
                   onChange={(e) => handleFilterChange('platform', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#004080] focus:border-[#004080]"
                 >
@@ -144,8 +144,8 @@ export default function SoftwareCatalogPage() {
               {/* Sort */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                <select 
-                  value={sort} 
+                <select
+                  value={sort}
                   onChange={(e) => handleFilterChange('sort', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#004080] focus:border-[#004080]"
                 >
@@ -164,9 +164,8 @@ export default function SoftwareCatalogPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setView("grid")}
-                    className={`px-3 py-2 rounded-l-md border-r ${
-                      view === "grid" ? "bg-[#004080] text-white" : "bg-white text-gray-700"
-                    }`}
+                    className={`px-3 py-2 rounded-l-md border-r ${view === "grid" ? "bg-[#004080] text-white" : "bg-white text-gray-700"
+                      }`}
                   >
                     <Grid className="h-4 w-4" />
                   </Button>
@@ -174,9 +173,8 @@ export default function SoftwareCatalogPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setView("list")}
-                    className={`px-3 py-2 rounded-r-md ${
-                      view === "list" ? "bg-[#004080] text-white" : "bg-white text-gray-700"
-                    }`}
+                    className={`px-3 py-2 rounded-r-md ${view === "list" ? "bg-[#004080] text-white" : "bg-white text-gray-700"
+                      }`}
                   >
                     <List className="h-4 w-4" />
                   </Button>
@@ -202,15 +200,15 @@ export default function SoftwareCatalogPage() {
               </div>
 
               {view === "grid" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                   {softwareData?.softwares?.map((software: any) => (
                     <Card key={software.id} className="overflow-hidden border border-gray-200 rounded-lg hover:shadow-lg transition-shadow flex flex-col h-full">
-                      <div 
+                      <div
                         className="relative pt-[60%] bg-gray-50 cursor-pointer group overflow-hidden rounded-t-lg"
                         onClick={() => handleSoftwareClick(software)}
                       >
                         {software.image_url ? (
-                          <img 
+                          <img
                             src={software.image_url}
                             alt={`${software.name} screenshot`}
                             className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -229,17 +227,17 @@ export default function SoftwareCatalogPage() {
                           <Badge className="bg-green-100 text-green-800 text-xs">FREE</Badge>
                         </div>
                       </div>
-                      
+
                       <div className="p-4 flex-grow flex flex-col">
                         <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 mb-1">{software.name}</h3>
                         <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
-                        
+
                         <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
                           <div className="flex items-center">
                             <Star className="h-3 w-3 text-yellow-500 mr-0.5" />
                             <span className="text-xs text-gray-600">4.5</span>
                           </div>
-                          <Button 
+                          <Button
                             size="sm"
                             className="h-7 px-2 py-0 bg-[#004080] hover:bg-[#003366] text-white text-xs rounded"
                             asChild
@@ -258,12 +256,12 @@ export default function SoftwareCatalogPage() {
                 <div className="space-y-4">
                   {softwareData?.softwares?.map((software: any) => (
                     <div key={software.id} className="flex gap-4 p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow">
-                      <div 
+                      <div
                         className="flex-shrink-0 w-20 h-20 relative bg-gray-50 rounded overflow-hidden cursor-pointer group"
                         onClick={() => handleSoftwareClick(software)}
                       >
                         {software.image_url ? (
-                          <img 
+                          <img
                             src={software.image_url}
                             alt={`${software.name} screenshot`}
                             className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -274,7 +272,7 @@ export default function SoftwareCatalogPage() {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex-grow min-w-0">
                         <div className="flex items-start justify-between mb-2">
                           <div>
@@ -293,9 +291,9 @@ export default function SoftwareCatalogPage() {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="flex-shrink-0 self-center">
-                        <Button 
+                        <Button
                           className="px-4 py-2 bg-[#004080] hover:bg-[#003366] text-white rounded"
                           asChild
                         >

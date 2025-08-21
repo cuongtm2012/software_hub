@@ -1,0 +1,222 @@
+[
+  {
+    "name": "Audacity",
+    "description": "Sound recording and post-processing.",
+    "category": "Software",
+    "subcategory": "Audio",
+    "url": "http://www.audacityteam.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "http://www.audacityteam.org/",
+    "license": "GNU GPLv2+"
+  },
+  {
+    "name": "Ardour",
+    "description": "Digital Audio Workstation (DAW).",
+    "category": "Software",
+    "subcategory": "Audio",
+    "url": "https://ardour.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://ardour.org/",
+    "license": "GNU GPLv2"
+  },
+  {
+    "name": "Libre.fm",
+    "description": "Stream, download, remix, and share music for free.",
+    "category": "Software",
+    "subcategory": "Audio",
+    "url": "https://libre.fm/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://libre.fm/",
+    "license": "GNU AGPLv3"
+  },
+  {
+    "name": "LMMS",
+    "description": "Complete digital audio workstation.",
+    "category": "Software",
+    "subcategory": "Audio",
+    "url": "https://lmms.io/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://lmms.io/",
+    "license": "GNU GPLv2+"
+  },
+  {
+    "name": "mStream",
+    "description": "Suite of software for syncing and streaming music across multiple devices.",
+    "category": "Software",
+    "subcategory": "Audio",
+    "url": "http://mstream.io/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "http://mstream.io/",
+    "license": "GNU GPLv3"
+  },
+  {
+    "name": "Nuclear Music Player",
+    "description": "Streaming music player that finds music from free sources automatically.",
+    "category": "Software",
+    "subcategory": "Audio",
+    "url": "https://nuclear.js.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://nuclear.js.org/",
+    "license": "GNU AGPLv3"
+  },
+  {
+    "name": "asciinema",
+    "description": "Terminal session recorder.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "https://asciinema.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://asciinema.org/",
+    "license": "GNU GPLv3"
+  },
+  {
+    "name": "Clipboard",
+    "description": "Cut, copy, and paste anything, anywhere, all from the command line.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "https://github.com/Slackadays/Clipboard",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/Slackadays/Clipboard",
+    "license": "GNU GPLv3"
+  },
+  {
+    "name": "Cygwin",
+    "description": "Unix-like environment for Windows, providing access to a number of tools commonly found on Linux systems.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "http://cygwin.com/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "http://cygwin.com/",
+    "license": "GNU GPLv3"
+  },
+  {
+    "name": "Logdissect",
+    "description": "CLI utility and Python API for analyzing log files and other data.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "https://github.com/dogoncouch/logdissect/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/dogoncouch/logdissect/",
+    "license": "MIT"
+  },
+  {
+    "name": "PuTTY",
+    "description": "Remote terminal emulator that connects over SSH, Telnet, SCP, and rlogin protocols as well as raw socket connections.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "http://www.chiark.greenend.org.uk/~sgtatham/putty/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "http://www.chiark.greenend.org.uk/~sgtatham/putty/",
+    "license": "MIT"
+  },
+  {
+    "name": "ranger",
+    "description": "Minimal, lightweight, and aesthetically pleasing file explorer for GNU/Linux. It runs in the terminal window, so it fits in well with window managers such as i3. vi key bindings allow for quick operations to be performed, including rename and delete.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "https://ranger.github.io/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://ranger.github.io/",
+    "license": "GNU GPLv3"
+  },
+  {
+    "name": "GNU stow",
+    "description": "GNU Stow is a symlink farm manager which takes distinct packages of software and/or data located in separate directories on the filesystem, and makes them appear to be installed in the same place.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "https://www.gnu.org/software/stow/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://www.gnu.org/software/stow/",
+    "license": "GNU GPLv3"
+  },
+  {
+    "name": "SimpleLocalize",
+    "description": "No description available",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "https://github.com/simplelocalize/simplelocalize-cli",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/simplelocalize/simplelocalize-cli",
+    "license": ""
+  },
+  {
+    "name": "Localizely",
+    "description": "Open source tool that helps you sync localization files between your source code and the Localizely platform.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "https://github.com/localizely/localizely-cli",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/localizely/localizely-cli",
+    "license": "MIT"
+  },
+  {
+    "name": "Kit CLI",
+    "description": "Open source MLOps tool that allows you to create, manage, run, and deploy ModelKits using Kitfiles. From packaging new models to deploying existing ones, Kit CLI lets you streamline workflows effortlessly.",
+    "category": "Software",
+    "subcategory": "Command Line Tools",
+    "url": "https://github.com/jozu-ai/kitops?tab=readme-ov-file",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://github.com/jozu-ai/kitops?tab=readme-ov-file",
+    "license": "Apache License 2.0"
+  },
+  {
+    "name": "Conversations",
+    "description": "XMPP/Jabber client for Android.",
+    "category": "Software",
+    "subcategory": "Communication",
+    "url": "https://conversations.im/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://conversations.im/",
+    "license": "GNU GPLv3"
+  },
+  {
+    "name": "Gajim",
+    "description": "XMPP/Jabber client for desktop.",
+    "category": "Software",
+    "subcategory": "Communication",
+    "url": "https://gajim.org/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://gajim.org/",
+    "license": "GNU GPLv3"
+  },
+  {
+    "name": "Jitsi Meet",
+    "description": "Secure video conferencing and desktop sharing using WebRTC.",
+    "category": "Software",
+    "subcategory": "Communication",
+    "url": "https://jitsi.org/jitsi-meet/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://jitsi.org/jitsi-meet/",
+    "license": "Apache License 2.0"
+  },
+  {
+    "name": "Mail-in-a-Box",
+    "description": "Easy-to-deploy mail server package for cloud computers.",
+    "category": "Software",
+    "subcategory": "Communication",
+    "url": "https://mailinabox.email/",
+    "isOpenSource": true,
+    "isFree": true,
+    "sourceUrl": "https://mailinabox.email/",
+    "license": "CC0"
+  }
+]

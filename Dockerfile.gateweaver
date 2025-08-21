@@ -1,0 +1,567 @@
+# Gateweaver API Gateway Dockerfile
+FROM golang:1.21-alpine AS builder
+
+# Install dependencies
+RUN apk add --no-cache git ca-certificates tzdata
+
+# Set working directory
+WORKDIR /app
+
+# Create a simple Gateweaver implementation
+COPY <<EOF go.mod
+module gateweaver
+
+go 1.21
+
+require (
+    github.com/gin-gonic/gin v1.9.1
+    github.com/gin-contrib/cors v1.4.0
+    gopkg.in/yaml.v2 v2.4.0
+    github.com/prometheus/client_golang v1.17.0
+)
+EOF
+
+COPY <<EOF main.go
+package main
+
+import (
+    "fmt"
+    "log"
+    "net/http"
+    "net/http/httputil"
+    "net/url"
+    "os"
+    "strings"
+    "sync"
+    "time"
+
+    "github.com/gin-contrib/cors"
+    "github.com/gin-gonic/gin"
+    "github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
+    "gopkg.in/yaml.v2"
+)
+
+type Config struct {
+    Server struct {
+        Port string \`yaml:"port"\`
+        Host string \`yaml:"host"\`
+    } \`yaml:"server"\`
+    
+    Health struct {
+        Path string \`yaml:"path"\`
+        Port string \`yaml:"port"\`
+    } \`yaml:"health"\`
+    
+    Logging struct {
+        Level  string \`yaml:"level"\`
+        Format string \`yaml:"format"\`
+    } \`yaml:"logging"\`
+    
+    CORS struct {
+        Enabled      bool     \`yaml:"enabled"\`
+        AllowOrigins []string \`yaml:"allow_origins"\`
+        AllowMethods []string \`yaml:"allow_methods"\`
+        AllowHeaders []string \`yaml:"allow_headers"\`
+        ExposeHeaders []string \`yaml:"expose_headers"\`
+        MaxAge       int      \`yaml:"max_age"\`
+    } \`yaml:"cors"\`
+    
+    RateLimiting struct {
+        Enabled           bool \`yaml:"enabled"\`
+        RequestsPerMinute int  \`yaml:"requests_per_minute"\`
+        Burst             int  \`yaml:"burst"\`
+    } \`yaml:"rate_limiting"\`
+    
+    LoadBalancing struct {
+        Strategy string \`yaml:"strategy"\`
+    } \`yaml:"load_balancing"\`
+    
+    Upstreams map[string]struct {
+        Servers []struct {
+            URL    string \`yaml:"url"\`
+            Weight int    \`yaml:"weight"\`
+        } \`yaml:"servers"\`
+        HealthCheck struct {
+            Path               string \`yaml:"path"\`
+            Interval           string \`yaml:"interval"\`
+            Timeout            string \`yaml:"timeout"\`
+            UnhealthyThreshold int    \`yaml:"unhealthy_threshold"\`
+            HealthyThreshold   int    \`yaml:"healthy_threshold"\`
+        } \`yaml:"health_check"\`
+    } \`yaml:"upstreams"\`
+    
+    Routes []struct {
+        Path         string            \`yaml:"path"\`
+        Upstream     string            \`yaml:"upstream"\`
+        Methods      []string          \`yaml:"methods"\`
+        StripPath    bool              \`yaml:"strip_path"\`
+        Timeout      string            \`yaml:"timeout"\`
+        Priority     int               \`yaml:"priority"\`
+        WebSocket    bool              \`yaml:"websocket"\`
+        Headers      map[string]map[string]string \`yaml:"headers"\`
+        PrefixMatch  bool              \`yaml:"prefix_match"\`
+        RewritePath  string            \`yaml:"rewrite_path"\`
+    } \`yaml:"routes"\`
+    
+    Security struct {
+        MaxRequestSize string \`yaml:"max_request_size"\`
+        Headers        struct {
+            Remove []string            \`yaml:"remove"\`
+            Add    map[string]string   \`yaml:"add"\`
+        } \`yaml:"headers"\`
+    } \`yaml:"security"\`
+    
+    Metrics struct {
+        Enabled bool   \`yaml:"enabled"\`
+        Path    string \`yaml:"path"\`
+        Port    string \`yaml:"port"\`
+    } \`yaml:"metrics"\`
+    
+    CircuitBreaker struct {
+        Enabled            bool   \`yaml:"enabled"\`
+        FailureThreshold   int    \`yaml:"failure_threshold"\`
+        RecoveryTimeout    string \`yaml:"recovery_timeout"\`
+        HalfOpenMaxRequests int   \`yaml:"half_open_max_requests"\`
+    } \`yaml:"circuit_breaker"\`
+}
+
+type Gateweaver struct {
+    config     *Config
+    upstreams  map[string]*httputil.ReverseProxy
+    mu         sync.RWMutex
+}
+
+var (
+    requestsTotal = prometheus.NewCounterVec(
+        prometheus.CounterOpts{
+            Name: "gateweaver_requests_total",
+            Help: "Total number of requests",
+        },
+        []string{"method", "path", "status"},
+    )
+    
+    requestDuration = prometheus.NewHistogramVec(
+        prometheus.HistogramOpts{
+            Name: "gateweaver_request_duration_seconds",
+            Help: "Request duration in seconds",
+        },
+        []string{"method", "path"},
+    )
+)
+
+func init() {
+    prometheus.MustRegister(requestsTotal)
+    prometheus.MustRegister(requestDuration)
+}
+
+func main() {
+    config, err := loadConfig()
+    if err != nil {
+        log.Fatalf("Failed to load config: %v", err)
+    }
+    
+    gw := &Gateweaver{
+        config:    config,
+        upstreams: make(map[string]*httputil.ReverseProxy),
+    }
+    
+    // Initialize reverse proxies
+    gw.initUpstreams()
+    
+    // Start health check server
+    go gw.startHealthServer()
+    
+    // Start metrics server
+    if config.Metrics.Enabled {
+        go gw.startMetricsServer()
+    }
+    
+    // Setup main router
+    router := gw.setupRouter()
+    
+    // Start main server
+    addr := fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port)
+    log.Printf("Starting Gateweaver on %s", addr)
+    if err := router.Run(addr); err != nil {
+        log.Fatalf("Failed to start server: %v", err)
+    }
+}
+
+func loadConfig() (*Config, error) {
+    configFile := os.Getenv("CONFIG_FILE")
+    if configFile == "" {
+        configFile = "/etc/gateweaver/gateweaver.yml"
+    }
+    
+    data, err := os.ReadFile(configFile)
+    if err != nil {
+        return nil, err
+    }
+    
+    var config Config
+    if err := yaml.Unmarshal(data, &config); err != nil {
+        return nil, err
+    }
+    
+    return &config, nil
+}
+
+func (gw *Gateweaver) initUpstreams() {
+    gw.mu.Lock()
+    defer gw.mu.Unlock()
+    
+    for name, upstream := range gw.config.Upstreams {
+        if len(upstream.Servers) > 0 {
+            // For simplicity, use the first server
+            target, err := url.Parse(upstream.Servers[0].URL)
+            if err != nil {
+                log.Printf("Invalid upstream URL for %s: %v", name, err)
+                continue
+            }
+            
+            proxy := httputil.NewSingleHostReverseProxy(target)
+            
+            // Customize the proxy
+            originalDirector := proxy.Director
+            proxy.Director = func(req *http.Request) {
+                originalDirector(req)
+                req.Host = target.Host
+                req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+                req.Header.Set("X-Forwarded-Proto", "http")
+            }
+            
+            gw.upstreams[name] = proxy
+            log.Printf("Initialized upstream %s -> %s", name, target.String())
+        }
+    }
+}
+
+func (gw *Gateweaver) setupRouter() *gin.Engine {
+    if gw.config.Logging.Level == "debug" {
+        gin.SetMode(gin.DebugMode)
+    } else {
+        gin.SetMode(gin.ReleaseMode)
+    }
+    
+    router := gin.New()
+    router.Use(gin.Recovery())
+    
+    // CORS middleware
+    if gw.config.CORS.Enabled {
+        config := cors.DefaultConfig()
+        config.AllowOrigins = gw.config.CORS.AllowOrigins
+        config.AllowMethods = gw.config.CORS.AllowMethods
+        config.AllowHeaders = gw.config.CORS.AllowHeaders
+        config.ExposeHeaders = gw.config.CORS.ExposeHeaders
+        config.MaxAge = time.Duration(gw.config.CORS.MaxAge) * time.Second
+        config.AllowCredentials = true
+        router.Use(cors.New(config))
+    }
+    
+    // Logging middleware
+    router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+        return fmt.Sprintf("%s - [%s] %s %s %s %d %s %s %s\n",
+            param.ClientIP,
+            param.TimeStamp.Format(time.RFC1123),
+            param.Method,
+            param.Path,
+            param.Request.Proto,
+            param.StatusCode,
+            param.Latency,
+            param.Request.UserAgent(),
+            param.ErrorMessage,
+        )
+    }))
+    
+    // Metrics middleware
+    router.Use(func(c *gin.Context) {
+        start := time.Now()
+        c.Next()
+        duration := time.Since(start)
+        
+        requestsTotal.WithLabelValues(
+            c.Request.Method,
+            c.FullPath(),
+            fmt.Sprintf("%d", c.Writer.Status()),
+        ).Inc()
+        
+        requestDuration.WithLabelValues(
+            c.Request.Method,
+            c.FullPath(),
+        ).Observe(duration.Seconds())
+    })
+    
+    // Setup routes
+    gw.setupRoutes(router)
+    
+    return router
+}
+
+func (gw *Gateweaver) setupRoutes(router *gin.Engine) {
+    // Sort routes by priority (lower number = higher priority)
+    routes := gw.config.Routes
+    for i := 0; i < len(routes)-1; i++ {
+        for j := i + 1; j < len(routes); j++ {
+            if routes[i].Priority > routes[j].Priority {
+                routes[i], routes[j] = routes[j], routes[i]
+            }
+        }
+    }
+    
+    // Use a catch-all route with custom routing logic
+    router.NoRoute(gw.createPrefixHandler())
+    
+    for _, route := range routes {
+        gw.addRoute(router, route)
+    }
+}
+
+func (gw *Gateweaver) createPrefixHandler() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        path := c.Request.URL.Path
+        
+        // Check for microservice prefix matches first
+        var matchedRoute *struct {
+            Path         string            \`yaml:"path"\`
+            Upstream     string            \`yaml:"upstream"\`
+            Methods      []string          \`yaml:"methods"\`
+            StripPath    bool              \`yaml:"strip_path"\`
+            Timeout      string            \`yaml:"timeout"\`
+            Priority     int               \`yaml:"priority"\`
+            WebSocket    bool              \`yaml:"websocket"\`
+            Headers      map[string]map[string]string \`yaml:"headers"\`
+            PrefixMatch  bool              \`yaml:"prefix_match"\`
+            RewritePath  string            \`yaml:"rewrite_path"\`
+        }
+        
+        // Match microservice prefixes
+        if strings.HasPrefix(path, "/api/email") {
+            for _, route := range gw.config.Routes {
+                if route.Path == "/api/email" {
+                    matchedRoute = &route
+                    break
+                }
+            }
+        } else if strings.HasPrefix(path, "/api/chat") {
+            for _, route := range gw.config.Routes {
+                if route.Path == "/api/chat" {
+                    matchedRoute = &route
+                    break
+                }
+            }
+        } else if strings.HasPrefix(path, "/api/notifications") {
+            for _, route := range gw.config.Routes {
+                if route.Path == "/api/notifications" {
+                    matchedRoute = &route
+                    break
+                }
+            }
+        } else {
+            // Default to main app
+            for _, route := range gw.config.Routes {
+                if route.Path == "/" {
+                    matchedRoute = &route
+                    break
+                }
+            }
+        }
+        
+        if matchedRoute != nil {
+            // Check if method is allowed
+            methodAllowed := false
+            for _, method := range matchedRoute.Methods {
+                if strings.ToUpper(method) == c.Request.Method {
+                    methodAllowed = true
+                    break
+                }
+            }
+            
+            if methodAllowed {
+                handler := gw.createHandler(*matchedRoute)
+                handler(c)
+                return
+            }
+        }
+        
+        // If no route matched, return 404
+        c.JSON(http.StatusNotFound, gin.H{"error": "Route not found"})
+    }
+}
+
+func (gw *Gateweaver) addRoute(router *gin.Engine, route struct {
+    Path         string            \`yaml:"path"\`
+    Upstream     string            \`yaml:"upstream"\`
+    Methods      []string          \`yaml:"methods"\`
+    StripPath    bool              \`yaml:"strip_path"\`
+    Timeout      string            \`yaml:"timeout"\`
+    Priority     int               \`yaml:"priority"\`
+    WebSocket    bool              \`yaml:"websocket"\`
+    Headers      map[string]map[string]string \`yaml:"headers"\`
+    PrefixMatch  bool              \`yaml:"prefix_match"\`
+    RewritePath  string            \`yaml:"rewrite_path"\`
+}) {
+    handler := gw.createHandler(route)
+    
+    for _, method := range route.Methods {
+        switch strings.ToUpper(method) {
+        case "GET":
+            router.GET(route.Path, handler)
+        case "POST":
+            router.POST(route.Path, handler)
+        case "PUT":
+            router.PUT(route.Path, handler)
+        case "DELETE":
+            router.DELETE(route.Path, handler)
+        case "PATCH":
+            router.PATCH(route.Path, handler)
+        case "OPTIONS":
+            router.OPTIONS(route.Path, handler)
+        case "HEAD":
+            router.HEAD(route.Path, handler)
+        default:
+            router.Any(route.Path, handler)
+        }
+    }
+    
+    log.Printf("Added route: %s -> %s (methods: %v)", route.Path, route.Upstream, route.Methods)
+}
+
+func (gw *Gateweaver) createHandler(route struct {
+    Path         string            \`yaml:"path"\`
+    Upstream     string            \`yaml:"upstream"\`
+    Methods      []string          \`yaml:"methods"\`
+    StripPath    bool              \`yaml:"strip_path"\`
+    Timeout      string            \`yaml:"timeout"\`
+    Priority     int               \`yaml:"priority"\`
+    WebSocket    bool              \`yaml:"websocket"\`
+    Headers      map[string]map[string]string \`yaml:"headers"\`
+    PrefixMatch  bool              \`yaml:"prefix_match"\`
+    RewritePath  string            \`yaml:"rewrite_path"\`
+}) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        gw.mu.RLock()
+        proxy, exists := gw.upstreams[route.Upstream]
+        gw.mu.RUnlock()
+        
+        if !exists {
+            c.JSON(http.StatusBadGateway, gin.H{"error": "Upstream not available"})
+            return
+        }
+        
+        // Add headers
+        if headers, ok := route.Headers["add"]; ok {
+            for key, value := range headers {
+                c.Header(key, value)
+            }
+        }
+        
+        // Remove headers
+        if headers, ok := route.Headers["remove"]; ok {
+            for _, header := range headers {
+                c.Header(header, "")
+            }
+        }
+        
+        // Add security headers
+        for key, value := range gw.config.Security.Headers.Add {
+            c.Header(key, value)
+        }
+        
+        // Remove security headers
+        for _, header := range gw.config.Security.Headers.Remove {
+            c.Request.Header.Del(header)
+        }
+        
+        // Proxy the request
+        proxy.ServeHTTP(c.Writer, c.Request)
+    }
+}
+
+func (gw *Gateweaver) startHealthServer() {
+    router := gin.New()
+    router.Use(gin.Recovery())
+    
+    router.GET(gw.config.Health.Path, func(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{
+            "status": "healthy",
+            "timestamp": time.Now().Unix(),
+            "upstreams": gw.getUpstreamStatus(),
+        })
+    })
+    
+    addr := fmt.Sprintf("%s:%s", gw.config.Server.Host, gw.config.Health.Port)
+    log.Printf("Starting health server on %s", addr)
+    if err := router.Run(addr); err != nil {
+        log.Printf("Health server error: %v", err)
+    }
+}
+
+func (gw *Gateweaver) startMetricsServer() {
+    router := gin.New()
+    router.Use(gin.Recovery())
+    
+    router.GET(gw.config.Metrics.Path, gin.WrapH(promhttp.Handler()))
+    
+    addr := fmt.Sprintf("%s:%s", gw.config.Server.Host, gw.config.Metrics.Port)
+    log.Printf("Starting metrics server on %s", addr)
+    if err := router.Run(addr); err != nil {
+        log.Printf("Metrics server error: %v", err)
+    }
+}
+
+func (gw *Gateweaver) getUpstreamStatus() map[string]string {
+    gw.mu.RLock()
+    defer gw.mu.RUnlock()
+    
+    status := make(map[string]string)
+    for name := range gw.upstreams {
+        status[name] = "healthy"
+    }
+    return status
+}
+EOF
+
+# Initialize Go modules and download dependencies
+RUN go mod tidy
+RUN go mod download
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gateweaver .
+
+# Production stage
+FROM alpine:3.18
+
+# Install ca-certificates for HTTPS
+RUN apk --no-cache add ca-certificates tzdata
+
+# Create non-root user
+RUN addgroup -g 1001 -S gateweaver && \
+    adduser -u 1001 -S gateweaver -G gateweaver
+
+# Set working directory
+WORKDIR /app
+
+# Copy binary from builder stage
+COPY --from=builder /app/gateweaver .
+COPY --chown=gateweaver:gateweaver gateweaver.yml /etc/gateweaver/gateweaver.yml
+
+# Change ownership
+RUN chown -R gateweaver:gateweaver /app
+
+# Switch to non-root user
+USER gateweaver
+
+# Expose ports
+EXPOSE 8080 8081 8082
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8081/health || exit 1
+
+# Set environment variables
+ENV CONFIG_FILE=/etc/gateweaver/gateweaver.yml
+ENV GIN_MODE=release
+
+# Run the application
+CMD ["./gateweaver"]

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -7,45 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 export default function TestLoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const { loginMutation } = useAuth(); // Use the proper auth hook
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: { email: string; password: string }) => {
-      try {
-        const response = await apiRequest("POST", "/api/login", data);
-        return await response.json();
-      } catch (error) {
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      toast({ title: "Success", description: "Logged in successfully!" });
-      setLocation("/");
-      window.location.reload(); // Refresh to update auth state
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid credentials",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const handleTestLogin = async (email: string, role: string) => {
-    try {
-      const password = email === "cuongeurovnn@gmail.com" ? "abcd@1234" : "testpassword";
-      setCredentials({ email, password });
-      await loginMutation.mutateAsync({ email, password });
-    } catch (error) {
-      // Error is already handled by onError callback
-      console.error('Login error:', error);
-    }
+  const handleTestLogin = (email: string, role: string) => {
+    const password = email === "cuongeurovnn@gmail.com" ? "abcd@1234" : "testpassword";
+    // Directly pass credentials to mutation instead of setting state first
+    loginMutation.mutate({ email, password });
   };
 
   const handleLogin = async (e: React.FormEvent) => {

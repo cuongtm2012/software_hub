@@ -32,11 +32,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Extended product schema with validations
 const productSchema = insertProductSchema.extend({
-  name: z.string().min(3, "Product name must be at least 3 characters").max(100),
+  title: z.string().min(3, "Product title must be at least 3 characters").max(100),
   description: z.string().min(10, "Description must be at least 10 characters"),
   price: z.coerce.number().positive("Price must be positive").min(0.01, "Minimum price is $0.01"),
   category: z.string().min(1, "Category is required"),
-  image_url: z.string().optional(),
+  images: z.array(z.string()).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -51,6 +51,7 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
 
   // Fetch categories
   const { data: categories = [] } = useQuery<any[]>({
@@ -67,38 +68,47 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: "",
+      title: "",
       description: "",
       price: 0,
       category: "",
-      image_url: "",
+      images: [],
     },
   });
 
   // Update form values when editing and product data is loaded
   useEffect(() => {
     if (isEdit && product) {
+      console.log("📥 Loading product data:", product);
+      
+      // Extract first image URL from images array
+      const firstImageUrl = product.images && product.images.length > 0 ? product.images[0] : "";
+      setImageUrl(firstImageUrl);
+      
       form.reset({
-        name: product.title || product.name,
+        title: product.title || product.name,
         description: product.description,
         price: parseFloat(product.price) || 0,
         category: product.category,
-        image_url: product.image_url || "",
+        images: product.images || [],
       });
+      
+      console.log("✅ Form populated with image URL:", firstImageUrl);
     }
   }, [form, isEdit, product]);
 
   // Create product mutation
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
+      console.log("📤 Creating product with data:", data);
       return apiRequest("POST", "/api/seller/products", {
-        title: data.name,
+        title: data.title,
         description: data.description,
         price: data.price.toString(),
         category: data.category,
         price_type: "fixed",
         stock_quantity: 1,
-        images: data.image_url ? [data.image_url] : null
+        images: imageUrl ? [imageUrl] : null
       });
     },
     onSuccess: () => {
@@ -127,12 +137,15 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
   // Update product mutation
   const updateProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
+      console.log("📤 Updating product with data:", data);
+      console.log("🖼️ Image URL being sent:", imageUrl);
+      
       return apiRequest("PUT", `/api/seller/products/${productId}`, {
-        title: data.name,
+        title: data.title,
         description: data.description,
         price: data.price.toString(),
         category: data.category,
-        images: data.image_url ? [data.image_url] : null
+        images: imageUrl ? [imageUrl] : null
       });
     },
     onSuccess: () => {
@@ -163,15 +176,35 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
 
   // Form submission handler
   const onSubmit = async (values: ProductFormValues) => {
+    console.log("🎯 Form submission triggered!");
+    console.log("📦 Form values:", values);
+    console.log("🔧 Is Edit Mode:", isEdit);
+    console.log("🆔 Product ID:", productId);
+    
     setIsLoading(true);
     setServerError(null);
 
-    if (isEdit) {
-      updateProductMutation.mutate(values);
-    } else {
-      createProductMutation.mutate(values);
+    try {
+      if (isEdit) {
+        console.log("✅ Calling UPDATE mutation...");
+        updateProductMutation.mutate(values);
+      } else {
+        console.log("✅ Calling CREATE mutation...");
+        createProductMutation.mutate(values);
+      }
+    } catch (error) {
+      console.error("❌ Form submission error:", error);
+      setIsLoading(false);
     }
   };
+
+  // Log form errors for debugging
+  useEffect(() => {
+    const errors = form.formState.errors;
+    if (Object.keys(errors).length > 0) {
+      console.log("⚠️ Form validation errors:", errors);
+    }
+  }, [form.formState.errors]);
 
   if (isEdit && productLoading) {
     return (
@@ -191,16 +224,33 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
         </Alert>
       )}
 
+      {/* Display form validation errors */}
+      {Object.keys(form.formState.errors).length > 0 && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Form Validation Errors</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc list-inside">
+              {Object.entries(form.formState.errors).map(([field, error]) => (
+                <li key={field}>
+                  <strong>{field}:</strong> {error?.message as string}
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
-            name="name"
+            name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Product Name*</FormLabel>
+                <FormLabel>Product Title*</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter product name" {...field} />
+                  <Input placeholder="Enter product title" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -285,33 +335,26 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="image_url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Image URL (Optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="https://example.com/image.jpg" 
-                    {...field} 
-                    value={field.value || ""}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Enter a URL to an image of your product
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormItem>
+            <FormLabel>Image URL (Optional)</FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="https://example.com/image.jpg" 
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+              />
+            </FormControl>
+            <FormDescription>
+              Enter a URL to an image of your product
+            </FormDescription>
+          </FormItem>
 
-          {form.watch("image_url") && (
+          {imageUrl && (
             <div className="mt-2 p-2 border rounded">
               <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
               <div className="h-40 bg-gray-100 flex items-center justify-center overflow-hidden rounded">
                 <img
-                  src={form.watch("image_url")}
+                  src={imageUrl}
                   alt="Preview"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "";
@@ -332,7 +375,16 @@ export function ProductForm({ productId, isEdit = false }: ProductFormProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              onClick={() => {
+                console.log("🔘 Update button clicked!");
+                console.log("📝 Current form values:", form.getValues());
+                console.log("✔️ Form is valid:", form.formState.isValid);
+                console.log("❌ Form errors:", form.formState.errors);
+              }}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

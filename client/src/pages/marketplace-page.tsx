@@ -17,7 +17,7 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   // Fetch marketplace products from API
-  const { data: marketplaceData, isLoading } = useQuery<{products: Product[]}>({
+  const { data: marketplaceData, isLoading } = useQuery<{ products: Product[] }>({
     queryKey: ["/api/marketplace/products"],
   });
 
@@ -100,13 +100,14 @@ export default function MarketplacePage() {
     { id: "Services", name: "Services", count: marketplaceStores.filter((s: Product) => s.category === "Services").length }
   ];
 
-  const filteredStores = selectedCategory === "all" 
-    ? marketplaceStores 
+  const filteredStores = selectedCategory === "all"
+    ? marketplaceStores
     : marketplaceStores.filter((store: Product) => store.category === selectedCategory);
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full px-[4%] py-8">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold">Online Marketplace</h1>
@@ -119,118 +120,192 @@ export default function MarketplacePage() {
           )}
         </div>
 
-        {/* Categories */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-3">Categories</h2>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <Badge 
-                key={cat.id}
-                variant={selectedCategory === cat.id ? "default" : "outline"}
-                className="cursor-pointer px-3 py-1 text-sm"
-                onClick={() => setSelectedCategory(cat.id)}
-              >
-                {cat.name} ({cat.count})
-              </Badge>
-            ))}
-          </div>
-        </div>
+        {/* Two-Column Layout: Sidebar + Product Grid */}
+        <div className="flex gap-6">
+          {/* Left Sidebar - Filters (Fixed Width) */}
+          <aside className="hidden lg:block w-[280px] flex-shrink-0">
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 sticky top-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Tag className="h-5 w-5 text-gray-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Bộ lọc</h2>
+              </div>
 
-        {/* Store Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <Skeleton className="h-48 w-full" />
-                <CardHeader className="p-4 pb-2">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3" />
-                </CardContent>
-                <CardFooter className="p-4 pt-0">
-                  <Skeleton className="h-10 w-full" />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredStores.map((store: Product) => (
-              <Card key={store.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="relative h-48 bg-gray-100">
-                  {store.images && store.images.length > 0 ? (
-                    <img
-                      src={store.images[0]}
-                      alt={store.title}
-                      className="w-full h-full object-contain p-4"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://via.placeholder.com/200x150?text=No+Image";
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-6xl text-gray-400">
-                      📦
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2">
-                    <Badge className="bg-green-100 text-green-800">
-                      {store.stock_quantity} in stock
-                    </Badge>
-                  </div>
+              {/* Categories Filter */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Danh mục</h3>
+                <div className="space-y-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat.id
+                          ? 'bg-[#004080] text-white font-medium'
+                          : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{cat.name}</span>
+                        <span className={`text-xs ${selectedCategory === cat.id ? 'text-white/80' : 'text-gray-500'}`}>
+                          {cat.count}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-lg">{store.title}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span className="text-sm text-gray-600">{store.avg_rating || "No rating"}</span>
-                    </div>
-                    <span className="text-xs text-gray-500">by Seller</span>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="p-4 pt-0">
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{store.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-[#004080]">${store.price}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {store.category}
-                    </Badge>
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="p-4 pt-0 space-y-2">
-                  <Link to={`/marketplace/product/${store.id}`} className="block">
-                    <Button className="w-full bg-[#004080] hover:bg-[#003366] text-white">
-                      <Box className="h-4 w-4 mr-2" />
-                      View Details
-                    </Button>
-                  </Link>
-                  <AddToCart
-                    productId={parseInt(store.id.toString())}
-                    productName={store.title}
-                    price={parseFloat(store.price.toString())}
-                    stockQuantity={store.stock_quantity}
-                    variant="compact"
-                    className="w-full"
-                  />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
+              </div>
 
-        {filteredStores.length === 0 && (
-          <div className="text-center py-10">
-            <Box className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
-            <p className="text-gray-500">No items available in this category.</p>
-          </div>
-        )}
+              {/* Price Range Filter (Placeholder) */}
+              <div className="mb-6 pb-6 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Khoảng giá</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm text-gray-600">
+                    <input type="checkbox" className="mr-2 rounded" />
+                    Dưới $10
+                  </label>
+                  <label className="flex items-center text-sm text-gray-600">
+                    <input type="checkbox" className="mr-2 rounded" />
+                    $10 - $50
+                  </label>
+                  <label className="flex items-center text-sm text-gray-600">
+                    <input type="checkbox" className="mr-2 rounded" />
+                    Trên $50
+                  </label>
+                </div>
+              </div>
+
+              {/* Stock Status Filter */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Tình trạng</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm text-gray-600">
+                    <input type="checkbox" className="mr-2 rounded" defaultChecked />
+                    Còn hàng
+                  </label>
+                  <label className="flex items-center text-sm text-gray-600">
+                    <input type="checkbox" className="mr-2 rounded" />
+                    Hết hàng
+                  </label>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Right Column - Product Grid (Dynamic Width) */}
+          <main className="flex-1 min-w-0">
+            {/* Mobile Category Filter */}
+            <div className="lg:hidden mb-6">
+              <h2 className="text-lg font-semibold mb-3">Danh mục</h2>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <Badge
+                    key={cat.id}
+                    variant={selectedCategory === cat.id ? "default" : "outline"}
+                    className="cursor-pointer px-3 py-1 text-sm"
+                    onClick={() => setSelectedCategory(cat.id)}
+                  >
+                    {cat.name} ({cat.count})
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Results Count */}
+            <div className="mb-4">
+              <p className="text-sm text-gray-600">
+                Hiển thị <span className="font-semibold text-gray-900">{filteredStores.length}</span> sản phẩm
+                {selectedCategory !== "all" && (
+                  <span> trong danh mục <span className="font-semibold text-[#004080]">{categories.find(c => c.id === selectedCategory)?.name}</span></span>
+                )}
+              </p>
+            </div>
+
+            {/* Product Grid - Auto-fill with minmax */}
+            {isLoading ? (
+              <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Card key={i} className="overflow-hidden">
+                    <Skeleton className="h-48 w-full" />
+                    <CardHeader className="p-4 pb-2">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                    <CardFooter className="p-4 pt-0">
+                      <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredStores.length > 0 ? (
+              <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
+                {filteredStores.map((store: Product) => (
+                  <Card key={store.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full border border-gray-200 rounded-xl">
+                    <div className="relative h-48 bg-gray-100">
+                      {store.images && store.images.length > 0 ? (
+                        <img
+                          src={store.images[0]}
+                          alt={store.title}
+                          className="w-full h-full object-contain p-4"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://via.placeholder.com/200x150?text=No+Image";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-6xl text-gray-400">
+                          📦
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2">
+                        <Badge className="bg-green-100 text-green-800">
+                          {store.stock_quantity} in stock
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <CardHeader className="p-4 pb-2">
+                      <CardTitle className="text-lg line-clamp-1">{store.title}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center">
+                          <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                          <span className="text-sm text-gray-600">{store.avg_rating || "No rating"}</span>
+                        </div>
+                        <span className="text-xs text-gray-500">by Seller</span>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="p-4 pt-0 flex-grow">
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{store.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl font-bold text-[#004080]">${store.price}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {store.category}
+                        </Badge>
+                      </div>
+                    </CardContent>
+
+                    <CardFooter className="p-4 pt-0">
+                      <Link to={`/marketplace/product/${store.id}`}>
+                        <Button className="w-full bg-[#004080] hover:bg-[#003366] text-white">
+                          <Box className="h-4 w-4 mr-2" />
+                          Buy Now
+                        </Button>
+                      </Link>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-white rounded-xl shadow-md">
+                <Box className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Không tìm thấy sản phẩm</h3>
+                <p className="text-gray-500">Không có sản phẩm nào trong danh mục này.</p>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </Layout>
   );
