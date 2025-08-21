@@ -588,6 +588,26 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(reviews.created_at));
   }
 
+  async getSoftwareReviews(softwareId: number): Promise<Review[]> {
+    return this.getReviewsBySoftwareId(softwareId);
+  }
+
+  async getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined> {
+    const result = await db
+      .select()
+      .from(reviews)
+      .where(
+        and(
+          eq(reviews.target_type, 'software'),
+          eq(reviews.target_id, softwareId),
+          eq(reviews.user_id, userId)
+        )
+      )
+      .limit(1);
+    
+    return result[0];
+  }
+
   async deleteReview(id: number, userId: number): Promise<boolean> {
     const result = await db
       .delete(reviews)

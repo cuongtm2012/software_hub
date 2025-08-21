@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,11 +39,11 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
 
   // Fetch reviews for the software
   const { data: reviews, isLoading: isLoadingReviews } = useQuery<ReviewWithUser[]>({
-    queryKey: software ? ["/api/reviews", software.id] : [],
+    queryKey: software ? ["/api/softwares", software.id, "reviews"] : [],
     queryFn: async ({ queryKey }) => {
       if (!software) return [];
       const [_, softwareId] = queryKey;
-      const res = await fetch(`/api/reviews/${softwareId}`);
+      const res = await fetch(`/api/softwares/${softwareId}/reviews`);
       if (!res.ok) throw new Error("Failed to fetch reviews");
       return res.json();
     },
@@ -53,7 +53,8 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
   // Submit review mutation
   const submitReviewMutation = useMutation({
     mutationFn: async (reviewData: InsertReview) => {
-      const res = await apiRequest("POST", "/api/reviews", reviewData);
+      if (!software) throw new Error("Software not available");
+      const res = await apiRequest("POST", `/api/softwares/${software.id}/reviews`, reviewData);
       return res.json();
     },
     onSuccess: () => {
@@ -64,7 +65,7 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
       setReviewComment("");
       // Invalidate the reviews query to reload the data
       if (software) {
-        queryClient.invalidateQueries({ queryKey: ["/api/reviews", software.id] });
+        queryClient.invalidateQueries({ queryKey: ["/api/softwares", software.id, "reviews"] });
       }
     },
     onError: (error: Error) => {
@@ -114,9 +115,11 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden">
+      <DialogContent className="max-w-3xl p-0 overflow-hidden" aria-describedby="software-description">
         {software && (
-          <div className="flex flex-col md:flex-row">
+          <>
+            <DialogTitle className="sr-only">{software.name} Details</DialogTitle>
+            <div className="flex flex-col md:flex-row">
             {/* Software image */}
             <div className="flex-shrink-0 relative bg-gray-100 md:w-2/5">
               {software.image_url ? (
@@ -259,6 +262,7 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
               </div>
             </div>
           </div>
+          </>
         )}
       </DialogContent>
     </Dialog>

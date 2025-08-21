@@ -927,7 +927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user_id: req.user?.id
       });
       
-      const review = await storage.createReview(insertData);
+      const review = await storage.createReview(insertData, req.user?.id as number);
       res.status(201).json(review);
     } catch (error) {
       if (error instanceof ZodError) {
