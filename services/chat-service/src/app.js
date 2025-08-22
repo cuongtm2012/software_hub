@@ -37,14 +37,24 @@ async function initializeRedis() {
     }
     
     redisClient = redis.createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379'
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      socket: {
+        connectTimeout: 3000,
+        lazyConnect: true
+      }
     });
     
     redisClient.on('error', (err) => {
-      console.error('Redis connection error:', err);
+      console.warn('Redis connection error (continuing without Redis):', err.message);
     });
     
-    await redisClient.connect();
+    // Try to connect with timeout
+    const connectPromise = redisClient.connect();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Redis connection timeout')), 5000)
+    );
+    
+    await Promise.race([connectPromise, timeoutPromise]);
     console.log('Connected to Redis successfully');
     
     // Make Redis client available globally
@@ -54,6 +64,14 @@ async function initializeRedis() {
   } catch (error) {
     console.warn('Failed to connect to Redis:', error.message);
     console.log('Chat service will run without Redis (basic functionality mode)');
+    if (redisClient) {
+      try {
+        redisClient.disconnect();
+      } catch (e) {
+        // Ignore disconnect errors
+      }
+    }
+    redisClient = null;
     return null;
   }
 }
@@ -172,19 +190,11 @@ async function startServer() {
   try {
     console.log('Initializing chat service...');
     
-    // Initialize Redis (optional)
-    try {
-      await initializeRedis();
-    } catch (error) {
-      console.warn('Redis initialization failed, continuing without Redis');
-    }
+    // Initialize Redis (optional) - skip if Redis fails
+    await initializeRedis();
     
-    // Initialize MongoDB (optional)
-    try {
-      await initializeMongoDB();
-    } catch (error) {
-      console.warn('MongoDB initialization failed, continuing without MongoDB');
-    }
+    // Initialize MongoDB (optional) - skip if MongoDB fails
+    await initializeMongoDB();
     
     // Start HTTP server
     server.listen(PORT, () => {
