@@ -11,7 +11,15 @@ const PORT = process.env.PORT || 3001;
 let redisClient;
 async function initializeRedis() {
   try {
-    const redis = require('redis');
+    // Try to require redis, fallback if not available
+    let redis;
+    try {
+      redis = require('redis');
+    } catch (redisError) {
+      console.warn('Redis module not installed, skipping Redis connection');
+      return null;
+    }
+    
     redisClient = redis.createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379'
     });
@@ -28,7 +36,8 @@ async function initializeRedis() {
     
     return redisClient;
   } catch (error) {
-    console.error('Failed to connect to Redis:', error);
+    console.warn('Failed to connect to Redis:', error.message);
+    console.log('Email service will run without Redis (basic functionality mode)');
     // Don't exit, continue without Redis for basic functionality
     return null;
   }
@@ -45,7 +54,7 @@ app.get('/health', async (req, res) => {
     service: 'email-service',
     timestamp: new Date().toISOString(),
     dependencies: {
-      redis: redisClient ? (redisClient.isOpen ? 'connected' : 'disconnected') : 'not_configured'
+      redis: redisClient ? (redisClient.isOpen ? 'connected' : 'disconnected') : 'not_available'
     }
   };
   

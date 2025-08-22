@@ -40,6 +40,9 @@ import { pool } from "./db";
 const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
+  // System
+  initialize(): Promise<void>;
+  
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -258,6 +261,18 @@ export class DatabaseStorage implements IStorage {
       pool, 
       createTableIfMissing: true 
     });
+  }
+
+  // System initialization
+  async initialize(): Promise<void> {
+    try {
+      // Test database connection by running a simple query
+      const result = await db.select({ count: sql<number>`count(*)` }).from(users);
+      console.log('Database connection verified successfully');
+    } catch (error) {
+      console.error('Database initialization failed:', error);
+      throw error;
+    }
   }
 
   // Users
