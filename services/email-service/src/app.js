@@ -7,13 +7,56 @@ const emailController = require('./controllers/emailController');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Initialize Redis connection
+let redisClient;
+async function initializeRedis() {
+  try {
+    const redis = require('redis');
+    redisClient = redis.createClient({
+      url: process.env.REDIS_URL || 'redis://localhost:6379'
+    });
+    
+    redisClient.on('error', (err) => {
+      console.error('Redis connection error:', err);
+    });
+    
+    await redisClient.connect();
+    console.log('Connected to Redis successfully');
+    
+    // Make Redis client available globally
+    global.redisClient = redisClient;
+    
+    return redisClient;
+  } catch (error) {
+    console.error('Failed to connect to Redis:', error);
+    // Don't exit, continue without Redis for basic functionality
+    return null;
+  }
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'email-service' });
+// Health check endpoint with dependency status
+app.get('/health', async (req, res) => {
+  const health = {
+    status: 'ok',
+    service: 'email-service',
+    timestamp: new Date().toISOString(),
+    dependencies: {
+      redis: redisClient ? (redisClient.isOpen ? 'connected' : 'disconnected') : 'not_configured'
+    }
+  };
+  
+  // Check if SendGrid is configured
+  if (process.env.SENDGRID_API_KEY) {
+    health.dependencies.sendgrid = 'configured';
+  } else {
+    health.dependencies.sendgrid = 'not_configured';
+  }
+  
+  res.json(health);
 });
 
 // Email routes
@@ -43,8 +86,48 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Email service running on port ${PORT}`);
-});
+// Graceful shutdown handler
+async function gracefulShutdown() {
+  console.log('Shutting down email service gracefully...');
+  
+  try {
+    if (redisClient) {
+      await redisClient.quit();
+      console.log('Redis connection closed');
+    }
+    
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+}
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
+
+// Initialize and start server
+async function startServer() {
+  try {
+    console.log('Initializing email service...');
+    
+    // Initialize Redis
+    await initializeRedis();
+    
+    // Start HTTP server
+    app.listen(PORT, () => {
+      console.log(`Email service running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`SendGrid configured: ${!!process.env.SENDGRID_API_KEY}`);
+    });
+    
+  } catch (error) {
+    console.error('Failed to start email service:', error);
+    process.exit(1);
+  }
+}
+
+// Start the service
+startServer();
 
 module.exports = app;

@@ -10,14 +10,73 @@ app.use(express.urlencoded({ extended: false }));
 import session from 'express-session';
 import { randomBytes } from 'crypto';
 
+// Initialize database connection first
+import { storage } from "./storage";
+
+async function initializeDatabase() {
+  try {
+    console.log('Initializing database connection...');
+    await storage.initialize();
+    console.log('Database connection established successfully');
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    throw error;
+  }
+}
+
+async function waitForExternalServices(timeout = 60000) {
+  console.log('Waiting for external services to be ready...');
+  const startTime = Date.now();
+  
+  const services = [
+    { name: 'Email Service', url: process.env.EMAIL_SERVICE_URL || 'http://email-service:3001' },
+    { name: 'Chat Service', url: process.env.CHAT_SERVICE_URL || 'http://chat-service:3002' },
+    { name: 'Notification Service', url: process.env.NOTIFICATION_SERVICE_URL || 'http://notification-service:3003' }
+  ];
+
+  while (Date.now() - startTime < timeout) {
+    let allServicesReady = true;
+    
+    for (const service of services) {
+      try {
+        const response = await fetch(`${service.url}/health`, { 
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!response.ok) {
+          allServicesReady = false;
+          break;
+        }
+        
+      } catch (error) {
+        allServicesReady = false;
+        break;
+      }
+    }
+    
+    if (allServicesReady) {
+      console.log('All external services are ready');
+      return;
+    }
+    
+    console.log('Waiting for external services...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+  
+  console.warn('Some external services may not be ready, continuing startup...');
+}
+
 const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
 app.use(session({
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
+  store: storage.sessionStore,
   cookie: {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    httpOnly: true
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
   }
 }));
 
@@ -52,34 +111,59 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    console.log('Starting SoftwareHub application...');
+    
+    // Initialize database first
+    await initializeDatabase();
+    
+    // Wait for external services in production
+    if (process.env.NODE_ENV === 'production') {
+      await waitForExternalServices();
+    }
+    
+    // Register routes after database is ready
+    const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
-  });
+      console.error('Application error:', err);
+      res.status(status).json({ message });
+    });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  const isProduction = process.env.NODE_ENV === "production";
-  
-  if (!isProduction) {
-    // Dynamic import to avoid bundling Vite in production
-    const { setupVite } = await import("./vite");
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    // Setup Vite or static serving
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    if (!isProduction) {
+      // Dynamic import to avoid bundling Vite in production
+      const { setupVite } = await import("./vite");
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+      res.json({
+        status: 'ok',
+        service: 'softwarehub-app',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+      });
+    });
+
+    // ALWAYS serve the app on port 5000
+    const port = 5000;
+    server.listen(port, () => {
+      log(`SoftwareHub application serving on port ${port}`);
+      log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      log(`Database: Connected`);
+    });
+    
+  } catch (error) {
+    console.error('Failed to start application:', error);
+    process.exit(1);
   }
-
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen(port, () => {
-    log(`serving on port ${port}`);
-  });
 })();
