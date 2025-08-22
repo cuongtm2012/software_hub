@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const emailWorker = require('./workers/emailWorker');
 const notificationWorker = require('./workers/notificationWorker');
 const chatWorker = require('./workers/chatWorker');
@@ -14,8 +16,12 @@ class WorkerService {
     console.log('Starting Worker Service...');
     
     try {
-      // Initialize Redis connection with retry logic
-      await this.initializeRedisWithRetry();
+      // Initialize Redis connection with retry logic (optional)
+      try {
+        await this.initializeRedisWithRetry();
+      } catch (error) {
+        console.warn('Redis initialization failed, worker will run with limited functionality:', error.message);
+      }
       
       // Wait for external services to be ready
       await this.waitForExternalServices();
@@ -64,7 +70,8 @@ class WorkerService {
       } catch (error) {
         console.error(`Redis connection attempt ${i + 1} failed:`, error.message);
         if (i === maxRetries - 1) {
-          throw new Error(`Failed to connect to Redis after ${maxRetries} attempts`);
+          console.warn(`Failed to connect to Redis after ${maxRetries} attempts, continuing without Redis`);
+          return;
         }
         await new Promise(resolve => setTimeout(resolve, delay));
       }

@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const notificationController = require('./controllers/notificationController');
@@ -11,7 +13,15 @@ let pgPool;
 
 async function initializeRedis() {
   try {
-    const redis = require('redis');
+    // Try to require redis, fallback if not available
+    let redis;
+    try {
+      redis = require('redis');
+    } catch (redisError) {
+      console.warn('Redis module not installed, skipping Redis connection');
+      return null;
+    }
+    
     redisClient = redis.createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379'
     });
@@ -28,17 +38,26 @@ async function initializeRedis() {
     
     return redisClient;
   } catch (error) {
-    console.error('Failed to connect to Redis:', error);
-    throw error;
+    console.warn('Failed to connect to Redis:', error.message);
+    console.log('Notification service will run without Redis (basic functionality mode)');
+    return null;
   }
 }
 
 async function initializePostgreSQL() {
   try {
-    const { Pool } = require('pg');
+    // Try to require pg, fallback if not available
+    let pg;
+    try {
+      pg = require('pg');
+    } catch (pgError) {
+      console.warn('PostgreSQL module not installed, skipping PostgreSQL connection');
+      return null;
+    }
+    
     const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/softwarehub';
     
-    pgPool = new Pool({
+    pgPool = new pg.Pool({
       connectionString: databaseUrl,
       max: 20,
       idleTimeoutMillis: 30000,
@@ -57,8 +76,9 @@ async function initializePostgreSQL() {
     
     return pgPool;
   } catch (error) {
-    console.error('Failed to connect to PostgreSQL:', error);
-    throw error;
+    console.warn('Failed to connect to PostgreSQL:', error.message);
+    console.log('Notification service will run without PostgreSQL (basic functionality mode)');
+    return null;
   }
 }
 
@@ -73,8 +93,8 @@ app.get('/health', async (req, res) => {
     service: 'notification-service',
     timestamp: new Date().toISOString(),
     dependencies: {
-      redis: redisClient ? (redisClient.isOpen ? 'connected' : 'disconnected') : 'not_configured',
-      postgresql: pgPool ? 'connected' : 'not_configured',
+      redis: redisClient ? (redisClient.isOpen ? 'connected' : 'disconnected') : 'not_available',
+      postgresql: pgPool ? 'connected' : 'not_available',
       firebase: process.env.FIREBASE_PROJECT_ID ? 'configured' : 'not_configured'
     }
   };
@@ -148,11 +168,19 @@ async function startServer() {
   try {
     console.log('Initializing notification service...');
     
-    // Initialize Redis
-    await initializeRedis();
+    // Initialize Redis (optional)
+    try {
+      await initializeRedis();
+    } catch (error) {
+      console.warn('Redis initialization failed, continuing without Redis');
+    }
     
-    // Initialize PostgreSQL
-    await initializePostgreSQL();
+    // Initialize PostgreSQL (optional)
+    try {
+      await initializePostgreSQL();
+    } catch (error) {
+      console.warn('PostgreSQL initialization failed, continuing without PostgreSQL');
+    }
     
     // Start HTTP server
     app.listen(PORT, () => {

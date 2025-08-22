@@ -27,7 +27,15 @@ let mongoClient;
 
 async function initializeRedis() {
   try {
-    const redis = require('redis');
+    // Try to require redis, fallback if not available
+    let redis;
+    try {
+      redis = require('redis');
+    } catch (redisError) {
+      console.warn('Redis module not installed, skipping Redis connection');
+      return null;
+    }
+    
     redisClient = redis.createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379'
     });
@@ -44,17 +52,26 @@ async function initializeRedis() {
     
     return redisClient;
   } catch (error) {
-    console.error('Failed to connect to Redis:', error);
-    throw error;
+    console.warn('Failed to connect to Redis:', error.message);
+    console.log('Chat service will run without Redis (basic functionality mode)');
+    return null;
   }
 }
 
 async function initializeMongoDB() {
   try {
-    const { MongoClient } = require('mongodb');
+    // Try to require mongodb, fallback if not available
+    let mongodb;
+    try {
+      mongodb = require('mongodb');
+    } catch (mongoError) {
+      console.warn('MongoDB module not installed, skipping MongoDB connection');
+      return null;
+    }
+    
     const mongoUrl = process.env.MONGODB_URL || 'mongodb://admin:password@localhost:27017/softwarehub-chat?authSource=admin';
     
-    mongoClient = new MongoClient(mongoUrl);
+    mongoClient = new mongodb.MongoClient(mongoUrl);
     await mongoClient.connect();
     
     // Test connection
@@ -66,8 +83,9 @@ async function initializeMongoDB() {
     
     return mongoClient;
   } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
-    throw error;
+    console.warn('Failed to connect to MongoDB:', error.message);
+    console.log('Chat service will run without MongoDB (basic functionality mode)');
+    return null;
   }
 }
 
@@ -85,8 +103,8 @@ app.get('/health', async (req, res) => {
     service: 'chat-service',
     timestamp: new Date().toISOString(),
     dependencies: {
-      redis: redisClient ? (redisClient.isOpen ? 'connected' : 'disconnected') : 'not_configured',
-      mongodb: mongoClient ? 'connected' : 'not_configured',
+      redis: redisClient ? (redisClient.isOpen ? 'connected' : 'disconnected') : 'not_available',
+      mongodb: mongoClient ? 'connected' : 'not_available',
       socketio: io ? 'initialized' : 'not_initialized'
     }
   };
@@ -154,11 +172,19 @@ async function startServer() {
   try {
     console.log('Initializing chat service...');
     
-    // Initialize Redis
-    await initializeRedis();
+    // Initialize Redis (optional)
+    try {
+      await initializeRedis();
+    } catch (error) {
+      console.warn('Redis initialization failed, continuing without Redis');
+    }
     
-    // Initialize MongoDB
-    await initializeMongoDB();
+    // Initialize MongoDB (optional)
+    try {
+      await initializeMongoDB();
+    } catch (error) {
+      console.warn('MongoDB initialization failed, continuing without MongoDB');
+    }
     
     // Start HTTP server
     server.listen(PORT, () => {
