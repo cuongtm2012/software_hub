@@ -35,8 +35,18 @@ The application is composed of several independent services:
 - **Caching/Queueing**: Redis (for real-time chat, message queues, and caching).
 
 ### System Design
-- **Inter-service Communication**: Primarily uses REST APIs and Redis-based message queues for asynchronous processing.
-- **Docker Orchestration**: Utilizes Docker Compose for service networking, load balancing, environment variable management, and volume persistence.
+- **Inter-service Communication**: Comprehensive microservices architecture using REST APIs, Redis message queues, and Socket.IO for real-time features.
+- **Docker Orchestration**: Production-ready Docker Compose setup with 8 containerized services:
+  - Main Application (API Gateway + Frontend) - Port 5000
+  - PostgreSQL Database - Port 5432  
+  - Redis Cache/Queue - Port 6379
+  - MongoDB (Chat) - Port 27017
+  - Email Microservice - Port 3001
+  - Chat Microservice - Port 3002  
+  - Notification Microservice - Port 3003
+  - Worker Service (Background tasks)
+  - Nginx Load Balancer - Port 80/443
+  - Automated Backup Service
 - **UI/UX Decisions**: Emphasizes a modern, component-based design using Shadcn/UI and Tailwind CSS for a consistent and responsive user experience. The dashboard is organized with clear sections, visual themes, and role-based features.
 - **Development Guidelines**: Focus on modern web application patterns, maximizing frontend functionality, minimizing backend complexity, using Drizzle ORM, implementing proper error handling and validation, and maintaining separation between client and server code.
 
@@ -58,6 +68,20 @@ The application is composed of several independent services:
 - **PostgreSQL**: Relational database.
 - **MongoDB**: NoSQL database.
 - **Nginx**: Used as a reverse proxy for Docker orchestration.
+
+## Docker Architecture - ANALYZED ✅
+
+### Complete Microservices Setup - DOCUMENTED
+- **Architecture**: Production-ready Docker Compose with 10 services
+- **Main Application**: API Gateway + Frontend serving on port 5000
+- **Database Layer**: PostgreSQL (primary), Redis (cache/queue), MongoDB (chat)
+- **Microservices**: Email (3001), Chat (3002), Notification (3003), Worker (background)
+- **Infrastructure**: Nginx load balancer with rate limiting, automated PostgreSQL backup
+- **Security**: Health checks, restart policies, security headers, rate limiting
+- **Environment**: Comprehensive configuration for all external services (SendGrid, Firebase, Stripe, Cloudflare R2)
+- **Networking**: Custom bridge network with service discovery
+- **Data Persistence**: Named volumes for all databases with 7-day backup retention
+- **Production Features**: SSL ready (cert setup needed), monitoring, scaling capabilities
 
 ## Recent Changes (August 2025)
 
