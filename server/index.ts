@@ -68,17 +68,43 @@ async function waitForExternalServices(timeout = 60000) {
 }
 
 const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
+
+// Use memory store for development to avoid session store hanging issues
+const MemoryStore = session.MemoryStore;
+
 app.use(session({
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
-  store: storage.sessionStore,
+  store: new MemoryStore(), // Use memory store instead of PostgreSQL store
   cookie: {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production'
   }
 }));
+
+// Add session debugging middleware with improved filtering
+app.use((req, res, next) => {
+  // Only log session debug for meaningful API requests and page loads
+  const shouldLog = (
+    (req.path.startsWith('/api/') && !req.path.startsWith('/api/user') && req.method !== 'GET') || // Important API calls but not constant user checks
+    (req.path.startsWith('/api/login') || req.path.startsWith('/api/logout') || req.path.startsWith('/api/register')) || // Auth calls
+    (req.path === '/' || req.path.startsWith('/auth') || req.path.startsWith('/dashboard') || req.path.startsWith('/admin')) // Page loads
+  ) && !req.path.includes('/src/') && !req.path.includes('/@') && !req.path.includes('.js') && !req.path.includes('.css') && !req.path.includes('.ico');
+  
+  if (shouldLog) {
+    console.log('Session Debug:', {
+      sessionId: req.sessionID,
+      hasSession: !!req.session,
+      userId: req.session?.userId,
+      userEmail: req.session?.user?.email,
+      path: req.path,
+      method: req.method
+    });
+  }
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

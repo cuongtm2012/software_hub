@@ -163,7 +163,7 @@ export default function DashboardPage() {
                 <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Login Required</h2>
                 <p className="text-gray-600 mb-4">Please log in to access your dashboard.</p>
-                <Button onClick={() => navigate("/test-login")}>Login</Button>
+                <Button onClick={() => navigate("/auth")}>Login</Button>
               </CardContent>
             </Card>
           </div>

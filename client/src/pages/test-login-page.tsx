@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function TestLoginPage() {
   const [, setLocation] = useLocation();
@@ -16,16 +16,27 @@ export default function TestLoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
-      return apiRequest("/api/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      });
+      const res = await apiRequest("POST", "/api/login", data);
+      return await res.json();
     },
-    onSuccess: () => {
-      toast({ title: "Success", description: "Logged in successfully!" });
-      setLocation("/");
-      window.location.reload(); // Refresh to update auth state
+    onSuccess: (userData: any) => {
+      // Extract user data from response
+      const user = userData.user || userData;
+      queryClient.setQueryData(["/api/user"], user);
+      
+      toast({ 
+        title: "Success", 
+        description: `Logged in successfully! Welcome back, ${user.name}!` 
+      });
+      
+      // Auto-redirect based on user role
+      setTimeout(() => {
+        if (user.role === 'admin') {
+          setLocation('/admin');
+        } else {
+          setLocation('/dashboard');
+        }
+      }, 500);
     },
     onError: (error: any) => {
       toast({

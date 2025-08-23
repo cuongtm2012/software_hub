@@ -1038,7 +1038,7 @@ export default function AdminDashboardPage() {
                 <p className="text-gray-600 mb-4">
                   Please log in to access the admin dashboard.
                 </p>
-                <Button onClick={() => navigate("/test-login")}>Login</Button>
+                <Button onClick={() => navigate("/auth")}>Login</Button>
               </CardContent>
             </Card>
           </div>

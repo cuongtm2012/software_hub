@@ -257,10 +257,23 @@ export class DatabaseStorage implements IStorage {
   sessionStore: any;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
-    });
+    // Initialize session store with error handling
+    try {
+      this.sessionStore = new PostgresSessionStore({ 
+        pool, 
+        createTableIfMissing: true,
+        tableName: 'session',
+        errorLog: (err: any) => {
+          console.error('Session store error:', err);
+        }
+      });
+      console.log('PostgreSQL session store initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize session store:', error);
+      // Fallback to memory store for development
+      console.log('Falling back to memory store for sessions');
+      this.sessionStore = new session.MemoryStore();
+    }
   }
 
   // System initialization
@@ -269,10 +282,47 @@ export class DatabaseStorage implements IStorage {
       // Test database connection by running a simple query
       const result = await db.select({ count: sql<number>`count(*)` }).from(users);
       console.log('Database connection verified successfully');
+      
+      // Test session store connection
+      await this.testSessionStore();
+      
     } catch (error) {
       console.error('Database initialization failed:', error);
       throw error;
     }
+  }
+
+  // Test session store functionality
+  async testSessionStore(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const testSessionId = 'test-session-' + Date.now();
+      const testData = { test: true, timestamp: Date.now() };
+      
+      // Try to set a test session
+      this.sessionStore.set(testSessionId, testData, (err: any) => {
+        if (err) {
+          console.error('Session store test failed:', err);
+          reject(err);
+          return;
+        }
+        
+        // Try to get the test session
+        this.sessionStore.get(testSessionId, (err: any, session: any) => {
+          if (err) {
+            console.error('Session store get test failed:', err);
+            reject(err);
+            return;
+          }
+          
+          console.log('Session store test successful');
+          
+          // Clean up test session
+          this.sessionStore.destroy(testSessionId, () => {
+            resolve();
+          });
+        });
+      });
+    });
   }
 
   // Users

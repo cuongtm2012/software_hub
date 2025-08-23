@@ -95,8 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // Create session (simplified)
-      
+      // Create session and save it explicitly
       req.session.userId = user.id;
       req.session.user = {
         id: user.id,
@@ -105,11 +104,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: user.role
       };
       
-      res.json({ 
-        id: user.id, 
-        name: user.name, 
-        email: user.email, 
-        role: user.role 
+      // Save session explicitly to ensure persistence
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        
+        console.log("✅ Session saved successfully:", {
+          sessionId: req.sessionID,
+          userId: req.session.userId,
+          userEmail: req.session.user?.email
+        });
+        
+        res.json({ 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role 
+        });
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -4422,6 +4435,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
+      next(error);
+    }
+  });
+
+  // Public users endpoint for chat functionality
+  app.get("/api/users", isAuthenticated, async (req, res, next) => {
+    try {
+      const { role } = req.query;
+      const currentUserRole = req.user!.role;
+      
+      // Define role-based access rules for chat
+      let allowedRoles: string[] = [];
+      
+      if (currentUserRole === 'admin') {
+        allowedRoles = ['admin', 'seller', 'buyer', 'user', 'developer', 'client'];
+      } else if (currentUserRole === 'seller') {
+        allowedRoles = ['buyer', 'admin'];
+      } else if (currentUserRole === 'buyer') {
+        allowedRoles = ['seller', 'admin'];
+      } else {
+        allowedRoles = ['admin']; // Regular users can only chat with admin
+      }
+      
+      // Get users with basic info for chat
+      const query = db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+        })
+        .from(users)
+        .where(
+          and(
+            inArray(users.role, allowedRoles),
+            ne(users.id, req.user!.id) // Exclude current user
+          )
+        );
+      
+      const usersList = await query;
+      
+      res.json({ users: usersList });
+    } catch (error) {
+      console.error('Error fetching users for chat:', error);
       next(error);
     }
   });

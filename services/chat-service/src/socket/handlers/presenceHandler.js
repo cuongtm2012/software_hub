@@ -11,12 +11,22 @@ class PresenceHandler {
         connectedAt: new Date()
       });
       
+      // Get current online users to send to the newly connected user
+      const onlineUsers = await redisService.getOnlineUsers();
+      
+      // Send current online users to the newly connected user
+      socket.emit('online-users-list', {
+        users: onlineUsers.map(user => user.userId)
+      });
+      
       // Broadcast user online status to relevant rooms/users
       socket.broadcast.emit('user-online', {
         userId: socket.userId,
         userName: socket.userName,
         timestamp: new Date()
       });
+      
+      console.log(`User ${socket.userId} (${socket.userName}) is now online`);
       
     } catch (error) {
       console.error('Presence connection error:', error);
@@ -34,6 +44,8 @@ class PresenceHandler {
         userName: socket.userName,
         timestamp: new Date()
       });
+      
+      console.log(`User ${socket.userId} (${socket.userName}) is now offline`);
       
     } catch (error) {
       console.error('Presence disconnection error:', error);

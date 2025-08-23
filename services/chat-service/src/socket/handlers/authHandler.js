@@ -3,45 +3,134 @@ const jwt = require('../utils/jwt');
 class AuthHandler {
   authenticate(socket, next) {
     try {
-      const token = socket.handshake.auth.token || socket.handshake.headers.authorization;
+      // Handle authentication via query parameters or headers for development
+      const authData = socket.handshake.auth || {};
+      const headers = socket.handshake.headers || {};
       
-      if (!token) {
-        return next(new Error('Authentication token required'));
+      // Try to get user info from various sources
+      let userId, userName, userRole, userAvatar;
+      
+      // Method 1: Direct auth data from client
+      if (authData.userId || authData.userName) {
+        userId = authData.userId;
+        userName = authData.userName;
+        userRole = authData.userRole || 'user';
+        userAvatar = authData.userAvatar || '';
       }
-      
-      // For development, we'll accept a simple user object
-      // In production, verify JWT token properly
-      const cleanToken = token.replace('Bearer ', '');
-      
-      try {
-        // Try to parse as JWT first
-        const decoded = jwt.verifyToken(cleanToken);
-        socket.userId = decoded.userId;
-        socket.userName = decoded.userName;
-        socket.userRole = decoded.role;
-      } catch (jwtError) {
-        // Fallback for development - parse as JSON
+      // Method 2: From headers (our enhanced method)
+      else if (headers['x-user-id']) {
+        userId = headers['x-user-id'];
+        userName = headers['x-user-name'] || 'Unknown User';
+        userRole = headers['x-user-role'] || 'user';
+        userAvatar = headers['x-user-avatar'] || '';
+      }
+      // Method 3: JWT token (production method)
+      else {
+        const token = authData.token || headers.authorization;
+        
+        if (!token) {
+          // For development, allow connection and wait for authenticate event
+          console.log('No initial auth data, waiting for authenticate event...');
+          socket.userId = null;
+          socket.userName = null;
+          socket.userRole = null;
+          socket.userAvatar = null;
+          return next();
+        }
+        
+        const cleanToken = token.replace('Bearer ', '');
+        
         try {
-          const userInfo = JSON.parse(cleanToken);
-          socket.userId = userInfo.id;
-          socket.userName = userInfo.name;
-          socket.userRole = userInfo.role;
-        } catch (parseError) {
-          return next(new Error('Invalid authentication token'));
+          // Try to parse as JWT first
+          const jwt = require('../utils/jwt');
+          const decoded = jwt.verifyToken(cleanToken);
+          userId = decoded.userId;
+          userName = decoded.userName;
+          userRole = decoded.role;
+          userAvatar = decoded.avatar || '';
+        } catch (jwtError) {
+          console.log('JWT verification failed, continuing without auth...');
+          socket.userId = null;
+          socket.userName = null;
+          socket.userRole = null;
+          socket.userAvatar = null;
+          return next();
         }
       }
       
-      console.log(`Socket authenticated: User ${socket.userId} (${socket.userRole})`);
+      // Set socket properties
+      socket.userId = userId;
+      socket.userName = userName;
+      socket.userRole = userRole || 'user';
+      socket.userAvatar = userAvatar || '';
+      
+      console.log(`Socket pre-authenticated: User ${socket.userId} (${socket.userRole}) - ${socket.userName}`);
       next();
       
     } catch (error) {
       console.error('Socket authentication error:', error);
-      next(new Error('Authentication failed'));
+      // Don't fail authentication in development, just log and continue
+      socket.userId = null;
+      socket.userName = null;
+      socket.userRole = null;
+      socket.userAvatar = null;
+      next();
     }
+  }
+
+  // Handle explicit authenticate event from client
+  handleAuthenticate(socket, data) {
+    try {
+      const { userId, userName, userRole, userAvatar } = data;
+      
+      if (!userId || !userName) {
+        socket.emit('authenticated', {
+          success: false,
+          error: 'User ID and name are required'
+        });
+        return;
+      }
+      
+      // Update socket properties
+      socket.userId = userId;
+      socket.userName = userName;
+      socket.userRole = userRole || 'user';
+      socket.userAvatar = userAvatar || '';
+      
+      console.log(`Socket authenticated via event: User ${socket.userId} (${socket.userRole}) - ${socket.userName}`);
+      
+      socket.emit('authenticated', {
+        success: true,
+        user: {
+          id: socket.userId,
+          name: socket.userName,
+          role: socket.userRole,
+          avatar: socket.userAvatar
+        }
+      });
+      
+    } catch (error) {
+      console.error('Authenticate event error:', error);
+      socket.emit('authenticated', {
+        success: false,
+        error: 'Authentication failed'
+      });
+    }
+  }
+
+  // Middleware to check if user is authenticated
+  requireAuth(socket, next) {
+    if (!socket.userId) {
+      return next(new Error('Authentication required'));
+    }
+    next();
   }
 
   // Middleware to check if user is admin
   requireAdmin(socket, next) {
+    if (!socket.userId) {
+      return next(new Error('Authentication required'));
+    }
     if (socket.userRole !== 'admin') {
       return next(new Error('Admin access required'));
     }
