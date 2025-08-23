@@ -113,6 +113,10 @@ app.delete('/api/notifications/:id', notificationController.deleteNotification);
 app.post('/api/notifications/subscribe', notificationController.subscribe);
 app.delete('/api/notifications/unsubscribe/:token', notificationController.unsubscribe);
 
+// FCM token management
+app.post('/api/notifications/register-token', notificationController.registerToken);
+app.get('/api/notifications/status', notificationController.getServiceStatus);
+
 // Testing endpoints for all notification scenarios
 app.post('/api/notifications/test-new-message', notificationController.testNewMessage);
 app.post('/api/notifications/test-comment', notificationController.testComment);
