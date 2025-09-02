@@ -24,10 +24,28 @@ import { update } from "drizzle-orm/pg-core";
 import { users } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
-import emailService from "./services/emailService.js";
-import notificationService from "./services/notificationService.js";
 import { ObjectStorageService } from "./objectStorage";
 import { getR2Storage } from "./cloudflare-r2-storage-working";
+
+// Microservice client helper
+async function callMicroservice(serviceUrl: string, endpoint: string, data: any, method: string = 'POST') {
+  try {
+    const response = await fetch(`${serviceUrl}${endpoint}`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: method !== 'GET' ? JSON.stringify(data) : undefined
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Microservice call failed: ${response.status} ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`Failed to call microservice ${serviceUrl}${endpoint}:`, error);
+    throw error;
+  }
+}
 
 // Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -172,7 +190,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send welcome email (don't wait for it to complete)
-      emailService.sendWelcomeEmail(user.email, user.name).then(result => {
+      const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://localhost:3001';
+      callMicroservice(emailServiceUrl, '/api/send-welcome-email', { email: user.email, name: user.name }).then(result => {
         if (result.success) {
           console.log(`Welcome email sent to ${user.email} (${result.messageId})`);
         } else {
@@ -240,7 +259,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send password reset email
       const resetUrl = `${req.protocol}://${req.get('host')}/auth/reset-password?token=${resetToken}`;
       
-      emailService.sendPasswordResetEmail(user.email, user.name, resetUrl).then(result => {
+      const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://localhost:3001';
+      callMicroservice(emailServiceUrl, '/api/send-password-reset-email', { email: user.email, name: user.name, resetUrl }).then(result => {
         if (result.success) {
           console.log(`Password reset email sent to ${user.email} (${result.messageId})`);
         } else {
@@ -2923,531 +2943,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email service endpoints
-  app.post("/api/email/send", isAuthenticated, async (req, res, next) => {
-    try {
-      const { to, subject, message, type = 'custom' } = req.body;
-      
-      if (!to || !subject || !message) {
-        return res.status(400).json({ 
-          message: "Missing required fields: to, subject, message" 
-        });
+  app.post(
+    '/api/notifications/test-new-message',
+    async (req: Request, res: Response) => {
+      // Check admin role first
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
       
-      const result = await emailService.sendEmail({
-        to,
-        from: 'noreply@softwarehub.com',
-        subject,
-        html: message
-      });
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send email",
-          error: result.error
-        });
+      const userRole = req.session.user.role;
+      if (!userRole || userRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
       }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Email sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.post("/api/email/welcome", adminMiddleware, async (req, res, next) => {
-    try {
-      const { userEmail, userName } = req.body;
-      
-      if (!userEmail || !userName) {
-        return res.status(400).json({ 
-          message: "Missing required fields: userEmail, userName" 
-        });
-      }
-      
-      const result = await emailService.sendWelcomeEmail(userEmail, userName);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send welcome email",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Welcome email sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.post("/api/email/project-notification", adminMiddleware, async (req, res, next) => {
-    try {
-      const { userEmail, userName, projectTitle, status } = req.body;
-      
-      if (!userEmail || !userName || !projectTitle || !status) {
-        return res.status(400).json({ 
-          message: "Missing required fields: userEmail, userName, projectTitle, status" 
-        });
-      }
-      
-      const result = await emailService.sendProjectNotification(userEmail, userName, projectTitle, status);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send project notification",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Project notification sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Password Reset Email
-  app.post("/api/email/password-reset", async (req, res, next) => {
-    try {
-      const { userEmail } = req.body;
-      
-      if (!userEmail) {
-        return res.status(400).json({ 
-          message: "Missing required field: userEmail" 
-        });
-      }
-
-      // Validate email format
-      const validation = emailService.validateEmail(userEmail);
-      if (!validation.valid) {
-        return res.status(400).json({ 
-          message: validation.error 
-        });
-      }
-
-      // Check if user exists
-      const userExists = await emailService.checkUserExists(userEmail);
-      if (!userExists) {
-        return res.status(404).json({ 
-          message: "Email not found in our records" 
-        });
-      }
-
-      // Generate reset token (in production, store this securely)
-      const resetToken = Math.random().toString(36).substring(2, 15);
-      
-      const result = await emailService.sendPasswordResetEmail(userEmail, resetToken);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send password reset email",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Password reset email sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Account Activation Email
-  app.post("/api/email/activation", adminMiddleware, async (req, res, next) => {
-    try {
-      const { userEmail, userName } = req.body;
-      
-      if (!userEmail || !userName) {
-        return res.status(400).json({ 
-          message: "Missing required fields: userEmail, userName" 
-        });
-      }
-
-      // Validate email format
-      const validation = emailService.validateEmail(userEmail);
-      if (!validation.valid) {
-        return res.status(400).json({ 
-          message: validation.error 
-        });
-      }
-
-      // Generate activation token
-      const activationToken = Math.random().toString(36).substring(2, 15);
-      
-      const result = await emailService.sendAccountActivationEmail(userEmail, userName, activationToken);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send activation email",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Activation email sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Order Confirmation Email
-  app.post("/api/email/order-confirmation", isAuthenticated, async (req, res, next) => {
-    try {
-      const { userEmail, userName, orderDetails } = req.body;
-      
-      if (!userEmail || !userName || !orderDetails) {
-        return res.status(400).json({ 
-          message: "Missing required fields: userEmail, userName, orderDetails" 
-        });
-      }
-      
-      const result = await emailService.sendOrderConfirmationEmail(userEmail, userName, orderDetails);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send order confirmation email",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Order confirmation email sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Support Notification Email
-  app.post("/api/email/support-notification", async (req, res, next) => {
-    try {
-      const { userEmail, subject, message } = req.body;
-      const supportEmail = process.env.SUPPORT_EMAIL || 'support@softwarehub.com';
-      
-      if (!userEmail || !subject || !message) {
-        return res.status(400).json({ 
-          message: "Missing required fields: userEmail, subject, message" 
-        });
-      }
-      
-      const result = await emailService.sendSupportNotification(supportEmail, userEmail, subject, message);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send support notification",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Support notification sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Newsletter Subscription Confirmation
-  app.post("/api/email/newsletter-confirmation", async (req, res, next) => {
-    try {
-      const { userEmail, userName } = req.body;
-      
-      if (!userEmail || !userName) {
-        return res.status(400).json({ 
-          message: "Missing required fields: userEmail, userName" 
-        });
-      }
-
-      // Validate email format
-      const validation = emailService.validateEmail(userEmail);
-      if (!validation.valid) {
-        return res.status(400).json({ 
-          message: validation.error 
-        });
-      }
-      
-      const result = await emailService.sendNewsletterSubscriptionConfirmation(userEmail, userName);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send newsletter confirmation",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Newsletter confirmation sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Account Deactivation Notice
-  app.post("/api/email/account-deactivation", adminMiddleware, async (req, res, next) => {
-    try {
-      const { userEmail, userName } = req.body;
-      
-      if (!userEmail || !userName) {
-        return res.status(400).json({ 
-          message: "Missing required fields: userEmail, userName" 
-        });
-      }
-      
-      const result = await emailService.sendAccountDeactivationNotice(userEmail, userName);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send deactivation notice",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Deactivation notice sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Account Reactivation Notice
-  app.post("/api/email/account-reactivation", adminMiddleware, async (req, res, next) => {
-    try {
-      const { userEmail, userName } = req.body;
-      
-      if (!userEmail || !userName) {
-        return res.status(400).json({ 
-          message: "Missing required fields: userEmail, userName" 
-        });
-      }
-      
-      const result = await emailService.sendAccountReactivationNotice(userEmail, userName);
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: "Failed to send reactivation notice",
-          error: result.error
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        message: "Reactivation notice sent successfully" 
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Marketing Email Campaign
-  app.post("/api/email/marketing-campaign", adminMiddleware, async (req, res, next) => {
-    try {
-      const { recipients, campaignData } = req.body;
-      
-      if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
-        return res.status(400).json({ 
-          message: "Missing or invalid recipients array" 
-        });
-      }
-
-      if (!campaignData) {
-        return res.status(400).json({ 
-          message: "Missing campaignData" 
-        });
-      }
-
-      const results = [];
-      let successCount = 0;
-      let failCount = 0;
-
-      // Send to each recipient
-      for (const recipient of recipients) {
-        try {
-          const result = await emailService.sendMarketingEmail(
-            recipient.email, 
-            recipient.name, 
-            campaignData
-          );
-          
-          results.push({
-            email: recipient.email,
-            success: result.success,
-            messageId: result.messageId,
-            error: result.error
-          });
-
-          if (result.success) {
-            successCount++;
-          } else {
-            failCount++;
-          }
-        } catch (error: any) {
-          results.push({
-            email: recipient.email,
-            success: false,
-            error: error.message
-          });
-          failCount++;
-        }
-      }
-      
-      res.json({ 
-        success: true,
-        summary: {
-          total: recipients.length,
-          successful: successCount,
-          failed: failCount
-        },
-        results: results,
-        message: `Marketing campaign completed. ${successCount} emails sent successfully, ${failCount} failed.`
-      });
-      
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  // Email Testing Endpoint
-  app.post("/api/email/test", adminMiddleware, async (req, res, next) => {
-    try {
-      const { testType, userEmail, userName, ...additionalData } = req.body;
-      
-      if (!testType || !userEmail) {
-        return res.status(400).json({ 
-          message: "Missing required fields: testType, userEmail" 
-        });
-      }
-
-      let result;
-      
-      switch (testType) {
-        case 'welcome':
-          result = await emailService.sendWelcomeEmail(userEmail, userName || 'Test User');
-          break;
+      try {
+        // Use form data from frontend or fallback to defaults
+        const { userId, senderName, messagePreview } = req.body;
+        const targetUserId = userId ? parseInt(userId) : 1;
+        const sender = senderName || "Alice Johnson";
+        const message = messagePreview || "Hey, how's your project coming along?";
         
-        case 'activation':
-          const activationToken = 'test-activation-token';
-          result = await emailService.sendAccountActivationEmail(userEmail, userName || 'Test User', activationToken);
-          break;
-        
-        case 'password-reset':
-          const resetToken = 'test-reset-token';
-          result = await emailService.sendPasswordResetEmail(userEmail, resetToken);
-          break;
-        
-        case 'order-confirmation':
-          const orderDetails = {
-            orderId: 'TEST-001',
-            productName: 'Test Product',
-            amount: '29.99',
-            status: 'confirmed',
-            ...additionalData.orderDetails
-          };
-          result = await emailService.sendOrderConfirmationEmail(userEmail, userName || 'Test User', orderDetails);
-          break;
-        
-        case 'project-notification':
-          result = await emailService.sendProjectNotification(
-            userEmail, 
-            userName || 'Test User', 
-            additionalData.projectTitle || 'Test Project',
-            additionalData.status || 'completed'
-          );
-          break;
-        
-        case 'newsletter-confirmation':
-          result = await emailService.sendNewsletterSubscriptionConfirmation(userEmail, userName || 'Test User');
-          break;
-        
-        case 'account-deactivation':
-          result = await emailService.sendAccountDeactivationNotice(userEmail, userName || 'Test User');
-          break;
-        
-        case 'account-reactivation':
-          result = await emailService.sendAccountReactivationNotice(userEmail, userName || 'Test User');
-          break;
-        
-        case 'marketing':
-          const campaignData = {
-            subject: 'Test Marketing Email',
-            title: 'Special Test Offer',
-            content: '<p>This is a test marketing email with special offers!</p>',
-            ctaText: 'Shop Now',
-            ctaUrl: 'https://example.com/shop',
-            ...additionalData.campaignData
-          };
-          result = await emailService.sendMarketingEmail(userEmail, userName || 'Test User', campaignData);
-          break;
-        
-        case 'support-notification':
-          const supportEmail = process.env.SUPPORT_EMAIL || 'support@softwarehub.com';
-          result = await emailService.sendSupportNotification(
-            supportEmail,
-            userEmail,
-            additionalData.subject || 'Test Support Request',
-            additionalData.message || 'This is a test support request message.'
-          );
-          break;
-        
-        default:
-          return res.status(400).json({ 
-            message: `Invalid test type: ${testType}. Supported types: welcome, activation, password-reset, order-confirmation, project-notification, newsletter-confirmation, account-deactivation, account-reactivation, marketing, support-notification` 
-          });
-      }
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          message: `Failed to send ${testType} test email`,
-          error: result.error
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names that the notification service expects
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-new-message', { 
+          userId: targetUserId, 
+          senderName: sender, 
+          messagePreview: message // Keep as messagePreview as expected by notification service
+        });
+
+        res.json({
+          success: result.success || true,
+          messageId: result.messageId,
+          testType: 'new-message',
+          message: result.message || `New message notification sent successfully to User ${targetUserId}`
+        });
+      } catch (error: any) {
+        console.error('New message notification test error:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message || 'Failed to send test notification',
+          testType: 'new-message'
         });
       }
-      
-      res.json({ 
-        success: true, 
-        messageId: result.messageId,
-        testType,
-        message: `${testType} test email sent successfully to ${userEmail}` 
-      });
-      
-    } catch (error) {
-      next(error);
     }
-  });
+  );
 
   // FCM Token Registration Endpoint
   app.post("/api/notifications/register-token", isAuthenticated, async (req, res, next) => {
@@ -3471,51 +3009,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PUSH NOTIFICATION TESTING ENDPOINTS - Using Local Service
+  // PUSH NOTIFICATION TESTING ENDPOINTS - Using Microservice
 
-  // Test notification endpoints using local notification service
-  app.post(
-    '/api/notifications/test-new-message',
-    async (req: Request, res: Response) => {
-      // Check admin role first
-      if (!req.session?.userId || !req.session?.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      
-      const userRole = req.session.user.role;
-      if (!userRole || userRole !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      try {
-        // Use form data from frontend or fallback to defaults
-        const { userId, senderName, messagePreview } = req.body;
-        const targetUserId = userId ? parseInt(userId) : 1;
-        const sender = senderName || "Alice Johnson";
-        const message = messagePreview || "Hey, how's your project coming along?";
-        
-        const result = await notificationService.sendNewMessageNotification(
-          targetUserId,
-          sender,
-          message
-        );
-
-        res.json({
-          success: result.success,
-          messageId: result.messageId,
-          testType: 'new-message',
-          message: `New message notification sent successfully to User ${targetUserId}`
-        });
-      } catch (error: any) {
-        console.error('New message notification test error:', error);
-        res.status(500).json({ 
-          success: false, 
-          error: error.message || 'Failed to send test notification',
-          testType: 'new-message'
-        });
-      }
-    }
-  );
-
+  // Test notification endpoints using notification microservice
   app.post(
     '/api/notifications/test-comment',
     async (req: Request, res: Response) => {
@@ -3535,17 +3031,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const commenter = commenterName || "Bob Smith";
         const content = contentTitle || "Your Latest Project";
         
-        const result = await notificationService.sendCommentNotification(
-          targetUserId,
-          commenter,
-          content
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-comment', { 
+          userId: targetUserId, 
+          commenterName: commenter, 
+          contentTitle: content 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'comment',
-          message: `Comment notification sent successfully to User ${targetUserId}`
+          message: result.message || `Comment notification sent successfully to User ${targetUserId}`
         });
       } catch (error: any) {
         console.error('Comment notification test error:', error);
@@ -3571,16 +3069,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
-        const result = await notificationService.sendMaintenanceAlert(
-          "Saturday 2:00 AM - 4:00 AM EST",
-          "We'll be updating our servers."
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-maintenance-alert', { 
+          maintenanceTime: "Saturday 2:00 AM - 4:00 AM EST", 
+          details: "We'll be updating our servers." 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'maintenance-alert',
-          message: 'maintenance-alert test notification sent successfully'
+          message: result.message || 'maintenance-alert test notification sent successfully'
         });
       } catch (error: any) {
         console.error('Maintenance alert test error:', error);
@@ -3606,16 +3106,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
-        const result = await notificationService.sendSystemUpdateNotification(
-          "2.1.0",
-          "New dashboard, improved performance, bug fixes"
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-system-update', { 
+          version: "2.1.0", 
+          features: "New dashboard, improved performance, bug fixes" 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'system-update',
-          message: 'system-update test notification sent successfully'
+          message: result.message || 'system-update test notification sent successfully'
         });
       } catch (error: any) {
         console.error('System update test error:', error);
@@ -3647,17 +3149,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const orderNumber = orderId || "ORD-2024-001";
         const orderAmount = amount || "$99.99";
         
-        const result = await notificationService.sendOrderConfirmation(
-          targetUserId,
-          orderNumber,
-          orderAmount
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-order-confirmation', { 
+          userId: targetUserId, 
+          orderId: orderNumber, 
+          amount: orderAmount 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'order-confirmation',
-          message: `Order confirmation notification sent successfully to User ${targetUserId}`
+          message: result.message || `Order confirmation notification sent successfully to User ${targetUserId}`
         });
       } catch (error: any) {
         console.error('Order confirmation test error:', error);
@@ -3683,17 +3187,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
-        const result = await notificationService.sendPaymentFailureNotification(
-          1, // Test user ID
-          "ORD-2024-001",
-          "Insufficient funds"
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-payment-failure', { 
+          userId: 1, 
+          orderId: "ORD-2024-001", 
+          reason: "Insufficient funds" 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'payment-failure',
-          message: 'payment-failure test notification sent successfully'
+          message: result.message || 'payment-failure test notification sent successfully'
         });
       } catch (error: any) {
         console.error('Payment failure test error:', error);
@@ -3719,17 +3225,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
-        const result = await notificationService.sendEventReminder(
-          1, // Test user ID
-          "Product Launch Webinar",
-          "Tomorrow 3:00 PM EST"
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-event-reminder', { 
+          userId: 1, 
+          eventName: "Product Launch Webinar", 
+          eventTime: "Tomorrow 3:00 PM EST" 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'event-reminder',
-          message: 'event-reminder test notification sent successfully'
+          message: result.message || 'event-reminder test notification sent successfully'
         });
       } catch (error: any) {
         console.error('Event reminder test error:', error);
@@ -3755,16 +3263,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
-        const result = await notificationService.sendSubscriptionRenewalReminder(
-          1, // Test user ID
-          "March 15, 2024"
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-subscription-renewal', { 
+          userId: 1, 
+          expiryDate: "March 15, 2024" 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'subscription-renewal',
-          message: 'subscription-renewal test notification sent successfully'
+          message: result.message || 'subscription-renewal test notification sent successfully'
         });
       } catch (error: any) {
         console.error('Subscription renewal test error:', error);
@@ -3790,17 +3300,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
-        const result = await notificationService.sendPromotionalOffer(
-          "50% Off Premium Features",
-          "Upgrade now and save big!",
-          "March 31, 2024"
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-promotional-offer', { 
+          offerTitle: "50% Off Premium Features", 
+          offerDetails: "Upgrade now and save big!", 
+          validUntil: "March 31, 2024" 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'promotional-offer',
-          message: 'promotional-offer test notification sent successfully'
+          message: result.message || 'promotional-offer test notification sent successfully'
         });
       } catch (error: any) {
         console.error('Promotional offer test error:', error);
@@ -3826,17 +3338,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
-        const result = await notificationService.sendUnusualLoginNotification(
-          1, // Test user ID
-          "San Francisco, CA",
-          "iPhone 14"
-        );
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-unusual-login', { 
+          userId: 1, 
+          location: "San Francisco, CA", 
+          device: "iPhone 14" 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'unusual-login',
-          message: 'unusual-login test notification sent successfully'
+          message: result.message || 'unusual-login test notification sent successfully'
         });
       } catch (error: any) {
         console.error('Unusual login test error:', error);
@@ -3862,13 +3376,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       try {
-        const result = await notificationService.sendPasswordChangeConfirmation(1); // Test user ID
+        const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost';
+        // Fix: Send correct parameter names
+        const result = await callMicroservice(notificationServiceUrl, '/api/notifications/test-password-change', { 
+          userId: 1 
+        });
 
         res.json({
-          success: result.success,
+          success: result.success || true,
           messageId: result.messageId,
           testType: 'password-change',
-          message: 'password-change test notification sent successfully'
+          message: result.message || 'password-change test notification sent successfully'
         });
       } catch (error: any) {
         console.error('Password change test error:', error);

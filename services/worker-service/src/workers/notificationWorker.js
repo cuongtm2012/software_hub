@@ -65,20 +65,15 @@ class NotificationWorker {
           break;
         default:
           console.warn(`${this.name} unknown message type:`, message.type);
-          await redisSMQService.rejectMessage(messageId, false); // Don't requeue unknown types
-          return;
+          throw new Error(`Unknown message type: ${message.type}`); // This will trigger reject with no requeue
       }
       
-      // Acknowledge successful processing
-      await redisSMQService.acknowledgeMessage(messageId);
+      // Success - Redis SMQ will automatically acknowledge via the callback
       console.log(`${this.name} completed message:`, messageId);
       
     } catch (error) {
       console.error(`${this.name} message processing error:`, error);
-      
-      // Reject message for retry (redis-smq will handle retry logic)
-      await redisSMQService.rejectMessage(messageId, true);
-      throw error; // Let redis-smq handle the retry mechanism
+      throw error; // Let Redis SMQ handle the retry mechanism
     }
   }
 
@@ -353,7 +348,7 @@ class NotificationWorker {
       name: this.name,
       isRunning: this.isRunning,
       queueName: this.queueName,
-      smqConnected: redisSMQService.isConnected()
+      redisConnected: redisSMQService.isConnected
     };
   }
 }

@@ -141,7 +141,19 @@ class SocketServer {
       // Read receipts
       socket.on('mark-as-read', (data) => {
         if (!socket.userId) return;
-        this.handleMarkAsRead(socket, io, data);
+        messageHandler.handleMarkAsRead(socket, io, data);
+      });
+
+      // Get read status
+      socket.on('get-read-status', (data) => {
+        if (!socket.userId) return;
+        messageHandler.handleGetReadStatus(socket, data);
+      });
+
+      // Load more chat history
+      socket.on('load-more-history', (data) => {
+        if (!socket.userId) return;
+        messageHandler.handleLoadMoreHistory(socket, data);
       });
       
       // User status updates

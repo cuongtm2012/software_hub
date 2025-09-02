@@ -1,74 +1,74 @@
-const redisService = require('../services/redisService');
+const redisSMQService = require('../services/redisSMQService');
 
 class ChatWorker {
   constructor() {
     this.name = 'ChatWorker';
     this.isRunning = false;
-    this.processInterval = null;
+    this.queueName = 'chat-queue';
   }
 
   async start() {
     console.log(`Starting ${this.name}...`);
     this.isRunning = true;
     
-    // Start processing queue
-    this.processInterval = setInterval(() => {
-      this.processQueue().catch(error => {
-        console.error(`${this.name} processing error:`, error);
-      });
-    }, 1500); // Check queue every 1.5 seconds
+    // Start consuming messages from Redis SMQ
+    await redisSMQService.startConsumer(
+      this.queueName, 
+      this.handleMessage.bind(this),
+      { 
+        concurrency: 2, // Process up to 2 chat jobs concurrently
+        retryThreshold: 3 
+      }
+    );
     
-    console.log(`${this.name} started`);
+    console.log(`${this.name} started and consuming from ${this.queueName}`);
   }
 
   async stop() {
     console.log(`Stopping ${this.name}...`);
     this.isRunning = false;
     
-    if (this.processInterval) {
-      clearInterval(this.processInterval);
-      this.processInterval = null;
-    }
+    // Stop consuming messages
+    await redisSMQService.stopConsumer(this.queueName);
     
     console.log(`${this.name} stopped`);
   }
 
-  async processQueue() {
+  async handleMessage(message, messageId) {
     if (!this.isRunning) return;
     
+    console.log(`${this.name} processing message:`, messageId);
+    
     try {
-      const job = await redisService.popFromQueue('chat-queue');
-      if (!job) return;
-      
-      console.log(`${this.name} processing job:`, job.id);
-      
-      switch (job.type) {
+      switch (message.type) {
         case 'message-analytics':
-          await this.handleMessageAnalytics(job);
+          await this.handleMessageAnalytics(message);
           break;
         case 'content-moderation':
-          await this.handleContentModeration(job);
+          await this.handleContentModeration(message);
           break;
         case 'room-cleanup':
-          await this.handleRoomCleanup(job);
+          await this.handleRoomCleanup(message);
           break;
         case 'user-activity':
-          await this.handleUserActivity(job);
+          await this.handleUserActivity(message);
           break;
         default:
-          console.warn(`${this.name} unknown job type:`, job.type);
+          console.warn(`${this.name} unknown message type:`, message.type);
+          throw new Error(`Unknown message type: ${message.type}`);
       }
       
-      console.log(`${this.name} completed job:`, job.id);
+      // Success - Redis SMQ will automatically acknowledge via the callback
+      console.log(`${this.name} completed message:`, messageId);
       
     } catch (error) {
-      console.error(`${this.name} job processing error:`, error);
-      // In production, might want to retry or move to dead letter queue
+      console.error(`${this.name} message processing error:`, error);
+      throw error; // Let Redis SMQ handle the retry mechanism
     }
   }
 
-  async handleMessageAnalytics(job) {
-    const { roomId, messageId, messageData } = job.data;
+  async handleMessageAnalytics(message) {
+    const { roomId, messageId, messageData } = message.data;
     
     // Process message for analytics
     // - Word count
@@ -89,8 +89,8 @@ class ChatWorker {
     console.log(`Message analytics processed for room ${roomId}:`, analytics);
   }
 
-  async handleContentModeration(job) {
-    const { messageId, messageData, roomId } = job.data;
+  async handleContentModeration(message) {
+    const { messageId, messageData, roomId } = message.data;
     
     // Content moderation checks
     const moderationResult = {
@@ -125,8 +125,8 @@ class ChatWorker {
     }
   }
 
-  async handleRoomCleanup(job) {
-    const { roomId, cleanupType } = job.data;
+  async handleRoomCleanup(message) {
+    const { roomId, cleanupType } = message.data;
     
     switch (cleanupType) {
       case 'old-messages':
@@ -146,8 +146,8 @@ class ChatWorker {
     }
   }
 
-  async handleUserActivity(job) {
-    const { userId, activityType, metadata } = job.data;
+  async handleUserActivity(message) {
+    const { userId, activityType, metadata } = message.data;
     
     // Track user activity for insights
     const activity = {
@@ -173,8 +173,10 @@ class ChatWorker {
 
   getStatus() {
     return {
+      name: this.name,
       isRunning: this.isRunning,
-      hasProcessInterval: !!this.processInterval
+      queueName: this.queueName,
+      redisConnected: redisSMQService.isConnected
     };
   }
 }

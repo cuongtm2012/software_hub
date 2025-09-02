@@ -1,7 +1,27 @@
 const mongoService = require('../../services/mongoService');
 const redisService = require('../../services/redisService');
+const axios = require('axios');
 
 class MessageHandler {
+  constructor() {
+    // Initialize HTTP clients for worker and notification services
+    this.workerServiceClient = axios.create({
+      baseURL: process.env.WORKER_SERVICE_URL || 'http://localhost:3005',
+      timeout: 5000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    this.notificationServiceClient = axios.create({
+      baseURL: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3003',
+      timeout: 5000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
   async handleJoinRoom(socket, data) {
     try {
       const { roomId } = data;
@@ -23,14 +43,34 @@ class MessageHandler {
       // Mark user as active in room and update presence
       await mongoService.updateUserPresence(socket.userId, 'online', roomId);
       
-      // Get recent messages for the user
+      // Get recent messages for the user with enhanced details
       const recentMessages = await mongoService.getRoomMessages(roomId, { limit: 50 });
+      
+      // Mark messages as read for this user when they join
+      await mongoService.markAsRead(roomId, socket.userId);
+      
+      // Send room joined confirmation with message history
       socket.emit('room-joined', {
         roomId,
         success: true,
-        recentMessages: recentMessages.messages,
+        recentMessages: recentMessages.messages || [],
+        messageCount: recentMessages.totalCount || 0,
         timestamp: new Date()
       });
+      
+      // Also emit chat history separately for better client handling
+      if (recentMessages.messages && recentMessages.messages.length > 0) {
+        socket.emit('chat-history', {
+          roomId,
+          messages: recentMessages.messages,
+          totalCount: recentMessages.totalCount,
+          hasMore: recentMessages.hasMore || false
+        });
+        
+        console.log(`📝 Sent ${recentMessages.messages.length} chat history messages to user ${socket.userId} for room ${roomId}`);
+      } else {
+        console.log(`📝 No chat history found for room ${roomId}`);
+      }
       
       // Notify others in the room about user joining
       socket.to(roomId).emit('user-joined', {
@@ -177,6 +217,9 @@ class MessageHandler {
       
       // Send push notifications to offline users (if needed)
       await this.sendPushNotifications(roomId, savedMessage, socket.userId);
+
+      // Queue content moderation
+      await this.handleContentModeration(savedMessage, roomId);
       
       console.log(`Enhanced message sent in room ${roomId} by user ${socket.userId}`);
       
@@ -435,11 +478,103 @@ class MessageHandler {
   // Helper method to send push notifications to offline users
   async sendPushNotifications(roomId, message, senderId) {
     try {
-      // This would integrate with your notification service
-      // to send push notifications to offline users
       console.log(`Push notification triggered for room ${roomId}`);
+      
+      // Get room participants
+      const room = await mongoService.getRoom(roomId);
+      if (!room || !room.participants) {
+        console.log('No room participants found');
+        return;
+      }
+
+      // Get offline participants (excluding sender)
+      const offlineParticipants = room.participants.filter(participantId => 
+        participantId !== senderId
+      );
+
+      if (offlineParticipants.length === 0) {
+        console.log('No offline participants to notify');
+        return;
+      }
+
+      // Send chat notification jobs to worker service queue
+      for (const participantId of offlineParticipants) {
+        try {
+          // Add job to notification queue via worker service
+          await this.workerServiceClient.post('/api/queue/process', {
+            queueName: 'notification-queue',
+            messageData: {
+              type: 'chat-notification',
+              data: {
+                recipientId: participantId,
+                senderId: senderId,
+                senderName: message.senderName,
+                messagePreview: message.message.substring(0, 100),
+                chatId: roomId,
+                chatType: room.type || 'direct',
+                timestamp: message.timestamp
+              }
+            }
+          });
+
+          console.log(`📱 Chat notification queued for user ${participantId}`);
+        } catch (error) {
+          console.error(`Failed to queue chat notification for user ${participantId}:`, error.message);
+        }
+      }
+
+      // Also send chat analytics to worker service
+      try {
+        await this.workerServiceClient.post('/api/queue/process', {
+          queueName: 'chat-queue',
+          messageData: {
+            type: 'message-analytics',
+            data: {
+              roomId: roomId,
+              messageId: message._id || message.id,
+              messageData: {
+                senderId: senderId,
+                message: message.message,
+                type: message.type || 'text',
+                timestamp: message.timestamp
+              }
+            }
+          }
+        });
+
+        console.log(`📊 Message analytics queued for room ${roomId}`);
+      } catch (error) {
+        console.error(`Failed to queue message analytics:`, error.message);
+      }
+
     } catch (error) {
       console.error('Push notification error:', error);
+    }
+  }
+
+  // Enhanced method to handle content moderation
+  async handleContentModeration(message, roomId) {
+    try {
+      // Send content moderation job to worker service
+      await this.workerServiceClient.post('/api/queue/process', {
+        queueName: 'chat-queue',
+        messageData: {
+          type: 'content-moderation',
+          data: {
+            messageId: message._id || message.id,
+            messageData: {
+              senderId: message.senderId,
+              message: message.message,
+              type: message.type || 'text'
+            },
+            roomId: roomId
+          }
+        }
+      });
+
+      console.log(`🔍 Content moderation queued for message ${message._id || message.id}`);
+    } catch (error) {
+      console.error('Failed to queue content moderation:', error.message);
     }
   }
 
@@ -546,6 +681,148 @@ class MessageHandler {
       socket.emit('error', { 
         type: 'DELETE_MESSAGE_ERROR',
         message: 'Failed to delete message' 
+      });
+    }
+  }
+
+  // Mark messages as read (read/unread feature)
+  async handleMarkAsRead(socket, io, data) {
+    try {
+      const { roomId, messageId } = data;
+      
+      if (!roomId) {
+        socket.emit('error', { 
+          type: 'INVALID_READ_DATA',
+          message: 'Room ID is required' 
+        });
+        return;
+      }
+      
+      // Verify room access
+      const hasAccess = await mongoService.verifyRoomAccess(roomId, socket.userId);
+      if (!hasAccess) {
+        socket.emit('error', { 
+          type: 'ROOM_ACCESS_DENIED',
+          message: 'Access denied to room' 
+        });
+        return;
+      }
+      
+      // Mark messages as read in database
+      await mongoService.markAsRead(roomId, socket.userId, messageId);
+      
+      // Notify other participants about read receipt
+      socket.to(roomId).emit('message-read', {
+        roomId,
+        messageId,
+        readBy: socket.userId,
+        readAt: new Date()
+      });
+      
+      socket.emit('mark-read-success', { 
+        roomId, 
+        messageId,
+        success: true 
+      });
+      
+      console.log(`📖 Messages marked as read by user ${socket.userId} in room ${roomId}`);
+      
+    } catch (error) {
+      console.error('Mark as read error:', error);
+      socket.emit('error', { 
+        type: 'MARK_READ_ERROR',
+        message: 'Failed to mark messages as read' 
+      });
+    }
+  }
+
+  // Get message read status
+  async handleGetReadStatus(socket, data) {
+    try {
+      const { roomId } = data;
+      
+      if (!roomId) {
+        socket.emit('error', { 
+          type: 'INVALID_REQUEST',
+          message: 'Room ID is required' 
+        });
+        return;
+      }
+      
+      // Verify room access
+      const hasAccess = await mongoService.verifyRoomAccess(roomId, socket.userId);
+      if (!hasAccess) {
+        socket.emit('error', { 
+          type: 'ROOM_ACCESS_DENIED',
+          message: 'Access denied to room' 
+        });
+        return;
+      }
+      
+      // Get room details with unread count
+      const room = await mongoService.getRoom(roomId);
+      const unreadCount = room?.unreadCount?.[socket.userId] || 0;
+      
+      socket.emit('read-status', {
+        roomId,
+        unreadCount,
+        isUnread: unreadCount > 0
+      });
+      
+    } catch (error) {
+      console.error('Get read status error:', error);
+      socket.emit('error', { 
+        type: 'READ_STATUS_ERROR',
+        message: 'Failed to get read status' 
+      });
+    }
+  }
+
+  // Load more chat history (pagination)
+  async handleLoadMoreHistory(socket, data) {
+    try {
+      const { roomId, page = 1, limit = 50, beforeTimestamp } = data;
+      
+      if (!roomId) {
+        socket.emit('error', { 
+          type: 'INVALID_REQUEST',
+          message: 'Room ID is required' 
+        });
+        return;
+      }
+      
+      // Verify room access
+      const hasAccess = await mongoService.verifyRoomAccess(roomId, socket.userId);
+      if (!hasAccess) {
+        socket.emit('error', { 
+          type: 'ROOM_ACCESS_DENIED',
+          message: 'Access denied to room' 
+        });
+        return;
+      }
+      
+      // Get messages with pagination
+      const result = await mongoService.getRoomMessages(roomId, { 
+        page, 
+        limit, 
+        beforeTimestamp 
+      });
+      
+      socket.emit('chat-history-more', {
+        roomId,
+        messages: result.messages || [],
+        page,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore || false
+      });
+      
+      console.log(`📝 Sent ${result.messages?.length || 0} more chat history messages to user ${socket.userId} for room ${roomId} (page ${page})`);
+      
+    } catch (error) {
+      console.error('Load more history error:', error);
+      socket.emit('error', { 
+        type: 'LOAD_HISTORY_ERROR',
+        message: 'Failed to load chat history' 
       });
     }
   }

@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # Email Microservice - Development Mode
+  email-service:
+    build:
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
+    volumes:
+      - ./services/email-service/src:/app/src
+      - ./services/email-service/package.json:/app/package.json
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  # Chat Microservice - Development Mode  
+  chat-service:
+    build:
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
+    volumes:
+      - ./services/chat-service/src:/app/src
+      - ./services/chat-service/package.json:/app/package.json
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  # Notification Microservice - Development Mode
+  notification-service:
+    build:
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
+    volumes:
+      - ./services/notification-service/src:/app/src
+      - ./services/notification-service/package.json:/app/package.json
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  # Worker Microservice - Development Mode
+  worker-service:
+    build:
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
+    volumes:
+      - ./services/worker-service/src:/app/src
+      - ./services/worker-service/package.json:/app/package.json
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  # Main Application - Development Mode
+  softwarehub-app:
+    build:
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
+    volumes:
+      - ./server:/app/server
+      - ./client:/app/client
+      - ./shared:/app/shared
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./tailwind.config.ts:/app/tailwind.config.ts
+      - ./postcss.config.js:/app/postcss.config.js
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev

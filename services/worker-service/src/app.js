@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const express = require('express');
+const cors = require('cors');
 const emailWorker = require('./workers/emailWorker');
 const notificationWorker = require('./workers/notificationWorker');
 const chatWorker = require('./workers/chatWorker');
@@ -10,6 +12,72 @@ class WorkerService {
     this.workers = [];
     this.isRunning = false;
     this.healthCheckInterval = null;
+    this.app = express();
+    this.server = null;
+    
+    // Setup Express middleware
+    this.app.use(cors());
+    this.app.use(express.json());
+    
+    // Setup routes
+    this.setupRoutes();
+  }
+
+  setupRoutes() {
+    // Health check endpoint
+    this.app.get('/health', (req, res) => {
+      const status = this.getStatus();
+      res.json({
+        status: this.isRunning ? 'ok' : 'not_running',
+        service: 'worker-service',
+        timestamp: new Date().toISOString(),
+        ...status
+      });
+    });
+
+    // Queue processing endpoint for other services
+    this.app.post('/api/queue/process', async (req, res) => {
+      try {
+        const { queueName, messageData } = req.body;
+        
+        if (!queueName || !messageData) {
+          return res.status(400).json({
+            success: false,
+            error: 'queueName and messageData are required'
+          });
+        }
+
+        const result = await this.processQueue(queueName, messageData);
+        res.json(result);
+        
+      } catch (error) {
+        console.error('❌ Queue processing API error:', error);
+        res.status(500).json({
+          success: false,
+          error: error.message
+        });
+      }
+    });
+
+    // Queue statistics endpoint
+    this.app.get('/api/queue/stats', async (req, res) => {
+      try {
+        const stats = await this.getQueueStatistics();
+        res.json(stats);
+      } catch (error) {
+        console.error('❌ Queue stats API error:', error);
+        res.status(500).json({
+          success: false,
+          error: error.message
+        });
+      }
+    });
+
+    // Worker status endpoint
+    this.app.get('/api/workers/status', (req, res) => {
+      const status = this.getStatus();
+      res.json(status);
+    });
   }
 
   async start() {
@@ -21,6 +89,12 @@ class WorkerService {
       
       // Wait for external services to be ready
       await this.waitForExternalServices();
+      
+      // Start HTTP server
+      const PORT = process.env.PORT || 3005;
+      this.server = this.app.listen(PORT, () => {
+        console.log(`🌐 Worker Service HTTP API listening on port ${PORT}`);
+      });
       
       // Start all workers
       this.workers = [
@@ -141,15 +215,15 @@ class WorkerService {
         status: worker.getStatus ? worker.getStatus() : 'unknown'
       }));
       
-      // Check Redis SMQ connection and stats
-      const smqStatus = redisSMQService.isConnected();
+      // Check Redis connection and stats
+      const redisStatus = redisSMQService.isConnected;
       const queueStats = await redisSMQService.getQueueStats();
       
       const healthInfo = {
         timestamp: new Date().toISOString(),
         workers: workerStatus,
-        redisSMQ: {
-          connected: smqStatus,
+        redis: {
+          connected: redisStatus,
           stats: queueStats
         }
       };
@@ -167,6 +241,12 @@ class WorkerService {
     console.log('🛑 Shutting down Worker Service...');
     
     try {
+      // Stop HTTP server
+      if (this.server) {
+        this.server.close();
+        console.log('🛑 HTTP server stopped');
+      }
+      
       // Stop health monitoring
       if (this.healthCheckInterval) {
         clearInterval(this.healthCheckInterval);
@@ -206,9 +286,8 @@ class WorkerService {
         name: worker.name || worker.constructor.name,
         status: worker.getStatus ? worker.getStatus() : 'unknown'
       })),
-      redisSMQ: {
-        connected: redisSMQService.isConnected(),
-        version: require('redis-smq/package.json').version
+      redis: {
+        connected: redisSMQService.isConnected
       }
     };
   }

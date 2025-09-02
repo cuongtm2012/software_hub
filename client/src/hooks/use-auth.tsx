@@ -60,6 +60,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Force immediate refetch to ensure fresh data
       await queryClient.refetchQueries({ queryKey: ["/api/user"] });
       
+      // Request notification permission automatically when user logs in
+      if ('Notification' in window && Notification.permission === 'default') {
+        try {
+          const permission = await Notification.requestPermission();
+          console.log('Notification permission result:', permission);
+          
+          if (permission === 'granted') {
+            toast({
+              title: "Notifications enabled",
+              description: "You'll now receive notifications for new messages and updates.",
+            });
+            
+            // Initialize Firebase messaging if available
+            if (typeof window !== 'undefined' && window.firebase) {
+              try {
+                const { initializeFirebaseMessaging } = await import('@/lib/firebase-messaging');
+                await initializeFirebaseMessaging(user.id);
+              } catch (error) {
+                console.warn('Firebase messaging initialization failed:', error);
+              }
+            }
+          } else if (permission === 'denied') {
+            console.log('User denied notification permission');
+          }
+        } catch (error) {
+          console.error('Error requesting notification permission:', error);
+        }
+      } else if (Notification.permission === 'granted') {
+        // If already granted, just initialize Firebase messaging
+        if (typeof window !== 'undefined' && window.firebase) {
+          try {
+            const { initializeFirebaseMessaging } = await import('@/lib/firebase-messaging');
+            await initializeFirebaseMessaging(user.id);
+          } catch (error) {
+            console.warn('Firebase messaging initialization failed:', error);
+          }
+        }
+      }
+      
       // Auto-redirect based on user role
       setTimeout(() => {
         if (user.role === 'admin') {

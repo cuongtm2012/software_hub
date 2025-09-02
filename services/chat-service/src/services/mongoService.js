@@ -463,6 +463,16 @@ class MongoService {
       return room && room.participants.includes(userId);
     }
   }
+
+  // Get room details by ID
+  async getRoom(roomId) {
+    if (this.connected) {
+      const room = await this.rooms.findOne({ _id: roomId });
+      return room;
+    } else {
+      return this.rooms.get(roomId);
+    }
+  }
 }
 
 module.exports = new MongoService();

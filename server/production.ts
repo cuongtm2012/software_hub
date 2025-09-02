@@ -11,14 +11,77 @@ app.use(express.urlencoded({ extended: false }));
 import session from 'express-session';
 import { randomBytes } from 'crypto';
 
+// Initialize database connection first
+import { storage } from "./storage";
+
+async function initializeDatabase() {
+  try {
+    console.log('Initializing database connection...');
+    await storage.initialize();
+    console.log('Database connection established successfully');
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    throw error;
+  }
+}
+
+async function waitForExternalServices(timeout = 60000) {
+  console.log('Waiting for external services to be ready...');
+  const startTime = Date.now();
+  
+  const services = [
+    { name: 'Email Service', url: process.env.EMAIL_SERVICE_URL || 'http://email-service:3001' },
+    { name: 'Chat Service', url: process.env.CHAT_SERVICE_URL || 'http://chat-service:3002' },
+    { name: 'Notification Service', url: process.env.NOTIFICATION_SERVICE_URL || 'http://notification-service:3003' }
+  ];
+
+  while (Date.now() - startTime < timeout) {
+    let allServicesReady = true;
+    
+    for (const service of services) {
+      try {
+        const response = await fetch(`${service.url}/health`, { 
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!response.ok) {
+          allServicesReady = false;
+          break;
+        }
+        
+      } catch (error) {
+        allServicesReady = false;
+        break;
+      }
+    }
+    
+    if (allServicesReady) {
+      console.log('All external services are ready');
+      return;
+    }
+    
+    console.log('Waiting for external services...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+  
+  console.warn('Some external services may not be ready, continuing startup...');
+}
+
 const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
+
+// Use memory store for production to avoid session store hanging issues
+const MemoryStore = session.MemoryStore;
+
 app.use(session({
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
+  store: new MemoryStore(), // Use memory store instead of PostgreSQL store
   cookie: {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    httpOnly: true
+    httpOnly: true,
+    secure: false // Set to false for Docker environment
   }
 }));
 
@@ -77,6 +140,14 @@ function serveStatic(app: express.Express) {
 }
 
 (async () => {
+  try {
+    await initializeDatabase();
+    await waitForExternalServices();
+  } catch (error) {
+    console.error('Startup failed:', error);
+    process.exit(1);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

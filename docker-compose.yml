@@ -5,6 +5,7 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: softwarehub-postgres
+    platform: linux/arm64/v8  # Fix for M1/M2 Macs
     environment:
       - POSTGRES_DB=softwarehub
       - POSTGRES_USER=postgres
@@ -26,16 +27,12 @@ services:
       retries: 10
       start_period: 30s
     restart: unless-stopped
-    command: >
-      postgres -c shared_preload_libraries=''
-      -c max_connections=200
-      -c shared_buffers=256MB
-      -c effective_cache_size=1GB
 
   # Redis for caching and message queue
   redis:
     image: redis:7-alpine
     container_name: softwarehub-redis
+    platform: linux/arm64/v8  # Fix for M1/M2 Macs
     ports:
       - "6379:6379"
     volumes:
@@ -54,6 +51,7 @@ services:
   mongo:
     image: mongo:6
     container_name: softwarehub-mongo
+    platform: linux/arm64/v8  # Fix for M1/M2 Macs
     environment:
       - MONGO_INITDB_DATABASE=softwarehub-chat
       - MONGO_INITDB_ROOT_USERNAME=admin
@@ -78,6 +76,8 @@ services:
     build:
       context: ./services/email-service
       dockerfile: Dockerfile
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
     container_name: softwarehub-email-service
     ports:
       - "3001:3001"
@@ -109,6 +109,8 @@ services:
     build:
       context: ./services/chat-service
       dockerfile: Dockerfile
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
     container_name: softwarehub-chat-service
     ports:
       - "3002:3002"
@@ -139,6 +141,8 @@ services:
     build:
       context: ./services/notification-service
       dockerfile: Dockerfile
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
     container_name: softwarehub-notification-service
     ports:
       - "3003:3003"
@@ -171,6 +175,8 @@ services:
     build:
       context: ./services/worker-service
       dockerfile: Dockerfile
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
     container_name: softwarehub-worker-service
     environment:
       - NODE_ENV=production
@@ -197,6 +203,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      platforms:
+        - linux/arm64/v8  # Fix for M1/M2 Macs
     container_name: softwarehub-app
     ports:
       - "5000:5000"
@@ -257,6 +265,7 @@ services:
   nginx:
     image: nginx:alpine
     container_name: softwarehub-nginx
+    platform: linux/arm64/v8  # Fix for M1/M2 Macs
     ports:
       - "80:80"
       - "443:443"
@@ -273,6 +282,7 @@ services:
   postgres-backup:
     image: postgres:15-alpine
     container_name: softwarehub-backup
+    platform: linux/arm64/v8  # Fix for M1/M2 Macs
     environment:
       - PGPASSWORD=password
     volumes:

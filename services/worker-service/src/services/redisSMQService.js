@@ -1,174 +1,160 @@
-const { RedisSMQ } = require('redis-smq');
+const redis = require('redis');
 
 class RedisSMQService {
   constructor() {
-    this.producer = null;
-    this.consumer = null;
+    this.redisClient = null;
+    this.consumers = new Map();
     this.isConnected = false;
-    this.config = {
-      namespace: 'softwarehub',
-      redis: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT) || 6379,
-        password: process.env.REDIS_PASSWORD || null,
-        db: parseInt(process.env.REDIS_DB) || 0,
-      },
-      messages: {
-        store: true, // Store messages for reliability
-        expire: 3600 // Message expiration in seconds (1 hour)
-      },
-      queues: {
-        'email-queue': {
-          rateLimit: 100, // Max 100 messages per minute
-          priority: 10,
-          retry: {
-            enabled: true,
-            attempts: 3,
-            delay: 1000,
-            backoff: 'exponential'
-          }
-        },
-        'notification-queue': {
-          rateLimit: 200,
-          priority: 8,
-          retry: {
-            enabled: true,
-            attempts: 3,
-            delay: 1000,
-            backoff: 'exponential'
-          }
-        },
-        'chat-queue': {
-          rateLimit: 500,
-          priority: 15,
-          retry: {
-            enabled: true,
-            attempts: 2,
-            delay: 500,
-            backoff: 'linear'
-          }
-        },
-        'file-processing-queue': {
-          rateLimit: 50,
-          priority: 5,
-          retry: {
-            enabled: true,
-            attempts: 5,
-            delay: 2000,
-            backoff: 'exponential'
-          }
-        }
-      }
-    };
+    this.processingIntervals = new Map();
+    
+    this.queueNames = [
+      'email-queue',
+      'notification-queue', 
+      'chat-queue',
+      'file-processing-queue'
+    ];
   }
 
   async connect() {
     try {
-      console.log('🔄 Connecting to Redis SMQ...');
+      console.log('🔄 Connecting to Redis for queue management...');
       
-      // Initialize producer
-      this.producer = new RedisSMQ.Producer(this.config);
-      await this.producer.run();
-      
-      // Initialize consumer
-      this.consumer = new RedisSMQ.Consumer(this.config);
-      
-      // Setup queue configurations
-      await this.setupQueues();
+      // Create Redis client
+      this.redisClient = redis.createClient({
+        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        socket: {
+          connectTimeout: 10000,
+          lazyConnect: true
+        }
+      });
+
+      // Setup error handling
+      this.redisClient.on('error', (error) => {
+        console.error('🚨 Redis client error:', error);
+      });
+
+      this.redisClient.on('connect', () => {
+        console.log('✅ Redis client connected');
+      });
+
+      // Connect to Redis
+      await this.redisClient.connect();
       
       this.isConnected = true;
-      console.log('✅ Redis SMQ connected successfully');
-      
-      // Setup error handlers
-      this.setupErrorHandlers();
+      console.log('✅ Redis queue service connected successfully');
       
     } catch (error) {
-      console.error('❌ Failed to connect to Redis SMQ:', error);
+      console.error('❌ Failed to connect to Redis:', error);
       this.isConnected = false;
       throw error;
     }
   }
 
-  async setupQueues() {
+  async initializeQueues() {
     try {
-      for (const [queueName, queueConfig] of Object.entries(this.config.queues)) {
-        await this.producer.createQueue(queueName, {
-          rateLimit: queueConfig.rateLimit,
-          priority: queueConfig.priority,
-          retry: queueConfig.retry
-        });
-        console.log(`📋 Queue configured: ${queueName}`);
+      console.log('📋 Initializing queues...');
+      
+      // Initialize each queue (Redis lists)
+      for (const queueName of this.queueNames) {
+        // Ensure queue exists (Redis lists are created automatically)
+        const queueLength = await this.redisClient.lLen(queueName);
+        console.log(`📋 Queue ready: ${queueName} (length: ${queueLength})`);
       }
+      
+      console.log('✅ All queues initialized');
     } catch (error) {
-      console.error('❌ Error setting up queues:', error);
+      console.error('❌ Error initializing queues:', error);
       throw error;
     }
   }
 
-  setupErrorHandlers() {
-    // Producer error handling
-    this.producer.on('error', (error) => {
-      console.error('🚨 Redis SMQ Producer error:', error);
-    });
-
-    // Consumer error handling
-    this.consumer.on('error', (error) => {
-      console.error('🚨 Redis SMQ Consumer error:', error);
-    });
-
-    // Message processing error handling
-    this.consumer.on('message.error', (error, messageId) => {
-      console.error(`🚨 Message processing error for ${messageId}:`, error);
-    });
-
-    // Dead letter queue handling
-    this.consumer.on('message.dead_letter', (messageId, queueName) => {
-      console.warn(`💀 Message ${messageId} moved to dead letter queue from ${queueName}`);
-    });
-  }
-
-  // Producer methods
-  async publishMessage(queueName, messageType, data, options = {}) {
+  async addToQueue(queueName, data, options = {}) {
     if (!this.isConnected) {
-      throw new Error('Redis SMQ not connected');
+      throw new Error('Redis not connected');
     }
 
     try {
       const message = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        type: messageType,
+        type: data.type || 'unknown',
         data,
         timestamp: new Date().toISOString(),
+        attempts: 0,
+        maxAttempts: options.maxAttempts || 3,
         ...options
       };
 
-      const messageId = await this.producer.produce(queueName, message, {
-        priority: options.priority || 0,
-        delay: options.delay || 0,
-        ttl: options.ttl || this.config.messages.expire
-      });
-
-      console.log(`📤 Message published to ${queueName}: ${messageId}`);
-      return messageId;
+      // Push message to Redis list (LPUSH for FIFO with BRPOP)
+      await this.redisClient.lPush(queueName, JSON.stringify(message));
+      console.log(`📤 Message added to ${queueName}: ${message.id}`);
+      return message.id;
     } catch (error) {
-      console.error(`❌ Failed to publish message to ${queueName}:`, error);
+      console.error(`❌ Failed to add message to ${queueName}:`, error);
       throw error;
     }
   }
 
-  // Consumer methods
   async startConsumer(queueName, messageHandler, options = {}) {
     if (!this.isConnected) {
-      throw new Error('Redis SMQ not connected');
+      throw new Error('Redis not connected');
     }
 
     try {
-      await this.consumer.consume(queueName, messageHandler, {
-        concurrency: options.concurrency || 1,
-        messageRetryThreshold: options.retryThreshold || 3
-      });
+      console.log(`🔄 Starting consumer for ${queueName}...`);
+      
+      // Create a processing interval for this queue
+      const processQueue = async () => {
+        try {
+          // Block and wait for messages (BRPOP with 1 second timeout)
+          const result = await this.redisClient.brPop(queueName, 1);
+          
+          if (result) {
+            const messageData = JSON.parse(result.element);
+            console.log(`📥 Processing message from ${queueName}:`, messageData.id);
+            
+            try {
+              // Call the message handler
+              await messageHandler(messageData, messageData.id);
+              console.log(`✅ Message processed successfully: ${messageData.id}`);
+            } catch (error) {
+              console.error(`❌ Error processing message ${messageData.id}:`, error);
+              
+              // Handle retries
+              messageData.attempts = (messageData.attempts || 0) + 1;
+              
+              if (messageData.attempts < messageData.maxAttempts) {
+                // Requeue for retry with delay
+                console.log(`🔄 Requeuing message ${messageData.id} (attempt ${messageData.attempts}/${messageData.maxAttempts})`);
+                setTimeout(async () => {
+                  await this.redisClient.lPush(queueName, JSON.stringify(messageData));
+                }, 1000 * messageData.attempts); // Exponential backoff
+              } else {
+                // Move to dead letter queue
+                console.log(`💀 Moving message ${messageData.id} to dead letter queue`);
+                await this.redisClient.lPush(`${queueName}:dlq`, JSON.stringify(messageData));
+              }
+            }
+          }
+        } catch (error) {
+          if (error.message.includes('BRPOP')) {
+            // Timeout is expected, continue processing
+            return;
+          }
+          console.error(`❌ Consumer error for ${queueName}:`, error);
+        }
+      };
 
+      // Start continuous processing
+      const startProcessing = () => {
+        const interval = setInterval(processQueue, 100); // Check every 100ms
+        this.processingIntervals.set(queueName, interval);
+        return interval;
+      };
+
+      startProcessing();
+      this.consumers.set(queueName, { queueName, isActive: true });
       console.log(`🔄 Consumer started for queue: ${queueName}`);
+      
     } catch (error) {
       console.error(`❌ Failed to start consumer for ${queueName}:`, error);
       throw error;
@@ -177,84 +163,55 @@ class RedisSMQService {
 
   async stopConsumer(queueName) {
     try {
-      await this.consumer.cancel(queueName);
-      console.log(`⏹️ Consumer stopped for queue: ${queueName}`);
+      if (this.processingIntervals.has(queueName)) {
+        clearInterval(this.processingIntervals.get(queueName));
+        this.processingIntervals.delete(queueName);
+      }
+      
+      if (this.consumers.has(queueName)) {
+        this.consumers.delete(queueName);
+        console.log(`⏹️ Consumer stopped for queue: ${queueName}`);
+      }
     } catch (error) {
       console.error(`❌ Failed to stop consumer for ${queueName}:`, error);
       throw error;
     }
   }
 
-  // Message acknowledgment
-  async acknowledgeMessage(messageId) {
+  async getQueueStats() {
     try {
-      await this.consumer.acknowledge(messageId);
-      console.log(`✅ Message acknowledged: ${messageId}`);
-    } catch (error) {
-      console.error(`❌ Failed to acknowledge message ${messageId}:`, error);
-      throw error;
-    }
-  }
-
-  async rejectMessage(messageId, requeue = true) {
-    try {
-      await this.consumer.reject(messageId, requeue);
-      console.log(`❌ Message rejected: ${messageId} (requeue: ${requeue})`);
-    } catch (error) {
-      console.error(`❌ Failed to reject message ${messageId}:`, error);
-      throw error;
-    }
-  }
-
-  // Queue management
-  async getQueueStats(queueName) {
-    try {
-      const stats = await this.producer.getQueueStats(queueName);
+      const stats = {};
+      for (const queueName of this.queueNames) {
+        const length = await this.redisClient.lLen(queueName);
+        const dlqLength = await this.redisClient.lLen(`${queueName}:dlq`);
+        
+        stats[queueName] = {
+          name: queueName,
+          length: length,
+          dlqLength: dlqLength,
+          status: 'active',
+          consumers: this.consumers.has(queueName) ? 1 : 0
+        };
+      }
       return stats;
     } catch (error) {
-      console.error(`❌ Failed to get stats for queue ${queueName}:`, error);
-      throw error;
+      console.error('❌ Failed to get queue stats:', error);
+      return {};
     }
   }
 
-  async purgeQueue(queueName) {
-    try {
-      await this.producer.purgeQueue(queueName);
-      console.log(`🗑️ Queue purged: ${queueName}`);
-    } catch (error) {
-      console.error(`❌ Failed to purge queue ${queueName}:`, error);
-      throw error;
-    }
-  }
-
-  async deleteQueue(queueName) {
-    try {
-      await this.producer.deleteQueue(queueName);
-      console.log(`🗑️ Queue deleted: ${queueName}`);
-    } catch (error) {
-      console.error(`❌ Failed to delete queue ${queueName}:`, error);
-      throw error;
-    }
-  }
-
-  // Monitoring and health checks
   async getHealthStatus() {
     try {
-      const queuesStats = {};
-      for (const queueName of Object.keys(this.config.queues)) {
-        queuesStats[queueName] = await this.getQueueStats(queueName);
-      }
-
       return {
         connected: this.isConnected,
         timestamp: new Date().toISOString(),
-        queues: queuesStats,
+        queues: this.queueNames,
+        activeConsumers: Array.from(this.consumers.keys()),
+        stats: await this.getQueueStats(),
         config: {
-          namespace: this.config.namespace,
           redis: {
-            host: this.config.redis.host,
-            port: this.config.redis.port,
-            db: this.config.redis.db
+            host: process.env.REDIS_HOST || 'localhost',
+            port: process.env.REDIS_PORT || 6379
           }
         }
       };
@@ -268,36 +225,41 @@ class RedisSMQService {
     }
   }
 
-  // Graceful shutdown
   async disconnect() {
     try {
-      console.log('🔄 Disconnecting Redis SMQ...');
+      console.log('🔄 Disconnecting Redis queue service...');
       
-      if (this.consumer) {
-        await this.consumer.quit();
-        console.log('✅ Consumer disconnected');
+      // Stop all consumers
+      for (const queueName of this.consumers.keys()) {
+        await this.stopConsumer(queueName);
       }
       
-      if (this.producer) {
-        await this.producer.quit();
-        console.log('✅ Producer disconnected');
+      // Clear all processing intervals
+      for (const interval of this.processingIntervals.values()) {
+        clearInterval(interval);
+      }
+      this.processingIntervals.clear();
+      
+      // Disconnect Redis client
+      if (this.redisClient) {
+        await this.redisClient.disconnect();
+        console.log('✅ Redis client disconnected');
       }
       
       this.isConnected = false;
-      console.log('✅ Redis SMQ disconnected successfully');
+      console.log('✅ Redis queue service disconnected successfully');
     } catch (error) {
-      console.error('❌ Error during Redis SMQ disconnect:', error);
+      console.error('❌ Error during Redis disconnect:', error);
       throw error;
     }
   }
 
-  // Utility methods
   isConnected() {
     return this.isConnected;
   }
 
   getAvailableQueues() {
-    return Object.keys(this.config.queues);
+    return this.queueNames;
   }
 }
 

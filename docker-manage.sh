@@ -1,7 +1,12 @@
 #!/bin/bash
-# Software Hub Docker Management Script
+
+# Docker Management Script for SoftwareHub
+# This script helps manage Docker containers with live code updates
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 # Colors for output
 RED='\033[0;31m'
@@ -10,13 +15,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Functions
 print_status() {
     echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
 print_warning() {
@@ -27,88 +27,91 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Function to check if Docker is running
+print_header() {
+    echo -e "${BLUE}================================${NC}"
+    echo -e "${BLUE}$1${NC}"
+    echo -e "${BLUE}================================${NC}"
+}
+
+show_help() {
+    echo "Docker Management Script for SoftwareHub"
+    echo ""
+    echo "Usage: $0 [COMMAND] [OPTIONS]"
+    echo ""
+    echo "Commands:"
+    echo "  dev                 Start in development mode with live code updates"
+    echo "  prod                Start in production mode (static builds)"
+    echo "  stop                Stop all containers"
+    echo "  restart             Restart all containers"
+    echo "  rebuild             Rebuild and restart containers"
+    echo "  rebuild-service     Rebuild specific service: [main|email|chat|notification|worker]"
+    echo "  logs                Show logs for all services"
+    echo "  logs-service        Show logs for specific service"
+    echo "  status              Show container status"
+    echo "  update              Update containers with latest code changes"
+    echo "  clean               Clean up Docker system (removes unused images/containers)"
+    echo "  reset               Complete reset (stop, clean, rebuild)"
+    echo ""
+    echo "Examples:"
+    echo "  $0 dev                          # Start development mode"
+    echo "  $0 rebuild-service notification # Rebuild notification service"
+    echo "  $0 logs-service softwarehub-app # Show main app logs"
+    echo "  $0 update                       # Update running containers with code changes"
+}
+
 check_docker() {
-    if ! docker info > /dev/null 2>&1; then
-        print_error "Docker is not running. Please start Docker first."
+    if ! command -v docker &> /dev/null; then
+        print_error "Docker is not installed or not in PATH"
+        exit 1
+    fi
+    
+    if ! command -v docker-compose &> /dev/null; then
+        print_error "Docker Compose is not installed or not in PATH"
         exit 1
     fi
 }
 
-# Function to clean up and rebuild services
-clean_rebuild() {
-    print_status "Stopping all services..."
-    docker-compose down --volumes --remove-orphans
-
-    print_status "Removing old images..."
-    docker-compose down --rmi all --volumes --remove-orphans
-
-    print_status "Building fresh images..."
-    docker-compose build --no-cache
-
-    print_status "Starting services with dependencies..."
-    docker-compose up -d --remove-orphans
-}
-
-# Function to fix email service dependencies
-fix_email_service() {
-    print_status "Fixing email service dependencies..."
+start_dev() {
+    print_header "Starting SoftwareHub in Development Mode"
+    print_status "This mode provides live code updates without rebuilding containers"
     
-    # Rebuild email service with fresh dependencies
-    docker-compose stop email-service
-    docker-compose rm -f email-service
-    docker-compose build --no-cache email-service
-    docker-compose up -d email-service
-}
-
-# Function to check service health
-check_health() {
-    print_status "Checking service health..."
+    # Start databases first
+    print_status "Starting databases..."
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis mongo
     
-    services=("postgres" "redis" "mongo" "email-service" "chat-service" "notification-service")
+    # Wait for databases to be healthy
+    print_status "Waiting for databases to be ready..."
+    sleep 10
     
-    for service in "${services[@]}"; do
-        status=$(docker-compose ps -q $service | xargs docker inspect --format='{{.State.Health.Status}}' 2>/dev/null || echo "no-health-check")
-        
-        if [ "$status" = "healthy" ]; then
-            print_status "$service: ✅ Healthy"
-        elif [ "$status" = "unhealthy" ]; then
-            print_error "$service: ❌ Unhealthy"
-        elif [ "$status" = "starting" ]; then
-            print_warning "$service: ⏳ Starting..."
-        else
-            # Check if container is running
-            if docker-compose ps $service | grep -q "Up"; then
-                print_warning "$service: ⚠️  Running (no health check)"
-            else
-                print_error "$service: ❌ Not running"
-            fi
-        fi
-    done
-}
-
-# Function to show logs for failing services
-show_logs() {
-    print_status "Showing recent logs for all services..."
-    docker-compose logs --tail=50 --timestamps
-}
-
-# Function to restart specific service
-restart_service() {
-    if [ -z "$1" ]; then
-        print_error "Please specify a service name"
-        exit 1
-    fi
+    # Start microservices
+    print_status "Starting microservices..."
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d email-service chat-service notification-service worker-service
     
-    print_status "Restarting $1..."
-    docker-compose restart $1
-    sleep 5
-    check_health
+    # Wait for microservices to be healthy
+    print_status "Waiting for microservices to be ready..."
+    sleep 15
+    
+    # Start main application
+    print_status "Starting main application..."
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d softwarehub-app
+    
+    # Start nginx and backup service
+    print_status "Starting nginx and backup service..."
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d nginx postgres-backup
+    
+    print_status "Development environment started!"
+    print_status "Your code changes will be reflected immediately in the containers"
+    print_status "Access the application at: http://localhost"
+    print_status "Services running on:"
+    print_status "  - Main App: http://localhost:5000"
+    print_status "  - Email Service: http://localhost:3001" 
+    print_status "  - Chat Service: http://localhost:3002"
+    print_status "  - Notification Service: http://localhost:3003"
 }
 
-# Function to start services in correct order
-start_services() {
-    print_status "Starting services in correct dependency order..."
+start_prod() {
+    print_header "Starting SoftwareHub in Production Mode"
+    print_status "This mode uses static builds for better performance"
     
     # Start databases first
     print_status "Starting databases..."
@@ -116,105 +119,205 @@ start_services() {
     
     # Wait for databases to be healthy
     print_status "Waiting for databases to be ready..."
-    sleep 30
+    sleep 10
     
     # Start microservices
     print_status "Starting microservices..."
     docker-compose up -d email-service chat-service notification-service worker-service
     
-    # Wait for microservices
+    # Wait for microservices to be healthy
     print_status "Waiting for microservices to be ready..."
-    sleep 20
+    sleep 15
     
     # Start main application
     print_status "Starting main application..."
     docker-compose up -d softwarehub-app
     
-    # Wait for main app
-    sleep 15
+    # Start nginx and backup service
+    print_status "Starting nginx and backup service..."
+    docker-compose up -d nginx postgres-backup
     
-    # Start nginx
-    print_status "Starting nginx..."
-    docker-compose up -d nginx
-    
-    # Start backup service
-    docker-compose up -d postgres-backup
-    
-    print_status "All services started. Checking health..."
-    check_health
+    print_status "Production environment started!"
+    print_status "Access the application at: http://localhost"
 }
 
-# Clean up
-cleanup() {
-    print_status "Cleaning up Docker resources..."
-    docker-compose down --volumes --remove-orphans
-    docker system prune -f
-    docker volume prune -f
-    print_success "Cleanup completed!"
+stop_containers() {
+    print_header "Stopping SoftwareHub Containers"
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+    print_status "All containers stopped"
 }
 
-# Show help
-show_help() {
-    echo "Software Hub Docker Management Script"
-    echo
-    echo "Usage: $0 [COMMAND]"
-    echo
-    echo "Commands:"
-    echo "  start           - Start all services in correct order"
-    echo "  stop            - Stop all services"
-    echo "  restart         - Restart all services"
-    echo "  rebuild         - Clean rebuild all services"
-    echo "  fix-email       - Fix email service dependency issues"
-    echo "  health          - Check health of all services"
-    echo "  logs            - Show recent logs from all services"
-    echo "  restart-service - Restart a specific service"
-    echo "  clean           - Clean up all Docker resources"
-    echo
-    echo "Examples:"
-    echo "  $0 start"
-    echo "  $0 fix-email"
-    echo "  $0 restart-service email-service"
-    echo "  $0 health"
+restart_containers() {
+    print_header "Restarting SoftwareHub Containers"
+    stop_containers
+    start_dev
 }
 
-# Main execution
-case "$1" in
-    "start")
-        check_docker
-        start_services
+rebuild_all() {
+    print_header "Rebuilding All Containers"
+    print_status "This will rebuild all Docker images with latest code"
+    
+    stop_containers
+    docker-compose build --no-cache
+    start_dev
+    
+    print_status "All containers rebuilt and restarted"
+}
+
+rebuild_service() {
+    local service=$1
+    if [ -z "$service" ]; then
+        print_error "Please specify a service to rebuild"
+        print_status "Available services: main, email, chat, notification, worker"
+        exit 1
+    fi
+    
+    case $service in
+        main)
+            service_name="softwarehub-app"
+            ;;
+        email)
+            service_name="email-service"
+            ;;
+        chat)
+            service_name="chat-service"
+            ;;
+        notification)
+            service_name="notification-service"
+            ;;
+        worker)
+            service_name="worker-service"
+            ;;
+        *)
+            print_error "Unknown service: $service"
+            print_status "Available services: main, email, chat, notification, worker"
+            exit 1
+            ;;
+    esac
+    
+    print_header "Rebuilding $service_name"
+    docker-compose build --no-cache $service_name
+    docker-compose up -d $service_name
+    print_status "$service_name rebuilt and restarted"
+}
+
+show_logs() {
+    print_header "Showing Logs for All Services"
+    docker-compose logs -f
+}
+
+show_service_logs() {
+    local service=$1
+    if [ -z "$service" ]; then
+        print_error "Please specify a service name"
+        exit 1
+    fi
+    
+    print_header "Showing Logs for $service"
+    docker-compose logs -f "$service"
+}
+
+show_status() {
+    print_header "Container Status"
+    docker-compose ps
+    echo ""
+    print_status "Container Health:"
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+}
+
+update_containers() {
+    print_header "Updating Containers with Latest Code"
+    print_status "In development mode, code changes are automatically synced"
+    print_status "Restarting all services to pick up environment and config changes..."
+    
+    # Restart all application services to pick up any environment or config changes
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart email-service
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart chat-service
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart notification-service
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart worker-service
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart softwarehub-app
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart nginx
+    
+    print_status "All services restarted to pick up latest changes"
+}
+
+clean_docker() {
+    print_header "Cleaning Docker System"
+    print_warning "This will remove unused Docker images, containers, and networks"
+    read -p "Are you sure? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        docker system prune -f
+        docker image prune -f
+        print_status "Docker system cleaned"
+    else
+        print_status "Clean operation cancelled"
+    fi
+}
+
+reset_environment() {
+    print_header "Resetting Development Environment"
+    print_warning "This will stop all containers, clean Docker system, and rebuild everything"
+    read -p "Are you sure? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        stop_containers
+        docker system prune -f
+        docker image prune -f
+        rebuild_all
+        print_status "Environment completely reset"
+    else
+        print_status "Reset operation cancelled"
+    fi
+}
+
+# Main script logic
+check_docker
+
+case "${1:-help}" in
+    dev)
+        start_dev
         ;;
-    "stop")
-        print_status "Stopping all services..."
-        docker-compose down
+    prod)
+        start_prod
         ;;
-    "restart")
-        check_docker
-        print_status "Restarting all services..."
-        docker-compose down
-        start_services
+    stop)
+        stop_containers
         ;;
-    "rebuild")
-        check_docker
-        clean_rebuild
+    restart)
+        restart_containers
         ;;
-    "fix-email")
-        check_docker
-        fix_email_service
+    rebuild)
+        rebuild_all
         ;;
-    "health")
-        check_health
+    rebuild-service)
+        rebuild_service "$2"
         ;;
-    "logs")
+    logs)
         show_logs
         ;;
-    "restart-service")
-        check_docker
-        restart_service $2
+    logs-service)
+        show_service_logs "$2"
         ;;
-    "clean")
-        cleanup
+    status)
+        show_status
+        ;;
+    update)
+        update_containers
+        ;;
+    clean)
+        clean_docker
+        ;;
+    reset)
+        reset_environment
+        ;;
+    help|--help|-h)
+        show_help
         ;;
     *)
+        print_error "Unknown command: $1"
+        echo ""
         show_help
+        exit 1
         ;;
 esac

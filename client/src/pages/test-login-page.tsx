@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -7,49 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function TestLoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [credentials, setCredentials] = useState({ email: "", password: "" });
-
-  const loginMutation = useMutation({
-    mutationFn: async (data: { email: string; password: string }) => {
-      const res = await apiRequest("POST", "/api/login", data);
-      return await res.json();
-    },
-    onSuccess: (userData: any) => {
-      // Extract user data from response
-      const user = userData.user || userData;
-      queryClient.setQueryData(["/api/user"], user);
-      
-      toast({ 
-        title: "Success", 
-        description: `Logged in successfully! Welcome back, ${user.name}!` 
-      });
-      
-      // Auto-redirect based on user role
-      setTimeout(() => {
-        if (user.role === 'admin') {
-          setLocation('/admin');
-        } else {
-          setLocation('/dashboard');
-        }
-      }, 500);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid credentials",
-        variant: "destructive"
-      });
-    }
-  });
+  const { loginMutation } = useAuth(); // Use the proper auth hook
 
   const handleTestLogin = (email: string, role: string) => {
     const password = email === "cuongeurovnn@gmail.com" ? "abcd@1234" : "testpassword";
-    setCredentials({ email, password });
+    // Directly pass credentials to mutation instead of setting state first
     loginMutation.mutate({ email, password });
   };
 
