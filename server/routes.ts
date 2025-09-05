@@ -27,10 +27,36 @@ import crypto from "crypto";
 import { ObjectStorageService } from "./objectStorage";
 import { getR2Storage } from "./cloudflare-r2-storage-working";
 
-// Microservice client helper
+// Microservice client helper - Updated to use nginx gateway
 async function callMicroservice(serviceUrl: string, endpoint: string, data: any, method: string = 'POST') {
   try {
-    const response = await fetch(`${serviceUrl}${endpoint}`, {
+    // Use nginx gateway for all microservice calls
+    const nginxUrl = process.env.NGINX_URL || 'http://localhost';
+    
+    // Map service-specific endpoints to nginx routes
+    let finalUrl: string;
+    if (endpoint.startsWith('/api/notifications/')) {
+      // Route notification service calls through nginx
+      finalUrl = `${nginxUrl}${endpoint}`;
+    } else if (endpoint.startsWith('/api/send-') || endpoint.startsWith('/api/email/')) {
+      // Route email service calls through nginx  
+      finalUrl = `${nginxUrl}/api/email${endpoint.replace('/api', '')}`;
+    } else if (endpoint.startsWith('/api/')) {
+      // For other API calls, check if it's an email endpoint
+      if (endpoint.includes('email') || endpoint.includes('welcome') || endpoint.includes('password-reset')) {
+        finalUrl = `${nginxUrl}/api/email${endpoint.replace('/api', '')}`;
+      } else {
+        // Default to nginx proxy for all API calls
+        finalUrl = `${nginxUrl}${endpoint}`;
+      }
+    } else {
+      // Fallback to direct URL for non-API endpoints
+      finalUrl = `${serviceUrl}${endpoint}`;
+    }
+
+    console.log(`🔄 Calling microservice via nginx: ${finalUrl}`);
+    
+    const response = await fetch(finalUrl, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: method !== 'GET' ? JSON.stringify(data) : undefined

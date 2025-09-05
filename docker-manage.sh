@@ -1,18 +1,27 @@
 #!/bin/bash
 
-# Docker Management Script for SoftwareHub
-# This script helps manage Docker containers with live code updates
-
+# SoftwareHub Docker Management Script
+# Enhanced with APISIX API Gateway (nginx removed)
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
+
+# Configuration
+COMPOSE_FILE="docker-compose.yml"
+DEV_COMPOSE="docker-compose.dev.yml"
+APISIX_PROJECT="softwarehub-apisix"
+
+# Default gateway type - APISIX only now
+GATEWAY_TYPE="apisix"
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 print_status() {
@@ -33,30 +42,36 @@ print_header() {
     echo -e "${BLUE}================================${NC}"
 }
 
+print_gateway() {
+    echo -e "${CYAN}[GATEWAY]${NC} $1"
+}
+
 show_help() {
-    echo "Docker Management Script for SoftwareHub"
+    echo "SoftwareHub Docker Management Script"
+    echo "Using APISIX API Gateway"
     echo ""
-    echo "Usage: $0 [COMMAND] [OPTIONS]"
+    echo "Usage: $0 [command] [options]"
     echo ""
     echo "Commands:"
-    echo "  dev                 Start in development mode with live code updates"
-    echo "  prod                Start in production mode (static builds)"
-    echo "  stop                Stop all containers"
-    echo "  restart             Restart all containers"
-    echo "  rebuild             Rebuild and restart containers"
-    echo "  rebuild-service     Rebuild specific service: [main|email|chat|notification|worker]"
-    echo "  logs                Show logs for all services"
-    echo "  logs-service        Show logs for specific service"
-    echo "  status              Show container status"
-    echo "  update              Update containers with latest code changes"
-    echo "  clean               Clean up Docker system (removes unused images/containers)"
-    echo "  reset               Complete reset (stop, clean, rebuild)"
+    echo "  dev                                 # Start in development mode"
+    echo "  prod                                # Start in production mode"
+    echo "  stop                                # Stop all containers"
+    echo "  restart                             # Restart all containers"
+    echo "  rebuild                             # Rebuild and restart all containers"
+    echo "  rebuild-service <service>           # Rebuild specific service"
+    echo "  logs                                # Show logs for all services"
+    echo "  logs-service <service>              # Show logs for specific service"
+    echo "  status                              # Show container status"
+    echo "  setup-apisix                        # Configure APISIX routes"
+    echo "  help                                # Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0 dev                          # Start development mode"
-    echo "  $0 rebuild-service notification # Rebuild notification service"
-    echo "  $0 logs-service softwarehub-app # Show main app logs"
-    echo "  $0 update                       # Update running containers with code changes"
+    echo "  $0 dev                              # Start development mode"
+    echo "  $0 prod                             # Start production mode"
+    echo "  $0 rebuild-service notification     # Rebuild notification service"
+    echo "  $0 logs-service softwarehub-app     # Show main app logs"
+    echo "  $0 setup-apisix                     # Configure APISIX routes"
+    echo ""
 }
 
 check_docker() {
@@ -71,13 +86,29 @@ check_docker() {
     fi
 }
 
+get_compose_files() {
+    echo "-f $COMPOSE_FILE -p $APISIX_PROJECT"
+}
+
+get_dev_compose_files() {
+    echo "-f $COMPOSE_FILE -p $APISIX_PROJECT"
+}
+
 start_dev() {
     print_header "Starting SoftwareHub in Development Mode"
+    print_gateway "Using APISIX as API Gateway"
     print_status "This mode provides live code updates without rebuilding containers"
+    
+    local compose_args=$(get_dev_compose_files)
     
     # Start databases first
     print_status "Starting databases..."
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis mongo
+    docker-compose $compose_args up -d postgres redis mongo
+    
+    # Start etcd for APISIX
+    print_status "Starting etcd..."
+    docker-compose $compose_args up -d etcd
+    sleep 5
     
     # Wait for databases to be healthy
     print_status "Waiting for databases to be ready..."
@@ -85,7 +116,7 @@ start_dev() {
     
     # Start microservices
     print_status "Starting microservices..."
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d email-service chat-service notification-service worker-service
+    docker-compose $compose_args up -d email-service chat-service notification-service worker-service
     
     # Wait for microservices to be healthy
     print_status "Waiting for microservices to be ready..."
@@ -93,29 +124,44 @@ start_dev() {
     
     # Start main application
     print_status "Starting main application..."
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d softwarehub-app
+    docker-compose $compose_args up -d softwarehub-app
     
-    # Start nginx and backup service
-    print_status "Starting nginx and backup service..."
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d nginx postgres-backup
+    # Start APISIX gateway and dashboard
+    print_status "Starting APISIX gateway and dashboard..."
+    docker-compose $compose_args up -d apisix apisix-dashboard
+    sleep 15
+    
+    # Wait for APISIX to be fully healthy
+    print_status "Waiting for APISIX to be fully ready..."
+    sleep 5
+    
+    print_status "Configuring APISIX routes..."
+    if [ -f "./setup-apisix.sh" ]; then
+        ./setup-apisix.sh || print_warning "APISIX route configuration failed. Run './setup-apisix.sh' manually."
+    else
+        print_warning "setup-apisix.sh not found. APISIX routes not configured."
+    fi
+    
+    docker-compose $compose_args up -d postgres-backup
     
     print_status "Development environment started!"
-    print_status "Your code changes will be reflected immediately in the containers"
-    print_status "Access the application at: http://localhost"
-    print_status "Services running on:"
-    print_status "  - Main App: http://localhost:5000"
-    print_status "  - Email Service: http://localhost:3001" 
-    print_status "  - Chat Service: http://localhost:3002"
-    print_status "  - Notification Service: http://localhost:3003"
+    show_access_info
 }
 
 start_prod() {
     print_header "Starting SoftwareHub in Production Mode"
-    print_status "This mode uses static builds for better performance"
+    print_gateway "Using APISIX as API Gateway"
+    
+    local compose_args=$(get_compose_files)
     
     # Start databases first
     print_status "Starting databases..."
-    docker-compose up -d postgres redis mongo
+    docker-compose $compose_args up -d postgres redis mongo
+    
+    # Start etcd for APISIX
+    print_status "Starting etcd..."
+    docker-compose $compose_args up -d etcd
+    sleep 5
     
     # Wait for databases to be healthy
     print_status "Waiting for databases to be ready..."
@@ -123,7 +169,7 @@ start_prod() {
     
     # Start microservices
     print_status "Starting microservices..."
-    docker-compose up -d email-service chat-service notification-service worker-service
+    docker-compose $compose_args up -d email-service chat-service notification-service worker-service
     
     # Wait for microservices to be healthy
     print_status "Waiting for microservices to be ready..."
@@ -131,46 +177,73 @@ start_prod() {
     
     # Start main application
     print_status "Starting main application..."
-    docker-compose up -d softwarehub-app
+    docker-compose $compose_args up -d softwarehub-app
     
-    # Start nginx and backup service
-    print_status "Starting nginx and backup service..."
-    docker-compose up -d nginx postgres-backup
+    # Start APISIX gateway and dashboard
+    print_status "Starting APISIX gateway and dashboard..."
+    docker-compose $compose_args up -d apisix apisix-dashboard
+    sleep 15
+    
+    # Wait for APISIX to be fully healthy
+    print_status "Waiting for APISIX to be fully ready..."
+    sleep 5
+    
+    print_status "Configuring APISIX routes..."
+    if [ -f "./setup-apisix.sh" ]; then
+        ./setup-apisix.sh || print_warning "APISIX route configuration failed. Run './setup-apisix.sh' manually."
+    else
+        print_warning "setup-apisix.sh not found. APISIX routes not configured."
+    fi
+    
+    docker-compose $compose_args up -d postgres-backup
     
     print_status "Production environment started!"
-    print_status "Access the application at: http://localhost"
+    show_access_info
 }
 
 stop_containers() {
     print_header "Stopping SoftwareHub Containers"
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+    print_gateway "Stopping APISIX deployment"
+    
+    local compose_args=$(get_compose_files)
+    print_status "Stopping all services..."
+    docker-compose $compose_args down
+    
     print_status "All containers stopped"
 }
 
 restart_containers() {
-    print_header "Restarting SoftwareHub Containers"
+    print_header "Restarting SoftwareHub"
     stop_containers
-    start_dev
+    start_prod
 }
 
 rebuild_all() {
-    print_header "Rebuilding All Containers"
-    print_status "This will rebuild all Docker images with latest code"
+    print_header "Rebuilding All Services"
+    print_gateway "Using APISIX deployment"
     
-    stop_containers
-    docker-compose build --no-cache
-    start_dev
+    local compose_args=$(get_compose_files)
     
-    print_status "All containers rebuilt and restarted"
+    print_status "Stopping all containers..."
+    docker-compose $compose_args down
+    
+    print_status "Rebuilding all services..."
+    docker-compose $compose_args build --no-cache
+    
+    print_status "Starting services..."
+    start_prod
 }
 
 rebuild_service() {
     local service=$1
     if [ -z "$service" ]; then
-        print_error "Please specify a service to rebuild"
-        print_status "Available services: main, email, chat, notification, worker"
+        print_error "Please specify a service name"
+        print_status "Available services: main, email, chat, notification, worker, gateway"
         exit 1
     fi
+    
+    local compose_args=$(get_compose_files)
+    local service_name=""
     
     case $service in
         main)
@@ -188,22 +261,40 @@ rebuild_service() {
         worker)
             service_name="worker-service"
             ;;
+        gateway)
+            service_name="apisix"
+            ;;
         *)
             print_error "Unknown service: $service"
-            print_status "Available services: main, email, chat, notification, worker"
+            print_status "Available services: main, email, chat, notification, worker, gateway"
             exit 1
             ;;
     esac
     
     print_header "Rebuilding $service_name"
-    docker-compose build --no-cache $service_name
-    docker-compose up -d $service_name
+    print_gateway "Using APISIX deployment"
+    
+    docker-compose $compose_args build --no-cache $service_name
+    docker-compose $compose_args up -d $service_name
+    
+    # If rebuilding APISIX, reconfigure routes
+    if [ "$service" = "gateway" ]; then
+        sleep 5
+        print_status "Reconfiguring APISIX routes..."
+        if [ -f "./setup-apisix.sh" ]; then
+            ./setup-apisix.sh || print_warning "APISIX route configuration failed"
+        fi
+    fi
+    
     print_status "$service_name rebuilt and restarted"
 }
 
 show_logs() {
     print_header "Showing Logs for All Services"
-    docker-compose logs -f
+    print_gateway "Showing logs for APISIX deployment"
+    
+    local compose_args=$(get_compose_files)
+    docker-compose $compose_args logs -f
 }
 
 show_service_logs() {
@@ -214,61 +305,53 @@ show_service_logs() {
     fi
     
     print_header "Showing Logs for $service"
-    docker-compose logs -f "$service"
+    print_gateway "Using APISIX deployment"
+    
+    local compose_args=$(get_compose_files)
+    docker-compose $compose_args logs -f "$service"
 }
 
 show_status() {
     print_header "Container Status"
-    docker-compose ps
+    print_gateway "Status for APISIX deployment"
+    
     echo ""
-    print_status "Container Health:"
-    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    print_status "APISIX deployment:"
+    local compose_args=$(get_compose_files)
+    docker-compose $compose_args ps
+    
+    echo ""
+    print_status "Service Health:"
+    echo "  - APISIX Gateway: http://localhost:80"
+    echo "  - APISIX Dashboard: http://localhost:9000"
+    echo "  - APISIX Admin API: http://localhost:9180"
+    echo ""
 }
 
-update_containers() {
-    print_header "Updating Containers with Latest Code"
-    print_status "In development mode, code changes are automatically synced"
-    print_status "Restarting all services to pick up environment and config changes..."
+setup_apisix() {
+    print_header "Setting up APISIX Routes"
+    print_gateway "Configuring APISIX API Gateway"
     
-    # Restart all application services to pick up any environment or config changes
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart email-service
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart chat-service
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart notification-service
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart worker-service
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart softwarehub-app
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart nginx
-    
-    print_status "All services restarted to pick up latest changes"
-}
-
-clean_docker() {
-    print_header "Cleaning Docker System"
-    print_warning "This will remove unused Docker images, containers, and networks"
-    read -p "Are you sure? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker system prune -f
-        docker image prune -f
-        print_status "Docker system cleaned"
+    if [ -f "./setup-apisix.sh" ]; then
+        ./setup-apisix.sh
     else
-        print_status "Clean operation cancelled"
+        print_error "setup-apisix.sh not found!"
+        exit 1
     fi
 }
 
-reset_environment() {
-    print_header "Resetting Development Environment"
-    print_warning "This will stop all containers, clean Docker system, and rebuild everything"
-    read -p "Are you sure? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        stop_containers
-        docker system prune -f
-        docker image prune -f
-        rebuild_all
-        print_status "Environment completely reset"
-    else
-        print_status "Reset operation cancelled"
-    fi
+show_access_info() {
+    print_header "Access Information"
+    print_status "🌐 Application URLs:"
+    print_status "  - Main Application: http://localhost"
+    print_status "  - APISIX Dashboard: http://localhost:9000"
+    print_status "  - APISIX Admin API: http://localhost:9180"
+    print_status ""
+    print_status "📊 Direct Service Access:"
+    print_status "  - Main App: http://localhost:5000"
+    print_status "  - Email Service: http://localhost:3001"
+    print_status "  - Chat Service: http://localhost:3002"
+    print_status "  - Notification Service: http://localhost:3003"
 }
 
 # Main script logic
@@ -302,21 +385,14 @@ case "${1:-help}" in
     status)
         show_status
         ;;
-    update)
-        update_containers
+    setup-apisix)
+        setup_apisix
         ;;
-    clean)
-        clean_docker
-        ;;
-    reset)
-        reset_environment
-        ;;
-    help|--help|-h)
+    help)
         show_help
         ;;
     *)
         print_error "Unknown command: $1"
-        echo ""
         show_help
         exit 1
         ;;
