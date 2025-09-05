@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SoftwareHub Docker Management Script
-# Enhanced with APISIX API Gateway (nginx removed)
+# Enhanced with Gateweaver API Gateway (APISIX removed)
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,10 +10,10 @@ cd "$SCRIPT_DIR"
 # Configuration
 COMPOSE_FILE="docker-compose.yml"
 DEV_COMPOSE="docker-compose.dev.yml"
-APISIX_PROJECT="softwarehub-apisix"
+GATEWEAVER_PROJECT="softwarehub-gateweaver"
 
-# Default gateway type - APISIX only now
-GATEWAY_TYPE="apisix"
+# Default gateway type - Gateweaver only now
+GATEWAY_TYPE="gateweaver"
 
 # Colors for output
 RED='\033[0;31m'
@@ -43,12 +43,12 @@ print_header() {
 }
 
 print_gateway() {
-    echo -e "${CYAN}[GATEWAY]${NC} $1"
+    echo -e "${CYAN}[GATEWEAVER]${NC} $1"
 }
 
 show_help() {
     echo "SoftwareHub Docker Management Script"
-    echo "Using APISIX API Gateway"
+    echo "Using Gateweaver API Gateway"
     echo ""
     echo "Usage: $0 [command] [options]"
     echo ""
@@ -62,15 +62,18 @@ show_help() {
     echo "  logs                                # Show logs for all services"
     echo "  logs-service <service>              # Show logs for specific service"
     echo "  status                              # Show container status"
-    echo "  setup-apisix                        # Configure APISIX routes"
+    echo "  health                              # Check service health"
+    echo "  test-routing                        # Test Gateweaver routing"
+    echo "  remove-apisix                       # Remove old APISIX containers"
     echo "  help                                # Show this help message"
     echo ""
     echo "Examples:"
     echo "  $0 dev                              # Start development mode"
     echo "  $0 prod                             # Start production mode"
     echo "  $0 rebuild-service notification     # Rebuild notification service"
-    echo "  $0 logs-service softwarehub-app     # Show main app logs"
-    echo "  $0 setup-apisix                     # Configure APISIX routes"
+    echo "  $0 logs-service gateweaver          # Show Gateweaver logs"
+    echo "  $0 health                           # Check all service health"
+    echo "  $0 test-routing                     # Test gateway routing"
     echo ""
 }
 
@@ -84,31 +87,68 @@ check_docker() {
         print_error "Docker Compose is not installed or not in PATH"
         exit 1
     fi
+    
+    if ! docker info > /dev/null 2>&1; then
+        print_error "Docker is not running. Please start Docker and try again."
+        exit 1
+    fi
 }
 
 get_compose_files() {
-    echo "-f $COMPOSE_FILE -p $APISIX_PROJECT"
+    echo "-f $COMPOSE_FILE -p $GATEWEAVER_PROJECT"
 }
 
 get_dev_compose_files() {
-    echo "-f $COMPOSE_FILE -p $APISIX_PROJECT"
+    echo "-f $COMPOSE_FILE -p $GATEWEAVER_PROJECT"
+}
+
+# Function to remove old APISIX containers
+remove_apisix() {
+    print_header "Removing Old APISIX Services"
+    print_gateway "Cleaning up legacy APISIX deployment"
+    
+    # Stop and remove APISIX containers
+    docker stop softwarehub-apisix softwarehub-apisix-dashboard softwarehub-etcd 2>/dev/null || true
+    docker rm softwarehub-apisix softwarehub-apisix-dashboard softwarehub-etcd 2>/dev/null || true
+    
+    # Remove APISIX images
+    docker rmi apache/apisix:3.7.0-debian apache/apisix-dashboard:3.0.1-alpine bitnami/etcd:3.5.9 2>/dev/null || true
+    
+    print_status "APISIX services removed successfully"
+}
+
+# Function to build Gateweaver if needed
+build_gateweaver() {
+    print_status "Building Gateweaver API Gateway..."
+    
+    # Check if Gateweaver configuration exists
+    if [ ! -f "gateweaver.yml" ]; then
+        print_error "gateweaver.yml not found. Please ensure the configuration file exists."
+        exit 1
+    fi
+    
+    # Build Gateweaver image
+    docker build -f Dockerfile.gateweaver -t softwarehub-gateweaver:latest .
+    
+    print_status "Gateweaver image built successfully"
 }
 
 start_dev() {
     print_header "Starting SoftwareHub in Development Mode"
-    print_gateway "Using APISIX as API Gateway"
+    print_gateway "Using Gateweaver as API Gateway"
     print_status "This mode provides live code updates without rebuilding containers"
     
     local compose_args=$(get_dev_compose_files)
     
+    # Remove any old APISIX containers first
+    remove_apisix
+    
+    # Build Gateweaver if needed
+    build_gateweaver
+    
     # Start databases first
     print_status "Starting databases..."
     docker-compose $compose_args up -d postgres redis mongo
-    
-    # Start etcd for APISIX
-    print_status "Starting etcd..."
-    docker-compose $compose_args up -d etcd
-    sleep 5
     
     # Wait for databases to be healthy
     print_status "Waiting for databases to be ready..."
@@ -122,46 +162,42 @@ start_dev() {
     print_status "Waiting for microservices to be ready..."
     sleep 15
     
+    # Start Gateweaver gateway
+    print_status "Starting Gateweaver gateway..."
+    docker-compose $compose_args up -d gateweaver
+    sleep 10
+    
     # Start main application
     print_status "Starting main application..."
     docker-compose $compose_args up -d softwarehub-app
     
-    # Start APISIX gateway and dashboard
-    print_status "Starting APISIX gateway and dashboard..."
-    docker-compose $compose_args up -d apisix apisix-dashboard
-    sleep 15
-    
-    # Wait for APISIX to be fully healthy
-    print_status "Waiting for APISIX to be fully ready..."
-    sleep 5
-    
-    print_status "Configuring APISIX routes..."
-    if [ -f "./setup-apisix.sh" ]; then
-        ./setup-apisix.sh || print_warning "APISIX route configuration failed. Run './setup-apisix.sh' manually."
-    else
-        print_warning "setup-apisix.sh not found. APISIX routes not configured."
-    fi
-    
+    # Start backup service
     docker-compose $compose_args up -d postgres-backup
     
+    # Wait for everything to be ready
+    print_status "Waiting for all services to be ready..."
+    sleep 5
+    
     print_status "Development environment started!"
+    check_service_health
     show_access_info
 }
 
 start_prod() {
     print_header "Starting SoftwareHub in Production Mode"
-    print_gateway "Using APISIX as API Gateway"
+    print_gateway "Using Gateweaver as API Gateway"
     
     local compose_args=$(get_compose_files)
+    
+    # Remove any old APISIX containers first
+    remove_apisix
+    
+    # Build Gateweaver if needed
+    build_gateweaver
     
     # Start databases first
     print_status "Starting databases..."
     docker-compose $compose_args up -d postgres redis mongo
-    
-    # Start etcd for APISIX
-    print_status "Starting etcd..."
-    docker-compose $compose_args up -d etcd
-    sleep 5
     
     # Wait for databases to be healthy
     print_status "Waiting for databases to be ready..."
@@ -175,35 +211,30 @@ start_prod() {
     print_status "Waiting for microservices to be ready..."
     sleep 15
     
+    # Start Gateweaver gateway
+    print_status "Starting Gateweaver gateway..."
+    docker-compose $compose_args up -d gateweaver
+    sleep 10
+    
     # Start main application
     print_status "Starting main application..."
     docker-compose $compose_args up -d softwarehub-app
     
-    # Start APISIX gateway and dashboard
-    print_status "Starting APISIX gateway and dashboard..."
-    docker-compose $compose_args up -d apisix apisix-dashboard
-    sleep 15
-    
-    # Wait for APISIX to be fully healthy
-    print_status "Waiting for APISIX to be fully ready..."
-    sleep 5
-    
-    print_status "Configuring APISIX routes..."
-    if [ -f "./setup-apisix.sh" ]; then
-        ./setup-apisix.sh || print_warning "APISIX route configuration failed. Run './setup-apisix.sh' manually."
-    else
-        print_warning "setup-apisix.sh not found. APISIX routes not configured."
-    fi
-    
+    # Start backup service
     docker-compose $compose_args up -d postgres-backup
     
+    # Wait for everything to be ready
+    print_status "Waiting for all services to be ready..."
+    sleep 5
+    
     print_status "Production environment started!"
+    check_service_health
     show_access_info
 }
 
 stop_containers() {
     print_header "Stopping SoftwareHub Containers"
-    print_gateway "Stopping APISIX deployment"
+    print_gateway "Stopping Gateweaver deployment"
     
     local compose_args=$(get_compose_files)
     print_status "Stopping all services..."
@@ -220,7 +251,7 @@ restart_containers() {
 
 rebuild_all() {
     print_header "Rebuilding All Services"
-    print_gateway "Using APISIX deployment"
+    print_gateway "Using Gateweaver deployment"
     
     local compose_args=$(get_compose_files)
     
@@ -229,6 +260,7 @@ rebuild_all() {
     
     print_status "Rebuilding all services..."
     docker-compose $compose_args build --no-cache
+    build_gateweaver
     
     print_status "Starting services..."
     start_prod
@@ -262,7 +294,7 @@ rebuild_service() {
             service_name="worker-service"
             ;;
         gateway)
-            service_name="apisix"
+            service_name="gateweaver"
             ;;
         *)
             print_error "Unknown service: $service"
@@ -272,26 +304,22 @@ rebuild_service() {
     esac
     
     print_header "Rebuilding $service_name"
-    print_gateway "Using APISIX deployment"
+    print_gateway "Using Gateweaver deployment"
     
-    docker-compose $compose_args build --no-cache $service_name
-    docker-compose $compose_args up -d $service_name
-    
-    # If rebuilding APISIX, reconfigure routes
     if [ "$service" = "gateway" ]; then
-        sleep 5
-        print_status "Reconfiguring APISIX routes..."
-        if [ -f "./setup-apisix.sh" ]; then
-            ./setup-apisix.sh || print_warning "APISIX route configuration failed"
-        fi
+        build_gateweaver
+    else
+        docker-compose $compose_args build --no-cache $service_name
     fi
+    
+    docker-compose $compose_args up -d $service_name
     
     print_status "$service_name rebuilt and restarted"
 }
 
 show_logs() {
     print_header "Showing Logs for All Services"
-    print_gateway "Showing logs for APISIX deployment"
+    print_gateway "Showing logs for Gateweaver deployment"
     
     local compose_args=$(get_compose_files)
     docker-compose $compose_args logs -f
@@ -305,7 +333,7 @@ show_service_logs() {
     fi
     
     print_header "Showing Logs for $service"
-    print_gateway "Using APISIX deployment"
+    print_gateway "Using Gateweaver deployment"
     
     local compose_args=$(get_compose_files)
     docker-compose $compose_args logs -f "$service"
@@ -313,45 +341,140 @@ show_service_logs() {
 
 show_status() {
     print_header "Container Status"
-    print_gateway "Status for APISIX deployment"
+    print_gateway "Status for Gateweaver deployment"
     
     echo ""
-    print_status "APISIX deployment:"
+    print_status "Gateweaver deployment:"
     local compose_args=$(get_compose_files)
     docker-compose $compose_args ps
     
     echo ""
-    print_status "Service Health:"
-    echo "  - APISIX Gateway: http://localhost:80"
-    echo "  - APISIX Dashboard: http://localhost:9000"
-    echo "  - APISIX Admin API: http://localhost:9180"
+    print_status "Service Endpoints:"
+    echo "  - Main Gateway: http://localhost"
+    echo "  - Gateweaver Health: http://localhost:8081/health"
+    echo "  - Gateweaver Metrics: http://localhost:8082/metrics"
     echo ""
 }
 
-setup_apisix() {
-    print_header "Setting up APISIX Routes"
-    print_gateway "Configuring APISIX API Gateway"
+# Function to check service health
+check_service_health() {
+    print_header "Checking Service Health"
+    print_gateway "Health check for Gateweaver deployment"
     
-    if [ -f "./setup-apisix.sh" ]; then
-        ./setup-apisix.sh
+    # Check Gateweaver health
+    echo ""
+    print_status "Gateweaver API Gateway:"
+    if curl -f -s "http://localhost:8081/health" > /dev/null; then
+        print_status "✅ Gateweaver is healthy"
+        curl -s "http://localhost:8081/health" | jq '.' 2>/dev/null || curl -s "http://localhost:8081/health"
     else
-        print_error "setup-apisix.sh not found!"
-        exit 1
+        print_error "❌ Gateweaver health check failed"
     fi
+    
+    # Check individual microservices
+    echo ""
+    print_status "Microservices:"
+    
+    services=("email-service:3001" "chat-service:3002" "notification-service:3003")
+    for service in "${services[@]}"; do
+        name=$(echo $service | cut -d: -f1)
+        port=$(echo $service | cut -d: -f2)
+        
+        if curl -f -s "http://localhost:$port/health" > /dev/null; then
+            print_status "✅ $name is healthy"
+        else
+            print_warning "⚠️  $name health check failed"
+        fi
+    done
+    
+    # Check databases
+    echo ""
+    print_status "Databases:"
+    
+    if docker exec softwarehub-postgres pg_isready -U postgres > /dev/null 2>&1; then
+        print_status "✅ PostgreSQL is healthy"
+    else
+        print_warning "⚠️  PostgreSQL health check failed"
+    fi
+    
+    if docker exec softwarehub-redis redis-cli ping > /dev/null 2>&1; then
+        print_status "✅ Redis is healthy"
+    else
+        print_warning "⚠️  Redis health check failed"
+    fi
+    
+    if docker exec softwarehub-mongo mongosh --eval "db.adminCommand('ping')" --quiet > /dev/null 2>&1; then
+        print_status "✅ MongoDB is healthy"
+    else
+        print_warning "⚠️  MongoDB health check failed"
+    fi
+}
+
+# Function to test Gateweaver routing
+test_routing() {
+    print_header "Testing Gateweaver Routing"
+    print_gateway "Testing API Gateway routing functionality"
+    
+    # Test main gateway
+    echo ""
+    print_status "Testing main gateway (port 80):"
+    if curl -f -s "http://localhost" > /dev/null; then
+        print_status "✅ Main gateway is accessible"
+    else
+        print_warning "⚠️  Main gateway test failed"
+    fi
+    
+    # Test health endpoint
+    echo ""
+    print_status "Testing health endpoint:"
+    if curl -f -s "http://localhost:8081/health" > /dev/null; then
+        print_status "✅ Health endpoint is accessible"
+    else
+        print_error "❌ Health endpoint test failed"
+    fi
+    
+    # Test metrics endpoint
+    echo ""
+    print_status "Testing metrics endpoint:"
+    if curl -f -s "http://localhost:8082/metrics" > /dev/null; then
+        print_status "✅ Metrics endpoint is accessible"
+    else
+        print_warning "⚠️  Metrics endpoint test failed"
+    fi
+    
+    # Test routing to services through gateway
+    echo ""
+    print_status "Testing service routing through gateway:"
+    
+    services=("api/email/health" "api/chat/health" "api/notifications/health")
+    for endpoint in "${services[@]}"; do
+        service_name=$(echo $endpoint | cut -d/ -f2)
+        
+        if curl -f -s "http://localhost/$endpoint" > /dev/null; then
+            print_status "✅ $service_name routing works"
+        else
+            print_warning "⚠️  $service_name routing test failed"
+        fi
+    done
 }
 
 show_access_info() {
     print_header "Access Information"
     print_status "🌐 Application URLs:"
     print_status "  - Main Application: http://localhost"
-    print_status "  - APISIX Dashboard: http://localhost:9000"
-    print_status "  - APISIX Admin API: http://localhost:9180"
+    print_status "  - Gateweaver Health: http://localhost:8081/health"
+    print_status "  - Gateweaver Metrics: http://localhost:8082/metrics"
     print_status ""
     print_status "📊 Direct Service Access:"
     print_status "  - Main App: http://localhost:5000"
     print_status "  - Email Service: http://localhost:3001"
     print_status "  - Chat Service: http://localhost:3002"
     print_status "  - Notification Service: http://localhost:3003"
+    print_status ""
+    print_status "🔗 Service Routing through Gateway:"
+    print_status "  - Email API: http://localhost/api/email/*"
+    print_status "  - Chat API: http://localhost/api/chat/*"
+    print_status "  - Notifications API: http://localhost/api/notifications/*"
 }
 
 # Main script logic
@@ -385,8 +508,14 @@ case "${1:-help}" in
     status)
         show_status
         ;;
-    setup-apisix)
-        setup_apisix
+    health)
+        check_service_health
+        ;;
+    test-routing)
+        test_routing
+        ;;
+    remove-apisix)
+        remove_apisix
         ;;
     help)
         show_help

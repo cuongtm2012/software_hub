@@ -27,48 +27,81 @@ import crypto from "crypto";
 import { ObjectStorageService } from "./objectStorage";
 import { getR2Storage } from "./cloudflare-r2-storage-working";
 
-// Microservice client helper - Updated to use nginx gateway
+// Microservice client helper - Updated to use Gateweaver gateway
 async function callMicroservice(serviceUrl: string, endpoint: string, data: any, method: string = 'POST') {
   try {
-    // Use nginx gateway for all microservice calls
-    const nginxUrl = process.env.NGINX_URL || 'http://localhost';
+    // Use Gateweaver gateway for all microservice calls
+    const gateweaverUrl = process.env.NGINX_URL || 'http://gateweaver:8080';
     
-    // Map service-specific endpoints to nginx routes
+    // Map service-specific endpoints to Gateweaver routes
     let finalUrl: string;
     if (endpoint.startsWith('/api/notifications/')) {
-      // Route notification service calls through nginx
-      finalUrl = `${nginxUrl}${endpoint}`;
+      // Route notification service calls through Gateweaver
+      finalUrl = `${gateweaverUrl}${endpoint}`;
     } else if (endpoint.startsWith('/api/send-') || endpoint.startsWith('/api/email/')) {
-      // Route email service calls through nginx  
-      finalUrl = `${nginxUrl}/api/email${endpoint.replace('/api', '')}`;
+      // Route email service calls through Gateweaver  
+      finalUrl = `${gateweaverUrl}/api/email${endpoint.replace('/api', '')}`;
+    } else if (endpoint.startsWith('/api/chat/')) {
+      // Route chat service calls through Gateweaver
+      finalUrl = `${gateweaverUrl}${endpoint}`;
     } else if (endpoint.startsWith('/api/')) {
       // For other API calls, check if it's an email endpoint
       if (endpoint.includes('email') || endpoint.includes('welcome') || endpoint.includes('password-reset')) {
-        finalUrl = `${nginxUrl}/api/email${endpoint.replace('/api', '')}`;
+        finalUrl = `${gateweaverUrl}/api/email${endpoint.replace('/api', '')}`;
       } else {
-        // Default to nginx proxy for all API calls
-        finalUrl = `${nginxUrl}${endpoint}`;
+        // Default to Gateweaver proxy for all API calls
+        finalUrl = `${gateweaverUrl}${endpoint}`;
       }
     } else {
       // Fallback to direct URL for non-API endpoints
       finalUrl = `${serviceUrl}${endpoint}`;
     }
 
-    console.log(`🔄 Calling microservice via nginx: ${finalUrl}`);
+    console.log(`🔄 Calling microservice via Gateweaver: ${finalUrl}`);
     
     const response = await fetch(finalUrl, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': 'softwarehub-app',
+        'X-Original-Service': serviceUrl
+      },
       body: method !== 'GET' ? JSON.stringify(data) : undefined
     });
     
+    // Enhanced response handling for all services
+    console.log(`📡 Service response status: ${response.status}`);
+    console.log(`📋 Service response headers:`, Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
-      throw new Error(`Microservice call failed: ${response.status} ${response.statusText}`);
+      // Get response text for better error details
+      const errorText = await response.text();
+      console.error(`🚨 Service error (${response.status}):`, errorText);
+      
+      // Try to parse as JSON for structured error responses
+      try {
+        const jsonError = JSON.parse(errorText);
+        throw new Error(`Service call failed: ${response.status} ${response.statusText} - ${JSON.stringify(jsonError)}`);
+      } catch (parseError) {
+        throw new Error(`Service call failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
     }
     
-    return await response.json();
+    // Handle successful responses - both JSON and text
+    const contentType = response.headers.get('content-type');
+    console.log(`📄 Service content-type: ${contentType}`);
+    
+    if (contentType && contentType.includes('application/json')) {
+      const jsonResponse = await response.json();
+      console.log(`✅ Service JSON response:`, jsonResponse);
+      return jsonResponse;
+    } else {
+      const textResponse = await response.text();
+      console.log(`✅ Service text response:`, textResponse);
+      return { success: true, message: textResponse };
+    }
   } catch (error) {
-    console.error(`Failed to call microservice ${serviceUrl}${endpoint}:`, error);
+    console.error(`❌ Failed to call microservice ${serviceUrl}${endpoint}:`, error);
     throw error;
   }
 }
