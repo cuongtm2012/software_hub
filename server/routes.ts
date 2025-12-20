@@ -19,13 +19,14 @@ import {
   products
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, ne, inArray, desc, gt, count } from "drizzle-orm";
-import { update } from "drizzle-orm/pg-core";
+import { eq, and, ne, inArray, desc, gt, count, or } from "drizzle-orm";
 import { users } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
 import { ObjectStorageService } from "./objectStorage";
 import { getR2Storage } from "./cloudflare-r2-storage-working";
+// Import email module directly
+import { sendWelcomeEmail, sendPasswordResetEmail, sendOrderConfirmationEmail } from "./email";
 
 // Microservice client helper - Updated to use Gateweaver gateway
 async function callMicroservice(serviceUrl: string, endpoint: string, data: any, method: string = 'POST') {
@@ -249,8 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send welcome email (don't wait for it to complete)
-      const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://localhost:3001';
-      callMicroservice(emailServiceUrl, '/api/send-welcome-email', { email: user.email, name: user.name }).then(result => {
+      sendWelcomeEmail(user.email, user.name).then(result => {
         if (result.success) {
           console.log(`Welcome email sent to ${user.email} (${result.messageId})`);
         } else {
@@ -318,8 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send password reset email
       const resetUrl = `${req.protocol}://${req.get('host')}/auth/reset-password?token=${resetToken}`;
       
-      const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://localhost:3001';
-      callMicroservice(emailServiceUrl, '/api/send-password-reset-email', { email: user.email, name: user.name, resetUrl }).then(result => {
+      sendPasswordResetEmail(user.email, user.name, resetUrl).then(result => {
         if (result.success) {
           console.log(`Password reset email sent to ${user.email} (${result.messageId})`);
         } else {
