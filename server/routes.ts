@@ -27,6 +27,7 @@ import { ObjectStorageService } from "./objectStorage";
 import { getR2Storage } from "./cloudflare-r2-storage-working";
 // Import email module directly
 import { sendWelcomeEmail, sendPasswordResetEmail, sendOrderConfirmationEmail } from "./email";
+import { registerProductRoutes } from "./product-routes";
 
 // Microservice client helper - Updated to use Gateweaver gateway
 async function callMicroservice(serviceUrl: string, endpoint: string, data: any, method: string = 'POST') {
@@ -147,6 +148,9 @@ const adminMiddleware = hasRole(['admin']);
 const adminOrDeveloperMiddleware = hasRole(['admin', 'developer']);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register Product Routes
+  registerProductRoutes(app);
+  
   // Simple test login for testing purposes (before setupAuth to avoid conflicts)
   app.post("/api/login", async (req, res, next) => {
     try {

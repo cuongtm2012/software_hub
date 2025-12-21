@@ -1,0 +1,85 @@
+
+model Product {
+  id               Int               @id @default(autoincrement())
+  title            String
+  description      String
+  version          String
+  releaseDate      DateTime
+  fileSize         String
+  licenseType      String
+  platforms        String
+  language         String
+  priceBase        Float
+  priceDiscounted  Float
+  discountPercent  Int
+  badge            String?           // có thể null nếu không có badge
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  images           ProductImage[]
+  packages         Package[]
+  reviews          Review[]
+  faqs             Faq[]
+  relatedProducts  RelatedProduct[]  @relation("RelatedProductsForProduct")
+  relatedTo        RelatedProduct[]  @relation("RelatedProductsForRelatedProduct")
+  orders           Order[]
+}
+
+model ProductImage {
+  id           Int      @id @default(autoincrement())
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    Int
+  imageUrl     String
+  isThumbnail  Boolean  @default(false)
+  position     Int
+}
+
+model Package {
+  id              Int      @id @default(autoincrement())
+  product         Product  @relation(fields: [productId], references: [id])
+  productId       Int
+  name            String
+  price           Float
+  discountPercent Int
+  orders          Order[]
+}
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   Int
+  package     Package  @relation(fields: [packageId], references: [id])
+  packageId   Int
+  email       String
+  totalPrice  Float
+  status      String   // e.g. Pending, Paid, Failed
+  createdAt   DateTime @default(now())
+}
+
+model Review {
+  id               Int      @id @default(autoincrement())
+  product          Product  @relation(fields: [productId], references: [id])
+  productId        Int
+  reviewerName     String
+  verifiedPurchase Boolean  @default(false)
+  rating           Int
+  reviewText       String
+  reviewDate       DateTime
+  helpfulCount     Int      @default(0)
+}
+
+model Faq {
+  id         Int      @id @default(autoincrement())
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  Int
+  question   String
+  answer     String
+}
+
+model RelatedProduct {
+  id                Int      @id @default(autoincrement())
+  product           Product  @relation("RelatedProductsForProduct", fields: [productId], references: [id])
+  productId         Int
+  relatedProduct    Product  @relation("RelatedProductsForRelatedProduct", fields: [relatedProductId], references: [id])
+  relatedProductId  Int
+}
