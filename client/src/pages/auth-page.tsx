@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Zap } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -73,6 +73,41 @@ export default function AuthPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Quick Login mutations
+  const quickLoginMutation = useMutation({
+    mutationFn: async (role: 'seller' | 'buyer') => {
+      const response = await fetch(`/api/quick-login/${role}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || `Failed to quick login as ${role}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Quick Login Successful",
+        description: `Logged in as demo ${data.role}`,
+      });
+      // Trigger a page reload to update auth state
+      window.location.href = data.role === 'admin' ? '/admin' : '/dashboard';
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Quick Login Failed",
+        description: error.message || "Failed to login. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Set active tab from URL params
   useEffect(() => {
@@ -490,6 +525,22 @@ export default function AuthPage() {
                       >
                         Create Account
                       </Button>
+                      <div className="mt-4 flex flex-col space-y-2 w-full">
+                        <Button
+                          onClick={() => quickLoginMutation.mutate('seller')}
+                          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+                        >
+                          <Zap className="mr-2 h-4 w-4" />
+                          Quick Login as Seller
+                        </Button>
+                        <Button
+                          onClick={() => quickLoginMutation.mutate('buyer')}
+                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                        >
+                          <Zap className="mr-2 h-4 w-4" />
+                          Quick Login as Buyer
+                        </Button>
+                      </div>
                     </CardFooter>
                   </Card>
                 </TabsContent>

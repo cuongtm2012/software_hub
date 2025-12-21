@@ -208,6 +208,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quick Login endpoints for demo accounts
+  app.post("/api/quick-login/seller", async (req, res, next) => {
+    try {
+      // Find seller demo account
+      const user = await storage.getUserByEmail("seller@test.com");
+      
+      if (!user) {
+        return res.status(404).json({ message: "Demo seller account not found" });
+      }
+      
+      // Create session
+      req.session.userId = user.id;
+      req.session.user = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      };
+      
+      // Save session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        
+        console.log("✅ Quick login as Seller successful:", {
+          sessionId: req.sessionID,
+          userId: req.session.userId,
+          userEmail: req.session.user?.email
+        });
+        
+        res.json({ 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role 
+        });
+      });
+    } catch (error) {
+      console.error("Quick login seller error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/quick-login/buyer", async (req, res, next) => {
+    try {
+      // Find buyer demo account
+      const user = await storage.getUserByEmail("buyer@test.com");
+      
+      if (!user) {
+        return res.status(404).json({ message: "Demo buyer account not found" });
+      }
+      
+      // Create session
+      req.session.userId = user.id;
+      req.session.user = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      };
+      
+      // Save session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        
+        console.log("✅ Quick login as Buyer successful:", {
+          sessionId: req.sessionID,
+          userId: req.session.userId,
+          userEmail: req.session.user?.email
+        });
+        
+        res.json({ 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role 
+        });
+      });
+    } catch (error) {
+      console.error("Quick login buyer error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/logout", (req, res) => {
     req.session.destroy((err) => {
       if (err) {
@@ -1103,11 +1192,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Project not found" });
       }
       
-      // Check permissions
+      // Check permissions - fixed to use assigned_developer_id
       if (
         req.user?.role !== 'admin' && 
         project.client_id !== req.user?.id && 
-        project.developer_id !== req.user?.id
+        project.assigned_developer_id !== req.user?.id
       ) {
         return res.status(403).json({ message: "You do not have permission to update this project" });
       }
@@ -2210,18 +2299,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/seller/products/:id", isAuthenticated, async (req, res, next) => {
     try {
       const { id } = req.params;
-      const updateData = insertProductSchema.partial().parse(req.body);
+      console.log(`🔧 Seller product update request - Product ID: ${id}, Seller ID: ${req.user!.id}`);
+      console.log('📦 Update data received:', JSON.stringify(req.body, null, 2));
       
+      // Validate that the product exists and belongs to the seller
+      const existingProduct = await storage.getProductById(parseInt(id));
+      
+      if (!existingProduct) {
+        console.log(`❌ Product ${id} not found`);
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      if (existingProduct.seller_id !== req.user!.id) {
+        console.log(`❌ Unauthorized: Product ${id} belongs to seller ${existingProduct.seller_id}, not ${req.user!.id}`);
+        return res.status(403).json({ message: "Unauthorized: You can only update your own products" });
+      }
+      
+      // Parse and validate the update data from the request
+      const updateData = insertProductSchema.partial().parse(req.body);
+      console.log('✅ Validated update data:', JSON.stringify(updateData, null, 2));
+      
+      // Perform the update with seller ID for permission checking
       const product = await storage.updateProduct(parseInt(id), updateData, req.user!.id);
       
       if (!product) {
-        return res.status(404).json({ message: "Product not found or unauthorized" });
+        console.log(`❌ Update failed for product ${id}`);
+        return res.status(404).json({ message: "Failed to update product or unauthorized" });
       }
       
+      console.log(`✅ Product ${id} updated successfully by seller ${req.user!.id}`);
       res.json({ product });
     } catch (error) {
+      console.error('❌ Seller product update error:', error);
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
+        console.error('Validation error details:', validationError.message);
         res.status(400).json({ message: validationError.message });
       } else {
         next(error);
@@ -2705,10 +2817,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public Marketplace Routes
   app.get("/api/marketplace/products", async (req, res, next) => {
     try {
-      // Get all approved products for marketplace
+      // Get all approved products for marketplace - Fix: ensure we're using correct status
       const allProducts = await db.select().from(products).where(eq(products.status, 'approved'));
+      
+      console.log(`📦 Marketplace products fetched: ${allProducts.length} approved products`);
       res.json({ products: allProducts });
     } catch (error) {
+      console.error('Marketplace products error:', error);
       next(error);
     }
   });
