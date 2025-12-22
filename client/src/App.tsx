@@ -14,6 +14,7 @@ import { ProtectedRoute, AdminRoute } from "@/lib/protected-route";
 import { useAuth, AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
 import { ShoppingCartSidebar } from "@/components/shopping-cart-sidebar";
+import { FloatingChatButton } from "@/components/floating-chat-button";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -731,6 +732,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <ShoppingCartSidebar />
+            <FloatingChatButton />
             <Router />
           </TooltipProvider>
         </CartProvider>

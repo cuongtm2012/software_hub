@@ -5,6 +5,7 @@ import {
   sellerProfiles, cartItems, supportTickets, salesAnalytics,
   serviceRequests, serviceQuotations, serviceProjects, servicePayments,
   userPresence, notifications,
+  chatRooms, chatRoomMembers, chatMessages,
   type User, type InsertUser, 
   type Software, type InsertSoftware,
   type Category, type InsertCategory,
@@ -29,7 +30,10 @@ import {
   type ServiceProject, type InsertServiceProject,
   type ServicePayment, type InsertServicePayment,
   type UserPresence, type InsertUserPresence,
-  type Notification, type InsertNotification
+  type Notification, type InsertNotification,
+  type ChatRoom, type InsertChatRoom,
+  type ChatRoomMember, type InsertChatRoomMember,
+  type ChatMessage, type InsertChatMessage
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
@@ -250,1487 +254,121 @@ export interface IStorage {
   markAllNotificationsAsRead(userId: number): Promise<boolean>;
   deleteNotification(id: number, userId: number): Promise<boolean>;
 
+  // Chat
+  getUserChatRooms(userId: number): Promise<ChatRoom[]>;
+  getChatRoomById(roomId: number): Promise<ChatRoom | undefined>;
+  createDirectChatRoom(userId: number, participantId: number): Promise<ChatRoom>;
+  getDirectChatRoom(userId: number, participantId: number): Promise<ChatRoom | undefined>;
+  createGroupChatRoom(name: string, creatorId: number, participantIds: number[]): Promise<ChatRoom>;
+  isChatRoomMember(roomId: number, userId: number): Promise<boolean>;
+  getChatMessages(roomId: number, limit?: number, before?: number): Promise<ChatMessage[]>;
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  markMessagesAsRead(roomId: number, userId: number): Promise<void>;
+  updateUserPresence(userId: number, status: string): Promise<void>;
+  getOnlineUsers(): Promise<User[]>;
+
   // Session store
   sessionStore: any;
 }
 
-export class DatabaseStorage implements IStorage {
+class DatabaseStorage implements IStorage {
   sessionStore: any;
 
   constructor() {
-    // Initialize session store with error handling
-    try {
-      this.sessionStore = new PostgresSessionStore({ 
-        pool, 
-        createTableIfMissing: true,
-        tableName: 'session',
-        errorLog: (err: any) => {
-          console.error('Session store error:', err);
-        }
-      });
-      console.log('PostgreSQL session store initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize session store:', error);
-      // Fallback to memory store for development
-      console.log('Falling back to memory store for sessions');
-      this.sessionStore = new session.MemoryStore();
-    }
-  }
-
-  // System initialization
-  async initialize(): Promise<void> {
-    try {
-      // Test database connection by running a simple query
-      const result = await db.select({ count: sql<number>`count(*)` }).from(users);
-      console.log('Database connection verified successfully');
-      
-      // Test session store connection
-      await this.testSessionStore();
-      
-    } catch (error) {
-      console.error('Database initialization failed:', error);
-      throw error;
-    }
-  }
-
-  // Test session store functionality
-  async testSessionStore(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const testSessionId = 'test-session-' + Date.now();
-      const testData = { test: true, timestamp: Date.now() };
-      
-      // Try to set a test session
-      this.sessionStore.set(testSessionId, testData, (err: any) => {
-        if (err) {
-          console.error('Session store test failed:', err);
-          reject(err);
-          return;
-        }
-        
-        // Try to get the test session
-        this.sessionStore.get(testSessionId, (err: any, session: any) => {
-          if (err) {
-            console.error('Session store get test failed:', err);
-            reject(err);
-            return;
-          }
-          
-          console.log('Session store test successful');
-          
-          // Clean up test session
-          this.sessionStore.destroy(testSessionId, () => {
-            resolve();
-          });
-        });
-      });
+    this.sessionStore = new PostgresSessionStore({
+      pool: pool,
+      tableName: 'session',
+      createTableIfMissing: true
     });
+  }
+
+  // System
+  async initialize(): Promise<void> {
+    // Initialization logic here
   }
 
   // Users
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, id));
     return user;
-  }
-  
-  // Admin methods
-  async getAllUsers(params?: { role?: string; search?: string; limit?: number; offset?: number }): Promise<{ users: User[], total: number }> {
-    try {
-      // Build conditions array
-      const conditions = [];
-      
-      if (params?.role && params.role !== 'all') {
-        conditions.push(eq(users.role, params.role as any));
-      }
-      
-      if (params?.search) {
-        conditions.push(
-          or(
-            ilike(users.name, `%${params.search}%`),
-            ilike(users.email, `%${params.search}%`)
-          )
-        );
-      }
-      
-      // Get total count
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(users)
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
-      const total = totalResult[0]?.count || 0;
-      
-      // Build main query with presence data
-      const usersList = await db
-        .select({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          role: users.role,
-          created_at: users.created_at,
-          is_online: userPresence.is_online,
-          last_seen: userPresence.last_seen,
-        })
-        .from(users)
-        .leftJoin(userPresence, eq(users.id, userPresence.user_id))
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(users.created_at))
-        .limit(params?.limit || 1000)
-        .offset(params?.offset || 0);
-      
-      return {
-        users: usersList as any[],
-        total: Number(total)
-      };
-    } catch (error) {
-      console.error('Error in getAllUsers:', error);
-      return {
-        users: [],
-        total: 0
-      };
-    }
-  }
-
-  async deleteUser(id: number): Promise<boolean> {
-    try {
-      const result = await db.delete(users).where(eq(users.id, id)).returning({ id: users.id });
-      return result.length > 0;
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      return false;
-    }
-  }
-
-  async resetUserPassword(id: number, newPassword: string): Promise<boolean> {
-    try {
-      const result = await db
-        .update(users)
-        .set({ password: newPassword })
-        .where(eq(users.id, id))
-        .returning({ id: users.id });
-      return result.length > 0;
-    } catch (error) {
-      console.error('Error resetting user password:', error);
-      return false;
-    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
     return user;
-  }
-  
-  async updateUserProfile(userId: number, profileData: any): Promise<User | undefined> {
-    const [updatedUser] = await db
-      .update(users)
-      .set({ 
-        profile_data: profileData,
-        updated_at: new Date()
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    return updatedUser;
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [createdUser] = await db.insert(users).values(user).returning();
+    const [createdUser] = await db
+      .insert(users)
+      .values(user)
+      .returning();
     return createdUser;
   }
 
-  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
-      .set(userData)
+      .set(user)
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
   }
 
-  // Categories
-  async createCategory(category: InsertCategory): Promise<Category> {
-    const [createdCategory] = await db.insert(categories).values(category).returning();
-    return createdCategory;
-  }
-
-  async getCategories(): Promise<Category[]> {
-    return db.select().from(categories);
-  }
-
-  async getCategoryById(id: number): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(eq(categories.id, id));
-    return category;
-  }
-
-  // Software
-  async createSoftware(softwareData: InsertSoftware, userId: number): Promise<Software> {
-    const [software] = await db
-      .insert(softwares)
-      .values({
-        ...softwareData,
-        created_by: userId
-      })
+  async updateUserProfile(userId: number, profileData: any): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(profileData)
+      .where(eq(users.id, userId))
       .returning();
-    return software;
+    return updatedUser;
   }
 
-  async getSoftwareById(id: number): Promise<Software | undefined> {
-    const [software] = await db
+  // Admin User Management
+  async getAllUsers(params?: { role?: string; search?: string; limit?: number; offset?: number }): Promise<{ users: any[], total: number }> {
+    const query = db
       .select()
-      .from(softwares)
-      .where(eq(softwares.id, id));
-    return software;
-  }
+      .from(users);
 
-  async updateSoftwareStatus(id: number, status: 'approved' | 'rejected'): Promise<Software | undefined> {
-    const [updatedSoftware] = await db
-      .update(softwares)
-      .set({ status })
-      .where(eq(softwares.id, id))
-      .returning();
-    return updatedSoftware;
-  }
-
-  async getSoftwareList(params: {
-    category?: number;
-    platform?: string;
-    search?: string;
-    status?: 'pending' | 'approved' | 'rejected';
-    limit?: number;
-    offset?: number;
-  }): Promise<{ softwares: Software[], total: number }> {
-    try {
-      // Build conditions
-      const conditions = [];
-      conditions.push(eq(softwares.status, params.status || 'approved'));
-      
-      if (params.category) {
-        conditions.push(eq(softwares.category_id, params.category));
-      }
-      
-      if (params.search) {
-        conditions.push(
-          or(
-            ilike(softwares.name, `%${params.search}%`),
-            ilike(softwares.description, `%${params.search}%`)
-          )
-        );
-      }
-      
-      // Get total count first
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(softwares)
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
-      const total = totalResult[0]?.count || 0;
-      
-      // Build main query
-      const softwareList = await db
-        .select()
-        .from(softwares)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(softwares.created_at))
-        .limit(params.limit || 1000)
-        .offset(params.offset || 0);
-      
-      return {
-        softwares: softwareList,
-        total: Number(total)
-      };
-    } catch (error) {
-      console.error('Error in getSoftwareList:', error);
-      return {
-        softwares: [],
-        total: 0
-      };
+    if (params?.role) {
+      query.where(eq(users.role, params.role));
     }
-  }
 
-  async updateSoftware(id: number, updateData: Partial<InsertSoftware>): Promise<Software | undefined> {
-    const [updatedSoftware] = await db
-      .update(softwares)
-      .set(updateData)
-      .where(eq(softwares.id, id))
-      .returning();
-    return updatedSoftware;
-  }
-
-  async getAdminSoftwareList(filters: any, limit: number, offset: number) {
-    try {
-      const conditions = [];
-      
-      // Apply filters
-      if (filters.search) {
-        conditions.push(
-          or(
-            ilike(softwares.name, `%${filters.search}%`),
-            ilike(softwares.description, `%${filters.search}%`)
-          )
-        );
-      }
-      
-      if (filters.status && filters.status !== 'all') {
-        conditions.push(eq(softwares.status, filters.status));
-      }
-      
-      // Get total count and results
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(softwares)
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
-      const count = totalResult[0]?.count || 0;
-      
-      const results = await db
-        .select()
-        .from(softwares)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(desc(softwares.created_at));
-      
-      return {
-        softwares: results,
-        total: count,
-        page: Math.floor(offset / limit) + 1,
-        totalPages: Math.ceil(count / limit)
-      };
-    } catch (error) {
-      console.error('Error in getAdminSoftwareList:', error);
-      return {
-        softwares: [],
-        total: 0,
-        page: 1,
-        totalPages: 0
-      };
-    }
-  }
-
-  async updateSoftwareAdmin(id: number, updates: Partial<any>) {
-    try {
-      const result = await db
-        .update(softwares)
-        .set(updates)
-        .where(eq(softwares.id, id))
-        .returning();
-      
-      return result[0];
-    } catch (error) {
-      console.error('Error updating software:', error);
-      return null;
-    }
-  }
-
-  async deleteSoftware(id: number): Promise<boolean> {
-    const result = await db
-      .delete(softwares)
-      .where(eq(softwares.id, id))
-      .returning({ id: softwares.id });
-    
-    return result.length > 0;
-  }
-
-  async incrementSoftwareDownloads(id: number): Promise<void> {
-    await db
-      .update(softwares)
-      .set({ 
-        downloads: sql`${softwares.downloads} + 1`
-      })
-      .where(eq(softwares.id, id));
-  }
-
-  // Reviews
-  async createReview(reviewData: InsertReview, userId: number): Promise<Review> {
-    const [review] = await db
-      .insert(reviews)
-      .values({
-        ...reviewData,
-        user_id: userId
-      })
-      .returning();
-    return review;
-  }
-
-  async getReviewsBySoftwareId(softwareId: number): Promise<Review[]> {
-    return db
-      .select()
-      .from(reviews)
-      .where(
-        and(
-          eq(reviews.target_type, 'software'),
-          eq(reviews.target_id, softwareId)
-        )
-      )
-      .orderBy(desc(reviews.created_at));
-  }
-
-  async deleteReview(id: number, userId: number): Promise<boolean> {
-    const result = await db
-      .delete(reviews)
-      .where(
-        and(
-          eq(reviews.id, id),
-          eq(reviews.user_id, userId)
-        )
-      )
-      .returning({ id: reviews.id });
-    
-    return result.length > 0;
-  }
-
-  // External Project Requests
-  async createExternalRequest(request: InsertExternalRequest): Promise<ExternalRequest> {
-    const [result] = await db
-      .insert(externalRequests)
-      .values(request)
-      .returning();
-      
-    return result;
-  }
-  
-  async getExternalRequests(status?: string, limit: number = 20, offset: number = 0): Promise<{ requests: ExternalRequest[], total: number }> {
-    try {
-      const conditions = [];
-      
-      if (status) {
-        conditions.push(eq(externalRequests.status, status as any));
-      }
-      
-      // Get total count and results
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(externalRequests)
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
-      const total = totalResult[0]?.count || 0;
-      
-      const requests = await db
-        .select()
-        .from(externalRequests)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(externalRequests.created_at))
-        .limit(limit)
-        .offset(offset);
-    
-      return {
-        requests,
-        total: Number(total)
-      };
-    } catch (error) {
-      console.error('Error in getExternalRequests:', error);
-      return {
-        requests: [],
-        total: 0
-      };
-    }
-  }
-  
-  async getExternalRequestById(id: number): Promise<ExternalRequest | undefined> {
-    const [request] = await db
-      .select()
-      .from(externalRequests)
-      .where(eq(externalRequests.id, id));
-      
-    return request;
-  }
-  
-  async updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined> {
-    const [request] = await db
-      .update(externalRequests)
-      .set({ status: status as any })
-      .where(eq(externalRequests.id, id))
-      .returning();
-      
-    return request;
-  }
-  
-  async convertExternalRequestToProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest> {
-    // Update the external request with project data and change status
-    const [result] = await db
-      .update(externalRequests)
-      .set({
-        ...updates,
-        status: 'converted',
-      })
-      .where(eq(externalRequests.id, id))
-      .returning();
-    
-    if (!result) {
-      throw new Error("External request not found");
-    }
-    
-    return result;
-  }
-
-  async getAllExternalRequests(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ requests: ExternalRequest[], total: number }> {
-    // Build conditions array
-    const conditions = [];
-    
-    if (params?.status && params.status !== 'all') {
-      conditions.push(eq(externalRequests.status, params.status as any));
-    }
-    
     if (params?.search) {
-      conditions.push(
-        or(
-          ilike(externalRequests.name, `%${params.search}%`),
-          ilike(externalRequests.email, `%${params.search}%`),
-          ilike(externalRequests.project_description, `%${params.search}%`)
-        )
-      );
+      query.where(ilike(users.name, `%${params.search}%`));
     }
-    
-    // Get total count and results
-    const countResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(externalRequests)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
-    const total = countResult[0]?.count || 0;
-    
-    const results = await db
-      .select()
-      .from(externalRequests)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(externalRequests.created_at))
-      .limit(params?.limit || 100)
+
+    const total = await query.count();
+    const usersList = await query
+      .limit(params?.limit || 10)
       .offset(params?.offset || 0);
-    
-    return { requests: results, total: Number(total) };
+
+    return { users: usersList, total };
   }
 
-  async assignDeveloperToExternalRequest(id: number, developerId: number): Promise<ExternalRequest | undefined> {
-    const [updatedRequest] = await db
-      .update(externalRequests)
-      .set({ 
-        assigned_developer_id: developerId,
-        updated_at: new Date()
-      })
-      .where(eq(externalRequests.id, id))
-      .returning();
-    return updatedRequest;
-  }
-
-  async getUserExternalRequests(
-    email: string, 
-    options?: {
-      limit?: number;
-      offset?: number;
-      status?: string;
-    }
-  ): Promise<{ requests: ExternalRequest[]; total: number }> {
-    let query = db.select().from(externalRequests).where(eq(externalRequests.email, email));
-    
-    // Add status filter
-    if (options?.status && options.status !== 'all') {
-      query = query.where(and(
-        eq(externalRequests.email, email),
-        eq(externalRequests.status, options.status)
-      ));
-    }
-    
-    // Get total count
-    const [{ count }] = await db
-      .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(externalRequests)
-      .where(eq(externalRequests.email, email));
-    
-    // Apply pagination and ordering
-    const requestsList = await query
-      .orderBy(desc(externalRequests.created_at))
-      .limit(options?.limit || 50)
-      .offset(options?.offset || 0);
-    
-    return { requests: requestsList, total: count };
-  }
-
-  async getAvailableProjects(status?: string): Promise<ExternalRequest[]> {
-    let query = db.select().from(externalRequests).where(
-      sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
-    );
-    
-    if (status && status !== 'all') {
-      const statusMap: { [key: string]: string } = {
-        'pending': 'pending',
-        'in-progress': 'in_progress', 
-        'completed': 'completed',
-        'cancelled': 'cancelled'
-      };
-      const dbStatus = statusMap[status] || status;
-      query = query.where(and(
-        eq(externalRequests.status, dbStatus as any),
-        sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
-      ));
-    }
-    
-    return query.orderBy(desc(externalRequests.created_at));
-  }
-
-  async getAvailableProjectsPaginated(
-    status?: string,
-    options?: {
-      limit?: number;
-      offset?: number;
-    }
-  ): Promise<{ projects: Project[]; total: number }> {
-    let query = db.select().from(externalRequests).where(
-      sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
-    );
-    
-    if (status && status !== 'all') {
-      // Map frontend status to database status
-      const statusMap: { [key: string]: string } = {
-        'pending': 'pending',
-        'in-progress': 'in_progress', 
-        'completed': 'completed',
-        'cancelled': 'cancelled'
-      };
-      const dbStatus = statusMap[status] || status;
-      query = query.where(and(
-        eq(externalRequests.status, dbStatus as any),
-        sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`
-      ));
-    }
-    
-    // Get total count
-    const [{ count }] = await db
-      .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(externalRequests)
-      .where(sql`${externalRequests.client_id} IS NOT NULL OR ${externalRequests.assigned_developer_id} IS NOT NULL`);
-    
-    // Apply pagination and ordering
-    const projectsList = await query
-      .orderBy(desc(externalRequests.created_at))
-      .limit(options?.limit || 50)
-      .offset(options?.offset || 0);
-    
-    return { projects: projectsList, total: count };
-  }
-
-  async getCombinedProjectsForUser(
-    userEmail: string,
-    status?: string,
-    options?: {
-      limit?: number;
-      offset?: number;
-    }
-  ): Promise<{ projects: any[]; total: number }> {
-    // Get the user ID first to filter properly
-    const user = await this.getUserByEmail(userEmail);
-    if (!user) {
-      return { projects: [], total: 0 };
-    }
-
-    // Get user's external requests (requests they submitted)
-    const userRequestsQuery = db.select({
-      id: externalRequests.id,
-      title: sql<string>`null`.as('title'),
-      description: sql<string>`null`.as('description'),
-      project_description: externalRequests.project_description,
-      status: externalRequests.status,
-      created_at: externalRequests.created_at,
-      budget: sql<string>`null`.as('budget'),
-      deadline: sql<string>`null`.as('deadline'),
-      type: sql<string>`'external_request'`.as('type')
-    }).from(externalRequests).where(eq(externalRequests.email, userEmail));
-
-    // Only get projects assigned to THIS user (either as client or assigned developer)
-    // New users should not see any projects unless they are specifically assigned
-    const assignedProjectsQuery = db.select({
-      id: externalRequests.id,
-      title: externalRequests.title,
-      description: sql<string>`null`.as('description'),
-      project_description: externalRequests.project_description,
-      status: externalRequests.status,
-      created_at: externalRequests.created_at,
-      budget: externalRequests.budget,
-      deadline: externalRequests.deadline,
-      type: sql<string>`'project'`.as('type')
-    }).from(externalRequests).where(
-      or(
-        eq(externalRequests.client_id, user.id),
-        eq(externalRequests.assigned_developer_id, user.id)
-      )
-    );
-
-    // Apply status filter if provided
-    if (status && status !== 'all') {
-      const statusMap: { [key: string]: string } = {
-        'pending': 'pending',
-        'in-progress': 'in_progress', 
-        'completed': 'completed',
-        'cancelled': 'cancelled'
-      };
-      const dbStatus = statusMap[status] || status;
-      userRequestsQuery.where(eq(externalRequests.status, dbStatus));
-      assignedProjectsQuery.where(and(
-        eq(externalRequests.status, dbStatus),
-        or(
-          eq(externalRequests.client_id, user.id),
-          eq(externalRequests.assigned_developer_id, user.id)
-        )
-      ));
-    }
-
-    // Execute queries to get counts
-    const [userRequestsCount] = await db
-      .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(externalRequests)
-      .where(eq(externalRequests.email, userEmail));
-
-    const [assignedProjectsCount] = await db
-      .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(externalRequests)
-      .where(or(
-        eq(externalRequests.client_id, user.id),
-        eq(externalRequests.assigned_developer_id, user.id)
-      ));
-
-    const totalCount = userRequestsCount.count + assignedProjectsCount.count;
-
-    // Get the combined results with pagination
-    const userRequests = await userRequestsQuery
-      .orderBy(desc(externalRequests.created_at))
-      .limit(Math.min(options?.limit || 10, totalCount))
-      .offset(options?.offset || 0);
-
-    const remainingLimit = Math.max(0, (options?.limit || 10) - userRequests.length);
-    const assignedProjects = remainingLimit > 0 ? await assignedProjectsQuery
-      .orderBy(desc(externalRequests.created_at))
-      .limit(remainingLimit)
-      .offset(Math.max(0, (options?.offset || 0) - userRequestsCount.count)) : [];
-
-    // Combine and sort by created_at
-    const combinedProjects = [...userRequests, ...assignedProjects]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    return { projects: combinedProjects, total: totalCount };
-  }
-
-  // Phase 2: Project Management
-  async createProject(project: InsertExternalRequest, clientId?: number): Promise<ExternalRequest> {
-    const [createdProject] = await db
-      .insert(externalRequests)
-      .values({
-        ...project,
-        client_id: clientId
-      })
-      .returning();
-    return createdProject;
-  }
-
-  async getProjectById(id: number): Promise<ExternalRequest | undefined> {
-    const [project] = await db.select().from(externalRequests).where(eq(externalRequests.id, id));
-    return project;
-  }
-
-  async getProjectsByClientId(clientId: number): Promise<ExternalRequest[]> {
-    return db
-      .select()
-      .from(externalRequests)
-      .where(eq(externalRequests.client_id, clientId))
-      .orderBy(desc(externalRequests.created_at));
-  }
-
-  async getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: ExternalRequest[], total: number }> {
-    let query = db.select().from(externalRequests);
-    
-    if (status) {
-      query = query.where(eq(externalRequests.status, status as any));
-    }
-    
-    // Get total count
-    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(externalRequests);
-    const total = totalResult[0]?.count || 0;
-    
-    // Apply ordering and pagination
-    query = query.orderBy(desc(externalRequests.created_at));
-    
-    if (limit) {
-      query = query.limit(limit);
-    }
-    
-    if (offset) {
-      query = query.offset(offset);
-    }
-    
-    const projectsList = await query;
-    
-    return {
-      projects: projectsList,
-      total: Number(total)
-    };
-  }
-
-  async updateProjectStatus(id: number, status: string): Promise<ExternalRequest | undefined> {
-    const [updatedProject] = await db
-      .update(externalRequests)
-      .set({ status: status as any, updated_at: new Date() })
-      .where(eq(externalRequests.id, id))
-      .returning();
-    return updatedProject;
-  }
-
-  // New methods for admin dashboard
-  async getAllProjects(status?: string): Promise<ExternalRequest[]> {
-    let query = db.select().from(externalRequests);
-    
-    if (status && status !== 'all') {
-      const statusMap: { [key: string]: string } = {
-        'pending': 'pending',
-        'in-progress': 'in_progress', 
-        'completed': 'completed',
-        'cancelled': 'cancelled'
-      };
-      const dbStatus = statusMap[status] || status;
-      query = query.where(eq(externalRequests.status, dbStatus as any));
-    }
-    
-    return query.orderBy(desc(externalRequests.created_at));
-  }
-
-  async getClientProjects(clientId: number, status?: string): Promise<ExternalRequest[]> {
-    let query = db
-      .select()
-      .from(externalRequests)
-      .where(eq(externalRequests.client_id, clientId));
-    
-    if (status && status !== 'all') {
-      const statusMap: { [key: string]: string } = {
-        'pending': 'pending',
-        'in-progress': 'in_progress', 
-        'completed': 'completed',
-        'cancelled': 'cancelled'
-      };
-      const dbStatus = statusMap[status] || status;
-      query = query.where(and(
-        eq(externalRequests.client_id, clientId),
-        eq(externalRequests.status, dbStatus as any)
-      ));
-    }
-    
-    return query.orderBy(desc(externalRequests.created_at));
-  }
-
-  async getDeveloperProjects(developerId: number, status?: string): Promise<ExternalRequest[]> {
-    let query = db
-      .select()
-      .from(externalRequests)
-      .where(eq(externalRequests.assigned_developer_id, developerId));
-    
-    if (status && status !== 'all') {
-      const statusMap: { [key: string]: string } = {
-        'pending': 'pending',
-        'in-progress': 'in_progress', 
-        'completed': 'completed',
-        'cancelled': 'cancelled'
-      };
-      const dbStatus = statusMap[status] || status;
-      query = query.where(and(
-        eq(externalRequests.assigned_developer_id, developerId),
-        eq(externalRequests.status, dbStatus as any)
-      ));
-    }
-    
-    return query.orderBy(desc(externalRequests.created_at));
-  }
-
-  async getProjectsCount(status?: string): Promise<{ count: number }> {
-    let query = db
-      .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(externalRequests);
-    
-    if (status && status !== 'all') {
-      const statusMap: { [key: string]: string } = {
-        'pending': 'pending',
-        'in-progress': 'in_progress', 
-        'completed': 'completed',
-        'cancelled': 'cancelled'
-      };
-      const dbStatus = statusMap[status] || status;
-      query = query.where(eq(externalRequests.status, dbStatus as any));
-    }
-    
-    const [result] = await query;
-    return { count: result.count };
-  }
-
-  // Quotes
-  async createQuote(quote: InsertQuote, developerId: number): Promise<Quote> {
-    const [createdQuote] = await db
-      .insert(quotes)
-      .values({
-        ...quote,
-        developer_id: developerId
-      })
-      .returning();
-    return createdQuote;
-  }
-
-  async getQuotesByProjectId(projectId: number): Promise<Quote[]> {
-    return db
-      .select()
-      .from(quotes)
-      .where(eq(quotes.project_id, projectId))
-      .orderBy(desc(quotes.created_at));
-  }
-
-  async getQuotesByDeveloperId(developerId: number): Promise<Quote[]> {
-    return db
-      .select()
-      .from(quotes)
-      .where(eq(quotes.developer_id, developerId))
-      .orderBy(desc(quotes.created_at));
-  }
-
-  async updateQuoteStatus(id: number, status: string): Promise<Quote | undefined> {
-    const [updatedQuote] = await db
-      .update(quotes)
-      .set({ status: status as any })
-      .where(eq(quotes.id, id))
-      .returning();
-    return updatedQuote;
-  }
-
-  // Messages
-  async sendMessage(message: InsertMessage, senderId: number): Promise<Message> {
-    const [createdMessage] = await db
-      .insert(messages)
-      .values({
-        ...message,
-        sender_id: senderId
-      })
-      .returning();
-    return createdMessage;
-  }
-
-  async getMessagesByProjectId(projectId: number): Promise<Message[]> {
-    return db
-      .select()
-      .from(messages)
-      .where(eq(messages.project_id, projectId))
-      .orderBy(messages.created_at);
-  }
-
-  // Portfolios
-  async createPortfolio(portfolio: InsertPortfolio, developerId: number): Promise<Portfolio> {
-    const [createdPortfolio] = await db
-      .insert(portfolios)
-      .values({
-        ...portfolio,
-        developer_id: developerId
-      })
-      .returning();
-    return createdPortfolio;
-  }
-
-  async getPortfolioById(id: number): Promise<Portfolio | undefined> {
-    const [portfolio] = await db.select().from(portfolios).where(eq(portfolios.id, id));
-    return portfolio;
-  }
-
-  async getPortfoliosByDeveloperId(developerId: number): Promise<Portfolio[]> {
-    return db
-      .select()
-      .from(portfolios)
-      .where(eq(portfolios.developer_id, developerId))
-      .orderBy(desc(portfolios.created_at));
-  }
-
-  async getAllPortfolios(limit?: number, offset?: number): Promise<{ portfolios: Portfolio[], total: number }> {
-    let query = db.select().from(portfolios);
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(portfolios);
-    
-    // Get total count
-    const [countResult] = await countQuery;
-    const total = countResult?.count || 0;
-    
-    // Apply pagination
-    if (limit) {
-      query = query.limit(limit);
-      
-      if (offset) {
-        query = query.offset(offset);
-      }
-    }
-    
-    // Order by creation date, newest first
-    query = query.orderBy(desc(portfolios.created_at));
-    
-    const portfoliosList = await query;
-    
-    return {
-      portfolios: portfoliosList,
-      total: Number(total)
-    };
-  }
-
-  async updatePortfolio(id: number, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
-    const [updatedPortfolio] = await db
-      .update(portfolios)
-      .set(portfolio)
-      .where(eq(portfolios.id, id))
-      .returning();
-    return updatedPortfolio;
-  }
-
-  async deletePortfolio(id: number, developerId: number): Promise<boolean> {
+  async deleteUser(id: number): Promise<boolean> {
     const result = await db
-      .delete(portfolios)
-      .where(
-        and(
-          eq(portfolios.id, id),
-          eq(portfolios.developer_id, developerId)
-        )
-      )
-      .returning({ id: portfolios.id });
-    
-    return result.length > 0;
+      .delete(users)
+      .where(eq(users.id, id));
+    return result > 0;
   }
 
-  // Portfolio Reviews
-  async createPortfolioReview(review: InsertPortfolioReview, userId: number): Promise<PortfolioReview> {
-    const [createdReview] = await db
-      .insert(portfolioReviews)
-      .values({
-        ...review,
-        user_id: userId
-      })
+  async resetUserPassword(id: number, newPassword: string): Promise<boolean> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ password: newPassword })
+      .where(eq(users.id, id))
       .returning();
-    return createdReview;
+    return !!updatedUser;
   }
 
-  async getPortfolioReviewsByPortfolioId(portfolioId: number): Promise<PortfolioReview[]> {
-    return db
-      .select()
-      .from(portfolioReviews)
-      .where(eq(portfolioReviews.portfolio_id, portfolioId))
-      .orderBy(desc(portfolioReviews.created_at));
-  }
-
-  async deletePortfolioReview(id: number, userId: number): Promise<boolean> {
-    const result = await db
-      .delete(portfolioReviews)
-      .where(
-        and(
-          eq(portfolioReviews.id, id),
-          eq(portfolioReviews.user_id, userId)
-        )
-      )
-      .returning({ id: portfolioReviews.id });
-    
-    return result.length > 0;
-  }
-
-  // Phase 3: Marketplace
-  // Products
-  async createProduct(product: InsertProduct, sellerId: number): Promise<Product> {
-    const [createdProduct] = await db
-      .insert(products)
-      .values({
-        ...product,
-        seller_id: sellerId
-      })
-      .returning();
-    return createdProduct;
-  }
-
-  async getProductById(id: number): Promise<Product | undefined> {
-    const [product] = await db.select().from(products).where(eq(products.id, id));
-    return product;
-  }
-
-  async getProductsByCategory(category: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }> {
-    let query = db.select().from(products).where(eq(products.category, category));
-    let countQuery = db.select({ count: sql<number>`count(*)` })
-      .from(products)
-      .where(eq(products.category, category));
-    
-    // Get total count
-    const [countResult] = await countQuery;
-    const total = countResult?.count || 0;
-    
-    // Apply pagination
-    if (limit) {
-      query = query.limit(limit);
-      
-      if (offset) {
-        query = query.offset(offset);
-      }
-    }
-    
-    // Order by creation date, newest first
-    query = query.orderBy(desc(products.created_at));
-    
-    const productsList = await query;
-    
-    return {
-      products: productsList,
-      total: Number(total)
-    };
-  }
-
-  async getProductsBySellerId(
-    sellerId: number, 
-    options?: {
-      limit?: number;
-      offset?: number;
-      status?: string;
-      search?: string;
-    }
-  ): Promise<{ products: Product[]; total: number }> {
-    let query = db.select().from(products).where(eq(products.seller_id, sellerId));
-    
-    // Add filters
-    if (options?.status && options.status !== 'all') {
-      query = query.where(and(
-        eq(products.seller_id, sellerId),
-        eq(products.status, options.status)
-      ));
-    }
-    
-    if (options?.search) {
-      query = query.where(and(
-        eq(products.seller_id, sellerId),
-        or(
-          ilike(products.title, `%${options.search}%`),
-          ilike(products.description, `%${options.search}%`),
-          ilike(products.category, `%${options.search}%`)
-        )
-      ));
-    }
-    
-    // Get total count
-    const [{ count }] = await db
-      .select({ count: sql`count(*)`.mapWith(Number) })
-      .from(products)
-      .where(eq(products.seller_id, sellerId));
-    
-    // Apply pagination and ordering
-    const productList = await query
-      .orderBy(desc(products.created_at))
-      .limit(options?.limit || 50)
-      .offset(options?.offset || 0);
-    
-    return { products: productList, total: count };
-  }
-
-  async getProducts(params?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ products: Product[], total: number }> {
-    let query = db.select().from(products);
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(products);
-    
-    // Apply filters
-    const conditions = [];
-    
-    if (params?.category) {
-      conditions.push(eq(products.category, params.category));
-    }
-    
-    if (params?.search) {
-      conditions.push(
-        or(
-          ilike(products.title, `%${params.search}%`),
-          ilike(products.description, `%${params.search}%`),
-          ilike(products.category, `%${params.search}%`)
-        )
-      );
-    }
-    
-    if (conditions.length > 0) {
-      const whereCondition = conditions.length === 1 ? conditions[0] : and(...conditions);
-      query = query.where(whereCondition);
-      countQuery = countQuery.where(whereCondition);
-    }
-    
-    // Get total count
-    const [countResult] = await countQuery;
-    const total = countResult?.count || 0;
-    
-    // Apply pagination and ordering
-    query = query.orderBy(desc(products.created_at));
-    
-    if (params?.limit) {
-      query = query.limit(params.limit);
-      
-      if (params?.offset) {
-        query = query.offset(params.offset);
-      }
-    }
-    
-    const productsList = await query;
-    
-    return {
-      products: productsList,
-      total: Number(total)
-    };
-  }
-
-  async searchProducts(search: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }> {
-    let query = db.select().from(products).where(
-      or(
-        ilike(products.title, `%${search}%`),
-        ilike(products.description, `%${search}%`),
-        ilike(products.category, `%${search}%`)
-      )
-    );
-    
-    let countQuery = db.select({ count: sql<number>`count(*)` })
-      .from(products)
-      .where(
-        or(
-          ilike(products.title, `%${search}%`),
-          ilike(products.description, `%${search}%`),
-          ilike(products.category, `%${search}%`)
-        )
-      );
-    
-    // Get total count
-    const [countResult] = await countQuery;
-    const total = countResult?.count || 0;
-    
-    // Apply pagination
-    if (limit) {
-      query = query.limit(limit);
-      
-      if (offset) {
-        query = query.offset(offset);
-      }
-    }
-    
-    // Order by creation date, newest first
-    query = query.orderBy(desc(products.created_at));
-    
-    const productsList = await query;
-    
-    return {
-      products: productsList,
-      total: Number(total)
-    };
-  }
-
-  async updateProduct(id: number, product: Partial<InsertProduct>, sellerId?: number): Promise<Product | undefined> {
-    let whereCondition = eq(products.id, id);
-    
-    // If sellerId is provided, add seller check for permission control
-    if (sellerId !== undefined) {
-      whereCondition = and(
-        eq(products.id, id),
-        eq(products.seller_id, sellerId)
-      );
-    }
-    
-    const [updatedProduct] = await db
-      .update(products)
-      .set(product)
-      .where(whereCondition)
-      .returning();
-    return updatedProduct;
-  }
-
-  async deleteProduct(id: number, sellerId: number): Promise<boolean> {
-    const result = await db
-      .delete(products)
-      .where(
-        and(
-          eq(products.id, id),
-          eq(products.seller_id, sellerId)
-        )
-      )
-      .returning({ id: products.id });
-    
-    return result.length > 0;
-  }
-
-  // Orders
-  async createOrder(order: InsertOrder, items: InsertOrderItem[], buyerId: number): Promise<Order> {
-    // Start a transaction
-    return await db.transaction(async (tx) => {
-      // Create the order
-      const [createdOrder] = await tx
-        .insert(orders)
-        .values({
-          ...order,
-          buyer_id: buyerId
-        })
-        .returning();
-      
-      // Insert order items
-      if (items.length > 0) {
-        await tx
-          .insert(orderItems)
-          .values(
-            items.map(item => ({
-              ...item,
-              order_id: createdOrder.id
-            }))
-          );
-      }
-      
-      return createdOrder;
-    });
-  }
-
-  async getOrderById(id: number): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.id, id));
-    return order;
-  }
-
-  async getOrdersByBuyerId(buyerId: number): Promise<Order[]> {
-    return db
-      .select()
-      .from(orders)
-      .where(eq(orders.buyer_id, buyerId))
-      .orderBy(desc(orders.created_at));
-  }
-
-  async getOrdersBySellerId(sellerId: number): Promise<Order[]> {
-    // Join orders with order_items and products to find orders that contain products from this seller
-    const result = await db
-      .select({
-        order: orders
-      })
-      .from(orders)
-      .innerJoin(orderItems, eq(orders.id, orderItems.order_id))
-      .innerJoin(products, and(
-        eq(orderItems.product_id, products.id),
-        eq(products.seller_id, sellerId)
-      ))
-      .groupBy(orders.id)
-      .orderBy(desc(orders.created_at));
-    
-    return result.map(r => r.order);
-  }
-
-  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
-    const [updatedOrder] = await db
-      .update(orders)
-      .set({ 
-        status, 
-        updated_at: new Date() 
-      })
-      .where(eq(orders.id, id))
-      .returning();
-    
-    // If the order is marked as completed, update any pending payments
-    if (status === 'completed') {
-      await db
-        .update(payments)
-        .set({ 
-          status: 'completed',
-          escrow_release: true 
-        })
-        .where(and(
-          eq(payments.order_id, id),
-          eq(payments.status, 'pending')
-        ));
-    }
-    
-    return updatedOrder;
-  }
-
-  async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
-    const [createdOrderItem] = await db
-      .insert(orderItems)
-      .values(orderItem)
-      .returning();
-    return createdOrderItem;
-  }
-
-  // Payments
-  async createPayment(payment: InsertPayment): Promise<Payment> {
-    const [createdPayment] = await db
-      .insert(payments)
-      .values(payment)
-      .returning();
-    return createdPayment;
-  }
-
-  async getPaymentById(id: number): Promise<Payment | undefined> {
-    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
-    return payment;
-  }
-
-  async getPaymentsByOrderId(orderId: number): Promise<Payment[]> {
-    return db
-      .select()
-      .from(payments)
-      .where(eq(payments.order_id, orderId))
-      .orderBy(desc(payments.created_at));
-  }
-
-  async releaseEscrow(id: number, buyerId: number): Promise<Payment | undefined> {
-    // First check if the payment belongs to an order created by this buyer
-    const payment = await this.getPaymentById(id);
-    
-    if (!payment || !payment.order_id) {
-      return undefined;
-    }
-    
-    const order = await this.getOrderById(payment.order_id);
-    
-    // Check if the order belongs to this buyer and is in a state where escrow can be released
-    // Escrow can only be released if the order is in "delivered" or "completed" status
-    if (!order || 
-        order.buyer_id !== buyerId || 
-        (order.status !== 'delivered' && order.status !== 'completed')) {
-      return undefined;
-    }
-    
-    // Release the escrow
-    const [updatedPayment] = await db
-      .update(payments)
-      .set({ 
-        escrow_release: true,
-        status: 'completed' 
-      })
-      .where(eq(payments.id, id))
-      .returning();
-    
-    // If the payment was successfully released, update the order to completed status
-    if (updatedPayment && order.status !== 'completed') {
-      await this.updateOrderStatus(order.id, 'completed');
-    }
-    
-    return updatedPayment;
-  }
-
-  // Product Reviews
-  async createProductReview(review: InsertProductReview, buyerId: number): Promise<ProductReview> {
-    const [createdReview] = await db
-      .insert(productReviews)
-      .values({
-        ...review,
-        buyer_id: buyerId
-      })
-      .returning();
-    return createdReview;
-  }
-
-  async getProductReviewsByProductId(productId: number): Promise<ProductReview[]> {
-    return db
-      .select()
-      .from(productReviews)
-      .where(eq(productReviews.product_id, productId))
-      .orderBy(desc(productReviews.created_at));
-  }
-
-  async getProductReviewsByBuyerId(buyerId: number): Promise<ProductReview[]> {
-    return db
-      .select()
-      .from(productReviews)
-      .where(eq(productReviews.buyer_id, buyerId))
-      .orderBy(desc(productReviews.created_at));
-  }
-
-  async deleteProductReview(id: number, buyerId: number): Promise<boolean> {
-    const result = await db
-      .delete(productReviews)
-      .where(
-        and(
-          eq(productReviews.id, id),
-          eq(productReviews.buyer_id, buyerId)
-        )
-      )
-      .returning({ id: productReviews.id });
-    
-    return result.length > 0;
-  }
-
-  // User Downloads functionality
+  // User Downloads
   async createUserDownload(userId: number, softwareId: number, version: string): Promise<UserDownload> {
     const [download] = await db
       .insert(userDownloads)
@@ -1743,67 +381,1059 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return download;
   }
-  
+
   async getUserDownloads(userId: number): Promise<UserDownload[]> {
-    const downloadsWithSoftware = await db
-      .select({
-        download: userDownloads,
-        software: softwares
-      })
+    const downloads = await db
+      .select()
       .from(userDownloads)
-      .innerJoin(softwares, eq(userDownloads.software_id, softwares.id))
-      .where(eq(userDownloads.user_id, userId))
-      .orderBy(desc(userDownloads.downloaded_at));
-    
-    return downloadsWithSoftware.map(item => ({
-      ...item.download,
-      softwareName: item.software.name,
-      softwareImageUrl: item.software.image_url
-    }));
+      .where(eq(userDownloads.user_id, userId));
+    return downloads;
   }
 
-  // User Reviews management
+  // User Reviews Management
   async getUserReviews(userId: number): Promise<Review[]> {
-    const reviewsWithSoftware = await db
-      .select({
-        review: reviews,
-        software: softwares
-      })
+    const reviewsList = await db
+      .select()
       .from(reviews)
-      .innerJoin(softwares, eq(reviews.target_id, softwares.id))
-      .where(
-        and(
-          eq(reviews.user_id, userId),
-          eq(reviews.target_type, 'software')
-        )
-      )
-      .orderBy(desc(reviews.created_at));
-    
-    return reviewsWithSoftware.map(item => ({
-      ...item.review,
-      softwareName: item.software.name,
-      softwareImageUrl: item.software.image_url
-    }));
+      .where(eq(reviews.user_id, userId));
+    return reviewsList;
   }
-  
+
   async updateReview(id: number, userId: number, reviewData: Partial<InsertReview>): Promise<Review | undefined> {
     const [updatedReview] = await db
       .update(reviews)
-      .set({
-        ...reviewData,
-        // Don't allow changing the target
-        target_type: undefined,
-        target_id: undefined
-      })
-      .where(
-        and(
-          eq(reviews.id, id),
-          eq(reviews.user_id, userId)
-        )
-      )
+      .set(reviewData)
+      .where(and(eq(reviews.id, id), eq(reviews.user_id, userId)))
       .returning();
-    
     return updatedReview;
+  }
+
+  // Categories
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [createdCategory] = await db
+      .insert(categories)
+      .values(category)
+      .returning();
+    return createdCategory;
+  }
+
+  async getCategories(): Promise<Category[]> {
+    const categoriesList = await db
+      .select()
+      .from(categories);
+    return categoriesList;
+  }
+
+  async getCategoryById(id: number): Promise<Category | undefined> {
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
+    return category;
+  }
+
+  // Software
+  async createSoftware(software: InsertSoftware, userId: number): Promise<Software> {
+    const [createdSoftware] = await db
+      .insert(softwares)
+      .values({
+        ...software,
+        created_by: userId,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdSoftware;
+  }
+
+  async getSoftwareById(id: number): Promise<Software | undefined> {
+    const [software] = await db
+      .select()
+      .from(softwares)
+      .where(eq(softwares.id, id));
+    return software;
+  }
+
+  async updateSoftware(id: number, software: Partial<InsertSoftware>): Promise<Software | undefined> {
+    const [updatedSoftware] = await db
+      .update(softwares)
+      .set({
+        ...software,
+        updated_at: new Date()
+      })
+      .where(eq(softwares.id, id))
+      .returning();
+    return updatedSoftware;
+  }
+
+  async updateSoftwareAdmin(id: number, software: Partial<InsertSoftware>): Promise<Software | undefined> {
+    const [updatedSoftware] = await db
+      .update(softwares)
+      .set({
+        ...software,
+        updated_at: new Date()
+      })
+      .where(eq(softwares.id, id))
+      .returning();
+    return updatedSoftware;
+  }
+
+  async deleteSoftware(id: number): Promise<boolean> {
+    const result = await db
+      .delete(softwares)
+      .where(eq(softwares.id, id));
+    return result > 0;
+  }
+
+  async updateSoftwareStatus(id: number, status: 'approved' | 'rejected'): Promise<Software | undefined> {
+    const [updatedSoftware] = await db
+      .update(softwares)
+      .set({
+        status,
+        updated_at: new Date()
+      })
+      .where(eq(softwares.id, id))
+      .returning();
+    return updatedSoftware;
+  }
+
+  async incrementSoftwareDownloads(id: number): Promise<void> {
+    await db
+      .update(softwares)
+      .set({
+        downloads: sql`${softwares.downloads} + 1`
+      })
+      .where(eq(softwares.id, id));
+  }
+
+  async getSoftwareList(params: {
+    category?: number;
+    platform?: string;
+    search?: string;
+    status?: 'pending' | 'approved' | 'rejected';
+    limit?: number;
+    offset?: number;
+  }): Promise<{ softwares: Software[], total: number }> {
+    const query = db
+      .select()
+      .from(softwares);
+
+    if (params.category) {
+      query.where(eq(softwares.category_id, params.category));
+    }
+
+    if (params.platform) {
+      query.where(eq(softwares.platform, params.platform));
+    }
+
+    if (params.search) {
+      query.where(ilike(softwares.name, `%${params.search}%`));
+    }
+
+    if (params.status) {
+      query.where(eq(softwares.status, params.status));
+    }
+
+    const total = await query.count();
+    const softwaresList = await query
+      .limit(params.limit || 10)
+      .offset(params.offset || 0);
+
+    return { softwares: softwaresList, total };
+  }
+
+  async getAdminSoftwareList(filters: any, limit?: number, offset?: number): Promise<{ softwares: Software[], total: number }> {
+    const query = db
+      .select()
+      .from(softwares);
+
+    if (filters.category) {
+      query.where(eq(softwares.category_id, filters.category));
+    }
+
+    if (filters.platform) {
+      query.where(eq(softwares.platform, filters.platform));
+    }
+
+    if (filters.search) {
+      query.where(ilike(softwares.name, `%${filters.search}%`));
+    }
+
+    if (filters.status) {
+      query.where(eq(softwares.status, filters.status));
+    }
+
+    const total = await query.count();
+    const softwaresList = await query
+      .limit(limit || 10)
+      .offset(offset || 0);
+
+    return { softwares: softwaresList, total };
+  }
+
+  // Reviews
+  async createReview(review: InsertReview, userId: number): Promise<Review> {
+    const [createdReview] = await db
+      .insert(reviews)
+      .values({
+        ...review,
+        user_id: userId,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdReview;
+  }
+
+  async getReviewsBySoftwareId(softwareId: number): Promise<Review[]> {
+    const reviewsList = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.software_id, softwareId));
+    return reviewsList;
+  }
+
+  async getSoftwareReviews(softwareId: number): Promise<Review[]> {
+    const reviewsList = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.software_id, softwareId));
+    return reviewsList;
+  }
+
+  async getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined> {
+    const [review] = await db
+      .select()
+      .from(reviews)
+      .where(and(eq(reviews.user_id, userId), eq(reviews.software_id, softwareId)));
+    return review;
+  }
+
+  async getReviewById(id: number): Promise<Review | undefined> {
+    const [review] = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, id));
+    return review;
+  }
+
+  async deleteReview(id: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(reviews)
+      .where(and(eq(reviews.id, id), eq(reviews.user_id, userId)));
+    return result > 0;
+  }
+
+  // External Project Requests
+  async createExternalRequest(request: InsertExternalRequest): Promise<ExternalRequest> {
+    const [createdRequest] = await db
+      .insert(externalRequests)
+      .values({
+        ...request,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdRequest;
+  }
+
+  async getExternalRequests(status?: string, limit?: number, offset?: number): Promise<{ requests: ExternalRequest[], total: number }> {
+    const query = db
+      .select()
+      .from(externalRequests);
+
+    if (status) {
+      query.where(eq(externalRequests.status, status));
+    }
+
+    const total = await query.count();
+    const requestsList = await query
+      .limit(limit || 10)
+      .offset(offset || 0);
+
+    return { requests: requestsList, total };
+  }
+
+  async getExternalRequestById(id: number): Promise<ExternalRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.id, id));
+    return request;
+  }
+
+  async updateExternalRequestStatus(id: number, status: string): Promise<ExternalRequest | undefined> {
+    const [updatedRequest] = await db
+      .update(externalRequests)
+      .set({
+        status,
+        updated_at: new Date()
+      })
+      .where(eq(externalRequests.id, id))
+      .returning();
+    return updatedRequest;
+  }
+
+  async convertExternalRequestToProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest> {
+    const [updatedRequest] = await db
+      .update(externalRequests)
+      .set({
+        ...updates,
+        updated_at: new Date()
+      })
+      .where(eq(externalRequests.id, id))
+      .returning();
+    return updatedRequest;
+  }
+
+  async getAllExternalRequests(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ requests: ExternalRequest[], total: number }> {
+    const query = db
+      .select()
+      .from(externalRequests);
+
+    if (params?.status) {
+      query.where(eq(externalRequests.status, params.status));
+    }
+
+    if (params?.search) {
+      query.where(ilike(externalRequests.title, `%${params.search}%`));
+    }
+
+    const total = await query.count();
+    const requestsList = await query
+      .limit(params?.limit || 10)
+      .offset(params?.offset || 0);
+
+    return { requests: requestsList, total };
+  }
+
+  async assignDeveloperToExternalRequest(id: number, developerId: number): Promise<ExternalRequest | undefined> {
+    const [updatedRequest] = await db
+      .update(externalRequests)
+      .set({
+        developer_id: developerId,
+        updated_at: new Date()
+      })
+      .where(eq(externalRequests.id, id))
+      .returning();
+    return updatedRequest;
+  }
+
+  async getUserExternalRequests(email: string): Promise<ExternalRequest[]> {
+    const requestsList = await db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.client_email, email));
+    return requestsList;
+  }
+
+  async getAvailableProjects(status?: string): Promise<ExternalRequest[]> {
+    const query = db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.type, 'project'));
+
+    if (status) {
+      query.where(eq(externalRequests.status, status));
+    }
+
+    const projectsList = await query;
+    return projectsList;
+  }
+
+  async getAllProjects(status?: string): Promise<ExternalRequest[]> {
+    const query = db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.type, 'project'));
+
+    if (status) {
+      query.where(eq(externalRequests.status, status));
+    }
+
+    const projectsList = await query;
+    return projectsList;
+  }
+
+  async getClientProjects(clientId: number, status?: string): Promise<ExternalRequest[]> {
+    const query = db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.client_id, clientId));
+
+    if (status) {
+      query.where(eq(externalRequests.status, status));
+    }
+
+    const projectsList = await query;
+    return projectsList;
+  }
+
+  async getDeveloperProjects(developerId: number, status?: string): Promise<ExternalRequest[]> {
+    const query = db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.developer_id, developerId));
+
+    if (status) {
+      query.where(eq(externalRequests.status, status));
+    }
+
+    const projectsList = await query;
+    return projectsList;
+  }
+
+  async getProjectsCount(status?: string): Promise<{ count: number }> {
+    const query = db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(externalRequests)
+      .where(eq(externalRequests.type, 'project'));
+
+    if (status) {
+      query.where(eq(externalRequests.status, status));
+    }
+
+    const [result] = await query;
+    return result;
+  }
+
+  // Phase 2: Project Management (now using external requests)
+  async createProject(project: InsertExternalRequest, clientId?: number): Promise<ExternalRequest> {
+    const [createdProject] = await db
+      .insert(externalRequests)
+      .values({
+        ...project,
+        client_id: clientId,
+        type: 'project',
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdProject;
+  }
+
+  async getProjectById(id: number): Promise<ExternalRequest | undefined> {
+    const [project] = await db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.id, id));
+    return project;
+  }
+
+  async getProjectsByClientId(clientId: number): Promise<ExternalRequest[]> {
+    const projectsList = await db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.client_id, clientId));
+    return projectsList;
+  }
+
+  async getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: ExternalRequest[], total: number }> {
+    const query = db
+      .select()
+      .from(externalRequests)
+      .where(eq(externalRequests.type, 'project'));
+
+    if (status) {
+      query.where(eq(externalRequests.status, status));
+    }
+
+    const total = await query.count();
+    const projectsList = await query
+      .limit(limit || 10)
+      .offset(offset || 0);
+
+    return { projects: projectsList, total };
+  }
+
+  async updateProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest | undefined> {
+    const [updatedProject] = await db
+      .update(externalRequests)
+      .set({
+        ...updates,
+        updated_at: new Date()
+      })
+      .where(eq(externalRequests.id, id))
+      .returning();
+    return updatedProject;
+  }
+
+  async updateProjectStatus(id: number, status: string): Promise<ExternalRequest | undefined> {
+    const [updatedProject] = await db
+      .update(externalRequests)
+      .set({
+        status,
+        updated_at: new Date()
+      })
+      .where(eq(externalRequests.id, id))
+      .returning();
+    return updatedProject;
+  }
+
+  // Quotes
+  async createQuote(quote: InsertQuote, developerId: number): Promise<Quote> {
+    const [createdQuote] = await db
+      .insert(quotes)
+      .values({
+        ...quote,
+        developer_id: developerId,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdQuote;
+  }
+
+  async getQuotesByProjectId(projectId: number): Promise<Quote[]> {
+    const quotesList = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.project_id, projectId));
+    return quotesList;
+  }
+
+  async getQuotesByDeveloperId(developerId: number): Promise<Quote[]> {
+    const quotesList = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.developer_id, developerId));
+    return quotesList;
+  }
+
+  async getDeveloperQuoteForProject(developerId: number, projectId: number): Promise<Quote | undefined> {
+    const [quote] = await db
+      .select()
+      .from(quotes)
+      .where(and(eq(quotes.developer_id, developerId), eq(quotes.project_id, projectId)));
+    return quote;
+  }
+
+  async getQuoteById(id: number): Promise<Quote | undefined> {
+    const [quote] = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.id, id));
+    return quote;
+  }
+
+  async updateQuoteStatus(id: number, status: string): Promise<Quote | undefined> {
+    const [updatedQuote] = await db
+      .update(quotes)
+      .set({
+        status,
+        updated_at: new Date()
+      })
+      .where(eq(quotes.id, id))
+      .returning();
+    return updatedQuote;
+  }
+
+  async rejectOtherQuotes(projectId: number, acceptedQuoteId: number): Promise<void> {
+    await db
+      .update(quotes)
+      .set({
+        status: 'rejected',
+        updated_at: new Date()
+      })
+      .where(and(eq(quotes.project_id, projectId), sql`${quotes.id} != ${acceptedQuoteId}`));
+  }
+
+  // Messages
+  async sendMessage(message: InsertMessage, senderId: number): Promise<Message> {
+    const [createdMessage] = await db
+      .insert(messages)
+      .values({
+        ...message,
+        sender_id: senderId,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdMessage;
+  }
+
+  async getMessagesByProjectId(projectId: number): Promise<Message[]> {
+    const messagesList = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.project_id, projectId));
+    return messagesList;
+  }
+
+  // Portfolios
+  async createPortfolio(portfolio: InsertPortfolio, developerId: number): Promise<Portfolio> {
+    const [createdPortfolio] = await db
+      .insert(portfolios)
+      .values({
+        ...portfolio,
+        developer_id: developerId,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdPortfolio;
+  }
+
+  async getPortfolioById(id: number): Promise<Portfolio | undefined> {
+    const [portfolio] = await db
+      .select()
+      .from(portfolios)
+      .where(eq(portfolios.id, id));
+    return portfolio;
+  }
+
+  async getPortfoliosByDeveloperId(developerId: number): Promise<Portfolio[]> {
+    const portfoliosList = await db
+      .select()
+      .from(portfolios)
+      .where(eq(portfolios.developer_id, developerId));
+    return portfoliosList;
+  }
+
+  async getDeveloperPortfolio(developerId: number): Promise<Portfolio[]> {
+    const portfoliosList = await db
+      .select()
+      .from(portfolios)
+      .where(eq(portfolios.developer_id, developerId));
+    return portfoliosList;
+  }
+
+  async getAllPortfolios(limit?: number, offset?: number): Promise<{ portfolios: Portfolio[], total: number }> {
+    const query = db
+      .select()
+      .from(portfolios);
+
+    const total = await query.count();
+    const portfoliosList = await query
+      .limit(limit || 10)
+      .offset(offset || 0);
+
+    return { portfolios: portfoliosList, total };
+  }
+
+  async updatePortfolio(id: number, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
+    const [updatedPortfolio] = await db
+      .update(portfolios)
+      .set({
+        ...portfolio,
+        updated_at: new Date()
+      })
+      .where(eq(portfolios.id, id))
+      .returning();
+    return updatedPortfolio;
+  }
+
+  async deletePortfolio(id: number, developerId: number): Promise<boolean> {
+    const result = await db
+      .delete(portfolios)
+      .where(and(eq(portfolios.id, id), eq(portfolios.developer_id, developerId)));
+    return result > 0;
+  }
+
+  // Portfolio Reviews
+  async createPortfolioReview(review: InsertPortfolioReview, userId: number): Promise<PortfolioReview> {
+    const [createdReview] = await db
+      .insert(portfolioReviews)
+      .values({
+        ...review,
+        user_id: userId,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdReview;
+  }
+
+  async getPortfolioReviewsByPortfolioId(portfolioId: number): Promise<PortfolioReview[]> {
+    const reviewsList = await db
+      .select()
+      .from(portfolioReviews)
+      .where(eq(portfolioReviews.portfolio_id, portfolioId));
+    return reviewsList;
+  }
+
+  async getPortfolioReviews(portfolioId: number): Promise<PortfolioReview[]> {
+    const reviewsList = await db
+      .select()
+      .from(portfolioReviews)
+      .where(eq(portfolioReviews.portfolio_id, portfolioId));
+    return reviewsList;
+  }
+
+  async getClientReviewForPortfolio(clientId: number, portfolioId: number): Promise<PortfolioReview | undefined> {
+    const [review] = await db
+      .select()
+      .from(portfolioReviews)
+      .where(and(eq(portfolioReviews.client_id, clientId), eq(portfolioReviews.portfolio_id, portfolioId)));
+    return review;
+  }
+
+  async deletePortfolioReview(id: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(portfolioReviews)
+      .where(and(eq(portfolioReviews.id, id), eq(portfolioReviews.user_id, userId)));
+    return result > 0;
+  }
+
+  // Phase 3: Marketplace
+  // Products
+  async createProduct(product: InsertProduct, sellerId: number): Promise<Product> {
+    const [createdProduct] = await db
+      .insert(products)
+      .values({
+        ...product,
+        seller_id: sellerId,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdProduct;
+  }
+
+  async getProductById(id: number): Promise<Product | undefined> {
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, id));
+    return product;
+  }
+
+  async getProducts(params?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ products: Product[], total: number }> {
+    const query = db
+      .select()
+      .from(products);
+
+    if (params?.category) {
+      query.where(eq(products.category, params.category));
+    }
+
+    if (params?.search) {
+      query.where(ilike(products.name, `%${params.search}%`));
+    }
+
+    const total = await query.count();
+    const productsList = await query
+      .limit(params?.limit || 10)
+      .offset(params?.offset || 0);
+
+    return { products: productsList, total };
+  }
+
+  async getProductsByCategory(category: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }> {
+    const query = db
+      .select()
+      .from(products)
+      .where(eq(products.category, category));
+
+    const total = await query.count();
+    const productsList = await query
+      .limit(limit || 10)
+      .offset(offset || 0);
+
+    return { products: productsList, total };
+  }
+
+  async getProductsBySellerId(sellerId: number): Promise<Product[]> {
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(eq(products.seller_id, sellerId));
+    return productsList;
+  }
+
+  async searchProducts(search: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }> {
+    const query = db
+      .select()
+      .from(products)
+      .where(ilike(products.name, `%${search}%`));
+
+    const total = await query.count();
+    const productsList = await query
+      .limit(limit || 10)
+      .offset(offset || 0);
+
+    return { products: productsList, total };
+  }
+
+  async updateProduct(id: number, product: Partial<InsertProduct>, sellerId: number): Promise<Product | undefined> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set({
+        ...product,
+        updated_at: new Date()
+      })
+      .where(and(eq(products.id, id), eq(products.seller_id, sellerId)))
+      .returning();
+    return updatedProduct;
+  }
+
+  async deleteProduct(id: number, sellerId: number): Promise<boolean> {
+    const result = await db
+      .delete(products)
+      .where(and(eq(products.id, id), eq(products.seller_id, sellerId)));
+    return result > 0;
+  }
+
+  // Orders
+  async createOrder(order: InsertOrder, items: InsertOrderItem[], buyerId: number): Promise<Order> {
+    return await db.transaction(async (tx) => {
+      // Create the order
+      const [createdOrder] = await tx
+        .insert(orders)
+        .values({
+          ...order,
+          buyer_id: buyerId,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning();
+
+      // Create the order items
+      await tx.insert(orderItems).values(
+        items.map(item => ({
+          ...item,
+          order_id: createdOrder.id,
+          created_at: new Date(),
+          updated_at: new Date()
+        }))
+      );
+
+      return createdOrder;
+    });
+  }
+
+  async getOrderById(id: number): Promise<Order | undefined> {
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, id));
+    return order;
+  }
+
+  async getAllOrders(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ orders: Order[], total: number }> {
+    const query = db
+      .select()
+      .from(orders);
+
+    if (params?.status) {
+      query.where(eq(orders.status, params.status));
+    }
+
+    if (params?.search) {
+      query.where(ilike(orders.id, `%${params.search}%`));
+    }
+
+    const total = await query.count();
+    const ordersList = await query
+      .limit(params?.limit || 10)
+      .offset(params?.offset || 0);
+
+    return { orders: ordersList, total };
+  }
+
+  async getOrdersByBuyerId(buyerId: number): Promise<Order[]> {
+    const ordersList = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.buyer_id, buyerId));
+    return ordersList;
+  }
+
+  async getBuyerOrders(buyerId: number): Promise<Order[]> {
+    const ordersList = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.buyer_id, buyerId));
+    return ordersList;
+  }
+
+  async getOrdersBySellerId(sellerId: number): Promise<Order[]> {
+    const ordersList = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.seller_id, sellerId));
+    return ordersList;
+  }
+
+  async getSellerOrders(sellerId: number): Promise<Order[]> {
+    const ordersList = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.seller_id, sellerId));
+    return ordersList;
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        status,
+        updated_at: new Date()
+      })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
+  }
+
+  // Payments
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const [createdPayment] = await db
+      .insert(payments)
+      .values({
+        ...payment,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdPayment;
+  }
+
+  async getPaymentById(id: number): Promise<Payment | undefined> {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, id));
+    return payment;
+  }
+
+  async getPaymentsByOrderId(orderId: number): Promise<Payment[]> {
+    const paymentsList = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.order_id, orderId));
+    return paymentsList;
+  }
+
+  async getAllPayments(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ payments: Payment[], total: number }> {
+    const query = db
+      .select()
+      .from(payments);
+
+    if (params?.status) {
+      query.where(eq(payments.status, params.status));
+    }
+
+    if (params?.search) {
+      query.where(ilike(payments.id, `%${params.search}%`));
+    }
+
+    const total = await query.count();
+    const paymentsList = await query
+      .limit(params?.limit || 10)
+      .offset(params?.offset || 0);
+
+    return { payments: paymentsList, total };
+  }
+
+  async getClientPayments(clientId: number): Promise<Payment[]> {
+    const paymentsList = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.client_id, clientId));
+    return paymentsList;
+  }
+
+  async getDeveloperPayments(developerId: number): Promise<Payment[]> {
+    const paymentsList = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.developer_id, developerId));
+    return paymentsList;
+  }
+
+  async getBuyerPayments(buyerId: number): Promise<Payment[]> {
+    const paymentsList = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.buyer_id, buyerId));
+    return paymentsList;
+  }
+
+  async getSellerPayments(sellerId: number): Promise<Payment[]> {
+    const paymentsList = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.seller_id, sellerId));
+    return paymentsList;
+  }
+
+  async updatePaymentStatus(id: number, status: string): Promise<Payment | undefined> {
+    const [updatedPayment] = await db
+      .update(payments)
+      .set({
+        status,
+        updated_at: new Date()
+      })
+      .where(eq(payments.id, id))
+      .returning();
+    return updatedPayment;
+  }
+
+  async releaseEscrow(id: number, buyerId: number): Promise<Payment | undefined> {
+    const [updatedPayment] = await db
+      .update(payments)
+      .set({
+        status: 'released',
+        updated_at: new Date()
+      })
+      .where(and(eq(payments.id, id), eq(payments.buyer_id, buyerId)))
+      .returning();
+    return updatedPayment;
+  }
+
+  // Product Reviews
+  async createProductReview(review: InsertProductReview, buyerId: number): Promise<ProductReview> {
+    const [createdReview] = await db
+      .insert(productReviews)
+      .values({
+        ...review,
+        buyer_id: buyerId,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    return createdReview;
+  }
+
+  async getProductReviewsByProductId(productId: number): Promise<ProductReview[]> {
+    const reviewsList = await db
+      .select()
+      .from(productReviews)
+      .where(eq(productReviews.product_id, productId));
+    return reviewsList;
+  }
+
+  async getProductReviews(productId: number): Promise<ProductReview[]> {
+    const reviewsList = await db
+      .select()
+      .from(productReviews)
+      .where(eq(productReviews.product_id, productId));
+    return reviewsList;
+  }
+
+  async getUserReviewForProduct(userId: number, productId: number): Promise<ProductReview | undefined> {
+    const [review] = await db
+      .select()
+      .from(productReviews)
+      .where(and(eq(productReviews.user_id, userId), eq(productReviews.product_id, productId)));
+    return review;
+  }
+
+  async getProductReviewsByBuyerId(buyerId: number): Promise<ProductReview[]> {
+    const reviewsList = await db
+      .select()
+      .from(productReviews)
+      .where(eq(productReviews.buyer_id, buyerId));
+    return reviewsList;
+  }
+
+  async deleteProductReview(id: number, buyerId: number): Promise<boolean> {
+    const result = await db
+      .delete(productReviews)
+      .where(and(eq(productReviews.id, id), eq(productReviews.buyer_id, buyerId)));
+    return result > 0;
   }
 
   // Seller Profile Management
@@ -1812,7 +1442,9 @@ export class DatabaseStorage implements IStorage {
       .insert(sellerProfiles)
       .values({
         ...profile,
-        user_id: userId
+        user_id: userId,
+        created_at: new Date(),
+        updated_at: new Date()
       })
       .returning();
     return createdProfile;
@@ -1850,20 +1482,12 @@ export class DatabaseStorage implements IStorage {
     return updatedProfile;
   }
 
-  async getAllSellersForVerification(): Promise<any[]> {
-    const sellersWithUsers = await db
-      .select({
-        sellerProfile: sellerProfiles,
-        user: users
-      })
+  async getAllSellersForVerification(): Promise<SellerProfile[]> {
+    const profilesList = await db
+      .select()
       .from(sellerProfiles)
-      .innerJoin(users, eq(sellerProfiles.user_id, users.id))
-      .orderBy(desc(sellerProfiles.created_at));
-    
-    return sellersWithUsers.map(item => ({
-      ...item.sellerProfile,
-      user: item.user
-    }));
+      .where(eq(sellerProfiles.verification_status, 'pending'));
+    return profilesList;
   }
 
   // Cart Management
@@ -1872,41 +1496,34 @@ export class DatabaseStorage implements IStorage {
       .insert(cartItems)
       .values({
         ...item,
-        user_id: userId
+        user_id: userId,
+        created_at: new Date(),
+        updated_at: new Date()
       })
       .returning();
     return cartItem;
   }
 
   async getCartItems(userId: number): Promise<CartItem[]> {
-    return db
+    const cartItemsList = await db
       .select()
       .from(cartItems)
-      .where(eq(cartItems.user_id, userId))
-      .orderBy(cartItems.created_at);
+      .where(eq(cartItems.user_id, userId));
+    return cartItemsList;
   }
 
   async removeFromCart(itemId: number, userId: number): Promise<boolean> {
     const result = await db
       .delete(cartItems)
-      .where(
-        and(
-          eq(cartItems.id, itemId),
-          eq(cartItems.user_id, userId)
-        )
-      )
-      .returning({ id: cartItems.id });
-    
-    return result.length > 0;
+      .where(and(eq(cartItems.id, itemId), eq(cartItems.user_id, userId)));
+    return result > 0;
   }
 
   async clearCart(userId: number): Promise<boolean> {
     const result = await db
       .delete(cartItems)
-      .where(eq(cartItems.user_id, userId))
-      .returning({ id: cartItems.id });
-    
-    return result.length > 0;
+      .where(eq(cartItems.user_id, userId));
+    return result > 0;
   }
 
   // Support Tickets
@@ -1915,23 +1532,20 @@ export class DatabaseStorage implements IStorage {
       .insert(supportTickets)
       .values({
         ...ticket,
-        buyer_id: buyerId
+        buyer_id: buyerId,
+        created_at: new Date(),
+        updated_at: new Date()
       })
       .returning();
     return createdTicket;
   }
 
   async getSupportTickets(userId: number): Promise<SupportTicket[]> {
-    return db
+    const ticketsList = await db
       .select()
       .from(supportTickets)
-      .where(
-        or(
-          eq(supportTickets.buyer_id, userId),
-          eq(supportTickets.seller_id, userId)
-        )
-      )
-      .orderBy(desc(supportTickets.created_at));
+      .where(eq(supportTickets.user_id, userId));
+    return ticketsList;
   }
 
   async updateSupportTicket(id: number, updates: Partial<SupportTicket>): Promise<SupportTicket | undefined> {
@@ -1950,46 +1564,46 @@ export class DatabaseStorage implements IStorage {
   async createSalesAnalytics(analytics: InsertSalesAnalytics): Promise<SalesAnalytics> {
     const [createdAnalytics] = await db
       .insert(salesAnalytics)
-      .values(analytics)
+      .values({
+        ...analytics,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
       .returning();
     return createdAnalytics;
   }
 
   async getSalesAnalytics(sellerId: number, filters?: { startDate?: Date; endDate?: Date; }): Promise<SalesAnalytics[]> {
-    let query = db
+    const query = db
       .select()
       .from(salesAnalytics)
       .where(eq(salesAnalytics.seller_id, sellerId));
 
     if (filters?.startDate) {
-      query = query.where(and(
-        eq(salesAnalytics.seller_id, sellerId),
-        sql`${salesAnalytics.date} >= ${filters.startDate}`
-      ));
+      query.where(sql`${salesAnalytics.created_at} >= ${filters.startDate}`);
     }
 
     if (filters?.endDate) {
-      query = query.where(and(
-        eq(salesAnalytics.seller_id, sellerId),
-        sql`${salesAnalytics.date} <= ${filters.endDate}`
-      ));
+      query.where(sql`${salesAnalytics.created_at} <= ${filters.endDate}`);
     }
 
-    return query.orderBy(desc(salesAnalytics.date));
+    const analyticsList = await query;
+    return analyticsList;
   }
 
-  // IT Services Implementation
-  
+  // IT Services
   // Service Requests
   async createServiceRequest(request: InsertServiceRequest, clientId: number): Promise<ServiceRequest> {
-    const [created] = await db
+    const [createdRequest] = await db
       .insert(serviceRequests)
       .values({
         ...request,
-        client_id: clientId
+        client_id: clientId,
+        created_at: new Date(),
+        updated_at: new Date()
       })
       .returning();
-    return created;
+    return createdRequest;
   }
 
   async getServiceRequestById(id: number): Promise<ServiceRequest | undefined> {
@@ -2001,22 +1615,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getServiceRequestsByClient(clientId: number): Promise<ServiceRequest[]> {
-    return db
+    const requestsList = await db
       .select()
       .from(serviceRequests)
-      .where(eq(serviceRequests.client_id, clientId))
-      .orderBy(desc(serviceRequests.created_at));
+      .where(eq(serviceRequests.client_id, clientId));
+    return requestsList;
   }
 
   async getAllServiceRequests(): Promise<ServiceRequest[]> {
-    return db
+    const requestsList = await db
       .select()
-      .from(serviceRequests)
-      .orderBy(desc(serviceRequests.created_at));
+      .from(serviceRequests);
+    return requestsList;
   }
 
   async updateServiceRequest(id: number, request: Partial<InsertServiceRequest>): Promise<ServiceRequest | undefined> {
-    const [updated] = await db
+    const [updatedRequest] = await db
       .update(serviceRequests)
       .set({
         ...request,
@@ -2024,32 +1638,34 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(serviceRequests.id, id))
       .returning();
-    return updated;
+    return updatedRequest;
   }
 
   async updateServiceRequestStatus(id: number, status: string, adminNotes?: string): Promise<ServiceRequest | undefined> {
-    const [updated] = await db
+    const [updatedRequest] = await db
       .update(serviceRequests)
       .set({
-        status: status as any,
+        status,
         admin_notes: adminNotes,
         updated_at: new Date()
       })
       .where(eq(serviceRequests.id, id))
       .returning();
-    return updated;
+    return updatedRequest;
   }
 
   // Service Quotations
   async createServiceQuotation(quotation: InsertServiceQuotation, adminId: number): Promise<ServiceQuotation> {
-    const [created] = await db
+    const [createdQuotation] = await db
       .insert(serviceQuotations)
       .values({
         ...quotation,
-        admin_id: adminId
+        admin_id: adminId,
+        created_at: new Date(),
+        updated_at: new Date()
       })
       .returning();
-    return created;
+    return createdQuotation;
   }
 
   async getServiceQuotationById(id: number): Promise<ServiceQuotation | undefined> {
@@ -2061,22 +1677,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getServiceQuotationsByRequest(requestId: number): Promise<ServiceQuotation[]> {
-    return db
+    const quotationsList = await db
       .select()
       .from(serviceQuotations)
-      .where(eq(serviceQuotations.service_request_id, requestId))
-      .orderBy(desc(serviceQuotations.created_at));
+      .where(eq(serviceQuotations.request_id, requestId));
+    return quotationsList;
   }
 
   async getAllServiceQuotations(): Promise<ServiceQuotation[]> {
-    return db
+    const quotationsList = await db
       .select()
-      .from(serviceQuotations)
-      .orderBy(desc(serviceQuotations.created_at));
+      .from(serviceQuotations);
+    return quotationsList;
   }
 
   async updateServiceQuotation(id: number, quotation: Partial<InsertServiceQuotation>): Promise<ServiceQuotation | undefined> {
-    const [updated] = await db
+    const [updatedQuotation] = await db
       .update(serviceQuotations)
       .set({
         ...quotation,
@@ -2084,29 +1700,33 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(serviceQuotations.id, id))
       .returning();
-    return updated;
+    return updatedQuotation;
   }
 
   async updateServiceQuotationStatus(id: number, status: string, clientResponse?: string): Promise<ServiceQuotation | undefined> {
-    const [updated] = await db
+    const [updatedQuotation] = await db
       .update(serviceQuotations)
       .set({
-        status: status as any,
+        status,
         client_response: clientResponse,
         updated_at: new Date()
       })
       .where(eq(serviceQuotations.id, id))
       .returning();
-    return updated;
+    return updatedQuotation;
   }
 
   // Service Projects
   async createServiceProject(project: InsertServiceProject): Promise<ServiceProject> {
-    const [created] = await db
+    const [createdProject] = await db
       .insert(serviceProjects)
-      .values(project)
+      .values({
+        ...project,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
       .returning();
-    return created;
+    return createdProject;
   }
 
   async getServiceProjectById(id: number): Promise<ServiceProject | undefined> {
@@ -2118,30 +1738,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getServiceProjectsByClient(clientId: number): Promise<ServiceProject[]> {
-    return db
+    const projectsList = await db
       .select()
       .from(serviceProjects)
-      .where(eq(serviceProjects.client_id, clientId))
-      .orderBy(desc(serviceProjects.created_at));
+      .where(eq(serviceProjects.client_id, clientId));
+    return projectsList;
   }
 
   async getServiceProjectsByAdmin(adminId: number): Promise<ServiceProject[]> {
-    return db
+    const projectsList = await db
       .select()
       .from(serviceProjects)
-      .where(eq(serviceProjects.admin_id, adminId))
-      .orderBy(desc(serviceProjects.created_at));
+      .where(eq(serviceProjects.admin_id, adminId));
+    return projectsList;
   }
 
   async getAllServiceProjects(): Promise<ServiceProject[]> {
-    return db
+    const projectsList = await db
       .select()
-      .from(serviceProjects)
-      .orderBy(desc(serviceProjects.created_at));
+      .from(serviceProjects);
+    return projectsList;
   }
 
   async updateServiceProject(id: number, project: Partial<InsertServiceProject>): Promise<ServiceProject | undefined> {
-    const [updated] = await db
+    const [updatedProject] = await db
       .update(serviceProjects)
       .set({
         ...project,
@@ -2149,29 +1769,33 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(serviceProjects.id, id))
       .returning();
-    return updated;
+    return updatedProject;
   }
 
   async updateServiceProjectProgress(id: number, progress: number, adminNotes?: string): Promise<ServiceProject | undefined> {
-    const [updated] = await db
+    const [updatedProject] = await db
       .update(serviceProjects)
       .set({
-        progress_percentage: progress,
+        progress,
         admin_notes: adminNotes,
         updated_at: new Date()
       })
       .where(eq(serviceProjects.id, id))
       .returning();
-    return updated;
+    return updatedProject;
   }
 
   // Service Payments
   async createServicePayment(payment: InsertServicePayment): Promise<ServicePayment> {
-    const [created] = await db
+    const [createdPayment] = await db
       .insert(servicePayments)
-      .values(payment)
+      .values({
+        ...payment,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
       .returning();
-    return created;
+    return createdPayment;
   }
 
   async getServicePaymentById(id: number): Promise<ServicePayment | undefined> {
@@ -2183,98 +1807,82 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getServicePaymentsByQuotation(quotationId: number): Promise<ServicePayment[]> {
-    return db
+    const paymentsList = await db
       .select()
       .from(servicePayments)
-      .where(eq(servicePayments.quotation_id, quotationId))
-      .orderBy(desc(servicePayments.created_at));
+      .where(eq(servicePayments.quotation_id, quotationId));
+    return paymentsList;
   }
 
   async getServicePaymentsByClient(clientId: number): Promise<ServicePayment[]> {
-    return db
+    const paymentsList = await db
       .select()
       .from(servicePayments)
-      .where(eq(servicePayments.client_id, clientId))
-      .orderBy(desc(servicePayments.created_at));
+      .where(eq(servicePayments.client_id, clientId));
+    return paymentsList;
   }
 
   async updateServicePaymentStatus(id: number, status: string): Promise<ServicePayment | undefined> {
-    const [updated] = await db
+    const [updatedPayment] = await db
       .update(servicePayments)
       .set({
-        status: status as any,
+        status,
         updated_at: new Date()
       })
       .where(eq(servicePayments.id, id))
       .returning();
-    return updated;
+    return updatedPayment;
   }
 
   // Notifications
   async createNotification(notification: InsertNotification): Promise<Notification> {
     const [createdNotification] = await db
       .insert(notifications)
-      .values(notification)
+      .values({
+        ...notification,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
       .returning();
     return createdNotification;
   }
 
   async getUserNotifications(userId: number, params?: { limit?: number; offset?: number; unreadOnly?: boolean }): Promise<{ notifications: Notification[], total: number }> {
-    let query = db.select().from(notifications).where(eq(notifications.user_id, userId));
-    let countQuery = db.select({ count: sql<number>`count(*)` })
+    const query = db
+      .select()
       .from(notifications)
       .where(eq(notifications.user_id, userId));
-    
+
     if (params?.unreadOnly) {
-      query = query.where(and(eq(notifications.user_id, userId), eq(notifications.is_read, false)));
-      countQuery = countQuery.where(and(eq(notifications.user_id, userId), eq(notifications.is_read, false)));
+      query.where(eq(notifications.is_read, false));
     }
-    
-    // Get total count
-    const [countResult] = await countQuery;
-    const total = countResult?.count || 0;
-    
-    // Apply pagination and ordering
-    query = query.orderBy(desc(notifications.created_at));
-    
-    if (params?.limit) {
-      query = query.limit(params.limit);
-      
-      if (params?.offset) {
-        query = query.offset(params.offset);
-      }
-    }
-    
-    const notificationsList = await query;
-    
-    return {
-      notifications: notificationsList,
-      total: Number(total)
-    };
+
+    const total = await query.count();
+    const notificationsList = await query
+      .limit(params?.limit || 10)
+      .offset(params?.offset || 0);
+
+    return { notifications: notificationsList, total };
   }
 
   async getUnreadNotificationCount(userId: number): Promise<number> {
     const [result] = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
       .from(notifications)
-      .where(and(
-        eq(notifications.user_id, userId),
-        eq(notifications.is_read, false)
-      ));
-    return result?.count || 0;
+      .where(and(eq(notifications.user_id, userId), eq(notifications.is_read, false)));
+    return result.count;
   }
 
   async markNotificationAsRead(id: number, userId: number): Promise<Notification | undefined> {
     const [updatedNotification] = await db
       .update(notifications)
-      .set({ 
-        is_read: true, 
-        read_at: new Date() 
+      .set({
+        is_read: true,
+        updated_at: new Date()
       })
-      .where(and(
-        eq(notifications.id, id),
-        eq(notifications.user_id, userId)
-      ))
+      .where(and(eq(notifications.id, id), eq(notifications.user_id, userId)))
       .returning();
     return updatedNotification;
   }
@@ -2282,267 +1890,209 @@ export class DatabaseStorage implements IStorage {
   async markAllNotificationsAsRead(userId: number): Promise<boolean> {
     const result = await db
       .update(notifications)
-      .set({ 
-        is_read: true, 
-        read_at: new Date() 
+      .set({
+        is_read: true,
+        updated_at: new Date()
       })
-      .where(and(
-        eq(notifications.user_id, userId),
-        eq(notifications.is_read, false)
-      ))
-      .returning({ id: notifications.id });
-    
-    return result.length > 0;
+      .where(eq(notifications.user_id, userId));
+    return result > 0;
   }
 
   async deleteNotification(id: number, userId: number): Promise<boolean> {
     const result = await db
       .delete(notifications)
-      .where(and(
-        eq(notifications.id, id),
-        eq(notifications.user_id, userId)
-      ))
-      .returning({ id: notifications.id });
+      .where(and(eq(notifications.id, id), eq(notifications.user_id, userId)));
+    return result > 0;
+  }
+
+  // Chat
+  async getUserChatRooms(userId: number): Promise<ChatRoom[]> {
+    const rooms = await db
+      .select({
+        room: chatRooms,
+      })
+      .from(chatRoomMembers)
+      .innerJoin(chatRooms, eq(chatRoomMembers.room_id, chatRooms.id))
+      .where(eq(chatRoomMembers.user_id, userId))
+      .orderBy(desc(chatRooms.updated_at));
     
-    return result.length > 0;
+    return rooms.map(r => r.room);
   }
 
-  // Additional missing method implementations
-  async getSoftwareReviews(softwareId: number): Promise<Review[]> {
-    return this.getReviewsBySoftwareId(softwareId);
-  }
-
-  async getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined> {
-    const [review] = await db
+  async getChatRoomById(roomId: number): Promise<ChatRoom | undefined> {
+    const [room] = await db
       .select()
-      .from(reviews)
+      .from(chatRooms)
+      .where(eq(chatRooms.id, roomId));
+    return room;
+  }
+
+  async createDirectChatRoom(userId: number, participantId: number): Promise<ChatRoom> {
+    return await db.transaction(async (tx) => {
+      const [room] = await tx
+        .insert(chatRooms)
+        .values({
+          type: 'direct',
+          created_by: userId,
+        })
+        .returning();
+
+      await tx.insert(chatRoomMembers).values([
+        { room_id: room.id, user_id: userId },
+        { room_id: room.id, user_id: participantId }
+      ]);
+
+      return room;
+    });
+  }
+
+  async getDirectChatRoom(userId: number, participantId: number): Promise<ChatRoom | undefined> {
+    const rooms = await db
+      .select({
+        room: chatRooms,
+        memberCount: sql<number>`COUNT(DISTINCT ${chatRoomMembers.user_id})`.as('member_count')
+      })
+      .from(chatRooms)
+      .innerJoin(chatRoomMembers, eq(chatRooms.id, chatRoomMembers.room_id))
       .where(
         and(
-          eq(reviews.user_id, userId),
-          eq(reviews.target_id, softwareId),
-          eq(reviews.target_type, 'software')
+          eq(chatRooms.type, 'direct'),
+          inArray(chatRoomMembers.user_id, [userId, participantId])
         )
+      )
+      .groupBy(chatRooms.id)
+      .having(sql`COUNT(DISTINCT ${chatRoomMembers.user_id}) = 2`);
+
+    return rooms[0]?.room;
+  }
+
+  async createGroupChatRoom(name: string, creatorId: number, participantIds: number[]): Promise<ChatRoom> {
+    return await db.transaction(async (tx) => {
+      const [room] = await tx
+        .insert(chatRooms)
+        .values({
+          type: 'group',
+          name,
+          created_by: creatorId,
+        })
+        .returning();
+
+      const allMembers = [creatorId, ...participantIds];
+      const uniqueMembers = Array.from(new Set(allMembers));
+      
+      await tx.insert(chatRoomMembers).values(
+        uniqueMembers.map(userId => ({
+          room_id: room.id,
+          user_id: userId
+        }))
       );
-    return review;
+
+      return room;
+    });
   }
 
-  async getReviewById(id: number): Promise<Review | undefined> {
-    const [review] = await db.select().from(reviews).where(eq(reviews.id, id));
-    return review;
-  }
-
-  async getDeveloperQuoteForProject(developerId: number, projectId: number): Promise<Quote | undefined> {
-    const [quote] = await db
+  async isChatRoomMember(roomId: number, userId: number): Promise<boolean> {
+    const [member] = await db
       .select()
-      .from(quotes)
+      .from(chatRoomMembers)
       .where(
         and(
-          eq(quotes.developer_id, developerId),
-          eq(quotes.project_id, projectId)
+          eq(chatRoomMembers.room_id, roomId),
+          eq(chatRoomMembers.user_id, userId)
         )
       );
-    return quote;
+    return !!member;
   }
 
-  async getQuoteById(id: number): Promise<Quote | undefined> {
-    const [quote] = await db.select().from(quotes).where(eq(quotes.id, id));
-    return quote;
+  async getChatMessages(roomId: number, limit: number = 50, before?: number): Promise<ChatMessage[]> {
+    let query = db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.room_id, roomId));
+
+    if (before) {
+      query = db
+        .select()
+        .from(chatMessages)
+        .where(
+          and(
+            eq(chatMessages.room_id, roomId),
+            sql`${chatMessages.id} < ${before}`
+          )
+        );
+    }
+
+    const messages = await query
+      .orderBy(desc(chatMessages.created_at))
+      .limit(limit);
+
+    return messages.reverse();
   }
 
-  async rejectOtherQuotes(projectId: number, acceptedQuoteId: number): Promise<void> {
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [createdMessage] = await db
+      .insert(chatMessages)
+      .values(message)
+      .returning();
+
     await db
-      .update(quotes)
-      .set({ status: 'rejected' })
+      .update(chatRooms)
+      .set({ updated_at: new Date() })
+      .where(eq(chatRooms.id, message.room_id));
+
+    return createdMessage;
+  }
+
+  async markMessagesAsRead(roomId: number, userId: number): Promise<void> {
+    await db
+      .update(chatMessages)
+      .set({ status: 'read' })
       .where(
         and(
-          eq(quotes.project_id, projectId),
-          sql`${quotes.id} != ${acceptedQuoteId}`
+          eq(chatMessages.room_id, roomId),
+          sql`${chatMessages.sender_id} != ${userId}`,
+          sql`${chatMessages.status} != 'read'`
         )
       );
   }
 
-  async getDeveloperPortfolio(developerId: number): Promise<Portfolio[]> {
-    return this.getPortfoliosByDeveloperId(developerId);
-  }
-
-  async getPortfolioReviews(portfolioId: number): Promise<PortfolioReview[]> {
-    return this.getPortfolioReviewsByPortfolioId(portfolioId);
-  }
-
-  async getClientReviewForPortfolio(clientId: number, portfolioId: number): Promise<PortfolioReview | undefined> {
-    const [review] = await db
-      .select()
-      .from(portfolioReviews)
-      .where(
-        and(
-          eq(portfolioReviews.user_id, clientId),
-          eq(portfolioReviews.portfolio_id, portfolioId)
-        )
-      );
-    return review;
-  }
-
-  async getAllOrders(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ orders: Order[], total: number }> {
-    const conditions = [];
+  async updateUserPresence(userId: number, status: string): Promise<void> {
+    const isOnline = status === 'online';
     
-    if (params?.status && params.status !== 'all') {
-      conditions.push(eq(orders.status, params.status));
+    const [existing] = await db
+      .select()
+      .from(userPresence)
+      .where(eq(userPresence.user_id, userId));
+
+    if (existing) {
+      await db
+        .update(userPresence)
+        .set({
+          is_online: isOnline,
+          last_seen: new Date()
+        })
+        .where(eq(userPresence.user_id, userId));
+    } else {
+      await db
+        .insert(userPresence)
+        .values({
+          user_id: userId,
+          is_online: isOnline,
+          last_seen: new Date()
+        });
     }
-    
-    if (params?.search) {
-      conditions.push(
-        or(
-          ilike(orders.id.toString(), `%${params.search}%`),
-          ilike(orders.total_amount.toString(), `%${params.search}%`)
-        )
-      );
-    }
-    
-    // Get total count
-    const totalResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(orders)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
-    const total = totalResult[0]?.count || 0;
-    
-    // Get orders
-    const ordersList = await db
-      .select()
-      .from(orders)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(orders.created_at))
-      .limit(params?.limit || 100)
-      .offset(params?.offset || 0);
-    
-    return {
-      orders: ordersList,
-      total: Number(total)
-    };
   }
 
-  async getBuyerOrders(buyerId: number): Promise<Order[]> {
-    return this.getOrdersByBuyerId(buyerId);
-  }
-
-  async getSellerOrders(sellerId: number): Promise<Order[]> {
-    return this.getOrdersBySellerId(sellerId);
-  }
-
-  async getAllPayments(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ payments: Payment[], total: number }> {
-    const conditions = [];
-    
-    if (params?.status && params.status !== 'all') {
-      conditions.push(eq(payments.status, params.status));
-    }
-    
-    if (params?.search) {
-      conditions.push(
-        or(
-          ilike(payments.amount.toString(), `%${params.search}%`),
-          ilike(payments.stripe_payment_intent_id || '', `%${params.search}%`)
-        )
-      );
-    }
-    
-    // Get total count
-    const totalResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(payments)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
-    const total = totalResult[0]?.count || 0;
-    
-    // Get payments
-    const paymentsList = await db
-      .select()
-      .from(payments)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(payments.created_at))
-      .limit(params?.limit || 100)
-      .offset(params?.offset || 0);
-    
-    return {
-      payments: paymentsList,
-      total: Number(total)
-    };
-  }
-
-  async getClientPayments(clientId: number): Promise<Payment[]> {
-    return db
-      .select()
-      .from(payments)
-      .where(eq(payments.client_id, clientId))
-      .orderBy(desc(payments.created_at));
-  }
-
-  async getDeveloperPayments(developerId: number): Promise<Payment[]> {
-    return db
-      .select()
-      .from(payments)
-      .where(eq(payments.developer_id, developerId))
-      .orderBy(desc(payments.created_at));
-  }
-
-  async getBuyerPayments(buyerId: number): Promise<Payment[]> {
-    return db
-      .select()
-      .from(payments)
-      .innerJoin(orders, eq(payments.order_id, orders.id))
-      .where(eq(orders.buyer_id, buyerId))
-      .orderBy(desc(payments.created_at))
-      .then(results => results.map(r => r.payments));
-  }
-
-  async getSellerPayments(sellerId: number): Promise<Payment[]> {
-    return db
-      .select()
-      .from(payments)
-      .innerJoin(orders, eq(payments.order_id, orders.id))
-      .innerJoin(orderItems, eq(orders.id, orderItems.order_id))
-      .innerJoin(products, eq(orderItems.product_id, products.id))
-      .where(eq(products.seller_id, sellerId))
-      .orderBy(desc(payments.created_at))
-      .then(results => results.map(r => r.payments));
-  }
-
-  async updatePaymentStatus(id: number, status: string): Promise<Payment | undefined> {
-    const [updatedPayment] = await db
-      .update(payments)
-      .set({ 
-        status: status as any,
-        updated_at: new Date()
+  async getOnlineUsers(): Promise<User[]> {
+    const onlineUsers = await db
+      .select({
+        user: users
       })
-      .where(eq(payments.id, id))
-      .returning();
-    return updatedPayment;
-  }
+      .from(users)
+      .innerJoin(userPresence, eq(users.id, userPresence.user_id))
+      .where(eq(userPresence.is_online, true));
 
-  async getProductReviews(productId: number): Promise<ProductReview[]> {
-    return this.getProductReviewsByProductId(productId);
-  }
-
-  async getUserReviewForProduct(userId: number, productId: number): Promise<ProductReview | undefined> {
-    const [review] = await db
-      .select()
-      .from(productReviews)
-      .where(
-        and(
-          eq(productReviews.buyer_id, userId),
-          eq(productReviews.product_id, productId)
-        )
-      );
-    return review;
-  }
-
-  async updateProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest | undefined> {
-    const [updatedProject] = await db
-      .update(externalRequests)
-      .set({
-        ...updates,
-        updated_at: new Date()
-      })
-      .where(eq(externalRequests.id, id))
-      .returning();
-    return updatedProject;
+    return onlineUsers.map(u => u.user);
   }
 }
 
