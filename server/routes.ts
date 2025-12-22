@@ -326,7 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/orders", orderRouter);
   app.use("/api/admin", adminRouter);
   app.use("/api/products", productRouter);
-  app.use("/api/software", softwareRouter);
+  app.use("/api/softwares", softwareRouter); // Changed from /api/software to /api/softwares
 
   // Register function-based routes (named exports)
   registerMarketplaceRoutes(app);

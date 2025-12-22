@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useCart } from "@/hooks/use-cart";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -21,6 +22,7 @@ export default function ProductDetailPage() {
   const [, params] = useRoute("/marketplace/product/:id");
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const { addToCart } = useCart();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -35,6 +37,14 @@ export default function ProductDetailPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewContent, setReviewContent] = useState("");
   const [hoverRating, setHoverRating] = useState(0);
+
+  // Helper function to safely format price
+  const formatPrice = (price: any): string => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return (!isNaN(numPrice) && numPrice !== null && numPrice !== undefined) 
+      ? numPrice.toFixed(2) 
+      : '0.00';
+  };
 
   // Fetch product details
   const { data: product, isLoading, error } = useQuery({
@@ -110,6 +120,17 @@ export default function ProductDetailPage() {
       rating: reviewRating,
       comment: reviewContent,
       reviewer_name: reviewName.trim() || user.name
+    });
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    addToCart(product, selectedPackage);
+    toast({ 
+      title: "Đã thêm vào giỏ hàng!", 
+      description: `${product.name} đã được thêm vào giỏ hàng`,
+      duration: 2000
     });
   };
 
@@ -416,10 +437,10 @@ export default function ProductDetailPage() {
               <CardContent className="p-6">
                 <div className="mb-6">
                   <div className="flex items-baseline gap-3 mb-2">
-                    <span className="text-4xl font-bold text-blue-600">${selectedPackageData?.price?.toFixed(2)}</span>
+                    <span className="text-4xl font-bold text-blue-600">${formatPrice(selectedPackageData?.price)}</span>
                     {selectedPackageData?.discount && (
                       <>
-                        <span className="text-xl text-gray-400 line-through">${(selectedPackageData.price / (1 - selectedPackageData.discount / 100)).toFixed(2)}</span>
+                        <span className="text-xl text-gray-400 line-through">${formatPrice(selectedPackageData.price / (1 - selectedPackageData.discount / 100))}</span>
                         <Badge className="bg-green-500">Save {selectedPackageData.discount}%</Badge>
                       </>
                     )}
@@ -437,7 +458,7 @@ export default function ProductDetailPage() {
                           <div className="flex justify-between items-center">
                             <span className="font-semibold">{pkg.name}</span>
                             <div className="text-right">
-                              <div className="font-bold text-lg">${pkg.price}</div>
+                              <div className="font-bold text-lg">${formatPrice(pkg.price)}</div>
                               {pkg.discount && <Badge variant="outline" className="text-xs">Save {pkg.discount}%</Badge>}
                             </div>
                           </div>
@@ -455,9 +476,9 @@ export default function ProductDetailPage() {
 
                 <div className="space-y-3">
                   <Button onClick={handlePurchase} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg font-semibold">
-                    Buy Now - ${selectedPackageData?.price?.toFixed(2)}
+                    Buy Now - ${formatPrice(selectedPackageData?.price)}
                   </Button>
-                  <Button variant="outline" className="w-full h-12">
+                  <Button onClick={handleAddToCart} variant="outline" className="w-full h-12">
                     <ShoppingCart className="w-5 h-5 mr-2" />
                     Add to Cart
                   </Button>
@@ -642,7 +663,7 @@ export default function ProductDetailPage() {
                     </div>
                     <h3 className="font-semibold text-sm mb-2 line-clamp-2 leading-tight">{item.name}</h3>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-base font-bold text-blue-600">${parseFloat(item.price).toFixed(2)}</span>
+                      <span className="text-base font-bold text-blue-600">${formatPrice(item.price)}</span>
                     </div>
                     <Button className="w-full h-8 text-xs">View Product</Button>
                   </CardContent>

@@ -12,6 +12,8 @@ import AuthPage from "@/pages/auth-page";
 import UserProfilePage from "@/pages/user-profile-page";
 import { ProtectedRoute, AdminRoute } from "@/lib/protected-route";
 import { useAuth, AuthProvider } from "@/hooks/use-auth";
+import { CartProvider } from "@/hooks/use-cart";
+import { ShoppingCartSidebar } from "@/components/shopping-cart-sidebar";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -680,6 +682,22 @@ function Router() {
       }} roles={['seller', 'admin']} />
       <Route path="/marketplace/category/:category" component={MarketplaceCategoryPage} />
       <Route path="/marketplace/product/:id" component={ProductDetailPage} />
+      <Route path="/marketplace/checkout" component={() => {
+        const CheckoutPage = lazy(() => import("@/pages/checkout-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <CheckoutPage />
+          </Suspense>
+        );
+      }} />
+      <Route path="/marketplace/order-success/:orderId" component={() => {
+        const OrderSuccessPage = lazy(() => import("@/pages/order-success-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <OrderSuccessPage />
+          </Suspense>
+        );
+      }} />
       <Route path="/order-details/:id" component={OrderDetailsPage} />
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/seller/products" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
@@ -709,10 +727,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <ShoppingCartSidebar />
+            <Router />
+          </TooltipProvider>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

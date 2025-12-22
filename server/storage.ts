@@ -75,6 +75,7 @@ export interface IStorage {
   updateSoftwareAdmin(id: number, software: Partial<InsertSoftware>): Promise<Software | undefined>;
   deleteSoftware(id: number): Promise<boolean>;
   updateSoftwareStatus(id: number, status: 'approved' | 'rejected'): Promise<Software | undefined>;
+  incrementSoftwareDownloads(id: number): Promise<void>;
   getSoftwareList(params: {
     category?: number;
     platform?: string;
@@ -623,6 +624,15 @@ export class DatabaseStorage implements IStorage {
       .returning({ id: softwares.id });
     
     return result.length > 0;
+  }
+
+  async incrementSoftwareDownloads(id: number): Promise<void> {
+    await db
+      .update(softwares)
+      .set({ 
+        downloads: sql`${softwares.downloads} + 1`
+      })
+      .where(eq(softwares.id, id));
   }
 
   // Reviews

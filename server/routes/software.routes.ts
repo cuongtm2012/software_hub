@@ -16,19 +16,21 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       limit = "12", 
       category,
       search,
-      sort = "newest"
+      sort = "newest",
+      platform
     } = req.query;
     
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
+    const offset = (pageNum - 1) * limitNum;
     
     const result = await storage.getSoftwareList({
-      page: pageNum,
-      limit: limitNum,
-      categoryId: category ? parseInt(category as string) : undefined,
+      category: category ? parseInt(category as string) : undefined,
+      platform: platform as string,
       search: search as string,
-      sort: sort as string,
-      status: 'approved' // Only show approved software publicly
+      status: 'approved', // Only show approved software publicly
+      limit: limitNum,
+      offset: offset
     });
     
     res.json(result);
