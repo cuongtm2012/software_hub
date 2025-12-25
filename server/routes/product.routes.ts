@@ -1,6 +1,8 @@
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
-import { storage } from "../storage";
+import { productStorage } from "../storage/marketplace";
+import { orderStorage } from "../storage/marketplace";
+import { paymentStorage } from "../storage/marketplace";
 import { db } from "../db";
 import { products } from "@shared/schema";
 import { eq } from "drizzle-orm";
@@ -25,7 +27,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     
-    const { products, total } = await storage.getProducts({
+    const { products, total } = await productStorage.getProducts({
       page: pageNum,
       limit: limitNum,
       categoryId: category ? parseInt(category as string) : undefined,
@@ -46,7 +48,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
 router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const product = await storage.getProductById(parseInt(id));
+    const product = await productStorage.getProductById(parseInt(id));
     
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -71,7 +73,7 @@ router.post("/", isAuthenticated, async (req: Request, res: Response, next: Next
       seller_id: req.user?.id
     });
     
-    const product = await storage.createProduct(insertData);
+    const product = await productStorage.createProduct(insertData);
     res.status(201).json(product);
   } catch (error) {
     if (error instanceof ZodError) {
@@ -87,7 +89,7 @@ router.post("/", isAuthenticated, async (req: Request, res: Response, next: Next
 router.put("/:id", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const product = await storage.getProductById(parseInt(id));
+    const product = await productStorage.getProductById(parseInt(id));
     
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -98,7 +100,7 @@ router.put("/:id", isAuthenticated, async (req: Request, res: Response, next: Ne
       return res.status(403).json({ message: "You do not have permission to update this product" });
     }
     
-    const updatedProduct = await storage.updateProduct(parseInt(id), req.body);
+    const updatedProduct = await productStorage.updateProduct(parseInt(id), req.body);
     res.json(updatedProduct);
   } catch (error) {
     next(error);
@@ -109,7 +111,7 @@ router.put("/:id", isAuthenticated, async (req: Request, res: Response, next: Ne
 router.delete("/:id", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const product = await storage.getProductById(parseInt(id));
+    const product = await productStorage.getProductById(parseInt(id));
     
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -120,7 +122,7 @@ router.delete("/:id", isAuthenticated, async (req: Request, res: Response, next:
       return res.status(403).json({ message: "You do not have permission to delete this product" });
     }
     
-    await storage.deleteProduct(parseInt(id));
+    await productStorage.deleteProduct(parseInt(id));
     res.status(204).end();
   } catch (error) {
     next(error);
@@ -134,7 +136,7 @@ router.post("/:id/purchase", isAuthenticated, async (req: Request, res: Response
     const { quantity = 1, payment_method = "credit_card" } = req.body;
     
     // Get product details
-    const product = await storage.getProductById(parseInt(id));
+    const product = await productStorage.getProductById(parseInt(id));
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
@@ -168,7 +170,7 @@ router.post("/:id/purchase", isAuthenticated, async (req: Request, res: Response
       price: unitPrice.toString()
     }];
     
-    const order = await storage.createOrder({
+    const order = await orderStorage.createOrder({
       buyer_id: req.user!.id,
       seller_id: product.seller_id,
       total_amount: totalAmount.toString(),
@@ -182,7 +184,7 @@ router.post("/:id/purchase", isAuthenticated, async (req: Request, res: Response
     }, orderItems, req.user!.id);
     
     // Update product stock
-    await storage.updateProduct(parseInt(id), {
+    await productStorage.updateProduct(parseInt(id), {
       stock_quantity: product.stock_quantity - quantity,
       total_sales: product.total_sales + quantity
     });
@@ -196,7 +198,7 @@ router.post("/:id/purchase", isAuthenticated, async (req: Request, res: Response
       transaction_id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
     
-    await storage.createPayment(paymentData);
+    await paymentStorage.createPayment(paymentData);
     
     res.status(201).json({ 
       message: "Purchase successful", 

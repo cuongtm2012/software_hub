@@ -332,20 +332,29 @@ class DatabaseStorage implements IStorage {
 
   // Admin User Management
   async getAllUsers(params?: { role?: string; search?: string; limit?: number; offset?: number }): Promise<{ users: any[], total: number }> {
-    const query = db
-      .select()
-      .from(users);
+    let whereConditions = [];
 
     if (params?.role) {
-      query.where(eq(users.role, params.role));
+      whereConditions.push(eq(users.role, params.role));
     }
 
     if (params?.search) {
-      query.where(ilike(users.name, `%${params.search}%`));
+      whereConditions.push(ilike(users.name, `%${params.search}%`));
     }
 
-    const total = await query.count();
-    const usersList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(users)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+    const total = countResult?.count || 0;
+
+    // Get users list
+    const usersList = await db
+      .select()
+      .from(users)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .limit(params?.limit || 10)
       .offset(params?.offset || 0);
 
@@ -514,28 +523,37 @@ class DatabaseStorage implements IStorage {
     limit?: number;
     offset?: number;
   }): Promise<{ softwares: Software[], total: number }> {
-    const query = db
-      .select()
-      .from(softwares);
+    let whereConditions = [];
 
     if (params.category) {
-      query.where(eq(softwares.category_id, params.category));
+      whereConditions.push(eq(softwares.category_id, params.category));
     }
 
     if (params.platform) {
-      query.where(eq(softwares.platform, params.platform));
+      whereConditions.push(eq(softwares.platform, params.platform));
     }
 
     if (params.search) {
-      query.where(ilike(softwares.name, `%${params.search}%`));
+      whereConditions.push(ilike(softwares.name, `%${params.search}%`));
     }
 
     if (params.status) {
-      query.where(eq(softwares.status, params.status));
+      whereConditions.push(eq(softwares.status, params.status));
     }
 
-    const total = await query.count();
-    const softwaresList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(softwares)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+    const total = countResult?.count || 0;
+
+    // Get software list
+    const softwaresList = await db
+      .select()
+      .from(softwares)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .limit(params.limit || 10)
       .offset(params.offset || 0);
 
@@ -543,28 +561,37 @@ class DatabaseStorage implements IStorage {
   }
 
   async getAdminSoftwareList(filters: any, limit?: number, offset?: number): Promise<{ softwares: Software[], total: number }> {
-    const query = db
-      .select()
-      .from(softwares);
+    let whereConditions = [];
 
     if (filters.category) {
-      query.where(eq(softwares.category_id, filters.category));
+      whereConditions.push(eq(softwares.category_id, filters.category));
     }
 
     if (filters.platform) {
-      query.where(eq(softwares.platform, filters.platform));
+      whereConditions.push(eq(softwares.platform, filters.platform));
     }
 
     if (filters.search) {
-      query.where(ilike(softwares.name, `%${filters.search}%`));
+      whereConditions.push(ilike(softwares.name, `%${filters.search}%`));
     }
 
     if (filters.status) {
-      query.where(eq(softwares.status, filters.status));
+      whereConditions.push(eq(softwares.status, filters.status));
     }
 
-    const total = await query.count();
-    const softwaresList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(softwares)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+    const total = countResult?.count || 0;
+
+    // Get software list
+    const softwaresList = await db
+      .select()
+      .from(softwares)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .limit(limit || 10)
       .offset(offset || 0);
 
@@ -638,16 +665,25 @@ class DatabaseStorage implements IStorage {
   }
 
   async getExternalRequests(status?: string, limit?: number, offset?: number): Promise<{ requests: ExternalRequest[], total: number }> {
-    const query = db
-      .select()
-      .from(externalRequests);
+    let whereConditions = [];
 
     if (status) {
-      query.where(eq(externalRequests.status, status));
+      whereConditions.push(eq(externalRequests.status, status));
     }
 
-    const total = await query.count();
-    const requestsList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(externalRequests)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+    const total = countResult?.count || 0;
+
+    // Get requests list
+    const requestsList = await db
+      .select()
+      .from(externalRequests)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .limit(limit || 10)
       .offset(offset || 0);
 
@@ -687,20 +723,29 @@ class DatabaseStorage implements IStorage {
   }
 
   async getAllExternalRequests(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ requests: ExternalRequest[], total: number }> {
-    const query = db
-      .select()
-      .from(externalRequests);
+    let whereConditions = [];
 
     if (params?.status) {
-      query.where(eq(externalRequests.status, params.status));
+      whereConditions.push(eq(externalRequests.status, params.status));
     }
 
     if (params?.search) {
-      query.where(ilike(externalRequests.title, `%${params.search}%`));
+      whereConditions.push(ilike(externalRequests.title, `%${params.search}%`));
     }
 
-    const total = await query.count();
-    const requestsList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(externalRequests)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+    const total = countResult?.count || 0;
+
+    // Get requests list
+    const requestsList = await db
+      .select()
+      .from(externalRequests)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .limit(params?.limit || 10)
       .offset(params?.offset || 0);
 
@@ -831,17 +876,25 @@ class DatabaseStorage implements IStorage {
   }
 
   async getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: ExternalRequest[], total: number }> {
-    const query = db
-      .select()
-      .from(externalRequests)
-      .where(eq(externalRequests.type, 'project'));
+    let whereConditions = [eq(externalRequests.type, 'project')];
 
     if (status) {
-      query.where(eq(externalRequests.status, status));
+      whereConditions.push(eq(externalRequests.status, status));
     }
 
-    const total = await query.count();
-    const projectsList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(externalRequests)
+      .where(and(...whereConditions));
+
+    const total = countResult?.count || 0;
+
+    // Get projects list
+    const projectsList = await db
+      .select()
+      .from(externalRequests)
+      .where(and(...whereConditions))
       .limit(limit || 10)
       .offset(offset || 0);
 
@@ -1001,12 +1054,17 @@ class DatabaseStorage implements IStorage {
   }
 
   async getAllPortfolios(limit?: number, offset?: number): Promise<{ portfolios: Portfolio[], total: number }> {
-    const query = db
-      .select()
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
       .from(portfolios);
 
-    const total = await query.count();
-    const portfoliosList = await query
+    const total = countResult?.count || 0;
+
+    // Get portfolios list
+    const portfoliosList = await db
+      .select()
+      .from(portfolios)
       .limit(limit || 10)
       .offset(offset || 0);
 
@@ -1101,20 +1159,29 @@ class DatabaseStorage implements IStorage {
   }
 
   async getProducts(params?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ products: Product[], total: number }> {
-    const query = db
-      .select()
-      .from(products);
+    let whereConditions = [];
 
     if (params?.category) {
-      query.where(eq(products.category, params.category));
+      whereConditions.push(eq(products.category, params.category));
     }
 
     if (params?.search) {
-      query.where(ilike(products.name, `%${params.search}%`));
+      whereConditions.push(ilike(products.name, `%${params.search}%`));
     }
 
-    const total = await query.count();
-    const productsList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(products)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+    const total = countResult?.count || 0;
+
+    // Get products list
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .limit(params?.limit || 10)
       .offset(params?.offset || 0);
 
@@ -1122,13 +1189,19 @@ class DatabaseStorage implements IStorage {
   }
 
   async getProductsByCategory(category: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }> {
-    const query = db
-      .select()
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
       .from(products)
       .where(eq(products.category, category));
 
-    const total = await query.count();
-    const productsList = await query
+    const total = countResult?.count || 0;
+
+    // Get products list
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(eq(products.category, category))
       .limit(limit || 10)
       .offset(offset || 0);
 
@@ -1144,13 +1217,19 @@ class DatabaseStorage implements IStorage {
   }
 
   async searchProducts(search: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }> {
-    const query = db
-      .select()
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
       .from(products)
       .where(ilike(products.name, `%${search}%`));
 
-    const total = await query.count();
-    const productsList = await query
+    const total = countResult?.count || 0;
+
+    // Get products list
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(ilike(products.name, `%${search}%`))
       .limit(limit || 10)
       .offset(offset || 0);
 
@@ -1213,20 +1292,29 @@ class DatabaseStorage implements IStorage {
   }
 
   async getAllOrders(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ orders: Order[], total: number }> {
-    const query = db
-      .select()
-      .from(orders);
+    let whereConditions = [];
 
     if (params?.status) {
-      query.where(eq(orders.status, params.status));
+      whereConditions.push(eq(orders.status, params.status));
     }
 
     if (params?.search) {
-      query.where(ilike(orders.id, `%${params.search}%`));
+      whereConditions.push(sql`CAST(${orders.id} AS TEXT) LIKE ${`%${params.search}%`}`);
     }
 
-    const total = await query.count();
-    const ordersList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(orders)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+    const total = countResult?.count || 0;
+
+    // Get orders list
+    const ordersList = await db
+      .select()
+      .from(orders)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .limit(params?.limit || 10)
       .offset(params?.offset || 0);
 
@@ -1307,20 +1395,29 @@ class DatabaseStorage implements IStorage {
   }
 
   async getAllPayments(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ payments: Payment[], total: number }> {
-    const query = db
-      .select()
-      .from(payments);
+    let whereConditions = [];
 
     if (params?.status) {
-      query.where(eq(payments.status, params.status));
+      whereConditions.push(eq(payments.status, params.status));
     }
 
     if (params?.search) {
-      query.where(ilike(payments.id, `%${params.search}%`));
+      whereConditions.push(sql`CAST(${payments.id} AS TEXT) LIKE ${`%${params.search}%`}`);
     }
 
-    const total = await query.count();
-    const paymentsList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(payments)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+    const total = countResult?.count || 0;
+
+    // Get payments list
+    const paymentsList = await db
+      .select()
+      .from(payments)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .limit(params?.limit || 10)
       .offset(params?.offset || 0);
 
@@ -1848,17 +1945,25 @@ class DatabaseStorage implements IStorage {
   }
 
   async getUserNotifications(userId: number, params?: { limit?: number; offset?: number; unreadOnly?: boolean }): Promise<{ notifications: Notification[], total: number }> {
-    const query = db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.user_id, userId));
+    let whereConditions = [eq(notifications.user_id, userId)];
 
     if (params?.unreadOnly) {
-      query.where(eq(notifications.is_read, false));
+      whereConditions.push(eq(notifications.is_read, false));
     }
 
-    const total = await query.count();
-    const notificationsList = await query
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(notifications)
+      .where(and(...whereConditions));
+
+    const total = countResult?.count || 0;
+
+    // Get notifications list
+    const notificationsList = await db
+      .select()
+      .from(notifications)
+      .where(and(...whereConditions))
       .limit(params?.limit || 10)
       .offset(params?.offset || 0);
 

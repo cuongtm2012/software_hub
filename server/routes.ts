@@ -172,6 +172,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get current user
   app.get("/api/user", (req, res) => {
+    // Dev mode: auto-login if auth is disabled
+    if (process.env.DISABLE_AUTH === 'true') {
+      const mockRole = process.env.MOCK_USER_ROLE || 'seller';
+      const mockUsers: Record<string, any> = {
+        seller: { id: 2, name: "Test Seller", email: "seller@test.com", role: "seller", avatar: "" },
+        buyer: { id: 3, name: "Test Buyer", email: "buyer@test.com", role: "buyer", avatar: "" },
+        admin: { id: 1, name: "Admin User", email: "admin@test.com", role: "admin", avatar: "" },
+      };
+      
+      const mockUser = mockUsers[mockRole] || mockUsers.seller;
+      
+      // Set session for consistency
+      req.session.userId = mockUser.id;
+      req.session.user = mockUser;
+      
+      console.log('🔓 [DEV MODE] Auto-login:', mockUser.email, `(${mockUser.role})`);
+      return res.json(mockUser);
+    }
+    
+    // Normal mode: check session
     if (req.session?.user) {
       res.json(req.session.user);
     } else {

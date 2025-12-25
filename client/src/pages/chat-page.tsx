@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,15 +22,10 @@ import {
   Search,
   Smile,
   Paperclip,
-  Image as ImageIcon,
   Check,
   CheckCheck,
-  Clock,
-  Online,
-  Settings,
   X
 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
 import io, { Socket } from 'socket.io-client';
 import { cn } from '@/lib/utils';
 
@@ -91,132 +86,43 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  
+  // NEW: State for users and rooms from WebSocket
+  const [users, setUsers] = useState<User[]>([]);
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Get current user from main app
-  const { data: currentUser } = useQuery<User>({
+  // Get current user from main app (keep this)
+  const { data: currentUser, isLoading: currentUserLoading } = useQuery<User>({
     queryKey: ['/api/user'],
     enabled: true,
-  });
-
-  // Get chat rooms from chat service
-  const { data: roomsData, isLoading: roomsLoading, refetch: refetchRooms } = useQuery<{ success: boolean; rooms: ChatRoom[] }>({
-    queryKey: ['chat-rooms'],
-    queryFn: async () => {
-      if (!currentUser) throw new Error('User not authenticated');
-      
-      const response = await fetch(`${CHAT_SERVICE_URL}/api/chat/rooms/${currentUser.id}`, {
-        headers: {
-          'x-user-id': currentUser.id.toString(),
-          'x-user-role': currentUser.role,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch rooms: ${response.statusText}`);
-      }
-      
-      return response.json();
-    },
-    enabled: !!currentUser,
-    refetchOnWindowFocus: false,
-  });
-
-  // Get messages for selected room from chat service
-  const { data: messagesData, isLoading: messagesLoading, refetch: refetchMessages } = useQuery<{ success: boolean; messages: ChatMessage[] }>({
-    queryKey: ['chat-messages', selectedRoom],
-    queryFn: async () => {
-      if (!selectedRoom || !currentUser) throw new Error('Room or user not available');
-      
-      const response = await fetch(`${CHAT_SERVICE_URL}/api/chat/messages/${selectedRoom}`, {
-        headers: {
-          'x-user-id': currentUser.id.toString(),
-          'x-user-role': currentUser.role,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch messages: ${response.statusText}`);
-      }
-      
-      return response.json();
-    },
-    enabled: !!selectedRoom && !!currentUser,
-    refetchOnWindowFocus: false,
-  });
-
-  // Get available users from main app
-  const { data: usersData } = useQuery<{ users: User[] }>({
-    queryKey: ['/api/users'],
-    enabled: !!currentUser,
-    select: (data) => ({
-      users: data.users.filter(user => user.id !== currentUser?.id) // Exclude current user
-    }),
-  });
-
-  // Create room mutation using chat service
-  const createRoomMutation = useMutation({
-    mutationFn: async (targetUserId: number) => {
-      if (!currentUser) throw new Error('User not authenticated');
-      
-      const response = await fetch(`${CHAT_SERVICE_URL}/api/chat/room`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': currentUser.id.toString(),
-          'x-user-role': currentUser.role,
-        },
-        body: JSON.stringify({
-          participants: [currentUser.id.toString(), targetUserId.toString()],
-          type: 'direct',
-          name: null,
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create room');
-      }
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setSelectedRoom(data.room._id);
-      refetchRooms();
-      toast({
-        title: 'Chat Started',
-        description: 'Direct chat room created successfully',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create chat room',
-        variant: 'destructive',
-      });
-    },
   });
 
   // Initialize socket connection to chat service
   useEffect(() => {
     if (!currentUser) return;
 
-    console.log('Connecting to chat service at:', CHAT_SERVICE_URL);
+    console.log('🔌 Connecting to chat service at:', CHAT_SERVICE_URL);
     setConnectionStatus('connecting');
 
     const newSocket = io(CHAT_SERVICE_URL, {
       transports: ['websocket', 'polling'],
       timeout: 5000,
+      withCredentials: true, // Important: send cookies
     });
 
     newSocket.on('connect', () => {
-      console.log('Connected to chat service');
+      console.log('✅ Connected to chat service');
       setConnectionStatus('connected');
       
-      // Authenticate with the chat service using enhanced auth format
+      // Authenticate with the chat service
+      console.log('🔐 Sending authenticate event...');
       newSocket.emit('authenticate', {
         userId: currentUser.id.toString(),
         userName: currentUser.name,
@@ -226,64 +132,112 @@ export default function ChatPage() {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Disconnected from chat service');
+      console.log('❌ Disconnected from chat service');
       setConnectionStatus('disconnected');
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('Chat connection error:', error);
+      console.error('❌ Chat connection error:', error);
       setConnectionStatus('error');
       toast({
         title: 'Connection Error',
-        description: 'Failed to connect to chat service. Please check if the service is running.',
+        description: 'Failed to connect to chat service.',
         variant: 'destructive',
       });
     });
 
-    // Enhanced socket events from our chat service
+    // ==========================================
+    // AUTHENTICATION EVENTS
+    // ==========================================
+    
     newSocket.on('authenticated', (data) => {
-      console.log('Authentication result:', data);
-      if (!data.success) {
+      console.log('🔐 Authentication result:', data);
+      
+      if (data.success) {
+        toast({
+          title: 'Connected',
+          description: 'Successfully connected to chat service',
+        });
+        
+        // Request user list via WebSocket
+        console.log('📥 Requesting user list via WebSocket...');
+        newSocket.emit('get-user-list', { forceRefresh: true });
+      } else {
         toast({
           title: 'Authentication Failed',
-          description: 'Failed to authenticate with chat service',
+          description: data.error || 'Failed to authenticate',
           variant: 'destructive',
         });
       }
     });
 
-    // Initial online users list
+    // ==========================================
+    // USER LIST EVENTS
+    // ==========================================
+    
+    newSocket.on('user-list', (data) => {
+      console.log('👥 Received user list:', data);
+      
+      if (data.success && data.users) {
+        setUsers(data.users);
+        setIsLoadingUsers(false);
+        console.log(`✅ Loaded ${data.users.length} users (${data.onlineCount} online)`);
+      }
+    });
+
+    newSocket.on('user-list-error', (data) => {
+      console.error('❌ User list error:', data);
+      setIsLoadingUsers(false);
+      toast({
+        title: 'Failed to load users',
+        description: data.error,
+        variant: 'destructive',
+      });
+    });
+
+    // ==========================================
+    // ONLINE STATUS EVENTS
+    // ==========================================
+    
     newSocket.on('online-users-list', (data) => {
-      console.log('Received online users list:', data);
+      console.log('📡 Received online users list:', data);
       setOnlineUsers(new Set(data.users));
     });
 
+    newSocket.on('user-online', (data) => {
+      console.log('✅ User came online:', data.userId);
+      setOnlineUsers(prev => new Set(prev).add(data.userId));
+    });
+
+    newSocket.on('user-offline', (data) => {
+      console.log('❌ User went offline:', data.userId);
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(data.userId);
+        return newSet;
+      });
+    });
+
+    // ==========================================
+    // MESSAGING EVENTS
+    // ==========================================
+
     newSocket.on('room-joined', (data) => {
-      console.log('Joined room:', data);
-      refetchMessages();
+      console.log('🚪 Joined room:', data);
     });
 
     newSocket.on('new-message', (message: ChatMessage) => {
-      console.log('Received new message:', message);
+      console.log('💬 Received new message:', message);
       
-      // Update messages in real-time
-      queryClient.setQueryData(
-        ['chat-messages', message.roomId],
-        (old: { success: boolean; messages: ChatMessage[] } | undefined) => {
-          if (!old) return { success: true, messages: [message] };
-          
-          // Check if message already exists
-          const exists = old.messages.some(m => m._id === message._id);
-          if (exists) return old;
-          
-          return {
-            success: true,
-            messages: [...old.messages, message]
-          };
-        }
-      );
-      
-      scrollToBottom();
+      // Update messages if in the same room
+      if (message.roomId === selectedRoom) {
+        setMessages(prev => {
+          const exists = prev.some(m => m._id === message._id);
+          if (exists) return prev;
+          return [...prev, message];
+        });
+        scrollToBottom();
+      }
     });
 
     newSocket.on('typing-start', (data) => {
@@ -298,23 +252,8 @@ export default function ChatPage() {
       });
     });
 
-    // User presence events
-    newSocket.on('user-online', (data) => {
-      console.log('User came online:', data);
-      setOnlineUsers(prev => new Set(prev).add(data.userId));
-    });
-
-    newSocket.on('user-offline', (data) => {
-      console.log('User went offline:', data);
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(data.userId);
-        return newSet;
-      });
-    });
-
     newSocket.on('error', (data) => {
-      console.error('Chat service error:', data);
+      console.error('❌ Chat service error:', data);
       toast({
         title: 'Chat Error',
         description: data.message || 'An error occurred',
@@ -330,15 +269,16 @@ export default function ChatPage() {
       }
       newSocket.disconnect();
     };
-  }, [currentUser, toast, queryClient]);
+  }, [currentUser, toast]);
 
-  // Join room when selected
+  // Request user list when authenticated
   useEffect(() => {
-    if (socket && selectedRoom && connectionStatus === 'connected') {
-      console.log('Joining room:', selectedRoom);
-      socket.emit('join-room', { roomId: selectedRoom });
+    if (socket && connectionStatus === 'connected') {
+      setIsLoadingUsers(true);
+      console.log('📥 Requesting user list...');
+      socket.emit('get-user-list', { forceRefresh: false });
     }
-  }, [socket, selectedRoom, connectionStatus]);
+  }, [socket, connectionStatus]);
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -347,7 +287,73 @@ export default function ChatPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messagesData]);
+  }, [messages]);
+
+  const isUserOnline = (userId: string | number): boolean => {
+    return onlineUsers.has(userId.toString());
+  };
+
+  // FLOWCHART STEP: Sort Users by Online Status (Online on Top)
+  const sortedUsers = useMemo(() => {
+    if (!users || users.length === 0) return [];
+    
+    // Filter out current user and sort by online status
+    return users
+      .filter(user => user.id !== currentUser?.id)
+      .sort((a, b) => {
+        const aOnline = isUserOnline(a.id);
+        const bOnline = isUserOnline(b.id);
+        
+        // Online users first
+        if (aOnline && !bOnline) return -1;
+        if (!aOnline && bOnline) return 1;
+        
+        // Then sort by name
+        return a.name.localeCompare(b.name);
+      });
+  }, [users, onlineUsers, currentUser]);
+
+  const filteredUsers = sortedUsers.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredRooms = rooms.filter(room => 
+    getRoomDisplayName(room).toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Helper functions
+  const getRoomDisplayName = (room: ChatRoom): string => {
+    if (!room) return 'Unknown Chat';
+    
+    if (room.type === 'group' || room.type === 'channel') {
+      return room.name || 'Group Chat';
+    }
+    
+    const otherParticipant = room.participants?.find(p => p !== currentUser?.id.toString());
+    const otherUser = users.find(u => u.id.toString() === otherParticipant);
+    return otherUser?.name || 'Direct Message';
+  };
+
+  const getOtherUser = (room: ChatRoom): User | null => {
+    if (!room || room.type !== 'direct') return null;
+    const otherParticipant = room.participants?.find(p => p !== currentUser?.id.toString());
+    return users.find(u => u.id.toString() === otherParticipant) || null;
+  };
+
+  const getConnectionStatusColor = () => {
+    switch (connectionStatus) {
+      case 'connected': return 'text-green-500';
+      case 'connecting': return 'text-yellow-500';
+      case 'error': return 'text-red-500';
+      default: return 'text-gray-500';
+    }
+  };
+
+  const getMessageStatus = (message: ChatMessage) => {
+    if (message.senderId !== currentUser?.id.toString()) return null;
+    return 'sent';
+  };
 
   // Handle typing indicator
   const handleTyping = () => {
@@ -373,12 +379,6 @@ export default function ChatPage() {
     e.preventDefault();
     if (!newMessage.trim() || !selectedRoom || !socket || connectionStatus !== 'connected') return;
 
-    console.log('Sending message:', {
-      roomId: selectedRoom,
-      message: newMessage.trim(),
-      type: 'text'
-    });
-
     socket.emit('send-message', {
       roomId: selectedRoom,
       message: newMessage.trim(),
@@ -387,63 +387,58 @@ export default function ChatPage() {
 
     setNewMessage('');
     
-    // Stop typing indicator
     if (isTyping) {
       setIsTyping(false);
       socket.emit('typing-stop', { roomId: selectedRoom });
     }
   };
 
-  const getRoomDisplayName = (room: ChatRoom): string => {
-    // Add safety check for undefined room
-    if (!room) {
-      return 'Unknown Chat';
+  // Create new chat room with a user
+  const handleStartChat = (targetUserId: number) => {
+    if (!socket || connectionStatus !== 'connected') {
+      toast({
+        title: 'Not Connected',
+        description: 'Please wait for connection to chat service',
+        variant: 'destructive',
+      });
+      return;
     }
-    
-    if (room.type === 'group' || room.type === 'channel') {
-      return room.name || 'Group Chat';
+
+    // Request to create room via socket
+    socket.emit('create-room', {
+      participants: [currentUser!.id.toString(), targetUserId.toString()],
+      type: 'direct',
+    });
+  };
+
+  // Listen for room creation
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('room-created', (data) => {
+      console.log('🎉 Room created:', data);
+      setRooms(prev => [...prev, data.room]);
+      setSelectedRoom(data.room._id);
+      toast({
+        title: 'Chat Started',
+        description: 'Direct chat room created successfully',
+      });
+    });
+
+    return () => {
+      socket.off('room-created');
+    };
+  }, [socket, toast]);
+
+  // Join room when selected
+  useEffect(() => {
+    if (socket && selectedRoom && connectionStatus === 'connected') {
+      console.log('🚪 Joining room:', selectedRoom);
+      socket.emit('join-room', { roomId: selectedRoom });
+      // Load messages for this room
+      setMessages([]); // Clear previous messages
     }
-    
-    // For direct messages, show the other participant's name
-    const otherParticipant = room.participants?.find(p => p !== currentUser?.id.toString());
-    const otherUser = usersData?.users.find(u => u.id.toString() === otherParticipant);
-    return otherUser?.name || 'Direct Message';
-  };
-
-  const getOtherUser = (room: ChatRoom): User | null => {
-    if (!room || room.type !== 'direct') return null;
-    const otherParticipant = room.participants?.find(p => p !== currentUser?.id.toString());
-    return usersData?.users.find(u => u.id.toString() === otherParticipant) || null;
-  };
-
-  const isUserOnline = (userId: string | number): boolean => {
-    return onlineUsers.has(userId.toString());
-  };
-
-  const getConnectionStatusColor = () => {
-    switch (connectionStatus) {
-      case 'connected': return 'text-green-500';
-      case 'connecting': return 'text-yellow-500';
-      case 'error': return 'text-red-500';
-      default: return 'text-gray-500';
-    }
-  };
-
-  const getMessageStatus = (message: ChatMessage) => {
-    if (message.senderId !== currentUser?.id.toString()) return null;
-    
-    // Simple status logic - can be enhanced with real delivery/read receipts
-    return 'sent'; // 'sent', 'delivered', 'read'
-  };
-
-  const filteredUsers = usersData?.users.filter(user => 
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
-
-  const filteredRooms = roomsData?.rooms?.filter(room => 
-    getRoomDisplayName(room).toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  }, [socket, selectedRoom, connectionStatus]);
 
   if (!currentUser) {
     return (
@@ -486,7 +481,6 @@ export default function ChatPage() {
             </div>
           </div>
           
-          {/* Connection Status */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Circle className={`h-2 w-2 ${getConnectionStatusColor()}`} fill="currentColor" />
@@ -508,7 +502,6 @@ export default function ChatPage() {
           isSidebarCollapsed ? "w-16" : "w-80",
           "lg:flex hidden"
         )}>
-          {/* Search Bar */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             {!isSidebarCollapsed && (
               <div className="relative">
@@ -523,17 +516,16 @@ export default function ChatPage() {
             )}
           </div>
 
-          {/* Conversations List */}
           <ScrollArea className="flex-1">
             {!isSidebarCollapsed && (
               <div className="p-2">
-                {roomsLoading ? (
+                {isLoadingRooms ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                   </div>
                 ) : filteredRooms.length > 0 ? (
                   <div className="space-y-1">
-                    {filteredRooms.map((room: ChatRoom) => {
+                    {filteredRooms.map((room) => {
                       const otherUser = getOtherUser(room);
                       return (
                         <Button
@@ -579,9 +571,9 @@ export default function ChatPage() {
                                 <p className="text-xs text-gray-500 truncate">
                                   {room.lastMessage ? room.lastMessage.message : 'No messages yet'}
                                 </p>
-                                {room.unreadCount > 0 && (
+                                {(room.unreadCount ?? 0) > 0 && (
                                   <Badge variant="destructive" className="text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                                    {room.unreadCount > 9 ? '9+' : room.unreadCount}
+                                    {(room.unreadCount ?? 0) > 9 ? '9+' : room.unreadCount}
                                   </Badge>
                                 )}
                               </div>
@@ -606,54 +598,63 @@ export default function ChatPage() {
                     <Plus className="h-4 w-4" />
                     Start New Chat
                   </h3>
-                  {filteredUsers.map((user: User) => (
-                    <Button
-                      key={user.id}
-                      variant="ghost"
-                      className="w-full justify-start h-auto p-3"
-                      onClick={() => createRoomMutation.mutate(user.id)}
-                      disabled={createRoomMutation.isPending}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div className="relative">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.avatar} />
-                            <AvatarFallback className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs">
-                              {user.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {isUserOnline(user.id) && (
-                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border border-white dark:border-gray-800 rounded-full"></div>
-                          )}
+                  
+                  {isLoadingUsers ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : filteredUsers.length > 0 ? (
+                    filteredUsers.map((user) => (
+                      <Button
+                        key={user.id}
+                        variant="ghost"
+                        className="w-full justify-start h-auto p-3"
+                        onClick={() => handleStartChat(user.id)}
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="relative">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={user.avatar} />
+                              <AvatarFallback className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs">
+                                {user.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {isUserOnline(user.id) && (
+                              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border border-white dark:border-gray-800 rounded-full"></div>
+                            )}
+                          </div>
+                          <div className="flex-1 text-left">
+                            <p className="text-sm font-medium">{user.name}</p>
+                            <Badge 
+                              variant={user.role === 'admin' ? 'default' : 'secondary'} 
+                              className="text-xs h-4"
+                            >
+                              {user.role}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="flex-1 text-left">
-                          <p className="text-sm font-medium">{user.name}</p>
-                          <Badge 
-                            variant={user.role === 'admin' ? 'default' : 'secondary'} 
-                            className="text-xs h-4"
-                          >
-                            {user.role}
-                          </Badge>
-                        </div>
-                      </div>
-                    </Button>
-                  ))}
+                      </Button>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-sm">No users available</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </ScrollArea>
         </div>
 
-        {/* Chat Area */}
+        {/* Chat Area - keeping existing implementation */}
         <div className="flex-1 flex flex-col bg-white dark:bg-gray-800">
           {selectedRoom ? (
             <>
-              {/* Chat Header */}
               <div className="border-b border-gray-200 dark:border-gray-700 p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {(() => {
-                      const room = roomsData?.rooms?.find(r => r._id === selectedRoom);
+                      const room = rooms.find(r => r._id === selectedRoom);
                       const otherUser = room ? getOtherUser(room) : null;
                       return (
                         <>
@@ -700,17 +701,12 @@ export default function ChatPage() {
                 </div>
               </div>
               
-              {/* Messages Area */}
               <ScrollArea className="flex-1 p-4">
-                {messagesLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                  </div>
-                ) : messagesData?.messages && messagesData.messages.length > 0 ? (
+                {messages.length > 0 ? (
                   <div className="space-y-4">
-                    {messagesData.messages.map((message: ChatMessage, index) => {
+                    {messages.map((message, index) => {
                       const isOwn = message.senderId === currentUser.id.toString();
-                      const showAvatar = !isOwn && (index === 0 || messagesData.messages[index - 1].senderId !== message.senderId);
+                      const showAvatar = !isOwn && (index === 0 || messages[index - 1].senderId !== message.senderId);
                       const status = getMessageStatus(message);
                       
                       return (
@@ -763,9 +759,6 @@ export default function ChatPage() {
                                   {status === 'read' && <CheckCheck className="h-3 w-3 text-blue-500" />}
                                 </div>
                               )}
-                              {message.metadata?.isEdited && (
-                                <span className="text-xs text-gray-400">(edited)</span>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -801,7 +794,6 @@ export default function ChatPage() {
                 )}
               </ScrollArea>
 
-              {/* Message Input */}
               <div className="border-t border-gray-200 dark:border-gray-700 p-4">
                 <form onSubmit={handleSendMessage} className="flex items-end gap-2">
                   <div className="flex-1 relative">
@@ -814,7 +806,6 @@ export default function ChatPage() {
                       placeholder={connectionStatus === 'connected' ? "Type your message..." : "Connecting..."}
                       className="pr-20 py-3 rounded-full border-gray-300 dark:border-gray-600 focus:border-blue-500"
                       disabled={connectionStatus !== 'connected'}
-                      rows={1}
                     />
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                       <Button variant="ghost" size="sm" type="button" className="h-8 w-8 p-0">

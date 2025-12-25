@@ -1,12 +1,47 @@
 import type { Express } from "express";
-import { storage } from "../storage";
+import { userStorage } from "../storage/user";
 import { isAuthenticated } from "../middleware/auth.middleware";
 
 export function registerUserRoutes(app: Express) {
+  // Get all users (for chat user list)
+  // TEMPORARY: Remove auth middleware for debugging
+  app.get("/api/users", async (req, res, next) => {
+    try {
+      console.log('📋 /api/users called - Session:', {
+        sessionId: req.sessionID,
+        userId: req.session?.userId,
+        userEmail: req.session?.user?.email,
+        hasReqUser: !!req.user
+      });
+      
+      const result = await userStorage.getAllUsers();
+      
+      console.log('✅ Got all users:', result.users.length, 'total users');
+      
+      // Remove sensitive data and exclude current user
+      const safeUsers = result.users
+        .filter(u => u.id !== req.user?.id) // Exclude current user
+        .map(u => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          avatar: u.avatar,
+          createdAt: u.createdAt
+        }));
+      
+      console.log('📤 Sending users:', safeUsers.length, 'users (excluding current user)');
+      res.json({ users: safeUsers });
+    } catch (error) {
+      console.error('❌ Error in /api/users:', error);
+      next(error);
+    }
+  });
+
   // User Profile Management Routes
   app.get("/api/auth/profile", isAuthenticated, async (req, res, next) => {
     try {
-      const user = await storage.getUser(req.user?.id as number);
+      const user = await userStorage.getUser(req.user?.id as number);
       res.json({ profile: user?.profile || {} });
     } catch (error) {
       next(error);
@@ -16,7 +51,7 @@ export function registerUserRoutes(app: Express) {
   app.put("/api/auth/profile", isAuthenticated, async (req, res, next) => {
     try {
       const { profile } = req.body;
-      const updatedUser = await storage.updateUserProfile(req.user?.id as number, profile);
+      const updatedUser = await userStorage.updateUserProfile(req.user?.id as number, profile);
       res.json({ profile: updatedUser?.profile || {} });
     } catch (error) {
       next(error);
@@ -26,7 +61,7 @@ export function registerUserRoutes(app: Express) {
   // User Downloads Management
   app.get("/api/user/downloads", isAuthenticated, async (req, res, next) => {
     try {
-      const downloads = await storage.getUserDownloads(req.user?.id as number);
+      const downloads = await userStorage.getUserDownloads(req.user?.id as number);
       res.json({ downloads });
     } catch (error) {
       next(error);
@@ -41,7 +76,7 @@ export function registerUserRoutes(app: Express) {
         return res.status(400).json({ message: "Software ID and version are required" });
       }
       
-      const download = await storage.createUserDownload(
+      const download = await userStorage.createUserDownload(
         req.user?.id as number, 
         parseInt(softwareId), 
         version
@@ -56,7 +91,7 @@ export function registerUserRoutes(app: Express) {
   // User Reviews Management
   app.get("/api/user/reviews", isAuthenticated, async (req, res, next) => {
     try {
-      const reviews = await storage.getUserReviews(req.user?.id as number);
+      const reviews = await userStorage.getUserReviews(req.user?.id as number);
       res.json({ reviews });
     } catch (error) {
       next(error);
@@ -68,7 +103,7 @@ export function registerUserRoutes(app: Express) {
       const { id } = req.params;
       const reviewData = req.body;
       
-      const review = await storage.updateReview(
+      const review = await userStorage.updateReview(
         parseInt(id),
         req.user?.id as number,
         reviewData

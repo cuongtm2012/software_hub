@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
-import { storage } from "../storage";
+import { userStorage } from "../storage/user";
 import { db } from "../db";
 import { users } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
@@ -20,7 +20,7 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
     }
     
     // Find user by email
-    const user = await storage.getUserByEmail(email);
+    const user = await userStorage.getUserByEmail(email);
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -74,7 +74,7 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
 // Quick Login endpoints for demo accounts
 router.post("/quick-login/seller", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await storage.getUserByEmail("seller@test.com");
+    const user = await userStorage.getUserByEmail("seller@test.com");
     
     if (!user) {
       return res.status(404).json({ message: "Demo seller account not found" });
@@ -110,7 +110,7 @@ router.post("/quick-login/seller", async (req: Request, res: Response, next: Nex
 
 router.post("/quick-login/buyer", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await storage.getUserByEmail("buyer@test.com");
+    const user = await userStorage.getUserByEmail("buyer@test.com");
     
     if (!user) {
       return res.status(404).json({ message: "Demo buyer account not found" });
@@ -173,13 +173,13 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     }
     
     // Check if user already exists
-    const existingUser = await storage.getUserByEmail(email);
+    const existingUser = await userStorage.getUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({ message: "Email is already registered" });
     }
 
     // Create the user with default 'user' role
-    const user = await storage.createUser({
+    const user = await userStorage.createUser({
       name,
       email,
       password,
@@ -229,7 +229,7 @@ router.post("/forgot-password", async (req: Request, res: Response, next: NextFu
       return res.status(400).json({ message: "Email is required" });
     }
 
-    const user = await storage.getUserByEmail(email);
+    const user = await userStorage.getUserByEmail(email);
     
     // Always return success to prevent email enumeration
     res.json({ message: "If the email exists in our system, you'll receive a password reset link." });
@@ -313,7 +313,7 @@ router.post("/reset-password", async (req: Request, res: Response, next: NextFun
 // User Profile Management Routes
 router.get("/profile", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await storage.getUser(req.user?.id as number);
+    const user = await userStorage.getUser(req.user?.id as number);
     res.json({ profile: user?.profile || {} });
   } catch (error) {
     next(error);
@@ -323,7 +323,7 @@ router.get("/profile", isAuthenticated, async (req: Request, res: Response, next
 router.put("/profile", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { profile } = req.body;
-    const updatedUser = await storage.updateUserProfile(req.user?.id as number, profile);
+    const updatedUser = await userStorage.updateUserProfile(req.user?.id as number, profile);
     res.json({ profile: updatedUser?.profile || {} });
   } catch (error) {
     next(error);
@@ -333,7 +333,7 @@ router.put("/profile", isAuthenticated, async (req: Request, res: Response, next
 // User Downloads Management
 router.get("/downloads", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const downloads = await storage.getUserDownloads(req.user?.id as number);
+    const downloads = await userStorage.getUserDownloads(req.user?.id as number);
     res.json({ downloads });
   } catch (error) {
     next(error);
@@ -348,7 +348,7 @@ router.post("/downloads", isAuthenticated, async (req: Request, res: Response, n
       return res.status(400).json({ message: "Software ID and version are required" });
     }
     
-    const download = await storage.createUserDownload(
+    const download = await userStorage.createUserDownload(
       req.user?.id as number, 
       parseInt(softwareId), 
       version
@@ -363,9 +363,145 @@ router.post("/downloads", isAuthenticated, async (req: Request, res: Response, n
 // User Reviews Management
 router.get("/reviews", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const reviews = await storage.getUserReviews(req.user?.id as number);
+    const reviews = await userStorage.getUserReviews(req.user?.id as number);
     res.json({ reviews });
   } catch (error) {
+    next(error);
+  }
+});
+
+// TOKEN VALIDATION API FOR CHAT SERVICE
+
+/**
+ * Validate auth token and return user info
+ * Used by chat service to verify WebSocket connections
+ */
+router.post("/validate-token", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token } = req.body;
+    
+    console.log('🔐 Token validation request received:', { tokenLength: token?.length });
+    
+    if (!token) {
+      return res.status(400).json({ 
+        valid: false,
+        error: "Token is required" 
+      });
+    }
+
+    // Get session store from app
+    const sessionStore = (req as any).sessionStore;
+    
+    if (!sessionStore) {
+      console.error('❌ Session store not available');
+      return res.status(500).json({ 
+        valid: false,
+        error: "Session store not configured" 
+      });
+    }
+
+    // Get session data from store
+    sessionStore.get(token, (err: any, session: any) => {
+      if (err) {
+        console.error('❌ Session store error:', err);
+        return res.status(500).json({ 
+          valid: false,
+          error: "Session retrieval failed" 
+        });
+      }
+
+      if (!session || !session.userId || !session.user) {
+        console.log('❌ Invalid session - no user data found');
+        return res.status(401).json({ 
+          valid: false,
+          error: "Invalid or expired token" 
+        });
+      }
+
+      console.log('✅ Token validated successfully for user:', session.user.email);
+
+      // Token is valid, return user info
+      res.json({
+        valid: true,
+        user: {
+          id: session.user.id,
+          name: session.user.name,
+          email: session.user.email,
+          role: session.user.role,
+          avatar: session.user.avatar || ''
+        }
+      });
+    });
+
+  } catch (error) {
+    console.error("❌ Token validation error:", error);
+    res.status(500).json({ 
+      valid: false,
+      error: "Token validation failed" 
+    });
+  }
+});
+
+/**
+ * Get user list - for chat service
+ * Returns all users with basic info
+ */
+router.get("/users", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await userStorage.getAllUsers();
+    
+    // Return safe user list (no sensitive data)
+    const safeUsers = result.users.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      avatar: u.avatar || '',
+      createdAt: u.created_at
+    }));
+    
+    console.log(`✅ Returning ${safeUsers.length} users to chat service`);
+    
+    res.json({ 
+      success: true,
+      users: safeUsers,
+      total: result.total
+    });
+  } catch (error) {
+    console.error("Get users error:", error);
+    next(error);
+  }
+});
+
+/**
+ * Get user by ID - for chat service to fetch user details
+ */
+router.get("/users/:userId", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = req.params;
+    const user = await userStorage.getUser(parseInt(userId));
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        error: "User not found" 
+      });
+    }
+
+    // Return safe user info
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar || '',
+        createdAt: user.created_at
+      }
+    });
+  } catch (error) {
+    console.error("Get user error:", error);
     next(error);
   }
 });
