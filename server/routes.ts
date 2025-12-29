@@ -342,11 +342,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/reviews", reviewRouter);
   app.use("/api/seller", sellerRouter);
   app.use("/api/notifications", notificationRouter);
-  app.use("/api/chat", chatRouter);
+  // app.use("/api/chat", chatRouter); // REMOVED - Chat is WebSocket-only via Chat Service
   app.use("/api/orders", orderRouter);
   app.use("/api/admin", adminRouter);
   app.use("/api/products", productRouter);
-  app.use("/api/softwares", softwareRouter); // Changed from /api/software to /api/softwares
+  app.use("/api/softwares", softwareRouter);
 
   // Register function-based routes (named exports)
   registerMarketplaceRoutes(app);

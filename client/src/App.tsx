@@ -18,22 +18,22 @@ import { FloatingChatButton } from "@/components/floating-chat-button";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { 
-  Card, 
-  CardContent, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Pagination } from "@/components/pagination";
 import { StarRating } from "@/components/ui/star-rating";
-import { 
-  Loader2, 
-  Code, 
-  ArrowRight, 
-  Monitor, 
-  BookOpen, 
-  ShoppingCart, 
+import {
+  Loader2,
+  Code,
+  ArrowRight,
+  Monitor,
+  BookOpen,
+  ShoppingCart,
   Smartphone
 } from "lucide-react";
 
@@ -68,7 +68,7 @@ import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
 import DashboardPage from "@/pages/dashboard-page";
-import ChatPage from "@/pages/chat-page";
+// import ChatPage from "@/pages/chat-page"; // Disabled - use floating chat widget
 
 function Router() {
   return (
@@ -77,12 +77,13 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/request-project" component={ProjectRequestPage} />
-      
+
       {/* Protected Routes - Available to logged-in users */}
       <ProtectedRoute path="/profile" component={UserProfilePage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
-      <ProtectedRoute path="/chat" component={ChatPage} />
-      
+      {/* Chat page disabled - use floating chat widget instead */}
+      {/* <ProtectedRoute path="/chat" component={ChatPage} /> */}
+
       {/* Admin Routes - Only accessible to admin users */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} roles={['admin']} />
@@ -92,12 +93,12 @@ function Router() {
       <ProtectedRoute path="/admin/email-tests" component={EmailTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/push-notifications" component={PushNotificationTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/end-to-end-tests" component={EndToEndTestPage} roles={['admin']} />
-      
+
       {/* Phase 2: Code Service & Product Build Module */}
       <Route path="/it-services" component={() => {
         const { user, isLoading } = useAuth();
         const [, navigate] = useLocation();
-        
+
         if (isLoading) {
           return (
             <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
@@ -110,7 +111,7 @@ function Router() {
             </div>
           );
         }
-        
+
         return (
           <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
             <Header />
@@ -118,26 +119,26 @@ function Router() {
               <div className="bg-white shadow-sm rounded-lg p-8 text-center">
                 <h1 className="text-2xl font-bold text-gray-900 mb-4">IT Services & Solutions</h1>
                 <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  Connect with skilled developers for your custom software projects. Submit project requests, 
+                  Connect with skilled developers for your custom software projects. Submit project requests,
                   receive quotes, and collaborate securely through our platform.
                 </p>
-                
+
                 {user ? (
                   <div className="space-y-6 max-w-lg mx-auto">
                     <div className="bg-[#f0f7ff] p-6 rounded-lg border border-[#004080]/20">
                       <h2 className="text-lg font-medium text-[#004080] mb-2">Welcome, {user.name}!</h2>
                       <p className="text-gray-600 mb-4">
-                        You're logged in and ready to create a new project request. Our platform connects you 
+                        You're logged in and ready to create a new project request. Our platform connects you
                         with skilled developers who can bring your ideas to life.
                       </p>
                       <div className="flex gap-3 flex-wrap justify-center">
-                        <Button 
+                        <Button
                           onClick={() => navigate('/request-project')}
                           className="bg-[#004080] hover:bg-[#003366] text-white"
                         >
                           Create New Project
                         </Button>
-                        <Button 
+                        <Button
                           onClick={() => navigate('/dashboard')}
                           variant="outline"
                           className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
@@ -153,13 +154,13 @@ function Router() {
                       <h2 className="text-lg font-medium text-[#004080] mb-2">Ready to start your project?</h2>
                       <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
                       <div className="flex gap-3 flex-wrap justify-center">
-                        <Button 
+                        <Button
                           onClick={() => navigate('/auth')}
                           className="bg-[#004080] hover:bg-[#003366] text-white"
                         >
                           Login to Post a Project
                         </Button>
-                        <Button 
+                        <Button
                           onClick={() => navigate('/request-project')}
                           variant="outline"
                           className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
@@ -172,7 +173,7 @@ function Router() {
                 )}
               </div>
             </main>
-            
+
             {/* Successful Projects Section */}
             <div id="projects" className="py-16 bg-gray-50 scroll-mt-16">
               <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -270,8 +271,8 @@ function Router() {
                         <CardContent className="py-2 flex-grow">
                           <div className="flex flex-wrap gap-1 mb-3">
                             {project.technologies.map((tech, index) => (
-                              <span 
-                                key={index} 
+                              <span
+                                key={index}
                                 className="inline-block px-2 py-1 text-xs rounded-full bg-[#004080]/10 text-[#004080]"
                               >
                                 {tech}
@@ -295,20 +296,20 @@ function Router() {
                     );
                   })}
                 </div>
-                
+
 
               </div>
             </div>
-            
+
             <Footer />
           </div>
         );
       }} />
-      
+
       <Route path="/projects" component={() => {
         const { user, isLoading } = useAuth();
         const [, navigate] = useLocation();
-        
+
         if (isLoading) {
           return (
             <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
@@ -320,7 +321,7 @@ function Router() {
             </div>
           );
         }
-        
+
         if (!user) {
           return (
             <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
@@ -329,7 +330,7 @@ function Router() {
                 <div className="bg-white shadow-sm rounded-lg p-8 text-center">
                   <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Collaboration Platform</h1>
                   <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                    Connect with skilled developers for your custom software projects. Submit project requests, 
+                    Connect with skilled developers for your custom software projects. Submit project requests,
                     receive quotes, and collaborate securely through our platform.
                   </p>
                   <div className="space-y-6 max-w-lg mx-auto">
@@ -337,13 +338,13 @@ function Router() {
                       <h2 className="text-lg font-medium text-[#004080] mb-2">For Clients</h2>
                       <p className="text-gray-600 mb-4">Post your project requirements and connect with developers ready to build your custom solution.</p>
                       <div className="flex gap-3 flex-wrap justify-center">
-                        <Button 
+                        <Button
                           onClick={() => navigate('/auth')}
                           className="bg-[#004080] hover:bg-[#003366] text-white"
                         >
                           Login to Post a Project
                         </Button>
-                        <Button 
+                        <Button
                           onClick={() => navigate('/request-project')}
                           variant="outline"
                           className="border-[#004080] text-[#004080] hover:bg-[#f0f7ff]"
@@ -355,7 +356,7 @@ function Router() {
                   </div>
                 </div>
               </main>
-              
+
               {/* Phase 2: Code Service & Product Build Module - Portfolio Showcase */}
               <div className="py-16 bg-gray-50">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -453,8 +454,8 @@ function Router() {
                           <CardContent className="py-2 flex-grow">
                             <div className="flex flex-wrap gap-1 mb-3">
                               {project.technologies.map((tech, index) => (
-                                <span 
-                                  key={index} 
+                                <span
+                                  key={index}
                                   className="inline-block px-2 py-1 text-xs rounded-full bg-[#004080]/10 text-[#004080]"
                                 >
                                   {tech}
@@ -478,9 +479,9 @@ function Router() {
                       );
                     })}
                   </div>
-                  
+
                   <div className="flex justify-center mt-8">
-                    <Button 
+                    <Button
                       className="bg-[#004080] hover:bg-[#003366] text-white"
                       onClick={() => navigate('/request-project')}
                     >
@@ -489,7 +490,7 @@ function Router() {
                   </div>
                 </div>
               </div>
-              
+
               <Footer />
             </div>
           );
@@ -508,11 +509,11 @@ function Router() {
           queryKey: ['/api/portfolios', { page, limit }],
           queryFn: undefined,
         });
-        
+
         const handlePageChange = (newPage: number) => {
           setPage(newPage);
         };
-        
+
         return (
           <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
             <Header />
@@ -524,14 +525,14 @@ function Router() {
                     Browse work samples from our skilled developers
                   </p>
                 </div>
-                <Button 
+                <Button
                   onClick={() => navigate('/auth')}
                   className="bg-[#004080] hover:bg-[#003366] text-white"
                 >
                   Login to Hire Developers
                 </Button>
               </div>
-              
+
               {isLoading ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
@@ -543,7 +544,7 @@ function Router() {
                       <Card key={portfolio.id} className="bg-white hover:shadow-md transition-shadow">
                         <div className="relative pt-[60%] bg-gray-100">
                           {portfolio.images && portfolio.images[0] ? (
-                            <img 
+                            <img
                               src={portfolio.images[0]}
                               alt={portfolio.title}
                               className="absolute inset-0 h-full w-full object-cover"
@@ -557,12 +558,12 @@ function Router() {
                         <CardHeader className="pb-2">
                           <CardTitle className="text-lg">{portfolio.title}</CardTitle>
                           <div className="flex items-center mt-1">
-                            <StarRating 
-                              value={portfolio.reviews?.length 
-                                ? portfolio.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / portfolio.reviews.length 
+                            <StarRating
+                              value={portfolio.reviews?.length
+                                ? portfolio.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / portfolio.reviews.length
                                 : 0
-                              } 
-                              size="sm" 
+                              }
+                              size="sm"
                             />
                             <span className="text-sm text-gray-500 ml-2">
                               ({portfolio.reviews?.length || 0} reviews)
@@ -585,7 +586,7 @@ function Router() {
                       </Card>
                     ))}
                   </div>
-                  
+
                   {(portfolios as any).total > limit && (
                     <Pagination
                       currentPage={page}
@@ -617,10 +618,10 @@ function Router() {
         );
       }} />
       <Route path="/portfolios/:id" component={PortfolioDetailPage} />
-      
+
       {/* Software List */}
       <Route path="/software" component={SoftwareListPage} />
-      
+
       {/* Phase 3: Marketplace */}
       <Route path="/marketplace" component={() => {
         const MarketplacePageNew = lazy(() => import("@/pages/marketplace-page-new"));
@@ -630,7 +631,7 @@ function Router() {
           </Suspense>
         );
       }} />
-      
+
       {/* Seller Registration & Management */}
       <Route path="/seller/register" component={() => {
         const SellerRegistrationPage = lazy(() => import("@/pages/seller-registration-page"));
@@ -705,10 +706,10 @@ function Router() {
       <ProtectedRoute path="/marketplace/seller/new" roles={['seller', 'admin']} component={MarketplaceSellerNewPage} />
       <ProtectedRoute path="/marketplace/seller/edit/:id" roles={['seller', 'admin']} component={MarketplaceSellerEditPage} />
       <ProtectedRoute path="/marketplace/orders" roles={['buyer', 'admin']} component={MarketplaceOrdersPage} />
-      
+
       {/* Admin routes */}
       <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
-      
+
       {/* Test Login */}
       <Route path="/test-login" component={() => {
         const TestLoginPage = lazy(() => import("@/pages/test-login-page"));
@@ -718,7 +719,7 @@ function Router() {
           </Suspense>
         );
       }} />
-      
+
       <Route component={NotFound} />
     </Switch>
   );

@@ -9,11 +9,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  MessageCircle, 
-  Send, 
-  Users, 
-  ArrowLeft, 
+import {
+  MessageCircle,
+  Send,
+  Users,
+  ArrowLeft,
   Plus,
   Phone,
   Video,
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import io, { Socket } from 'socket.io-client';
 import { cn } from '@/lib/utils';
+import { NotificationBanner } from '@/components/NotificationBanner';
 
 // Chat service configuration
 const CHAT_SERVICE_URL = 'http://localhost:3002';
@@ -86,14 +87,14 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
-  
+
   // NEW: State for users and rooms from WebSocket
   const [users, setUsers] = useState<User[]>([]);
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
@@ -120,7 +121,7 @@ export default function ChatPage() {
     newSocket.on('connect', () => {
       console.log('✅ Connected to chat service');
       setConnectionStatus('connected');
-      
+
       // Authenticate with the chat service
       console.log('🔐 Sending authenticate event...');
       newSocket.emit('authenticate', {
@@ -149,16 +150,16 @@ export default function ChatPage() {
     // ==========================================
     // AUTHENTICATION EVENTS
     // ==========================================
-    
+
     newSocket.on('authenticated', (data) => {
       console.log('🔐 Authentication result:', data);
-      
+
       if (data.success) {
         toast({
           title: 'Connected',
           description: 'Successfully connected to chat service',
         });
-        
+
         // Request user list via WebSocket
         console.log('📥 Requesting user list via WebSocket...');
         newSocket.emit('get-user-list', { forceRefresh: true });
@@ -174,10 +175,10 @@ export default function ChatPage() {
     // ==========================================
     // USER LIST EVENTS
     // ==========================================
-    
+
     newSocket.on('user-list', (data) => {
       console.log('👥 Received user list:', data);
-      
+
       if (data.success && data.users) {
         setUsers(data.users);
         setIsLoadingUsers(false);
@@ -198,7 +199,7 @@ export default function ChatPage() {
     // ==========================================
     // ONLINE STATUS EVENTS
     // ==========================================
-    
+
     newSocket.on('online-users-list', (data) => {
       console.log('📡 Received online users list:', data);
       setOnlineUsers(new Set(data.users));
@@ -228,7 +229,7 @@ export default function ChatPage() {
 
     newSocket.on('new-message', (message: ChatMessage) => {
       console.log('💬 Received new message:', message);
-      
+
       // Update messages if in the same room
       if (message.roomId === selectedRoom) {
         setMessages(prev => {
@@ -280,6 +281,42 @@ export default function ChatPage() {
     }
   }, [socket, connectionStatus]);
 
+  // Fetch user's chat rooms
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (!currentUser) return;
+
+      setIsLoadingRooms(true);
+      try {
+        console.log('📥 Fetching chat rooms for user:', currentUser.id);
+        const response = await fetch(`/api/chat/rooms/${currentUser.id}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch rooms: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Received chat rooms:', data);
+
+        if (data.success && data.rooms) {
+          setRooms(data.rooms);
+          console.log(`📋 Loaded ${data.rooms.length} chat rooms`);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching chat rooms:', error);
+        toast({
+          title: 'Failed to load conversations',
+          description: 'Could not load your chat history.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingRooms(false);
+      }
+    };
+
+    fetchRooms();
+  }, [currentUser, toast]);
+
   // Auto-scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -296,40 +333,40 @@ export default function ChatPage() {
   // FLOWCHART STEP: Sort Users by Online Status (Online on Top)
   const sortedUsers = useMemo(() => {
     if (!users || users.length === 0) return [];
-    
+
     // Filter out current user and sort by online status
     return users
       .filter(user => user.id !== currentUser?.id)
       .sort((a, b) => {
         const aOnline = isUserOnline(a.id);
         const bOnline = isUserOnline(b.id);
-        
+
         // Online users first
         if (aOnline && !bOnline) return -1;
         if (!aOnline && bOnline) return 1;
-        
+
         // Then sort by name
         return a.name.localeCompare(b.name);
       });
   }, [users, onlineUsers, currentUser]);
 
-  const filteredUsers = sortedUsers.filter(user => 
+  const filteredUsers = sortedUsers.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredRooms = rooms.filter(room => 
+  const filteredRooms = rooms.filter(room =>
     getRoomDisplayName(room).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Helper functions
   const getRoomDisplayName = (room: ChatRoom): string => {
     if (!room) return 'Unknown Chat';
-    
+
     if (room.type === 'group' || room.type === 'channel') {
       return room.name || 'Group Chat';
     }
-    
+
     const otherParticipant = room.participants?.find(p => p !== currentUser?.id.toString());
     const otherUser = users.find(u => u.id.toString() === otherParticipant);
     return otherUser?.name || 'Direct Message';
@@ -358,7 +395,7 @@ export default function ChatPage() {
   // Handle typing indicator
   const handleTyping = () => {
     if (!socket || !selectedRoom || isTyping || connectionStatus !== 'connected') return;
-    
+
     setIsTyping(true);
     socket.emit('typing-start', { roomId: selectedRoom });
 
@@ -386,7 +423,7 @@ export default function ChatPage() {
     });
 
     setNewMessage('');
-    
+
     if (isTyping) {
       setIsTyping(false);
       socket.emit('typing-stop', { roomId: selectedRoom });
@@ -465,9 +502,9 @@ export default function ChatPage() {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate('/dashboard')}
               className="lg:hidden"
             >
@@ -480,7 +517,7 @@ export default function ChatPage() {
               <h1 className="text-xl font-semibold">Messages</h1>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Circle className={`h-2 w-2 ${getConnectionStatusColor()}`} fill="currentColor" />
@@ -488,6 +525,8 @@ export default function ChatPage() {
                 {connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}
               </span>
             </div>
+
+
             <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
               <X className="h-4 w-4" />
             </Button>
@@ -560,9 +599,9 @@ export default function ChatPage() {
                                 </p>
                                 {room.lastMessage && (
                                   <span className="text-xs text-gray-500">
-                                    {new Date(room.lastMessage.timestamp).toLocaleTimeString([], { 
-                                      hour: '2-digit', 
-                                      minute: '2-digit' 
+                                    {new Date(room.lastMessage.timestamp).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
                                     })}
                                   </span>
                                 )}
@@ -598,7 +637,7 @@ export default function ChatPage() {
                     <Plus className="h-4 w-4" />
                     Start New Chat
                   </h3>
-                  
+
                   {isLoadingUsers ? (
                     <div className="flex items-center justify-center py-4">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
@@ -625,8 +664,8 @@ export default function ChatPage() {
                           </div>
                           <div className="flex-1 text-left">
                             <p className="text-sm font-medium">{user.name}</p>
-                            <Badge 
-                              variant={user.role === 'admin' ? 'default' : 'secondary'} 
+                            <Badge
+                              variant={user.role === 'admin' ? 'default' : 'secondary'}
                               className="text-xs h-4"
                             >
                               {user.role}
@@ -700,7 +739,7 @@ export default function ChatPage() {
                   </div>
                 </div>
               </div>
-              
+
               <ScrollArea className="flex-1 p-4">
                 {messages.length > 0 ? (
                   <div className="space-y-4">
@@ -708,7 +747,7 @@ export default function ChatPage() {
                       const isOwn = message.senderId === currentUser.id.toString();
                       const showAvatar = !isOwn && (index === 0 || messages[index - 1].senderId !== message.senderId);
                       const status = getMessageStatus(message);
-                      
+
                       return (
                         <div
                           key={message._id}
@@ -725,7 +764,7 @@ export default function ChatPage() {
                               </AvatarFallback>
                             </Avatar>
                           )}
-                          
+
                           <div className={cn("flex flex-col", isOwn && "items-end")}>
                             {showAvatar && !isOwn && (
                               <span className="text-xs text-gray-500 mb-1 px-3">
@@ -747,9 +786,9 @@ export default function ChatPage() {
                               isOwn ? "justify-end" : "justify-start"
                             )}>
                               <span className="text-xs text-gray-500">
-                                {new Date(message.timestamp).toLocaleTimeString([], { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
+                                {new Date(message.timestamp).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
                                 })}
                               </span>
                               {isOwn && status && (
@@ -764,7 +803,7 @@ export default function ChatPage() {
                         </div>
                       );
                     })}
-                    
+
                     {typingUsers.size > 0 && (
                       <div className="flex items-center gap-2 text-sm text-gray-500 px-3">
                         <Avatar className="h-6 w-6">
@@ -780,7 +819,7 @@ export default function ChatPage() {
                         </div>
                       </div>
                     )}
-                    
+
                     <div ref={messagesEndRef} />
                   </div>
                 ) : (
@@ -816,8 +855,8 @@ export default function ChatPage() {
                       </Button>
                     </div>
                   </div>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     size="sm"
                     disabled={!newMessage.trim() || connectionStatus !== 'connected'}
                     className="h-10 w-10 p-0 rounded-full bg-blue-500 hover:bg-blue-600"
@@ -848,6 +887,9 @@ export default function ChatPage() {
           )}
         </div>
       </div>
+
+      {/* Push Notification Banner */}
+      {currentUser && <NotificationBanner userId={currentUser.id} />}
     </div>
   );
 }

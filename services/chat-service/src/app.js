@@ -62,6 +62,33 @@ app.get('/health', async (req, res) => {
   });
 });
 
+// Get user's chat rooms (REST API for compatibility)
+app.get('/api/chat/rooms/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const mongoService = require('./services/mongoService');
+
+    console.log('📥 REST API: Get rooms for user:', userId);
+
+    const rooms = await mongoService.getUserRooms(userId);
+
+    console.log(`✅ REST API: Returning ${rooms.length} rooms`);
+
+    res.json({
+      success: true,
+      rooms,
+      totalCount: rooms.length
+    });
+  } catch (error) {
+    console.error('❌ REST API: Failed to get rooms:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user rooms',
+      message: error.message
+    });
+  }
+});
+
 // ==========================================
 // NO REST API ROUTES - WEBSOCKET ONLY
 // ==========================================
@@ -77,7 +104,7 @@ app.get('/health', async (req, res) => {
 // Error handling
 app.use((err, req, res, next) => {
   console.error('Chat service error:', err);
-  res.status(500).json({ 
+  res.status(500).json({
     success: false,
     error: 'Internal server error',
     message: err.message
@@ -87,20 +114,20 @@ app.use((err, req, res, next) => {
 // Graceful shutdown
 async function gracefulShutdown() {
   console.log('Shutting down chat service...');
-  
+
   try {
     if (io) {
       io.close();
       console.log('Socket.IO server closed');
     }
-    
+
     await redisService.disconnect();
-    
+
     server.close(() => {
       console.log('HTTP server closed');
       process.exit(0);
     });
-    
+
   } catch (error) {
     console.error('Error during shutdown:', error);
     process.exit(1);
@@ -114,16 +141,16 @@ process.on('SIGTERM', gracefulShutdown);
 async function startServer() {
   try {
     console.log('🚀 Starting chat service...');
-    
+
     // Initialize Redis
     await redisService.connect();
-    
+
     // Initialize MongoDB
     await chatController.initialize();
-    
+
     // Initialize Socket.IO handlers
     await socketServer.init(io);
-    
+
     // Start HTTP server
     server.listen(PORT, () => {
       console.log(`✅ Chat service running on port ${PORT}`);
@@ -131,7 +158,7 @@ async function startServer() {
       console.log(`⚡ Redis: ${redisService.isConnected ? 'Connected' : 'Disconnected'}`);
       console.log('');
     });
-    
+
   } catch (error) {
     console.error('❌ Failed to start chat service:', error);
     process.exit(1);

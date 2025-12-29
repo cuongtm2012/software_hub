@@ -27,7 +27,7 @@ async function initializeDatabase() {
 async function waitForExternalServices(timeout = 60000) {
   console.log('Waiting for external services to be ready...');
   const startTime = Date.now();
-  
+
   const services = [
     { name: 'Email Service', url: process.env.EMAIL_SERVICE_URL || 'http://email-service:3001' },
     { name: 'Chat Service', url: process.env.CHAT_SERVICE_URL || 'http://chat-service:3002' },
@@ -36,34 +36,34 @@ async function waitForExternalServices(timeout = 60000) {
 
   while (Date.now() - startTime < timeout) {
     let allServicesReady = true;
-    
+
     for (const service of services) {
       try {
-        const response = await fetch(`${service.url}/health`, { 
+        const response = await fetch(`${service.url}/health`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
-        
+
         if (!response.ok) {
           allServicesReady = false;
           break;
         }
-        
+
       } catch (error) {
         allServicesReady = false;
         break;
       }
     }
-    
+
     if (allServicesReady) {
       console.log('All external services are ready');
       return;
     }
-    
+
     console.log('Waiting for external services...');
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
-  
+
   console.warn('Some external services may not be ready, continuing startup...');
 }
 
@@ -92,7 +92,7 @@ app.use((req, res, next) => {
     (req.path.startsWith('/api/login') || req.path.startsWith('/api/logout') || req.path.startsWith('/api/register')) || // Auth calls
     (req.path === '/' || req.path.startsWith('/auth') || req.path.startsWith('/dashboard') || req.path.startsWith('/admin')) // Page loads
   ) && !req.path.includes('/src/') && !req.path.includes('/@') && !req.path.includes('.js') && !req.path.includes('.css') && !req.path.includes('.ico');
-  
+
   if (shouldLog) {
     console.log('Session Debug:', {
       sessionId: req.sessionID,
@@ -139,15 +139,23 @@ app.use((req, res, next) => {
 (async () => {
   try {
     console.log('Starting SoftwareHub application...');
-    
+
     // Initialize database first
     await initializeDatabase();
-    
+
+    // Initialize Firebase Admin SDK for push notifications
+    try {
+      const { initializeFirebaseAdmin } = await import("./lib/firebase-admin");
+      initializeFirebaseAdmin();
+    } catch (error) {
+      console.warn('Firebase Admin SDK initialization skipped:', error);
+    }
+
     // Wait for external services in production
     if (process.env.NODE_ENV === 'production') {
       await waitForExternalServices();
     }
-    
+
     // Register routes after database is ready
     const server = await registerRoutes(app);
 
@@ -161,7 +169,7 @@ app.use((req, res, next) => {
 
     // Setup Vite or static serving
     const isProduction = process.env.NODE_ENV === "production";
-    
+
     if (!isProduction) {
       // Dynamic import to avoid bundling Vite in production
       const { setupVite } = await import("./vite");
@@ -187,7 +195,7 @@ app.use((req, res, next) => {
       log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       log(`Database: Connected`);
     });
-    
+
   } catch (error) {
     console.error('Failed to start application:', error);
     process.exit(1);

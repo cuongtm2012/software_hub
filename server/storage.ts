@@ -1,4 +1,4 @@
-import { 
+import {
   users, softwares, categories, reviews, userDownloads,
   externalRequests, quotes, messages, portfolios, portfolioReviews,
   products, orders, orderItems, payments, productReviews,
@@ -6,7 +6,7 @@ import {
   serviceRequests, serviceQuotations, serviceProjects, servicePayments,
   userPresence, notifications,
   chatRooms, chatRoomMembers, chatMessages,
-  type User, type InsertUser, 
+  type User, type InsertUser,
   type Software, type InsertSoftware,
   type Category, type InsertCategory,
   type Review, type InsertReview,
@@ -46,32 +46,32 @@ const PostgresSessionStore = connectPg(session);
 export interface IStorage {
   // System
   initialize(): Promise<void>;
-  
+
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   updateUserProfile(userId: number, profileData: any): Promise<User | undefined>;
-  
+
   // Admin User Management
   getAllUsers(params?: { role?: string; search?: string; limit?: number; offset?: number }): Promise<{ users: any[], total: number }>;
   deleteUser(id: number): Promise<boolean>;
   resetUserPassword(id: number, newPassword: string): Promise<boolean>;
-  
+
   // User Downloads
   createUserDownload(userId: number, softwareId: number, version: string): Promise<UserDownload>;
   getUserDownloads(userId: number): Promise<UserDownload[]>;
-  
+
   // User Reviews Management
   getUserReviews(userId: number): Promise<Review[]>;
   updateReview(id: number, userId: number, reviewData: Partial<InsertReview>): Promise<Review | undefined>;
-  
+
   // Categories
   createCategory(category: InsertCategory): Promise<Category>;
   getCategories(): Promise<Category[]>;
   getCategoryById(id: number): Promise<Category | undefined>;
-  
+
   // Software
   createSoftware(software: InsertSoftware, userId: number): Promise<Software>;
   getSoftwareById(id: number): Promise<Software | undefined>;
@@ -89,7 +89,7 @@ export interface IStorage {
     offset?: number;
   }): Promise<{ softwares: Software[], total: number }>;
   getAdminSoftwareList(filters: any, limit?: number, offset?: number): Promise<{ softwares: Software[], total: number }>;
-  
+
   // Reviews
   createReview(review: InsertReview, userId: number): Promise<Review>;
   getReviewsBySoftwareId(softwareId: number): Promise<Review[]>;
@@ -97,7 +97,7 @@ export interface IStorage {
   getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined>;
   getReviewById(id: number): Promise<Review | undefined>;
   deleteReview(id: number, userId: number): Promise<boolean>;
-  
+
   // External Project Requests
   createExternalRequest(request: InsertExternalRequest): Promise<ExternalRequest>;
   getExternalRequests(status?: string, limit?: number, offset?: number): Promise<{ requests: ExternalRequest[], total: number }>;
@@ -112,7 +112,7 @@ export interface IStorage {
   getClientProjects(clientId: number, status?: string): Promise<ExternalRequest[]>;
   getDeveloperProjects(developerId: number, status?: string): Promise<ExternalRequest[]>;
   getProjectsCount(status?: string): Promise<{ count: number }>;
-  
+
   // Phase 2: Project Management (now using external requests)
   createProject(project: InsertExternalRequest, clientId?: number): Promise<ExternalRequest>; // clientId optional for external requests
   getProjectById(id: number): Promise<ExternalRequest | undefined>;
@@ -120,7 +120,7 @@ export interface IStorage {
   getProjectsForDevelopers(status?: string, limit?: number, offset?: number): Promise<{ projects: ExternalRequest[], total: number }>;
   updateProject(id: number, updates: Partial<InsertExternalRequest>): Promise<ExternalRequest | undefined>;
   updateProjectStatus(id: number, status: string): Promise<ExternalRequest | undefined>;
-  
+
   // Quotes
   createQuote(quote: InsertQuote, developerId: number): Promise<Quote>;
   getQuotesByProjectId(projectId: number): Promise<Quote[]>;
@@ -129,11 +129,11 @@ export interface IStorage {
   getQuoteById(id: number): Promise<Quote | undefined>;
   updateQuoteStatus(id: number, status: string): Promise<Quote | undefined>;
   rejectOtherQuotes(projectId: number, acceptedQuoteId: number): Promise<void>;
-  
+
   // Messages
   sendMessage(message: InsertMessage, senderId: number): Promise<Message>;
   getMessagesByProjectId(projectId: number): Promise<Message[]>;
-  
+
   // Portfolios
   createPortfolio(portfolio: InsertPortfolio, developerId: number): Promise<Portfolio>;
   getPortfolioById(id: number): Promise<Portfolio | undefined>;
@@ -142,14 +142,14 @@ export interface IStorage {
   getAllPortfolios(limit?: number, offset?: number): Promise<{ portfolios: Portfolio[], total: number }>;
   updatePortfolio(id: number, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined>;
   deletePortfolio(id: number, developerId: number): Promise<boolean>;
-  
+
   // Portfolio Reviews
   createPortfolioReview(review: InsertPortfolioReview, userId: number): Promise<PortfolioReview>;
   getPortfolioReviewsByPortfolioId(portfolioId: number): Promise<PortfolioReview[]>;
   getPortfolioReviews(portfolioId: number): Promise<PortfolioReview[]>;
   getClientReviewForPortfolio(clientId: number, portfolioId: number): Promise<PortfolioReview | undefined>;
   deletePortfolioReview(id: number, userId: number): Promise<boolean>;
-  
+
   // Phase 3: Marketplace
   // Products
   createProduct(product: InsertProduct, sellerId: number): Promise<Product>;
@@ -160,7 +160,7 @@ export interface IStorage {
   searchProducts(search: string, limit?: number, offset?: number): Promise<{ products: Product[], total: number }>;
   updateProduct(id: number, product: Partial<InsertProduct>, sellerId: number): Promise<Product | undefined>;
   deleteProduct(id: number, sellerId: number): Promise<boolean>;
-  
+
   // Orders
   createOrder(order: InsertOrder, items: InsertOrderItem[], buyerId: number): Promise<Order>;
   getOrderById(id: number): Promise<Order | undefined>;
@@ -170,7 +170,7 @@ export interface IStorage {
   getOrdersBySellerId(sellerId: number): Promise<Order[]>;
   getSellerOrders(sellerId: number): Promise<Order[]>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
-  
+
   // Payments
   createPayment(payment: InsertPayment): Promise<Payment>;
   getPaymentById(id: number): Promise<Payment | undefined>;
@@ -182,7 +182,7 @@ export interface IStorage {
   getSellerPayments(sellerId: number): Promise<Payment[]>;
   updatePaymentStatus(id: number, status: string): Promise<Payment | undefined>;
   releaseEscrow(id: number, buyerId: number): Promise<Payment | undefined>;
-  
+
   // Product Reviews
   createProductReview(review: InsertProductReview, buyerId: number): Promise<ProductReview>;
   getProductReviewsByProductId(productId: number): Promise<ProductReview[]>;
@@ -190,29 +190,29 @@ export interface IStorage {
   getUserReviewForProduct(userId: number, productId: number): Promise<ProductReview | undefined>;
   getProductReviewsByBuyerId(buyerId: number): Promise<ProductReview[]>;
   deleteProductReview(id: number, buyerId: number): Promise<boolean>;
-  
+
   // Seller Profile Management
   createSellerProfile(profile: InsertSellerProfile, userId: number): Promise<SellerProfile>;
   getSellerProfile(userId: number): Promise<SellerProfile | undefined>;
   updateSellerProfile(userId: number, profile: Partial<InsertSellerProfile>): Promise<SellerProfile | undefined>;
   updateSellerVerificationStatus(userId: number, status: 'pending' | 'verified' | 'rejected'): Promise<SellerProfile | undefined>;
   getAllSellersForVerification(): Promise<SellerProfile[]>;
-  
+
   // Cart Management
   addToCart(item: InsertCartItem, userId: number): Promise<CartItem>;
   getCartItems(userId: number): Promise<CartItem[]>;
   removeFromCart(itemId: number, userId: number): Promise<boolean>;
   clearCart(userId: number): Promise<boolean>;
-  
+
   // Support Tickets
   createSupportTicket(ticket: InsertSupportTicket, buyerId: number): Promise<SupportTicket>;
   getSupportTickets(userId: number): Promise<SupportTicket[]>;
   updateSupportTicket(id: number, updates: Partial<SupportTicket>): Promise<SupportTicket | undefined>;
-  
+
   // Sales Analytics
   createSalesAnalytics(analytics: InsertSalesAnalytics): Promise<SalesAnalytics>;
   getSalesAnalytics(sellerId: number, filters?: { startDate?: Date; endDate?: Date; }): Promise<SalesAnalytics[]>;
-  
+
   // IT Services
   // Service Requests
   createServiceRequest(request: InsertServiceRequest, clientId: number): Promise<ServiceRequest>;
@@ -221,7 +221,7 @@ export interface IStorage {
   getAllServiceRequests(): Promise<ServiceRequest[]>;
   updateServiceRequest(id: number, request: Partial<InsertServiceRequest>): Promise<ServiceRequest | undefined>;
   updateServiceRequestStatus(id: number, status: string, adminNotes?: string): Promise<ServiceRequest | undefined>;
-  
+
   // Service Quotations
   createServiceQuotation(quotation: InsertServiceQuotation, adminId: number): Promise<ServiceQuotation>;
   getServiceQuotationById(id: number): Promise<ServiceQuotation | undefined>;
@@ -229,7 +229,7 @@ export interface IStorage {
   getAllServiceQuotations(): Promise<ServiceQuotation[]>;
   updateServiceQuotation(id: number, quotation: Partial<InsertServiceQuotation>): Promise<ServiceQuotation | undefined>;
   updateServiceQuotationStatus(id: number, status: string, clientResponse?: string): Promise<ServiceQuotation | undefined>;
-  
+
   // Service Projects
   createServiceProject(project: InsertServiceProject): Promise<ServiceProject>;
   getServiceProjectById(id: number): Promise<ServiceProject | undefined>;
@@ -238,14 +238,14 @@ export interface IStorage {
   getAllServiceProjects(): Promise<ServiceProject[]>;
   updateServiceProject(id: number, project: Partial<InsertServiceProject>): Promise<ServiceProject | undefined>;
   updateServiceProjectProgress(id: number, progress: number, adminNotes?: string): Promise<ServiceProject | undefined>;
-  
+
   // Service Payments
   createServicePayment(payment: InsertServicePayment): Promise<ServicePayment>;
   getServicePaymentById(id: number): Promise<ServicePayment | undefined>;
   getServicePaymentsByQuotation(quotationId: number): Promise<ServicePayment[]>;
   getServicePaymentsByClient(clientId: number): Promise<ServicePayment[]>;
   updateServicePaymentStatus(id: number, status: string): Promise<ServicePayment | undefined>;
-  
+
   // Notifications
   createNotification(notification: InsertNotification): Promise<Notification>;
   getUserNotifications(userId: number, params?: { limit?: number; offset?: number; unreadOnly?: boolean }): Promise<{ notifications: Notification[], total: number }>;
@@ -266,6 +266,13 @@ export interface IStorage {
   markMessagesAsRead(roomId: number, userId: number): Promise<void>;
   updateUserPresence(userId: number, status: string): Promise<void>;
   getOnlineUsers(): Promise<User[]>;
+
+  // FCM Tokens for Push Notifications
+  saveFCMToken(userId: number, token: string, deviceType?: string): Promise<void>;
+  getUserFCMTokens(userId: number): Promise<string[]>;
+  deleteFCMToken(token: string): Promise<boolean>;
+  deleteUserFCMTokens(userId: number): Promise<boolean>;
+  cleanupInvalidTokens(invalidTokens: string[]): Promise<void>;
 
   // Session store
   sessionStore: any;
@@ -2020,7 +2027,7 @@ class DatabaseStorage implements IStorage {
       .innerJoin(chatRooms, eq(chatRoomMembers.room_id, chatRooms.id))
       .where(eq(chatRoomMembers.user_id, userId))
       .orderBy(desc(chatRooms.updated_at));
-    
+
     return rooms.map(r => r.room);
   }
 
@@ -2084,7 +2091,7 @@ class DatabaseStorage implements IStorage {
 
       const allMembers = [creatorId, ...participantIds];
       const uniqueMembers = Array.from(new Set(allMembers));
-      
+
       await tx.insert(chatRoomMembers).values(
         uniqueMembers.map(userId => ({
           room_id: room.id,
@@ -2163,7 +2170,7 @@ class DatabaseStorage implements IStorage {
 
   async updateUserPresence(userId: number, status: string): Promise<void> {
     const isOnline = status === 'online';
-    
+
     const [existing] = await db
       .select()
       .from(userPresence)
@@ -2198,6 +2205,83 @@ class DatabaseStorage implements IStorage {
       .where(eq(userPresence.is_online, true));
 
     return onlineUsers.map(u => u.user);
+  }
+
+  // FCM Token Management for Push Notifications
+  async saveFCMToken(userId: number, token: string, deviceType: string = 'web'): Promise<void> {
+    try {
+      // Use raw SQL for upsert operation
+      await pool.query(
+        `INSERT INTO fcm_tokens (user_id, token, device_type, created_at, updated_at)
+         VALUES ($1, $2, $3, NOW(), NOW())
+         ON CONFLICT (user_id, token)
+         DO UPDATE SET 
+           updated_at = NOW(),
+           active = true`,
+        [userId, token, deviceType]
+      );
+      console.log(`✅ Saved FCM token for user ${userId}`);
+    } catch (error) {
+      console.error('Failed to save FCM token:', error);
+      throw error;
+    }
+  }
+
+  async getUserFCMTokens(userId: number): Promise<string[]> {
+    try {
+      const result = await pool.query(
+        `SELECT token FROM fcm_tokens 
+         WHERE user_id = $1 AND active = true`,
+        [userId]
+      );
+      return result.rows.map((row: any) => row.token);
+    } catch (error) {
+      console.error('Failed to get user FCM tokens:', error);
+      return [];
+    }
+  }
+
+  async deleteFCMToken(token: string): Promise<boolean> {
+    try {
+      const result = await pool.query(
+        `UPDATE fcm_tokens SET active = false WHERE token = $1`,
+        [token]
+      );
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Failed to delete FCM token:', error);
+      return false;
+    }
+  }
+
+  async deleteUserFCMTokens(userId: number): Promise<boolean> {
+    try {
+      const result = await pool.query(
+        `UPDATE fcm_tokens SET active = false WHERE user_id = $1`,
+        [userId]
+      );
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Failed to delete user FCM tokens:', error);
+      return false;
+    }
+  }
+
+  async cleanupInvalidTokens(invalidTokens: string[]): Promise<void> {
+    if (invalidTokens.length === 0) return;
+
+    try {
+      // Mark invalid tokens as inactive
+      await pool.query(
+        `UPDATE fcm_tokens 
+         SET active = false 
+         WHERE token = ANY($1::text[])`,
+        [invalidTokens]
+      );
+      console.log(`🧹 Cleaned up ${invalidTokens.length} invalid FCM tokens`);
+    } catch (error) {
+      console.error('Failed to cleanup invalid FCM tokens:', error);
+    }
   }
 }
 

@@ -6,10 +6,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { 
+import {
   Loader2, AlertCircle, CheckCircle2, Clock, FileText, DollarSign, MessagesSquare,
   Store, Plus, Package, TrendingUp, ShoppingCart, Star, Eye, Edit, Trash2,
-  Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp, 
+  Users, BarChart3, Briefcase, Code, Target, XCircle, ChevronDown, ChevronUp,
   ChevronLeft, ChevronRight, Edit3, CalendarDays, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { NotificationBanner } from "@/components/NotificationBanner";
 
 // Define types for the dashboard data
 interface Project {
@@ -78,13 +79,13 @@ export default function DashboardPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [selectedProjectStatus, setSelectedProjectStatus] = useState<string>('all');
-  
+
   // Product list expansion state
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingPagination, setIsLoadingPagination] = useState(false);
   const productsPerPage = 10;
-  
+
   // Project list expansion state
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [currentProjectPage, setCurrentProjectPage] = useState(1);
@@ -203,7 +204,7 @@ export default function DashboardPage() {
     active: products.filter(p => p.status === 'approved').length,
     pending: products.filter(p => p.status === 'pending').length,
     totalSales: products.reduce((sum, p) => sum + p.total_sales, 0),
-    avgRating: products.length > 0 
+    avgRating: products.length > 0
       ? products.reduce((sum, p) => sum + (p.avg_rating || 0), 0) / products.length
       : 0,
     totalRevenue: orders.reduce((sum, o) => sum + parseFloat(o.total_amount || '0'), 0)
@@ -212,15 +213,15 @@ export default function DashboardPage() {
   // Use unified data source - all sections should show the same projects from combined endpoint
   const allCombinedProjects = availableProjectsData?.projects || [];
   const totalCombinedProjectsCount = availableProjectsData?.total || allCombinedProjects.length;
-  
+
   // For expanded view, use paginated combined data; for compact view, show first 3 from combined data
-  const displayedProjects = showAllProjects 
+  const displayedProjects = showAllProjects
     ? (paginatedProjectsData?.projects || [])
     : allCombinedProjects.slice(0, 3); // Show only first 3 for compact view
-  
+
   const totalCombinedProjects = showAllProjects ? (paginatedProjectsData?.total || 0) : totalCombinedProjectsCount;
   const totalProjectPages = showAllProjects ? Math.ceil(totalCombinedProjects / projectsPerPage) : 1;
-  
+
   // Use unified combined projects for statistics
   const projectStats = {
     total: totalCombinedProjectsCount,
@@ -241,13 +242,17 @@ export default function DashboardPage() {
         <div className="container mx-auto px-1 sm:px-4 py-2 sm:py-8 max-w-full overflow-x-hidden">
           {/* Welcome Header */}
           <div className="flex flex-col gap-3 mb-4 sm:mb-8 p-3 sm:p-4 lg:p-6 bg-white rounded-lg shadow-sm border">
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
-                Welcome back, {user.name}!
-              </h1>
-              <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
-                Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
-              </p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+                  Welcome back, {user.name}!
+                </h1>
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
+                  Manage your {isSeller ? 'products and projects' : 'projects'} from your dashboard
+                </p>
+              </div>
+
+
             </div>
           </div>
 
@@ -419,7 +424,7 @@ export default function DashboardPage() {
                                           });
                                         } catch (error: any) {
                                           toast({
-                                            title: "Error", 
+                                            title: "Error",
                                             description: error.message || "Failed to delete product",
                                             variant: "destructive"
                                           });
@@ -439,8 +444,8 @@ export default function DashboardPage() {
                           {totalProducts > 3 && (
                             <div className="space-y-4">
                               <div className="text-center pt-4">
-                                <Button 
-                                  variant="outline" 
+                                <Button
+                                  variant="outline"
                                   onClick={() => {
                                     setShowAllProducts(!showAllProducts);
                                     setCurrentPage(1);
@@ -457,7 +462,7 @@ export default function DashboardPage() {
                                   {showAllProducts ? 'Show Less' : `View All Products (${totalProducts})`}
                                 </Button>
                               </div>
-                              
+
                               {/* Pagination Controls */}
                               {showAllProducts && totalPages > 1 && (
                                 <div className="flex items-center justify-between pt-4 border-t">
@@ -477,7 +482,7 @@ export default function DashboardPage() {
                                       <ChevronLeft className="h-4 w-4" />
                                       Previous
                                     </Button>
-                                    
+
                                     {/* Page numbers */}
                                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                                       const pageNum = i + 1;
@@ -496,7 +501,7 @@ export default function DashboardPage() {
                                         </Button>
                                       );
                                     })}
-                                    
+
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -512,7 +517,7 @@ export default function DashboardPage() {
                                   </div>
                                 </div>
                               )}
-                              
+
                               {/* Loading indicator for pagination */}
                               {showAllProducts && isLoadingPaginated && (
                                 <div className="flex items-center justify-center py-4">
@@ -660,15 +665,15 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         ))}
-                        
 
-                        
+
+
                         {/* Expand/Collapse Button and Pagination for Projects */}
                         {totalCombinedProjects > 3 && (
                           <div className="space-y-4">
                             <div className="text-center pt-4">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 onClick={() => {
                                   setShowAllProjects(!showAllProjects);
                                   setCurrentProjectPage(1);
@@ -685,7 +690,7 @@ export default function DashboardPage() {
                                 {showAllProjects ? 'Show Less' : `View All Projects (${totalCombinedProjects})`}
                               </Button>
                             </div>
-                            
+
                             {/* Pagination Controls for Projects */}
                             {showAllProjects && totalProjectPages > 1 && (
                               <div className="flex items-center justify-between pt-4 border-t">
@@ -705,7 +710,7 @@ export default function DashboardPage() {
                                     <ChevronLeft className="h-4 w-4" />
                                     Previous
                                   </Button>
-                                  
+
                                   {/* Page numbers */}
                                   {Array.from({ length: Math.min(totalProjectPages, 5) }, (_, i) => {
                                     const pageNum = i + 1;
@@ -724,7 +729,7 @@ export default function DashboardPage() {
                                       </Button>
                                     );
                                   })}
-                                  
+
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -740,7 +745,7 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                             )}
-                            
+
                             {/* Loading indicator for pagination */}
                             {showAllProjects && isLoadingPaginatedProjects && (
                               <div className="flex items-center justify-center py-4">
@@ -772,36 +777,36 @@ export default function DashboardPage() {
                     {/* Enhanced Project Filter Tabs */}
                     <Tabs defaultValue="all" className="w-full">
                       <TabsList className="grid w-full grid-cols-5 h-12 bg-gradient-to-r from-gray-100 to-gray-50 p-1 rounded-xl shadow-inner">
-                        <TabsTrigger 
-                          value="all" 
+                        <TabsTrigger
+                          value="all"
                           className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-green-700 transition-all duration-200 rounded-lg"
                         >
                           <div className="h-2 w-2 rounded-full bg-gray-400 data-[state=active]:bg-green-500"></div>
                           All
                         </TabsTrigger>
-                        <TabsTrigger 
-                          value="pending" 
+                        <TabsTrigger
+                          value="pending"
                           className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-700 transition-all duration-200 rounded-lg"
                         >
                           <div className="h-2 w-2 rounded-full bg-blue-400"></div>
                           Pending
                         </TabsTrigger>
-                        <TabsTrigger 
-                          value="in_progress" 
+                        <TabsTrigger
+                          value="in_progress"
                           className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-orange-700 transition-all duration-200 rounded-lg"
                         >
                           <div className="h-2 w-2 rounded-full bg-orange-400"></div>
                           In Progress
                         </TabsTrigger>
-                        <TabsTrigger 
-                          value="completed" 
+                        <TabsTrigger
+                          value="completed"
                           className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-green-700 transition-all duration-200 rounded-lg"
                         >
                           <div className="h-2 w-2 rounded-full bg-green-400"></div>
                           Completed
                         </TabsTrigger>
-                        <TabsTrigger 
-                          value="cancelled" 
+                        <TabsTrigger
+                          value="cancelled"
                           className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-red-700 transition-all duration-200 rounded-lg"
                         >
                           <div className="h-2 w-2 rounded-full bg-red-400"></div>
@@ -820,7 +825,7 @@ export default function DashboardPage() {
                             <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects found</h3>
                             <p className="text-gray-600 mb-6 max-w-md mx-auto">There are no available projects at the moment. Check back later or try a different status filter.</p>
-                            <Button 
+                            <Button
                               className="bg-green-600 hover:bg-green-700"
                               onClick={() => navigate('/request-project')}
                             >
@@ -833,43 +838,43 @@ export default function DashboardPage() {
                               const getStatusConfig = (status: string) => {
                                 switch (status) {
                                   case 'pending':
-                                    return { 
-                                      color: 'bg-blue-100 text-blue-800 border-blue-200', 
+                                    return {
+                                      color: 'bg-blue-100 text-blue-800 border-blue-200',
                                       icon: '🔄',
                                       dotColor: 'bg-blue-500'
                                     };
                                   case 'in_progress':
-                                    return { 
-                                      color: 'bg-orange-100 text-orange-800 border-orange-200', 
+                                    return {
+                                      color: 'bg-orange-100 text-orange-800 border-orange-200',
                                       icon: '⚡',
                                       dotColor: 'bg-orange-500'
                                     };
                                   case 'completed':
-                                    return { 
-                                      color: 'bg-green-100 text-green-800 border-green-200', 
+                                    return {
+                                      color: 'bg-green-100 text-green-800 border-green-200',
                                       icon: '✅',
                                       dotColor: 'bg-green-500'
                                     };
                                   case 'cancelled':
-                                    return { 
-                                      color: 'bg-red-100 text-red-800 border-red-200', 
+                                    return {
+                                      color: 'bg-red-100 text-red-800 border-red-200',
                                       icon: '❌',
                                       dotColor: 'bg-red-500'
                                     };
                                   default:
-                                    return { 
-                                      color: 'bg-gray-100 text-gray-800 border-gray-200', 
+                                    return {
+                                      color: 'bg-gray-100 text-gray-800 border-gray-200',
                                       icon: '📋',
                                       dotColor: 'bg-gray-500'
                                     };
                                 }
                               };
-                              
+
                               const statusConfig = getStatusConfig(project.status);
-                              
+
                               return (
-                                <div 
-                                  key={`all-tab-${project.id}-${index}-${project.type || 'project'}`} 
+                                <div
+                                  key={`all-tab-${project.id}-${index}-${project.type || 'project'}`}
                                   className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                   onClick={() => navigate(`/project/${project.id}`)}
                                 >
@@ -891,20 +896,20 @@ export default function DashboardPage() {
                                           <span className="capitalize">{project.status.replace('_', ' ')}</span>
                                         </div>
                                       </div>
-                                      
+
                                       {/* Description */}
                                       <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
                                         {project.project_description || project.description || 'No description available for this project.'}
                                       </p>
-                                      
+
                                       {/* Metadata Row */}
                                       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                         <div className="flex items-center gap-1">
                                           <CalendarDays className="h-4 w-4" />
-                                          <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
-                                            month: 'short', 
-                                            day: 'numeric', 
-                                            year: 'numeric' 
+                                          <span>Created {new Date(project.created_at).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric'
                                           })}</span>
                                         </div>
                                         {project.budget && (
@@ -921,7 +926,7 @@ export default function DashboardPage() {
                                         )}
                                       </div>
                                     </div>
-                                    
+
 
                                   </div>
                                 </div>
@@ -935,15 +940,15 @@ export default function DashboardPage() {
                       <TabsContent value="pending" className="space-y-4 mt-6">
                         <div className="grid gap-4">
                           {displayAvailableProjects?.filter((p: any) => p.status === 'pending').map((project: any, index) => {
-                            const statusConfig = { 
-                              color: 'bg-blue-100 text-blue-800 border-blue-200', 
+                            const statusConfig = {
+                              color: 'bg-blue-100 text-blue-800 border-blue-200',
                               icon: '🔄',
                               dotColor: 'bg-blue-500'
                             };
-                            
+
                             return (
-                              <div 
-                                key={`pending-${project.id}-${index}-${project.type || 'project'}`} 
+                              <div
+                                key={`pending-${project.id}-${index}-${project.type || 'project'}`}
                                 className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                 onClick={() => navigate(`/project/${project.id}`)}
                               >
@@ -963,18 +968,18 @@ export default function DashboardPage() {
                                         <span className="capitalize">Pending</span>
                                       </div>
                                     </div>
-                                    
+
                                     <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
                                       {project.project_description || project.description || 'No description available for this project.'}
                                     </p>
-                                    
+
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
                                         <CalendarDays className="h-4 w-4" />
-                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric', 
-                                          year: 'numeric' 
+                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          year: 'numeric'
                                         })}</span>
                                       </div>
                                       {project.budget && (
@@ -1009,15 +1014,15 @@ export default function DashboardPage() {
                       <TabsContent value="in_progress" className="space-y-4 mt-6">
                         <div className="grid gap-4">
                           {displayAvailableProjects?.filter((p: any) => p.status === 'in_progress' || p.status === 'in-progress').map((project: any, index) => {
-                            const statusConfig = { 
-                              color: 'bg-orange-100 text-orange-800 border-orange-200', 
+                            const statusConfig = {
+                              color: 'bg-orange-100 text-orange-800 border-orange-200',
                               icon: '⚡',
                               dotColor: 'bg-orange-500'
                             };
-                            
+
                             return (
-                              <div 
-                                key={`progress-${project.id}-${index}-${project.type || 'project'}`} 
+                              <div
+                                key={`progress-${project.id}-${index}-${project.type || 'project'}`}
                                 className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-orange-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                 onClick={() => navigate(`/project/${project.id}`)}
                               >
@@ -1037,18 +1042,18 @@ export default function DashboardPage() {
                                         <span className="capitalize">In Progress</span>
                                       </div>
                                     </div>
-                                    
+
                                     <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
                                       {project.project_description || project.description || 'No description available for this project.'}
                                     </p>
-                                    
+
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
                                         <CalendarDays className="h-4 w-4" />
-                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric', 
-                                          year: 'numeric' 
+                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          year: 'numeric'
                                         })}</span>
                                       </div>
                                       {project.budget && (
@@ -1083,15 +1088,15 @@ export default function DashboardPage() {
                       <TabsContent value="completed" className="space-y-4 mt-6">
                         <div className="grid gap-4">
                           {displayAvailableProjects?.filter((p: any) => p.status === 'completed').map((project: any, index) => {
-                            const statusConfig = { 
-                              color: 'bg-green-100 text-green-800 border-green-200', 
+                            const statusConfig = {
+                              color: 'bg-green-100 text-green-800 border-green-200',
                               icon: '✅',
                               dotColor: 'bg-green-500'
                             };
-                            
+
                             return (
-                              <div 
-                                key={`completed-${project.id}-${index}-${project.type || 'project'}`} 
+                              <div
+                                key={`completed-${project.id}-${index}-${project.type || 'project'}`}
                                 className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                 onClick={() => navigate(`/project/${project.id}`)}
                               >
@@ -1111,18 +1116,18 @@ export default function DashboardPage() {
                                         <span className="capitalize">Completed</span>
                                       </div>
                                     </div>
-                                    
+
                                     <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
                                       {project.project_description || project.description || 'No description available for this project.'}
                                     </p>
-                                    
+
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
                                         <CalendarDays className="h-4 w-4" />
-                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric', 
-                                          year: 'numeric' 
+                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          year: 'numeric'
                                         })}</span>
                                       </div>
                                       {project.budget && (
@@ -1157,15 +1162,15 @@ export default function DashboardPage() {
                       <TabsContent value="cancelled" className="space-y-4 mt-6">
                         <div className="grid gap-4">
                           {displayAvailableProjects?.filter((p: any) => p.status === 'cancelled').map((project: any, index) => {
-                            const statusConfig = { 
-                              color: 'bg-red-100 text-red-800 border-red-200', 
+                            const statusConfig = {
+                              color: 'bg-red-100 text-red-800 border-red-200',
                               icon: '❌',
                               dotColor: 'bg-red-500'
                             };
-                            
+
                             return (
-                              <div 
-                                key={`cancelled-${project.id}-${index}-${project.type || 'project'}`} 
+                              <div
+                                key={`cancelled-${project.id}-${index}-${project.type || 'project'}`}
                                 className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-red-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                                 onClick={() => navigate(`/project/${project.id}`)}
                               >
@@ -1185,18 +1190,18 @@ export default function DashboardPage() {
                                         <span className="capitalize">Cancelled</span>
                                       </div>
                                     </div>
-                                    
+
                                     <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
                                       {project.project_description || project.description || 'No description available for this project.'}
                                     </p>
-                                    
+
                                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                       <div className="flex items-center gap-1">
                                         <CalendarDays className="h-4 w-4" />
-                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric', 
-                                          year: 'numeric' 
+                                        <span>Created {new Date(project.created_at).toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          year: 'numeric'
                                         })}</span>
                                       </div>
                                       {project.budget && (
@@ -1235,6 +1240,9 @@ export default function DashboardPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Push Notification Banner */}
+      <NotificationBanner userId={user.id} />
     </div>
   );
 }
