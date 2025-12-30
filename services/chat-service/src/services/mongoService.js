@@ -18,7 +18,7 @@ class MongoService {
         this.rooms = this.db.collection('rooms');
         this.users = this.db.collection('users');
         this.connected = true;
-        
+
         // Create indexes for better performance
         await this.createIndexes();
         console.log('MongoDB service connected successfully');
@@ -37,18 +37,18 @@ class MongoService {
 
   async createIndexes() {
     if (!this.connected) return;
-    
+
     try {
       // Message indexes
       await this.messages.createIndex({ roomId: 1, timestamp: -1 });
       await this.messages.createIndex({ senderId: 1 });
       await this.messages.createIndex({ message: 'text' }); // For text search
-      
+
       // Room indexes
       await this.rooms.createIndex({ participants: 1 });
       await this.rooms.createIndex({ type: 1 });
       await this.rooms.createIndex({ lastActivity: -1 });
-      
+
       console.log('Database indexes created successfully');
     } catch (error) {
       console.warn('Failed to create indexes:', error.message);
@@ -143,8 +143,8 @@ class MongoService {
       // Update room's last message and activity
       await this.rooms.updateOne(
         { _id: messageData.roomId },
-        { 
-          $set: { 
+        {
+          $set: {
             lastActivity: new Date(),
             lastMessage: {
               _id: messageId,
@@ -160,7 +160,7 @@ class MongoService {
           }
         }
       );
-      
+
       // Increment unread count for other participants
       const room = await this.rooms.findOne({ _id: messageData.roomId });
       if (room) {
@@ -169,7 +169,7 @@ class MongoService {
         otherParticipants.forEach(participantId => {
           unreadUpdates[`unreadCount.${participantId}`] = 1;
         });
-        
+
         if (Object.keys(unreadUpdates).length > 0) {
           await this.rooms.updateOne(
             { _id: messageData.roomId },
@@ -183,7 +183,7 @@ class MongoService {
         this.messages.set(messageData.roomId, []);
       }
       this.messages.get(messageData.roomId).push(message);
-      
+
       if (this.rooms.has(messageData.roomId)) {
         const room = this.rooms.get(messageData.roomId);
         room.lastActivity = new Date();
@@ -209,7 +209,7 @@ class MongoService {
         participants: userId,
         'metadata.isArchived': { $ne: true }
       }).sort({ lastActivity: -1 }).toArray();
-      
+
       return rooms.map(room => ({
         ...room,
         unreadCount: room.unreadCount && room.unreadCount[userId] ? room.unreadCount[userId] : 0,
@@ -232,20 +232,20 @@ class MongoService {
   // Enhanced message retrieval with rich content
   async getRoomMessages(roomId, options = {}) {
     const { page = 1, limit = 50, beforeTimestamp, afterTimestamp } = options;
-    
+
     if (this.connected) {
-      const query = { 
+      const query = {
         roomId,
         'metadata.isDeleted': { $ne: true }
       };
-      
+
       if (beforeTimestamp) {
         query.timestamp = { $lt: new Date(beforeTimestamp) };
       }
       if (afterTimestamp) {
         query.timestamp = { $gt: new Date(afterTimestamp) };
       }
-      
+
       const totalCount = await this.messages.countDocuments(query);
       const messages = await this.messages
         .find(query)
@@ -253,7 +253,7 @@ class MongoService {
         .skip((page - 1) * limit)
         .limit(limit)
         .toArray();
-      
+
       return {
         messages: messages.reverse(), // Oldest first for chat display
         totalCount,
@@ -268,7 +268,7 @@ class MongoService {
       const start = (page - 1) * limit;
       const end = start + limit;
       const paginatedMessages = sortedMessages.slice(start, end);
-      
+
       return {
         messages: paginatedMessages.reverse(),
         totalCount: messages.length,
@@ -287,7 +287,7 @@ class MongoService {
         { _id: roomId },
         { $set: { [`unreadCount.${userId}`]: 0 } }
       );
-      
+
       // Mark specific message as read if provided
       if (messageId) {
         await this.messages.updateOne(
@@ -302,7 +302,7 @@ class MongoService {
         );
       }
     }
-    
+
     console.log(`Messages marked as read for user ${userId} in room ${roomId}`);
   }
 
@@ -311,7 +311,7 @@ class MongoService {
     const update = {
       $set: { [`metadata.reactions.${reaction}.${userId}`]: new Date() }
     };
-    
+
     if (this.connected) {
       await this.messages.updateOne({ _id: messageId }, update);
     } else {
@@ -327,7 +327,7 @@ class MongoService {
         }
       }
     }
-    
+
     console.log(`Reaction ${reaction} added by user ${userId} to message ${messageId}`);
   }
 
@@ -335,60 +335,60 @@ class MongoService {
     const update = {
       $unset: { [`metadata.reactions.${reaction}.${userId}`]: "" }
     };
-    
+
     if (this.connected) {
       await this.messages.updateOne({ _id: messageId }, update);
     }
-    
+
     console.log(`Reaction ${reaction} removed by user ${userId} from message ${messageId}`);
   }
 
   // Enhanced search with filters
   async searchMessages(query, userId, options = {}) {
     const { roomId, limit = 20, type, dateFrom, dateTo } = options;
-    
+
     if (this.connected) {
       const searchQuery = {
         $text: { $search: query },
         'metadata.isDeleted': { $ne: true }
       };
-      
+
       if (roomId) {
         searchQuery.roomId = roomId;
       }
-      
+
       if (type) {
         searchQuery.type = type;
       }
-      
+
       if (dateFrom || dateTo) {
         searchQuery.timestamp = {};
         if (dateFrom) searchQuery.timestamp.$gte = new Date(dateFrom);
         if (dateTo) searchQuery.timestamp.$lte = new Date(dateTo);
       }
-      
+
       // Only search in rooms where user is a participant
       const userRooms = await this.getUserRooms(userId);
       const roomIds = userRooms.map(room => room._id);
       searchQuery.roomId = { $in: roomIds };
-      
+
       const results = await this.messages
         .find(searchQuery)
         .sort({ timestamp: -1 })
         .limit(limit)
         .toArray();
-      
+
       return results;
     } else {
       // In-memory search (existing implementation)
       const results = [];
       const searchInRoom = (roomId, messages) => {
-        return messages.filter(msg => 
+        return messages.filter(msg =>
           msg.message.toLowerCase().includes(query.toLowerCase()) &&
           this.verifyRoomAccess(roomId, userId)
         );
       };
-      
+
       if (roomId) {
         const messages = this.messages.get(roomId) || [];
         results.push(...searchInRoom(roomId, messages));
@@ -397,7 +397,7 @@ class MongoService {
           results.push(...searchInRoom(rId, messages));
         }
       }
-      
+
       return results
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
         .slice(0, limit);
@@ -412,7 +412,7 @@ class MongoService {
       lastSeen: new Date(),
       roomId
     };
-    
+
     if (this.connected) {
       await this.users.updateOne(
         { _id: userId },
@@ -420,7 +420,7 @@ class MongoService {
         { upsert: true }
       );
     }
-    
+
     return presenceData;
   }
 
@@ -431,7 +431,7 @@ class MongoService {
       isTyping,
       timestamp: new Date()
     };
-    
+
     if (this.connected) {
       if (isTyping) {
         await this.users.updateOne(
@@ -446,7 +446,7 @@ class MongoService {
         );
       }
     }
-    
+
     return typingData;
   }
 
@@ -462,6 +462,51 @@ class MongoService {
       const room = this.rooms.get(roomId);
       return room && room.participants.includes(userId);
     }
+  }
+
+  // Update message
+  async updateMessage(messageId, updateData) {
+    if (this.connected) {
+      const result = await this.messages.findOneAndUpdate(
+        { _id: messageId },
+        { $set: { ...updateData, editedAt: new Date(), isEdited: true } },
+        { returnDocument: 'after' }
+      );
+      return result;
+    } else {
+      // In-memory implementation
+      for (const [roomId, messages] of this.messages.entries()) {
+        const index = messages.findIndex(msg => msg._id === messageId);
+        if (index !== -1) {
+          messages[index] = { ...messages[index], ...updateData, editedAt: new Date(), isEdited: true };
+          return messages[index];
+        }
+      }
+    }
+    return null;
+  }
+
+  // Delete message (soft delete)
+  async deleteMessage(messageId) {
+    if (this.connected) {
+      const result = await this.messages.findOneAndUpdate(
+        { _id: messageId },
+        { $set: { 'metadata.isDeleted': true, deletedAt: new Date() } },
+        { returnDocument: 'after' }
+      );
+      return result;
+    } else {
+      // In-memory implementation
+      for (const [roomId, messages] of this.messages.entries()) {
+        const index = messages.findIndex(msg => msg._id === messageId);
+        if (index !== -1) {
+          messages[index].metadata.isDeleted = true;
+          messages[index].deletedAt = new Date();
+          return messages[index];
+        }
+      }
+    }
+    return null;
   }
 
   // Get room details by ID

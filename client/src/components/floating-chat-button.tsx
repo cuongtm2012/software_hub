@@ -42,7 +42,6 @@ export function FloatingChatButton() {
   // User list states
   const [users, setUsers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
   // Bot chat states
@@ -81,7 +80,8 @@ export function FloatingChatButton() {
     startTyping,
     stopTyping,
     markAsRead,
-    loadRooms
+    loadRooms,
+    onlineUsers
   } = useChat();
 
   // Hide chat button when cart sidebar is open
@@ -144,50 +144,11 @@ export function FloatingChatButton() {
       }
     };
 
-    // Listen for online users list
-    const handleOnlineUsersList = (data: any) => {
-      console.log('📡 Received online users list:', data);
-      setOnlineUsers(new Set(data.users));
-    };
-
-    // Listen for user online event
-    const handleUserOnline = (data: any) => {
-      console.log('✅ User came online:', data.userId);
-      setOnlineUsers(prev => new Set(prev).add(data.userId));
-    };
-
-    // Listen for user offline event
-    const handleUserOffline = (data: any) => {
-      console.log('❌ User went offline:', data.userId);
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(data.userId);
-        return newSet;
-      });
-    };
-
-    // Listen for user list error
-    const handleUserListError = (data: any) => {
-      console.error('❌ User list error:', data);
-      setIsLoadingUsers(false);
-      toast({
-        title: 'Failed to load users',
-        description: data.error,
-        variant: 'destructive',
-      });
-    };
-
     socket.on('user-list', handleUserList);
-    socket.on('online-users-list', handleOnlineUsersList);
-    socket.on('user-online', handleUserOnline);
-    socket.on('user-offline', handleUserOffline);
     socket.on('user-list-error', handleUserListError);
 
     return () => {
       socket.off('user-list', handleUserList);
-      socket.off('online-users-list', handleOnlineUsersList);
-      socket.off('user-online', handleUserOnline);
-      socket.off('user-offline', handleUserOffline);
       socket.off('user-list-error', handleUserListError);
     };
   }, [socket, isConnected, chatMode, toast]);
@@ -397,6 +358,21 @@ export function FloatingChatButton() {
 
     setMessageInput(quickMessage);
     setTimeout(() => handleSendBotMessage(), 100);
+  };
+
+  const getRoomDisplayName = (room: any) => {
+    if (room.type === 'direct' && user) {
+      // Find the other participant in metadata or participants list
+      const otherParticipant = room.participants.find((p: string) => p !== user.id.toString());
+      if (room.metadata?.sellerName && user.id.toString() !== room.metadata.sellerId?.toString()) {
+        return room.metadata.sellerName;
+      }
+      if (room.metadata?.buyerName && user.id.toString() !== room.metadata.buyerId?.toString()) {
+        return room.metadata.buyerName;
+      }
+      return room.name || `Chat with ${otherParticipant || 'User'}`;
+    }
+    return room.name || 'Group Chat';
   };
 
   const totalUnread = rooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0);
@@ -656,38 +632,57 @@ export function FloatingChatButton() {
                           {rooms
                             .filter(room =>
                               !searchQuery ||
-                              room.name.toLowerCase().includes(searchQuery.toLowerCase())
+                              getRoomDisplayName(room).toLowerCase().includes(searchQuery.toLowerCase())
                             )
-                            .map((room) => (
-                              <button
-                                key={room._id}
-                                onClick={() => handleSelectRoom(room._id)}
-                                className="w-full p-2 bg-white rounded-lg border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-all text-left"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span className="text-white font-bold text-sm">
-                                      {room.name.charAt(0).toUpperCase()}
-                                    </span>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <h4 className="font-semibold text-sm truncate">{room.name}</h4>
-                                      {room.unreadCount! > 0 && (
-                                        <Badge className="bg-red-500 text-white ml-2">
-                                          {room.unreadCount}
-                                        </Badge>
+                            .map((room) => {
+                              const displayName = getRoomDisplayName(room);
+                              // For direct chats, check the other participant's online status
+                              const otherParticipantId = room.type === 'direct'
+                                ? room.participants.find((p: string) => p !== user?.id.toString())
+                                : null;
+                              const isOtherOnline = otherParticipantId ? onlineUsers.has(otherParticipantId) : false;
+
+                              return (
+                                <button
+                                  key={room._id}
+                                  onClick={() => handleSelectRoom(room._id)}
+                                  className="w-full p-2 bg-white rounded-lg border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-all text-left"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="relative flex-shrink-0">
+                                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                        <span className="text-white font-bold text-sm">
+                                          {(displayName || 'C').charAt(0).toUpperCase()}
+                                        </span>
+                                      </div>
+                                      {room.type === 'direct' && (
+                                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOtherOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
                                       )}
                                     </div>
-                                    {room.lastMessage && (
-                                      <p className="text-xs text-gray-600 truncate">
-                                        {room.lastMessage.message}
-                                      </p>
-                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <h4 className="font-semibold text-sm truncate">{displayName}</h4>
+                                          {isOtherOnline && room.type === 'direct' && (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                                          )}
+                                        </div>
+                                        {room.unreadCount! > 0 && (
+                                          <Badge className="bg-red-500 text-white ml-2">
+                                            {room.unreadCount}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      {room.lastMessage && (
+                                        <p className="text-xs text-gray-600 truncate">
+                                          {room.lastMessage.message}
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              </button>
-                            ))}
+                                </button>
+                              );
+                            })}
                         </div>
                       </div>
                     )}
@@ -743,7 +738,7 @@ export function FloatingChatButton() {
                                     <div className="relative">
                                       <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
                                         <span className="text-white font-bold text-sm">
-                                          {u.name.charAt(0).toUpperCase()}
+                                          {(u.name || 'U').charAt(0).toUpperCase()}
                                         </span>
                                       </div>
                                       {/* Online indicator */}
@@ -784,11 +779,11 @@ export function FloatingChatButton() {
                       </button>
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-xs">
-                          {currentRoom.name.charAt(0).toUpperCase()}
+                          {(getRoomDisplayName(currentRoom) || 'C').charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-sm">{currentRoom.name}</h4>
+                        <h4 className="font-semibold text-sm">{getRoomDisplayName(currentRoom)}</h4>
                         {currentRoom.metadata?.sellerName && (
                           <p className="text-xs text-gray-500">Seller</p>
                         )}
@@ -807,7 +802,7 @@ export function FloatingChatButton() {
                             {!isOwn && (
                               <div className="w-7 h-7 bg-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
                                 <span className="text-xs font-bold text-gray-600">
-                                  {msg.senderName.charAt(0).toUpperCase()}
+                                  {(msg.senderName || 'User').charAt(0).toUpperCase()}
                                 </span>
                               </div>
                             )}

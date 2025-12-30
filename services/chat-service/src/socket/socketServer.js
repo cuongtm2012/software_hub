@@ -152,7 +152,7 @@ class SocketServer {
           const roomData = {
             participants,
             type,
-            name: name || (type === 'direct' ? null : `${type.charAt(0).toUpperCase() + type.slice(1)} Chat`),
+            name: name || (type === 'direct' ? 'Direct Chat' : `${type.charAt(0).toUpperCase() + type.slice(1)} Chat`),
             createdBy: socket.userId,
             metadata: metadata || {}
           };

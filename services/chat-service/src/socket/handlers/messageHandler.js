@@ -49,11 +49,14 @@ class MessageHandler {
       // Mark messages as read for this user when they join
       await mongoService.markAsRead(roomId, socket.userId);
 
+      // Fetch the full room object
+      const room = await mongoService.getRoom(roomId);
+
       // Send room joined confirmation with message history
       socket.emit('room-joined', {
-        roomId,
+        room,
         success: true,
-        recentMessages: recentMessages.messages || [],
+        messages: recentMessages.messages || [],
         messageCount: recentMessages.totalCount || 0,
         timestamp: new Date()
       });
