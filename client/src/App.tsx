@@ -75,12 +75,35 @@ function Router() {
     <Switch>
       {/* Public Routes - Available to all users */}
       <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/auth/set-password" component={() => {
-        const SetPasswordPage = lazy(() => import("@/pages/set-password-page"));
+      <Route path="/auth" component={() => {
+        const AuthSupabasePage = lazy(() => import("@/pages/auth-supabase-page"));
         return (
           <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <SetPasswordPage />
+            <AuthSupabasePage />
+          </Suspense>
+        );
+      }} />
+      <Route path="/auth/set-password" component={() => {
+        const SupabaseSetPasswordPage = lazy(() => import("@/pages/supabase-set-password-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <SupabaseSetPasswordPage />
+          </Suspense>
+        );
+      }} />
+      <Route path="/auth/supabase" component={() => {
+        const AuthSupabasePage = lazy(() => import("@/pages/auth-supabase-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <AuthSupabasePage />
+          </Suspense>
+        );
+      }} />
+      <Route path="/auth/callback" component={() => {
+        const AuthCallbackPage = lazy(() => import("@/pages/auth-callback-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <AuthCallbackPage />
           </Suspense>
         );
       }} />

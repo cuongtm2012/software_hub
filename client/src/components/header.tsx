@@ -18,15 +18,15 @@ import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notification-bell";
 
 export function Header() {
-  const { user, logoutMutation } = useAuth();
+  const { user, signOut } = useAuth();
   const [location, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    await signOut();
   };
 
   const handleSearch = (e: React.FormEvent) => {
