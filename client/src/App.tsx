@@ -76,6 +76,14 @@ function Router() {
       {/* Public Routes - Available to all users */}
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/auth/set-password" component={() => {
+        const SetPasswordPage = lazy(() => import("@/pages/set-password-page"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <SetPasswordPage />
+          </Suspense>
+        );
+      }} />
       <Route path="/request-project" component={ProjectRequestPage} />
 
       {/* Protected Routes - Available to logged-in users */}

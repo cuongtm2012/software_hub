@@ -26,9 +26,7 @@ type LoginData = {
 };
 
 type RegisterData = {
-  name: string;
   email: string;
-  password: string;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -59,19 +57,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
       // Force immediate refetch to ensure fresh data
       await queryClient.refetchQueries({ queryKey: ["/api/user"] });
-      
+
       // Request notification permission automatically when user logs in
       if ('Notification' in window && Notification.permission === 'default') {
         try {
           const permission = await Notification.requestPermission();
           console.log('Notification permission result:', permission);
-          
+
           if (permission === 'granted') {
             toast({
               title: "Notifications enabled",
               description: "You'll now receive notifications for new messages and updates.",
             });
-            
+
             // Initialize Firebase messaging if available
             if (typeof window !== 'undefined' && window.firebase) {
               try {
@@ -98,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       }
-      
+
       // Auto-redirect based on user role
       setTimeout(() => {
         if (user.role === 'admin') {
@@ -107,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           window.location.href = '/dashboard';
         }
       }, 500);
-      
+
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.name}!`,
@@ -128,18 +126,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (responseData: any) => {
-      // Extract user data from response
-      const user = responseData.user || responseData;
-      queryClient.setQueryData(["/api/user"], user);
-      
-      // Show success message with email confirmation
-      const welcomeMessage = responseData.welcomeEmailSent 
-        ? `Welcome to SoftwareHub, ${user.name}! A welcome email has been sent to ${user.email}.`
-        : `Welcome to SoftwareHub, ${user.name}!`;
-      
+      // New flow: no user data returned, just confirmation
+      // Don't set user data since they need to verify email first
+
       toast({
-        title: "Registration successful",
-        description: welcomeMessage,
+        title: "Registration successful!",
+        description: responseData.message || "Please check your email to set your password and complete registration.",
+        duration: 6000,
       });
     },
     onError: (error: Error) => {

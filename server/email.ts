@@ -142,6 +142,66 @@ export async function sendWelcomeEmail(
   });
 }
 
+export async function sendVerificationEmail(
+  userEmail: string,
+  verificationUrl: string
+): Promise<EmailResult> {
+  const fromEmail = process.env.FROM_EMAIL || 'noreply@softwarehub.com';
+
+  return sendEmail({
+    to: userEmail,
+    from: { email: fromEmail, name: 'SoftwareHub Team' },
+    replyTo: fromEmail,
+    subject: 'Verify Your Email - Set Your Password',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #004080 0%, #002040 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to SoftwareHub!</h1>
+        </div>
+        <div style="padding: 40px 30px; background: #f9f9f9; border-radius: 0 0 8px 8px;">
+          <h2 style="color: #333; margin-top: 0; font-size: 22px;">Verify Your Email & Set Your Password</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Thank you for registering with SoftwareHub! To complete your registration and access your account, 
+            please verify your email address and set your password.
+          </p>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Click the button below to set your password:
+          </p>
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="${verificationUrl}" 
+               style="background: linear-gradient(135deg, #004080 0%, #003366 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 30px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,64,128,0.3);">
+              Set Your Password
+            </a>
+          </div>
+          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 25px 0; border-radius: 4px;">
+            <p style="color: #856404; margin: 0; font-size: 14px;">
+              <strong>⏰ Important:</strong> This link will expire in 24 hours for security reasons.
+            </p>
+          </div>
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            If you didn't create an account with SoftwareHub, you can safely ignore this email.
+          </p>
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <p style="color: #666; font-size: 14px; margin: 0;">
+              Best regards,<br>
+              <strong>The SoftwareHub Team</strong>
+            </p>
+          </div>
+        </div>
+        <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+          <p style="margin: 0;">
+            If the button doesn't work, copy and paste this link into your browser:<br>
+            <a href="${verificationUrl}" style="color: #004080; word-break: break-all;">${verificationUrl}</a>
+          </p>
+        </div>
+      </div>
+    `,
+    categories: ['verification', 'onboarding'],
+    customArgs: { emailType: 'email-verification' },
+  });
+}
+
+
 export async function sendPasswordResetEmail(
   userEmail: string,
   userName: string,

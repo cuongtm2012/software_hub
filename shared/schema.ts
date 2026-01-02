@@ -133,7 +133,7 @@ export const externalRequests = pgTable("external_requests", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
-  
+
   // Project details (enhanced for unified use)
   title: text("title"), // Optional title for internal projects  
   project_description: text("project_description").notNull(),
@@ -143,7 +143,7 @@ export const externalRequests = pgTable("external_requests", {
   budget_range: text("budget_range"),
   budget: numeric("budget"), // Specific budget amount
   deadline: timestamp("deadline"), // Specific deadline
-  
+
   // Project management
   status: externalRequestStatusEnum("status").default('pending').notNull(),
   client_id: integer("client_id").references(() => users.id), // Link to registered users
@@ -152,7 +152,7 @@ export const externalRequests = pgTable("external_requests", {
   admin_notes: text("admin_notes"), // Internal notes
   contact_email: text("contact_email"), // For external requests
   contact_phone: text("contact_phone"), // For external requests
-  
+
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -667,8 +667,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
   created_at: true,
   updated_at: true,
   profile_data: true,
-  reset_token: true,
-  reset_token_expires: true,
 });
 
 // Forgot password schemas
