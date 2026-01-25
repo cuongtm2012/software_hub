@@ -1,0 +1,95 @@
+# Multi-stage Production Dockerfile for Software Hub
+# Optimized for deployment with separate build stages
+
+# ============================================
+# Stage 1: Build Client (React/Vite)
+# ============================================
+FROM node:20-alpine AS client-builder
+
+WORKDIR /app
+
+# Copy package files for client
+COPY package*.json ./
+COPY client/package*.json ./client/ 2>/dev/null || true
+
+# Install dependencies
+RUN npm ci --legacy-peer-deps
+
+# Copy source code needed for client build
+COPY client ./client
+COPY shared ./shared
+COPY tsconfig.json ./
+
+# Build client
+ENV NODE_ENV=production
+RUN npm run build
+
+# ============================================
+# Stage 2: Prepare Server Dependencies
+# ============================================
+FROM node:20-alpine AS server-deps
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install production dependencies only
+RUN npm ci --production --legacy-peer-deps && \
+    npm cache clean --force
+
+# ============================================
+# Stage 3: Production Runtime
+# ============================================
+FROM node:20-alpine
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    postgresql-client
+
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Copy production dependencies from server-deps stage
+COPY --from=server-deps /app/node_modules ./node_modules
+COPY --from=server-deps /app/package*.json ./
+
+# Copy built client from client-builder stage
+COPY --from=client-builder /app/dist ./dist
+
+# Copy server source code
+COPY server ./server
+COPY shared ./shared
+COPY services ./services
+COPY tsconfig.json ./
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/uploads && \
+    chown -R nodejs:nodejs /app
+
+# Switch to nodejs user
+USER nodejs
+
+# Expose ports
+# 3000 - Main HTTP server
+# 3001 - WebSocket/Chat service (if running separately)
+EXPOSE 3000 3001
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
+
+# Environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the application
+CMD ["node", "server/index.js"]

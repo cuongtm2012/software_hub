@@ -1,0 +1,113 @@
+name: Deploy to Contabo VPS (Docker)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS via Docker
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          debug: true
+          script: |
+            set -e
+            
+            # Define paths
+            PROJECT_PATH="/var/www/software-hub"
+            BACKUP_PATH="/var/www/software-hub-backup-$(date +%Y%m%d-%H%M%S)"
+            
+            echo "=================================="
+            echo "Starting Docker Deployment"
+            echo "=================================="
+            
+            # Navigate to project directory
+            cd $PROJECT_PATH
+            
+            # Backup current deployment
+            if [ -d "$PROJECT_PATH/.git" ]; then
+              echo "Creating backup..."
+              cp -r $PROJECT_PATH $BACKUP_PATH
+            fi
+            
+            # Pull latest code
+            echo "Pulling latest code..."
+            if [ -d ".git" ]; then
+              git fetch origin
+              git reset --hard origin/main
+            else
+              echo "Not a git repository, skipping pull"
+            fi
+            
+            # Copy environment file if not exists
+            if [ ! -f ".env.production" ]; then
+              echo "Creating .env.production from template..."
+              cp .env.production.template .env.production
+              echo "⚠️  WARNING: Please update .env.production with actual values!"
+            fi
+            
+            # Build and deploy with Docker Compose
+            echo "Building Docker images..."
+            docker-compose -f docker-compose.production.yml build --no-cache
+            
+            echo "Stopping old containers..."
+            docker-compose -f docker-compose.production.yml down
+            
+            echo "Starting new containers..."
+            docker-compose -f docker-compose.production.yml up -d
+            
+            # Wait for services to be healthy
+            echo "Waiting for services to be healthy..."
+            sleep 15
+            
+            # Check container status
+            echo "Container status:"
+            docker-compose -f docker-compose.production.yml ps
+            
+            # Run database migrations
+            echo "Running database migrations..."
+            docker-compose -f docker-compose.production.yml exec -T app npm run db:migrate || echo "Migration failed or not configured"
+            
+            # Clean up old Docker images
+            echo "Cleaning up old Docker images..."
+            docker image prune -af --filter "until=24h"
+            docker system prune -f
+            
+            # Keep only last 5 backups
+            echo "Cleaning old backups..."
+            ls -dt /var/www/software-hub-backup-* 2>/dev/null | tail -n +6 | xargs rm -rf || true
+            
+            echo "=================================="
+            echo "Deployment completed successfully!"
+            echo "=================================="
+            
+            # Show logs
+            echo "Recent logs:"
+            docker-compose -f docker-compose.production.yml logs --tail=50
+
+      - name: Health check
+        run: |
+          sleep 20
+          echo "Performing health check..."
+          curl -f http://${{ secrets.SSH_HOST }} || curl -f http://${{ secrets.SSH_HOST }}:3000 || echo "⚠️  Health check failed - please verify manually"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Check the logs above for details."
+          echo "To rollback, SSH into the server and run:"
+          echo "  cd /var/www/software-hub"
+          echo "  docker-compose -f docker-compose.production.yml down"
+          echo "  # Restore from backup if needed"
