@@ -84,6 +84,7 @@ export interface IStorage {
     category?: number;
     platform?: string;
     search?: string;
+    type?: 'software' | 'api';
     status?: 'pending' | 'approved' | 'rejected';
     limit?: number;
     offset?: number;
@@ -559,6 +560,7 @@ class DatabaseStorage implements IStorage {
     category?: number;
     platform?: string;
     search?: string;
+    type?: 'software' | 'api';
     status?: 'pending' | 'approved' | 'rejected';
     limit?: number;
     offset?: number;
@@ -594,6 +596,11 @@ class DatabaseStorage implements IStorage {
 
     if (params.search) {
       whereConditions.push(ilike(softwares.name, `%${params.search}%`));
+    }
+
+    // Add type filter
+    if (params.type) {
+      whereConditions.push(eq(softwares.type, params.type));
     }
 
     if (params.status) {
@@ -1750,7 +1757,7 @@ class DatabaseStorage implements IStorage {
         )
       )
       .returning();
-    
+
     return updatedItem;
   }
 

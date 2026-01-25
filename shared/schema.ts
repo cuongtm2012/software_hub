@@ -12,6 +12,9 @@ export const platformEnum = pgEnum('platform', ['windows', 'mac', 'linux', 'andr
 // Status enum for software status
 export const statusEnum = pgEnum('status', ['pending', 'approved', 'rejected']);
 
+// Software type enum to distinguish between software and API
+export const softwareTypeEnum = pgEnum('software_type', ['software', 'api']);
+
 // Project status enum for project management
 export const projectStatusEnum = pgEnum('project_status', ['pending', 'in_progress', 'completed', 'cancelled']);
 
@@ -106,6 +109,7 @@ export const softwares = pgTable("softwares", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  type: softwareTypeEnum("type").default('software').notNull(), // 'software' or 'api'
   category_id: integer("category_id").references(() => categories.id).notNull(),
   platform: text("platform").array().notNull(),
   download_link: text("download_link").notNull(),
@@ -719,6 +723,7 @@ export const insertSoftwareSchema = createInsertSchema(softwares).omit({
   created_at: true,
   created_by: true,
   status: true,
+  type: true, // type will be set based on category or explicitly
 });
 
 export const insertReviewSchema = createInsertSchema(reviews).omit({

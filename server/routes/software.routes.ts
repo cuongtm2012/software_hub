@@ -29,8 +29,12 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       category,
       search,
       sort = "newest",
-      platform
+      platform,
+      type // 'software', 'api', or undefined for all
     } = req.query;
+
+    // Debug logging
+    console.log(`📥 GET /api/softwares - type: ${type}, limit: ${limit}`);
 
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
@@ -40,10 +44,23 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       category: category ? parseInt(category as string) : undefined,
       platform: platform as string,
       search: search as string,
+      type: type as 'software' | 'api' | undefined,
       status: 'approved', // Only show approved software publicly
       limit: limitNum,
       offset: offset
     });
+
+    console.log(`📤 Returning ${result.softwares?.length || 0} items (type filter: ${type || 'none'})`);
+    if (result.softwares?.length > 0) {
+      console.log(`   First item: ${result.softwares[0].name} (type: ${result.softwares[0].type})`);
+    }
+
+    // Prevent caching for filtered requests
+    if (type) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
 
     res.json(result);
   } catch (error) {

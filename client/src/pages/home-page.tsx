@@ -17,7 +17,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { SoftwareDetailModal } from "@/components/software-detail-modal";
+import { getShortDescription } from "@/lib/translations";
 
 // Utility function to chunk array into groups
 const chunkArray = <T,>(array: T[], size: number): T[][] => {
@@ -30,9 +30,35 @@ const chunkArray = <T,>(array: T[], size: number): T[][] => {
 
 export default function HomePage() {
   const [location, navigate] = useLocation();
-  const [selectedSoftware, setSelectedSoftware] = useState<any>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  // Get filter from URL params
+  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const categoryFromUrl = searchParams.get('category') || 'all';
+  const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
+
+  // Sync URL param changes to state (when URL changes externally)
+  useEffect(() => {
+    if (categoryFromUrl !== selectedCategory) {
+      console.log(`📍 URL changed to category: ${categoryFromUrl}`);
+      setSelectedCategory(categoryFromUrl);
+    }
+  }, [categoryFromUrl]);
+
+  // Sync state changes to URL (when user clicks category button)
+  useEffect(() => {
+    const currentParams = new URLSearchParams(location.split('?')[1] || '');
+    const currentCategory = currentParams.get('category') || 'all';
+
+    if (selectedCategory !== currentCategory) {
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'all') {
+        params.set('category', selectedCategory);
+      }
+      const newUrl = `/${params.toString() ? '?' + params.toString() : ''}`;
+      console.log(`🔄 Updating URL to: ${newUrl}`);
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [selectedCategory, location]);
 
   // Responsive grid calculation for "Tất cả sản phẩm" section
   const [gridColumns, setGridColumns] = useState(6); // Default: Desktop
@@ -88,7 +114,7 @@ export default function HomePage() {
     }
   });
 
-  // Fetch all software with optional category filter
+  // Fetch all software with type-based filtering
   const {
     data: allSoftware,
     isLoading: isLoadingAll
@@ -97,17 +123,36 @@ export default function HomePage() {
     queryFn: async () => {
       const params = new URLSearchParams({ limit: itemsToDisplay.toString() });
 
-      // Map category IDs to search terms or category names
-      if (selectedCategory === "api") {
-        params.append("search", "API");
-      } else if (selectedCategory !== "all") {
-        params.append("category", selectedCategory);
+      // Strict type-based filtering
+      if (selectedCategory === "software") {
+        params.append("type", "software");
+      } else if (selectedCategory === "api") {
+        params.append("type", "api");
+      }
+      // For "all" - no type filter, shows both software and api
+
+      const url = `/api/softwares?${params}`;
+      console.log(`🔍 Fetching: ${url} for category: ${selectedCategory}`);
+
+      // Add cache-busting headers
+      const response = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (!response.ok) throw new Error("Failed to fetch software");
+      const data = await response.json();
+
+      console.log(`✅ Received ${data.softwares?.length || 0} items for category: ${selectedCategory}`);
+      if (data.softwares?.length > 0) {
+        console.log(`   First item: ${data.softwares[0].name} (type: ${data.softwares[0].type})`);
       }
 
-      const response = await fetch(`/api/softwares?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch software");
-      return response.json();
-    }
+      return data;
+    },
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache (React Query v5)
   });
 
   // Fetch APIs (from Development (APIs) category)
@@ -117,15 +162,20 @@ export default function HomePage() {
   } = useQuery({
     queryKey: ["/api/softwares/apis"],
     queryFn: async () => {
-      const response = await fetch("/api/softwares?limit=10&search=API");
+      const response = await fetch("/api/softwares?limit=10&type=api", {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!response.ok) throw new Error("Failed to fetch APIs");
       return response.json();
     }
   });
 
-  const handleSoftwareClick = (software: any) => {
-    setSelectedSoftware(software);
-    setModalOpen(true);
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
   };
 
   // Generate gradient colors based on first letter
@@ -151,9 +201,6 @@ export default function HomePage() {
     { id: "all", name: "Tất cả", icon: Sparkles },
     { id: "software", name: "Phần mềm", icon: Monitor },
     { id: "api", name: "API", icon: Code },
-    { id: "documents", name: "Tài liệu", icon: Code },
-    { id: "tools", name: "Công cụ", icon: TrendingUp },
-    { id: "tutorials", name: "Hướng dẫn", icon: Users },
   ];
 
   return (
@@ -201,8 +248,9 @@ export default function HomePage() {
               {(popularSoftware?.softwares || Array(10).fill(null)).map((software: any, index: number) => (
                 <div
                   key={software?.id || index}
-                  onClick={() => software && handleSoftwareClick(software)}
+                  onClick={() => software && navigate(`/software/${software.id}`)}
                   className="scroll-snap-item bg-white rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-500 group cursor-pointer border border-gray-200 hover:border-[#004080] hover:scale-105 flex flex-col h-full"
+                  title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                 >
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
                     {software?.image_url ? (
@@ -272,8 +320,9 @@ export default function HomePage() {
               {(recentSoftware?.softwares || Array(10).fill(null)).map((software: any, index: number) => (
                 <div
                   key={software?.id || index}
-                  onClick={() => software && handleSoftwareClick(software)}
+                  onClick={() => software && navigate(`/software/${software.id}`)}
                   className="scroll-snap-item bg-white rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-500 group cursor-pointer border border-gray-200 hover:border-[#004080] hover:scale-105 flex flex-col h-full"
+                  title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                 >
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
                     {software?.image_url ? (
@@ -394,7 +443,7 @@ export default function HomePage() {
         </section >
 
         {/* Category Filter Bar */}
-        < section className="bg-white border-b sticky top-16 z-40 shadow-sm" >
+        <section className="bg-white border-b sticky top-16 z-40 shadow-sm">
           <div className="w-full px-[4%] py-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Danh mục</h2>
@@ -410,134 +459,165 @@ export default function HomePage() {
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
               {categories.map((category) => {
                 const Icon = category.icon;
+                const isActive = selectedCategory === category.id;
                 return (
                   <button
                     key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border whitespace-nowrap transition-all ${selectedCategory === category.id
-                      ? 'bg-[#004080] text-white border-[#004080]'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-[#ffcc00]'
+                    onClick={() => handleCategoryChange(category.id)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border whitespace-nowrap transition-all duration-200 font-medium ${isActive
+                      ? 'bg-[#004080] text-white border-[#004080] shadow-md scale-105'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-[#004080] hover:bg-gray-50'
                       }`}
                   >
                     <Icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{category.name}</span>
+                    <span className="text-sm">{category.name}</span>
                   </button>
                 );
               })}
             </div>
           </div>
-        </section >
+        </section>
 
         {/* Products Grid */}
-        < section className="py-8" >
+        <section className="py-8">
           <div className="w-full px-[4%]">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Tất cả sản phẩm</h2>
               <div className="text-sm text-gray-600">
-                Hiển thị {Math.min(allSoftware?.softwares?.length || 0, itemsToDisplay)} kết quả ({gridColumns} cột × 3 hàng)
+                {allSoftware?.softwares?.length > 0 ? (
+                  `Hiển thị ${Math.min(allSoftware.softwares.length, itemsToDisplay)} kết quả (${gridColumns} cột × 3 hàng)`
+                ) : (
+                  'Không có kết quả'
+                )}
               </div>
             </div>
 
-            {/* 3 Rows - Responsive Grid (Dynamic) */}
-            <div className="space-y-5">
-              {chunkArray(
-                (allSoftware?.softwares || Array(itemsToDisplay).fill(null)).slice(0, itemsToDisplay),
-                gridColumns
-              ).map((chunk, rowIndex) => (
-                <div key={rowIndex} className="grid-row">
-                  {chunk.map((software: any, index: number) => (
-                    <Card
-                      key={software?.id || `${rowIndex}-${index}`}
-                      onClick={() => software && handleSoftwareClick(software)}
-                      className="overflow-hidden border border-gray-200 rounded-xl hover:shadow-2xl hover:border-[#004080] transition-all duration-500 group cursor-pointer hover:scale-105 flex flex-col h-full"
-                    >
-                      <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-                        {software?.image_url ? (
-                          <img
-                            src={software.image_url}
-                            alt={software.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const placeholder = e.currentTarget.nextElementSibling;
-                              if (placeholder) {
-                                (placeholder as HTMLElement).style.display = 'flex';
-                              }
-                            }}
-                          />
-                        ) : null}
-                        <div
-                          className={`absolute inset-0 bg-gradient-to-br ${software ? getGradientColors(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
-                          style={{ display: software?.image_url ? 'none' : 'flex' }}
+            {/* Empty State */}
+            {!isLoadingAll && (!allSoftware?.softwares || allSoftware.softwares.length === 0) ? (
+              <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                  <Monitor className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Chưa có dữ liệu cho danh mục này
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  {selectedCategory === 'api'
+                    ? 'Hiện tại chưa có API nào trong hệ thống.'
+                    : selectedCategory === 'software'
+                      ? 'Hiện tại chưa có phần mềm nào trong danh mục này.'
+                      : 'Vui lòng chọn danh mục khác hoặc thử lại sau.'}
+                </p>
+                <Button
+                  onClick={() => setSelectedCategory('all')}
+                  className="bg-[#004080] hover:bg-[#003366] text-white"
+                >
+                  Xem tất cả
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* 3 Rows - Responsive Grid (Dynamic) */}
+                <div className="space-y-5">
+                  {chunkArray(
+                    (allSoftware?.softwares || Array(itemsToDisplay).fill(null)).slice(0, itemsToDisplay),
+                    gridColumns
+                  ).map((chunk, rowIndex) => (
+                    <div key={rowIndex} className="grid-row">
+                      {chunk.map((software: any, index: number) => (
+                        <Card
+                          key={software?.id || `${rowIndex}-${index}`}
+                          onClick={() => software && navigate(`/software/${software.id}`)}
+                          className="overflow-hidden border border-gray-200 rounded-xl hover:shadow-2xl hover:border-[#004080] transition-all duration-500 group cursor-pointer hover:scale-105 flex flex-col h-full"
+                          title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                         >
-                          <div className="text-center">
-                            <div className="text-5xl font-bold text-white opacity-90 mb-2">
-                              {software?.name ? software.name.charAt(0).toUpperCase() : '?'}
+                          <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+                            {software?.image_url ? (
+                              <img
+                                src={software.image_url}
+                                alt={software.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const placeholder = e.currentTarget.nextElementSibling;
+                                  if (placeholder) {
+                                    (placeholder as HTMLElement).style.display = 'flex';
+                                  }
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-br ${software ? getGradientColors(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
+                              style={{ display: software?.image_url ? 'none' : 'flex' }}
+                            >
+                              <div className="text-center">
+                                <div className="text-5xl font-bold text-white opacity-90 mb-2">
+                                  {software?.name ? software.name.charAt(0).toUpperCase() : '?'}
+                                </div>
+                                <Monitor className="h-10 w-10 text-white opacity-75 mx-auto" />
+                              </div>
                             </div>
-                            <Monitor className="h-10 w-10 text-white opacity-75 mx-auto" />
+                            {software?.badge && (
+                              <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                                {software.badge}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        {software?.badge && (
-                          <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                            {software.badge}
+                          <div className="p-4 flex flex-col flex-grow">
+                            <h3 className="font-semibold text-base text-gray-900 mb-2 line-clamp-1">
+                              {software?.name || "Đang tải..."}
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-grow">
+                              {software?.description ? getShortDescription(software.description, 100) : ""}
+                            </p>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 text-amber-400 fill-current" />
+                                <span className="text-sm font-semibold">4.5</span>
+                                <span className="text-xs text-gray-500">(234)</span>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {Math.floor(Math.random() * 1000)}K tải
+                              </span>
+                            </div>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (software) {
+                                  navigate(`/software/${software.id}`);
+                                }
+                              }}
+                              className="w-full bg-[#004080] hover:bg-[#003366] text-white rounded-lg shadow-md transition-all cursor-pointer"
+                              size="sm"
+                              title={`Xem chi tiết ${software?.name || 'phần mềm'}`}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Tải ngay
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-base text-gray-900 mb-2 line-clamp-1">
-                          {software?.name || "Loading..."}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {software?.description || ""}
-                        </p>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-amber-400 fill-current" />
-                            <span className="text-sm font-semibold">4.5</span>
-                            <span className="text-xs text-gray-500">(234)</span>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {Math.floor(Math.random() * 1000)}K tải
-                          </span>
-                        </div>
-                        <Button
-                          className="w-full bg-[#004080] hover:bg-[#003366] text-white rounded-lg shadow-md"
-                          size="sm"
-                        >
-                          Xem ngay
-                        </Button>
-                      </div>
-                    </Card>
+                        </Card>
+                      ))}
+                    </div>
                   ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-8 text-center">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/software')}
-                className="border-[#004080] text-[#004080] hover:bg-[#004080]/5"
-              >
-                Xem thêm sản phẩm
-              </Button>
-            </div>
+                <div className="mt-8 text-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/software')}
+                    className="border-[#004080] text-[#004080] hover:bg-[#004080]/5"
+                  >
+                    Xem thêm sản phẩm
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
-        </section >
+        </section>
       </main >
 
       <Footer />
 
-      {/* Software Detail Modal */}
-      {
-        selectedSoftware && (
-          <SoftwareDetailModal
-            software={selectedSoftware}
-            open={modalOpen}
-            onOpenChange={setModalOpen}
-          />
-        )
-      }
     </div >
   );
 }

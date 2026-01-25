@@ -1040,45 +1040,35 @@ export default function ProjectDetailPage() {
           <TabsContent value="messages" className="space-y-6">
             <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg">Project Details</CardTitle>
+                <CardTitle className="text-lg">Project Communication</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {project.budget && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-gray-600">
-                      <DollarSign className="mr-2 h-4 w-4" />
-                      Budget
-                    </div>
-                    <span className="font-medium">${project.budget.toLocaleString()}</span>
-                  </div>
-                ) : (
-                  <div className="space-y-4 mb-6 max-h-[500px] overflow-y-auto p-2">
-                    {Array.isArray(messages) && messages.map((message: any) => (
+                <div className="space-y-4 mb-6 max-h-[500px] overflow-y-auto p-2">
+                  {Array.isArray(messages) && messages.map((message: any) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                    >
                       <div
-                        key={message.id}
-                        className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                        className={`max-w-[80%] rounded-lg p-4 ${message.sender_id === user?.id
+                          ? 'bg-[#004080] text-white'
+                          : 'bg-gray-100 text-gray-800'
+                          }`}
                       >
-                        <div
-                          className={`max-w-[80%] rounded-lg p-4 ${message.sender_id === user?.id
-                            ? 'bg-[#004080] text-white'
-                            : 'bg-gray-100 text-gray-800'
-                            }`}
-                        >
-                          <div className="flex items-center space-x-2 mb-1">
-                            <User className="h-4 w-4" />
-                            <span className="text-sm font-medium">
-                              {message.sender_id === user?.id ? 'You' : message.sender?.name || `User #${message.sender_id}`}
-                            </span>
-                            <span className="text-xs opacity-70">
-                              {formatDate(message.created_at)} at {formatTime(message.created_at)}
-                            </span>
-                          </div>
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <User className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            {message.sender_id === user?.id ? 'You' : message.sender?.name || `User #${message.sender_id}`}
+                          </span>
+                          <span className="text-xs opacity-70">
+                            {formatDate(message.created_at)} at {formatTime(message.created_at)}
+                          </span>
                         </div>
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
 
                 {((project as any)?.status === 'in_progress' || (project as any)?.status === 'pending') && (isClient || isDeveloperWithQuote || hasAcceptedQuote) && (
                   <div className="mt-4">
@@ -1120,37 +1110,10 @@ export default function ProjectDetailPage() {
                     </Form>
                   </div>
                 )}
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-gray-600">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Created
-                  </div>
-                  <span className="font-medium">
-                    {new Date(project.created_at).toLocaleDateString()}
-                  </span>
-                </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full bg-[#004080] hover:bg-[#003366]">
-                  Submit Proposal
-                </Button>
-                <Button variant="outline" className="w-full border-[#004080] text-[#004080] hover:bg-[#f0f7ff]">
-                  Save Project
-                </Button>
-                <Button variant="outline" className="w-full">
-                  Contact Client
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       <Footer />

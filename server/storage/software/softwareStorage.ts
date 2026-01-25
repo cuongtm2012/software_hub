@@ -14,6 +14,7 @@ export interface ISoftwareStorage {
     category?: number;
     platform?: string;
     search?: string;
+    type?: 'software' | 'api';
     status?: 'pending' | 'approved' | 'rejected';
     limit?: number;
     offset?: number;
@@ -99,6 +100,7 @@ export class SoftwareStorage implements ISoftwareStorage {
     category?: number;
     platform?: string;
     search?: string;
+    type?: 'software' | 'api';
     status?: 'pending' | 'approved' | 'rejected';
     limit?: number;
     offset?: number;
@@ -115,6 +117,10 @@ export class SoftwareStorage implements ISoftwareStorage {
 
     if (params.search) {
       whereConditions.push(ilike(softwares.name, `%${params.search}%`));
+    }
+
+    if (params.type) {
+      whereConditions.push(eq(softwares.type, params.type));
     }
 
     if (params.status) {

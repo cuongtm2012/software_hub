@@ -50,10 +50,12 @@ import ITServicesPage from "@/pages/it-services-page";
 // Phase 3: Marketplace & Software
 import MarketplacePage from "@/pages/marketplace-page";
 import SoftwareListPage from "@/pages/software-list-page";
+import SoftwareDetailPage from "@/pages/software-detail-page";
 import CoursesListPage from "@/pages/courses-list-page";
 import CourseDetailPage from "@/pages/course-detail-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
+import ProductDetailPage from "@/pages/product-detail-page";
 import { ProductDetailEcommerce } from "@/pages/product-detail-ecommerce";
 import OrderDetailsPage from "@/pages/order-details-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
@@ -246,6 +248,7 @@ function Router() {
 
       {/* Software List */}
       <Route path="/software" component={SoftwareListPage} />
+      <Route path="/software/:id" component={SoftwareDetailPage} />
       <Route path="/courses" component={CoursesListPage} />
       <Route path="/courses/:id" component={CourseDetailPage} />
 
