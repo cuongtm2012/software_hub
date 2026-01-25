@@ -88,5 +88,5 @@ ENV PORT=3000
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["node", "server/index.js"]
+# Start the application with tsx for TypeScript support
+CMD ["npx", "tsx", "server/index.ts"]
