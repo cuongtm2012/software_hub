@@ -1,200 +1,304 @@
-# 🚀 Deployment Checklist
+# Deployment Checklist - Contabo VPS
 
-Use this checklist to ensure successful deployment to your Contabo VPS.
+## Pre-Deployment Checklist
 
-## ✅ Pre-Deployment Checklist
+### 1. GitHub Secrets Configuration ✓
+- [ ] `SSH_HOST` = `95.111.253.111`
+- [ ] `SSH_USERNAME` = `root`
+- [ ] `SSH_KEY` = Private SSH key (với header và footer đầy đủ)
+- [ ] `SSH_PORT` = `22` (hoặc custom port)
 
-### VPS Setup
-- [ ] VPS is accessible via SSH (`ssh root@95.111.253.111`)
-- [ ] Run VPS setup script (`scripts/vps-setup.sh`)
-- [ ] Node.js 20.x is installed
-- [ ] PM2 is installed and configured
-- [ ] Nginx is installed and running
-- [ ] PostgreSQL is installed and running
-- [ ] Firewall is configured (ports 22, 80, 443 open)
+**Cách kiểm tra:**
+- Vào GitHub Repository > Settings > Secrets and variables > Actions
+- Đảm bảo tất cả 4 secrets đã được tạo
 
-### Database Configuration
-- [ ] PostgreSQL database `software_hub` created
-- [ ] Database user `software_hub_user` created
-- [ ] Database password is secure and updated
-- [ ] Database connection string is correct in `.env.production`
+### 2. SSH Key Setup ✓
+- [ ] Đã tạo SSH key pair trên máy local
+- [ ] Public key đã được thêm vào `~/.ssh/authorized_keys` trên VPS
+- [ ] Private key đã được thêm vào GitHub Secret `SSH_KEY`
+- [ ] Permissions đúng: `~/.ssh` (700), `authorized_keys` (600)
 
-### GitHub Configuration
-- [ ] Repository is pushed to GitHub
-- [ ] GitHub Actions workflow file exists (`.github/workflows/deploy.yml`)
-- [ ] SSH key pair generated
-- [ ] Public key added to VPS `~/.ssh/authorized_keys`
-- [ ] GitHub Secrets configured:
-  - [ ] `SSH_PRIVATE_KEY`
-  - [ ] `REMOTE_HOST` (95.111.253.111)
-  - [ ] `REMOTE_USER` (root)
-  - [ ] `ENV_FILE` (optional)
-
-### Environment Variables
-- [ ] `.env.production` file created on VPS
-- [ ] `DATABASE_URL` configured
-- [ ] `SESSION_SECRET` generated (use `openssl rand -base64 32`)
-- [ ] `RESEND_API_KEY` added (for email service)
-- [ ] `STRIPE_SECRET_KEY` added (if using payments)
-- [ ] All required API keys configured
-
-### Nginx Configuration
-- [ ] Nginx config file created (`/etc/nginx/sites-available/software-hub`)
-- [ ] Symbolic link created (`/etc/nginx/sites-enabled/software-hub`)
-- [ ] Default site disabled
-- [ ] Nginx configuration tested (`nginx -t`)
-- [ ] Nginx restarted
-
-### Deployment Scripts
-- [ ] `deploy.sh` exists on VPS (`/var/www/deploy.sh`)
-- [ ] `deploy.sh` is executable (`chmod +x /var/www/deploy.sh`)
-- [ ] `ecosystem.config.js` configured for PM2
-
-## 🚀 Deployment Steps
-
-### 1. Initial Deployment
+**Cách kiểm tra:**
 ```bash
-# On your local machine
-git add .
-git commit -m "Initial production deployment"
-git push origin main
+# Trên local
+ssh -i ~/.ssh/contabo_deploy root@95.111.253.111
+# Nếu kết nối thành công mà không cần password = OK
 ```
 
-### 2. Monitor Deployment
-- [ ] Go to GitHub → Actions tab
-- [ ] Watch workflow execution
-- [ ] Verify all steps complete successfully
-- [ ] Check for any error messages
+### 3. VPS Configuration ✓
+- [ ] Node.js v20 đã được cài đặt
+- [ ] npm đã được cài đặt
+- [ ] PM2 đã được cài đặt globally
+- [ ] PostgreSQL đã được cài đặt và đang chạy
+- [ ] Nginx đã được cài đặt và cấu hình
+- [ ] Firewall đã mở port 22, 80, 443
 
-### 3. Verify Deployment
+**Cách kiểm tra:**
+```bash
+# Upload và chạy script health check
+scp scripts/vps-health-check.sh root@95.111.253.111:/tmp/
+ssh root@95.111.253.111 "bash /tmp/vps-health-check.sh"
+```
+
+### 4. Project Directory ✓
+- [ ] Thư mục `/root/Cuongtm2012` đã được tạo
+- [ ] Permissions: `755`
+- [ ] Owner: `root:root`
+
+**Cách kiểm tra:**
+```bash
+ssh root@95.111.253.111 "ls -la /root/Cuongtm2012"
+```
+
+### 5. Environment Variables ✓
+- [ ] File `.env` đã được tạo trong `/root/Cuongtm2012`
+- [ ] `DATABASE_URL` đã được cấu hình đúng
+- [ ] `SESSION_SECRET` đã được set
+- [ ] Các API keys cần thiết đã được thêm
+
+**Cách kiểm tra:**
+```bash
+ssh root@95.111.253.111 "cat /root/Cuongtm2012/.env"
+```
+
+### 6. Database Setup ✓
+- [ ] PostgreSQL database `software_hub` đã được tạo
+- [ ] User `software_hub_user` đã được tạo với password
+- [ ] User có đủ quyền trên database
+
+**Cách kiểm tra:**
+```bash
+ssh root@95.111.253.111 "sudo -u postgres psql -c '\l' | grep software_hub"
+```
+
+### 7. Nginx Configuration ✓
+- [ ] Nginx config file đã được tạo
+- [ ] Config đã được enable (symlink)
+- [ ] Nginx đã được restart
+- [ ] Reverse proxy đến port 3000 hoạt động
+
+**Cách kiểm tra:**
+```bash
+ssh root@95.111.253.111 "nginx -t"
+curl http://95.111.253.111
+```
+
+## Deployment Steps
+
+### Step 1: Test SSH Connection
+```bash
+ssh -i ~/.ssh/contabo_deploy root@95.111.253.111
+```
+**Expected:** Kết nối thành công không cần password
+
+### Step 2: Run Health Check
+```bash
+# Upload script
+scp scripts/vps-health-check.sh root@95.111.253.111:/tmp/
+
+# Run check
+ssh root@95.111.253.111 "bash /tmp/vps-health-check.sh"
+```
+**Expected:** Tất cả checks đều pass (✓)
+
+### Step 3: Manual Test Deploy (Optional)
+```bash
+# Build locally
+npm run build
+
+# Create package
+tar -czf software-hub.tar.gz dist server shared services package*.json tsconfig.json
+
+# Upload
+scp software-hub.tar.gz root@95.111.253.111:/tmp/
+
+# Deploy manually
+ssh root@95.111.253.111 << 'EOF'
+cd /root/Cuongtm2012
+tar -xzf /tmp/software-hub.tar.gz
+npm ci --production
+npm run db:migrate
+pm2 start npm --name "software-hub" -- start
+pm2 save
+EOF
+```
+**Expected:** Application starts successfully
+
+### Step 4: Trigger GitHub Actions
+1. Go to GitHub Repository
+2. Navigate to **Actions** tab
+3. Select **Deploy to Contabo VPS** workflow
+4. Click **Run workflow** > **Run workflow**
+
+**Expected:** All steps complete successfully
+
+### Step 5: Verify Deployment
+```bash
+# Check application status
+ssh root@95.111.253.111 "pm2 list"
+
+# Check logs
+ssh root@95.111.253.111 "pm2 logs software-hub --lines 50"
+
+# Test endpoint
+curl http://95.111.253.111
+```
+**Expected:** Application is running and responding
+
+## Troubleshooting Guide
+
+### Issue: Connection Refused
+**Symptoms:** GitHub Actions cannot connect to VPS
+
+**Solutions:**
+1. Check firewall:
+```bash
+ssh root@95.111.253.111 "ufw status"
+ssh root@95.111.253.111 "ufw allow 22/tcp"
+```
+
+2. Check SSH service:
+```bash
+ssh root@95.111.253.111 "systemctl status sshd"
+```
+
+3. Verify SSH key format in GitHub Secret
+
+### Issue: Permission Denied
+**Symptoms:** SSH connection fails with permission error
+
+**Solutions:**
+1. Fix permissions:
+```bash
+ssh root@95.111.253.111 "chmod 700 ~/.ssh"
+ssh root@95.111.253.111 "chmod 600 ~/.ssh/authorized_keys"
+```
+
+2. Check authorized_keys content:
+```bash
+ssh root@95.111.253.111 "cat ~/.ssh/authorized_keys"
+```
+
+### Issue: Deployment Fails
+**Symptoms:** Files uploaded but application doesn't start
+
+**Solutions:**
+1. Check PM2 logs:
+```bash
+ssh root@95.111.253.111 "pm2 logs software-hub --err"
+```
+
+2. Check environment variables:
+```bash
+ssh root@95.111.253.111 "cat /root/Cuongtm2012/.env"
+```
+
+3. Check database connection:
+```bash
+ssh root@95.111.253.111 "cd /root/Cuongtm2012 && npm run db:migrate"
+```
+
+### Issue: Application Crashes
+**Symptoms:** PM2 shows app in error state
+
+**Solutions:**
+1. Check application logs:
+```bash
+ssh root@95.111.253.111 "pm2 logs software-hub --lines 100"
+```
+
+2. Try starting manually:
+```bash
+ssh root@95.111.253.111 "cd /root/Cuongtm2012 && npm start"
+```
+
+3. Check dependencies:
+```bash
+ssh root@95.111.253.111 "cd /root/Cuongtm2012 && npm ci --production"
+```
+
+## Post-Deployment Verification
+
+### 1. Application Health
+- [ ] PM2 shows app as "online"
+- [ ] No errors in PM2 logs
+- [ ] Application responds to HTTP requests
+
+### 2. Database
+- [ ] Migrations ran successfully
+- [ ] Can connect to database
+- [ ] Tables are created
+
+### 3. Nginx
+- [ ] Reverse proxy working
+- [ ] Can access via IP: http://95.111.253.111
+- [ ] Static files served correctly
+
+### 4. Monitoring
+- [ ] PM2 monitoring enabled
+- [ ] Log rotation configured
+- [ ] Backup directory created
+
+## Quick Commands Reference
+
 ```bash
 # SSH into VPS
 ssh root@95.111.253.111
 
-# Check PM2 processes
+# Check PM2 status
 pm2 list
 
-# Check application logs
-pm2 logs software-hub-server --lines 50
+# View logs
+pm2 logs software-hub
 
-# Test health endpoint
-curl http://localhost:5000/api/health
+# Restart application
+pm2 restart software-hub
 
-# Check Nginx status
-systemctl status nginx
+# Stop application
+pm2 stop software-hub
+
+# View Nginx logs
+tail -f /var/log/nginx/access.log
+tail -f /var/log/nginx/error.log
+
+# Check database
+sudo -u postgres psql software_hub
+
+# Check disk space
+df -h
+
+# Check memory
+free -h
+
+# View running processes
+htop
 ```
 
-### 4. Test Application
-- [ ] Visit http://95.111.253.111 in browser
-- [ ] Homepage loads correctly
-- [ ] API endpoints respond
-- [ ] Database connections work
-- [ ] Authentication works
-- [ ] File uploads work (if applicable)
+## Emergency Rollback
 
-## 🔒 Security Checklist
+If deployment fails and you need to rollback:
 
-### SSH Security
-- [ ] SSH key authentication enabled
-- [ ] Password authentication disabled (optional)
-- [ ] SSH port changed from 22 (optional)
-- [ ] Fail2ban installed (optional)
+```bash
+ssh root@95.111.253.111 << 'EOF'
+# Find latest backup
+LATEST_BACKUP=$(ls -dt /root/software-hub-backup-* | head -1)
+echo "Rolling back to: $LATEST_BACKUP"
 
-### Application Security
-- [ ] All secrets are in environment variables (not in code)
-- [ ] Session secret is strong and random
-- [ ] Database password is strong
-- [ ] CORS is properly configured
-- [ ] Rate limiting is enabled
-- [ ] Input validation is implemented
+# Stop current app
+pm2 stop software-hub
 
-### Server Security
-- [ ] Firewall (UFW) is enabled
-- [ ] Only necessary ports are open
-- [ ] System packages are updated
-- [ ] Automatic security updates enabled (optional)
+# Restore backup
+rm -rf /root/Cuongtm2012
+cp -r $LATEST_BACKUP /root/Cuongtm2012
 
-### SSL/HTTPS (Recommended)
-- [ ] Domain name configured (if applicable)
-- [ ] Certbot installed
-- [ ] SSL certificate obtained
-- [ ] HTTPS redirect configured
-- [ ] Auto-renewal configured
-
-## 📊 Post-Deployment Checklist
-
-### Monitoring Setup
-- [ ] PM2 monitoring configured
-- [ ] Log rotation configured
-- [ ] Disk space monitoring setup
-- [ ] Uptime monitoring configured (optional)
-- [ ] Error tracking setup (Sentry, etc.) (optional)
-
-### Backup Configuration
-- [ ] Database backup script created
-- [ ] Automated daily backups configured
-- [ ] Backup retention policy defined
-- [ ] Backup restoration tested
-
-### Performance Optimization
-- [ ] PM2 cluster mode enabled (if needed)
-- [ ] Nginx caching configured
-- [ ] Gzip compression enabled
-- [ ] Static assets cached properly
-- [ ] Database indexes optimized
-
-### Documentation
-- [ ] Deployment process documented
-- [ ] Environment variables documented
-- [ ] Troubleshooting guide created
-- [ ] Team members have access to credentials
-
-## 🔄 Ongoing Maintenance
-
-### Daily
-- [ ] Check PM2 process status
-- [ ] Review error logs
-- [ ] Monitor disk space
-
-### Weekly
-- [ ] Review application logs
-- [ ] Check for security updates
-- [ ] Verify backups are working
-
-### Monthly
-- [ ] Update system packages
-- [ ] Review and rotate logs
-- [ ] Test backup restoration
-- [ ] Review SSL certificate expiry
-
-## 🆘 Emergency Contacts
-
-- **VPS Provider:** Contabo Support
-- **Technical Lead:** admin@in2sight.com
-- **Database Admin:** [Your DBA contact]
-- **DevOps:** [Your DevOps contact]
-
-## 📝 Deployment Log
-
-Keep a record of deployments:
-
-| Date | Version | Deployed By | Notes |
-|------|---------|-------------|-------|
-| 2026-01-25 | v1.0.0 | Initial | First production deployment |
-|  |  |  |  |
-
-## ✅ Sign-off
-
-- [ ] All checklist items completed
-- [ ] Application tested and verified
-- [ ] Team notified of deployment
-- [ ] Documentation updated
-
-**Deployed by:** ___________________  
-**Date:** ___________________  
-**Signature:** ___________________
+# Restart app
+cd /root/Cuongtm2012
+pm2 restart software-hub
+EOF
+```
 
 ---
 
-**Next Deployment:** Follow this checklist for each deployment  
-**Emergency Rollback:** `pm2 restart all` or restore from backup
+**Last Updated:** 2026-01-25
+**VPS IP:** 95.111.253.111
+**Project Path:** /root/Cuongtm2012

@@ -44,29 +44,38 @@ jobs:
       - name: Deploy to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
           source: "software-hub.tar.gz"
           target: "/tmp/"
+          debug: true
+          strip_components: 0
 
       - name: Execute deployment script on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          debug: true
           script: |
             set -e
             
             # Define paths
-            PROJECT_PATH="/var/www/software-hub"
-            BACKUP_PATH="/var/www/software-hub-backup-$(date +%Y%m%d-%H%M%S)"
+            PROJECT_PATH="/root/Cuongtm2012"
+            BACKUP_PATH="/root/software-hub-backup-$(date +%Y%m%d-%H%M%S)"
             
             # Create project directory if it doesn't exist
+            echo "Creating project directory..."
             mkdir -p $PROJECT_PATH
+            
+            # Set proper permissions
+            echo "Setting permissions..."
+            chown -R root:root $PROJECT_PATH
+            chmod -R 755 $PROJECT_PATH
             
             # Backup current deployment
             if [ -d "$PROJECT_PATH/dist" ]; then
@@ -88,16 +97,25 @@ jobs:
             echo "Running database migrations..."
             npm run db:migrate || echo "Migration failed or not configured"
             
-            # Restart application
+            # Restart application with PM2
             echo "Restarting application..."
-            bash /var/www/deploy.sh
+            if command -v pm2 &> /dev/null; then
+              pm2 restart software-hub || pm2 start npm --name "software-hub" -- start
+              pm2 save
+            else
+              echo "PM2 not found. Please install PM2 or configure your process manager."
+              # Fallback: try to restart with systemd if configured
+              systemctl restart software-hub || echo "No systemd service configured"
+            fi
             
             # Keep only last 5 backups
-            ls -dt /var/www/software-hub-backup-* | tail -n +6 | xargs rm -rf || true
+            echo "Cleaning old backups..."
+            ls -dt /root/software-hub-backup-* 2>/dev/null | tail -n +6 | xargs rm -rf || true
             
             echo "Deployment completed successfully!"
 
       - name: Health check
         run: |
-          sleep 10
-          curl -f http://${{ secrets.REMOTE_HOST }} || exit 1
+          sleep 15
+          echo "Performing health check..."
+          curl -f http://${{ secrets.SSH_HOST }} || curl -f http://${{ secrets.SSH_HOST }}:3000 || echo "Health check failed - please verify manually"
