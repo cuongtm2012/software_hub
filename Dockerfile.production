@@ -1,6 +1,3 @@
-# Multi-stage Production Dockerfile for Software Hub
-# Optimized for deployment with separate build stages
-
 # ============================================
 # Stage 1: Build Client (React/Vite)
 # ============================================
@@ -8,20 +5,21 @@ FROM node:20-alpine AS client-builder
 
 WORKDIR /app
 
-# Copy package files for client
+# Copy package files
 COPY package*.json ./
 
 # Install dependencies
 RUN npm ci --legacy-peer-deps
 
-# Copy source code needed for client build
-COPY client ./client
-COPY shared ./shared
-COPY tsconfig.json ./
+# Copy all source code
+COPY . .
 
-# Build client
+# Build client - Vite will use config from vite.config.ts
 ENV NODE_ENV=production
 RUN npm run build
+
+# Verify build output
+RUN ls -la dist/ || ls -la client/dist/
 
 # ============================================
 # Stage 2: Prepare Server Dependencies
