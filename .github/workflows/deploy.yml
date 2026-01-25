@@ -65,8 +65,8 @@ jobs:
             set -e
             
             # Define paths
-            PROJECT_PATH="/root/Cuongtm2012"
-            BACKUP_PATH="/root/software-hub-backup-$(date +%Y%m%d-%H%M%S)"
+            PROJECT_PATH="/var/www/software-hub"
+            BACKUP_PATH="/var/www/software-hub-backup-$(date +%Y%m%d-%H%M%S)"
             
             # Create project directory if it doesn't exist
             echo "Creating project directory..."
@@ -110,7 +110,7 @@ jobs:
             
             # Keep only last 5 backups
             echo "Cleaning old backups..."
-            ls -dt /root/software-hub-backup-* 2>/dev/null | tail -n +6 | xargs rm -rf || true
+            ls -dt /var/www/software-hub-backup-* 2>/dev/null | tail -n +6 | xargs rm -rf || true
             
             echo "Deployment completed successfully!"
 

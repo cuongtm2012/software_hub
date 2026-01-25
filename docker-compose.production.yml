@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: software-hub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-software_hub}
+      POSTGRES_USER: ${DB_USER:-software_hub_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"  # Expose for external access if needed
+    networks:
+      - software-hub-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-software_hub_user} -d ${DB_NAME:-software_hub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Main Application (Node.js + React)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: software-hub-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      
+      # Database Configuration
+      DATABASE_URL: postgresql://${DB_USER:-software_hub_user}:${DB_PASSWORD}@db:5432/${DB_NAME:-software_hub}
+      
+      # Session
+      SESSION_SECRET: ${SESSION_SECRET}
+      
+      # Email (Resend)
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      
+      # OAuth (Optional)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET}
+      
+      # Chat Service
+      CHAT_SERVICE_URL: ${CHAT_SERVICE_URL:-http://chat-service:3001}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - software-hub-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Chat Service (WebSocket) - Optional separate service
+  chat-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: software-hub-chat
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${DB_USER:-software_hub_user}:${DB_PASSWORD}@db:5432/${DB_NAME:-software_hub}
+      SESSION_SECRET: ${SESSION_SECRET}
+    command: ["node", "services/chat/index.js"]
+    ports:
+      - "3001:3001"
+    networks:
+      - software-hub-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy (Optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: software-hub-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - software-hub-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  software-hub-network:
+    driver: bridge
+    name: software-hub-network
+
+volumes:
+  postgres_data:
+    driver: local
+    name: software-hub-postgres-data
