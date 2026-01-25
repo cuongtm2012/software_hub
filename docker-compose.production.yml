@@ -1,11 +1,18 @@
 version: '3.8'
 
+# Load environment variables from .env.production
+x-env-file: &env-file
+  env_file:
+    - .env.production
+
 services:
   # PostgreSQL Database
   db:
     image: postgres:16-alpine
     container_name: software-hub-db
     restart: unless-stopped
+    env_file:
+      - .env.production
     environment:
       POSTGRES_DB: ${DB_NAME:-software_hub}
       POSTGRES_USER: ${DB_USER:-software_hub_user}
@@ -35,6 +42,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - .env.production
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -80,6 +89,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - .env.production
     environment:
       NODE_ENV: production
       PORT: 3001

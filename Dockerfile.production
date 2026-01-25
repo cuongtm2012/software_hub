@@ -10,7 +10,6 @@ WORKDIR /app
 
 # Copy package files for client
 COPY package*.json ./
-COPY client/package*.json ./client/ 2>/dev/null || true
 
 # Install dependencies
 RUN npm ci --legacy-peer-deps
