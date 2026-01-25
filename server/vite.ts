@@ -68,15 +68,19 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // Fix: Look for files in client/dist instead of dist/public
-  const distPath = path.resolve(import.meta.dirname, "..", "client", "dist");
+  // Try Docker path first (/app/dist), then local path (client/dist)
+  const dockerDistPath = path.resolve(import.meta.dirname, "..", "dist");
+  const localDistPath = path.resolve(import.meta.dirname, "..", "client", "dist");
+
+  const distPath = fs.existsSync(dockerDistPath) ? dockerDistPath : localDistPath;
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory. Tried:\n- ${dockerDistPath}\n- ${localDistPath}\nMake sure to build the client first`,
     );
   }
 
+  console.log(`Serving static files from: ${distPath}`);
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
