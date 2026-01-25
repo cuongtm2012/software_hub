@@ -5,51 +5,50 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
 } from "@/components/ui/dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  ChevronLeft, 
-  Loader2, 
-  Search, 
-  UsersRound, 
-  AlertTriangle 
+import {
+  ChevronLeft,
+  Loader2,
+  Search,
+  UsersRound,
+  AlertTriangle
 } from "lucide-react";
 
 // Role definitions for display
@@ -96,9 +95,9 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>("");
-  
+
   // Fetch users from API
-  const { 
+  const {
     data: usersData,
     isLoading: isLoadingUsers,
     error: usersError
@@ -109,7 +108,7 @@ export default function UsersPage() {
       return response.json();
     }
   });
-  
+
   // Handle role change mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: number, role: string }) => {
@@ -136,8 +135,8 @@ export default function UsersPage() {
   // Handle password reset mutation
   const resetPasswordMutation = useMutation({
     mutationFn: async ({ userId }: { userId: number }) => {
-      const response = await apiRequest('POST', `/api/admin/users/${userId}/reset-password`, { 
-        newPassword: 'abcd1234' 
+      const response = await apiRequest('POST', `/api/admin/users/${userId}/reset-password`, {
+        newPassword: 'abcd1234'
       });
       return response.json();
     },
@@ -155,11 +154,11 @@ export default function UsersPage() {
       });
     }
   });
-  
+
   // Filter users based on search term
   const filteredUsers = usersData?.users?.filter((user: User) => {
     if (!searchTerm) return true;
-    
+
     const searchTermLower = searchTerm.toLowerCase();
     return (
       user.name.toLowerCase().includes(searchTermLower) ||
@@ -167,16 +166,16 @@ export default function UsersPage() {
       roleDefinitions[user.role].label.toLowerCase().includes(searchTermLower)
     );
   });
-  
+
   const handleEditClick = (user: User) => {
     setSelectedUser(user);
     setSelectedRole(user.role);
     setIsEditDialogOpen(true);
   };
-  
+
   const handleRoleUpdate = () => {
     if (!selectedUser || !selectedRole) return;
-    
+
     updateRoleMutation.mutate({
       userId: selectedUser.id,
       role: selectedRole
@@ -185,16 +184,15 @@ export default function UsersPage() {
 
   const handlePasswordReset = () => {
     if (!selectedUser) return;
-    
+
     resetPasswordMutation.mutate({
       userId: selectedUser.id
     });
   };
-  
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8">
         <div className="flex items-center mb-6">
           <Button
             variant="ghost"
@@ -207,7 +205,7 @@ export default function UsersPage() {
           </Button>
           <h1 className="text-2xl font-bold">User Management</h1>
         </div>
-        
+
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -231,7 +229,7 @@ export default function UsersPage() {
                 />
               </div>
             </div>
-            
+
             {isLoadingUsers ? (
               <div className="space-y-4">
                 {Array(5).fill(0).map((_, i) => (
@@ -277,8 +275,8 @@ export default function UsersPage() {
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleEditClick(user)}
                         >
@@ -311,7 +309,7 @@ export default function UsersPage() {
             )}
           </CardContent>
         </Card>
-        
+
         {/* Edit User Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
@@ -340,7 +338,7 @@ export default function UsersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-3">
                 <Label>Password Reset</Label>
                 <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
@@ -348,8 +346,8 @@ export default function UsersPage() {
                     <span className="text-sm font-medium">Reset to default password</span>
                     <span className="text-xs text-muted-foreground">New password: abcd1234</span>
                   </div>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={handlePasswordReset}
                     disabled={resetPasswordMutation.isPending}
@@ -363,13 +361,13 @@ export default function UsersPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleRoleUpdate}
                 disabled={updateRoleMutation.isPending}
               >
@@ -381,8 +379,7 @@ export default function UsersPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { serveStatic, log } from "./vite";
 
 const app = express();
 app.use(express.json());
@@ -11,16 +11,101 @@ app.use(express.urlencoded({ extended: false }));
 import session from 'express-session';
 import { randomBytes } from 'crypto';
 
+// Initialize database connection first
+import { storage } from "./storage";
+
+async function initializeDatabase() {
+  try {
+    console.log('Initializing database connection...');
+    await storage.initialize();
+    console.log('Database connection established successfully');
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    throw error;
+  }
+}
+
+async function waitForExternalServices(timeout = 60000) {
+  console.log('Waiting for external services to be ready...');
+  const startTime = Date.now();
+
+  const services = [
+    { name: 'Email Service', url: process.env.EMAIL_SERVICE_URL || 'http://email-service:3001' },
+    { name: 'Chat Service', url: process.env.CHAT_SERVICE_URL || 'http://chat-service:3002' },
+    { name: 'Notification Service', url: process.env.NOTIFICATION_SERVICE_URL || 'http://notification-service:3003' }
+  ];
+
+  while (Date.now() - startTime < timeout) {
+    let allServicesReady = true;
+
+    for (const service of services) {
+      try {
+        const response = await fetch(`${service.url}/health`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          allServicesReady = false;
+          break;
+        }
+
+      } catch (error) {
+        allServicesReady = false;
+        break;
+      }
+    }
+
+    if (allServicesReady) {
+      console.log('All external services are ready');
+      return;
+    }
+
+    console.log('Waiting for external services...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+
+  console.warn('Some external services may not be ready, continuing startup...');
+}
+
 const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
+
+// Use memory store for development to avoid session store hanging issues
+const MemoryStore = session.MemoryStore;
+
 app.use(session({
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
+  store: new MemoryStore(), // Use memory store instead of PostgreSQL store
   cookie: {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    httpOnly: true
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
   }
 }));
+
+// Add session debugging middleware with improved filtering
+app.use((req, res, next) => {
+  // Only log session debug for meaningful API requests and page loads
+  const shouldLog = (
+    (req.path.startsWith('/api/') && !req.path.startsWith('/api/user') && req.method !== 'GET') || // Important API calls but not constant user checks
+    (req.path.startsWith('/api/login') || req.path.startsWith('/api/logout') || req.path.startsWith('/api/register')) || // Auth calls
+    (req.path === '/' || req.path.startsWith('/auth') || req.path.startsWith('/dashboard') || req.path.startsWith('/admin')) // Page loads
+  ) && !req.path.includes('/src/') && !req.path.includes('/@') && !req.path.includes('.js') && !req.path.includes('.css') && !req.path.includes('.ico');
+
+  if (shouldLog) {
+    console.log('Session Debug:', {
+      sessionId: req.sessionID,
+      hasSession: !!req.session,
+      userId: req.session?.userId,
+      userEmail: req.session?.user?.email,
+      path: req.path,
+      method: req.method
+    });
+  }
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -53,37 +138,67 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    console.log('Starting SoftwareHub application...');
 
-  // Serve payment service files (PHP)
-  app.use('/services', express.static(path.join(import.meta.dirname, '../services')));
+    // Initialize database first
+    await initializeDatabase();
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    // Initialize Firebase Admin SDK for push notifications
+    try {
+      const { initializeFirebaseAdmin } = await import("./lib/firebase-admin");
+      initializeFirebaseAdmin();
+    } catch (error) {
+      console.warn('Firebase Admin SDK initialization skipped:', error);
+    }
 
-    res.status(status).json({ message });
-    throw err;
-  });
+    // Wait for external services in production
+    if (process.env.NODE_ENV === 'production') {
+      await waitForExternalServices();
+    }
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    // Register routes after database is ready
+    const server = await registerRoutes(app);
+
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+
+      console.error('Application error:', err);
+      res.status(status).json({ message });
+    });
+
+    // Setup Vite or static serving
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (!isProduction) {
+      // Dynamic import to avoid bundling Vite in production
+      const { setupVite } = await import("./vite");
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+      res.json({
+        status: 'ok',
+        service: 'softwarehub-app',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+      });
+    });
+
+    // ALWAYS serve the app on port 5000
+    const port = 5000;
+    server.listen(port, () => {
+      log(`SoftwareHub application serving on port ${port}`);
+      log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      log(`Database: Connected`);
+    });
+
+  } catch (error) {
+    console.error('Failed to start application:', error);
+    process.exit(1);
   }
-
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
 })();

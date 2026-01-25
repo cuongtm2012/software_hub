@@ -12,6 +12,9 @@ export const platformEnum = pgEnum('platform', ['windows', 'mac', 'linux', 'andr
 // Status enum for software status
 export const statusEnum = pgEnum('status', ['pending', 'approved', 'rejected']);
 
+// Software type enum to distinguish between software and API
+export const softwareTypeEnum = pgEnum('software_type', ['software', 'api']);
+
 // Project status enum for project management
 export const projectStatusEnum = pgEnum('project_status', ['pending', 'in_progress', 'completed', 'cancelled']);
 
@@ -106,13 +109,37 @@ export const softwares = pgTable("softwares", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  type: softwareTypeEnum("type").default('software').notNull(), // 'software' or 'api'
   category_id: integer("category_id").references(() => categories.id).notNull(),
   platform: text("platform").array().notNull(),
   download_link: text("download_link").notNull(),
   image_url: text("image_url"),
   created_by: integer("created_by").references(() => users.id).notNull(),
   status: statusEnum("status").default('pending').notNull(),
+  version: text("version"),
+  vendor: text("vendor"),
+  license: text("license"),
+  installation_instructions: text("installation_instructions"),
+  documentation_link: text("documentation_link"),
+  admin_notes: text("admin_notes"),
   created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Courses table for IT learning resources
+export const courses = pgTable("courses", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  topic: text("topic").notNull(), // JavaScript, Python, C, React, etc.
+  instructor: text("instructor"), // F8 Official, Hỏi Dân IT, etc.
+  youtube_url: text("youtube_url").notNull(),
+  playlist_id: text("playlist_id"), // Extracted from YouTube URL
+  thumbnail_url: text("thumbnail_url"),
+  level: text("level"), // beginner, intermediate, advanced
+  language: text("language").default('vi'),
+  status: statusEnum("status").default('approved').notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Reviews table
@@ -133,7 +160,7 @@ export const externalRequests = pgTable("external_requests", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
-  
+
   // Project details (enhanced for unified use)
   title: text("title"), // Optional title for internal projects  
   project_description: text("project_description").notNull(),
@@ -143,7 +170,7 @@ export const externalRequests = pgTable("external_requests", {
   budget_range: text("budget_range"),
   budget: numeric("budget"), // Specific budget amount
   deadline: timestamp("deadline"), // Specific deadline
-  
+
   // Project management
   status: externalRequestStatusEnum("status").default('pending').notNull(),
   client_id: integer("client_id").references(() => users.id), // Link to registered users
@@ -152,7 +179,7 @@ export const externalRequests = pgTable("external_requests", {
   admin_notes: text("admin_notes"), // Internal notes
   contact_email: text("contact_email"), // For external requests
   contact_phone: text("contact_phone"), // For external requests
-  
+
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -164,11 +191,18 @@ export const quotes = pgTable("quotes", {
   id: serial("id").primaryKey(),
   project_id: integer("project_id").references(() => externalRequests.id).notNull(),
   developer_id: integer("developer_id").references(() => users.id).notNull(),
-  price: numeric("price").notNull(),
-  timeline: text("timeline").notNull(),
-  message: text("message"),
+  title: text("title"), // Quote title
+  description: text("description"), // Detailed description
+  price: numeric("price").notNull(), // Total price
+  timeline: text("timeline").notNull(), // Legacy timeline field
+  timeline_days: integer("timeline_days"), // Timeline in days (structured)
+  deliverables: text("deliverables").array(), // Array of deliverable items
+  deposit_amount: numeric("deposit_amount"), // Deposit required
+  terms_conditions: text("terms_conditions"), // Terms and conditions
+  message: text("message"), // Additional message
   status: quoteStatusEnum("status").default('pending').notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const messages = pgTable("messages", {
@@ -668,8 +702,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
   created_at: true,
   updated_at: true,
   profile_data: true,
-  reset_token: true,
-  reset_token_expires: true,
 });
 
 // Forgot password schemas
@@ -691,6 +723,7 @@ export const insertSoftwareSchema = createInsertSchema(softwares).omit({
   created_at: true,
   created_by: true,
   status: true,
+  type: true, // type will be set based on category or explicitly
 });
 
 export const insertReviewSchema = createInsertSchema(reviews).omit({

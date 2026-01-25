@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Service Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #messages { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; margin: 10px 0; }
+        input { width: 70%; padding: 8px; }
+        button { padding: 8px 16px; }
+        .status { color: green; font-weight: bold; }
+        .message { margin: 5px 0; }
+        .system { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Chat Service Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    <input id="messageInput" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="joinRoom()">Join Test Room</button>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3002');
+        const messages = document.getElementById('messages');
+        const status = document.getElementById('status');
+        
+        function addMessage(text, isSystem = false) {
+            const div = document.createElement('div');
+            div.className = isSystem ? 'system' : 'message';
+            div.innerHTML = text;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        socket.on('connect', () => {
+            status.innerHTML = '<span class="status">Connected to chat service</span>';
+            addMessage('Connected to chat service (ID: ' + socket.id + ')', true);
+        });
+        
+        socket.on('disconnect', () => {
+            status.innerHTML = 'Disconnected';
+            addMessage('Disconnected from chat service', true);
+        });
+        
+        socket.on('message-received', (data) => {
+            addMessage(`<strong>User ${data.userId}:</strong> ${data.message}`);
+        });
+        
+        socket.on('user-joined', (data) => {
+            addMessage(`User ${data.userId} joined the room`, true);
+        });
+        
+        socket.on('user-left', (data) => {
+            addMessage(`User ${data.userId} left the room`, true);
+        });
+        
+        function joinRoom() {
+            socket.emit('join-room', { roomId: 'test-room', userId: 1 });
+            addMessage('Joining test room...', true);
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                socket.emit('send-message', {
+                    roomId: 'test-room',
+                    userId: 1,
+                    message: message,
+                    timestamp: new Date().toISOString()
+                });
+                input.value = '';
+            }
+        }
+        
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Auto-join room on connection
+        socket.on('connect', () => {
+            setTimeout(() => {
+                joinRoom();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

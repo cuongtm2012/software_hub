@@ -1,43 +1,51 @@
-# Multi-stage build for optimized production image
-FROM node:20-alpine AS base
+# Development-focused Dockerfile for ARM64 (M1/M2 Mac) compatibility
+FROM --platform=linux/arm64/v8 node:20-alpine
+
 WORKDIR /app
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install dumb-init and curl for proper signal handling and health checks
+RUN apk add --no-cache dumb-init curl
 
-FROM base AS deps
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Configure npm for better reliability
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retries 10 && \
+    npm config set fetch-retry-mintimeout 30000 && \
+    npm config set fetch-retry-maxtimeout 180000 && \
+    npm config set fetch-timeout 300000
+
+# Copy package files first for better Docker layer caching
 COPY package*.json ./
 RUN npm ci --only=production
 
-FROM base AS builder  
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+# Install ALL dependencies (including devDependencies) for development
+# This ensures tsx and other dev tools are available
+RUN npm cache clean --force && \
+    npm ci --no-audit --no-fund --legacy-peer-deps && \
+    npm cache clean --force
 
-FROM base AS production
-ENV NODE_ENV=production
+# Copy application files
+COPY --chown=nodejs:nodejs . .
 
-# Copy production dependencies
-COPY --from=deps /app/node_modules ./node_modules
+# Change ownership to nodejs user
+USER nodejs
 
-# Copy built application
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/client/dist ./client/dist
-COPY --from=builder /app/shared ./shared
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD node healthcheck.js
 
-# Copy remaining necessary files
-COPY package*.json ./
-COPY server ./server
+# Set environment variables
+ENV NODE_ENV=development
+ENV PORT=5000
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && adduser -S softwarehub -u 1001
-RUN chown -R softwarehub:nodejs /app
-USER softwarehub
-
+# Expose port
 EXPOSE 5000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:5000/api/health || exit 1
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
 
-CMD ["npm", "start"]
+# Always run in development mode to avoid ARM64 Rollup build issues
+CMD ["npm", "run", "dev"]

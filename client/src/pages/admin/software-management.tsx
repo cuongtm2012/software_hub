@@ -89,10 +89,10 @@ export default function SoftwareManagement() {
 
   // Fetch software list with filters
   const { data: softwareData, isLoading, refetch } = useQuery({
-    queryKey: ['/api/admin/softwares', { 
-      page: currentPage, 
+    queryKey: ['/api/admin/softwares', {
+      page: currentPage,
       limit: pageSize,
-      ...filters 
+      ...filters
     }],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -105,7 +105,7 @@ export default function SoftwareManagement() {
         ...(filters.dateFrom && { dateFrom: filters.dateFrom }),
         ...(filters.dateTo && { dateTo: filters.dateTo })
       });
-      
+
       console.log('Fetching admin software with params:', params.toString());
       const response = await fetch(`/api/admin/softwares?${params}`, {
         credentials: 'include',
@@ -113,14 +113,14 @@ export default function SoftwareManagement() {
           'Content-Type': 'application/json'
         }
       });
-      
+
       console.log('Admin software response status:', response.status);
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Admin software error:', errorText);
         throw new Error(`Failed to fetch software: ${response.status} ${errorText}`);
       }
-      
+
       const data = await response.json();
       console.log('Admin software data received:', data);
       return data;
@@ -261,13 +261,16 @@ export default function SoftwareManagement() {
 
   const handleSaveEdit = () => {
     if (!selectedSoftware) return;
-    
+
+    // Remove readonly fields that shouldn't be updated
+    const { id, created_at, created_by, ...cleanedData } = editFormData;
+
     // Check if only status changed for quick status update
-    if (editFormData.status !== selectedSoftware.status && 
-        (Object.keys(editFormData).length === 1 || 
-        (Object.keys(editFormData).length === Object.keys(selectedSoftware).length && 
-         Object.keys(editFormData).filter(key => (editFormData as any)[key] !== (selectedSoftware as any)[key]).length === 1 &&
-         editFormData.status !== selectedSoftware.status))) {
+    if (editFormData.status !== selectedSoftware.status &&
+      (Object.keys(cleanedData).length === 1 ||
+        (Object.keys(cleanedData).length === Object.keys(selectedSoftware).length &&
+          Object.keys(cleanedData).filter(key => (cleanedData as any)[key] !== (selectedSoftware as any)[key]).length === 1 &&
+          editFormData.status !== selectedSoftware.status))) {
       updateStatusMutation.mutate({
         id: selectedSoftware.id,
         status: editFormData.status as SoftwareStatus
@@ -275,7 +278,7 @@ export default function SoftwareManagement() {
     } else {
       updateSoftwareMutation.mutate({
         id: selectedSoftware.id,
-        updates: editFormData
+        updates: cleanedData
       });
     }
   };
@@ -299,7 +302,7 @@ export default function SoftwareManagement() {
       'pending': 'secondary',
       'rejected': 'destructive'
     };
-    
+
     const labels: Record<SoftwareStatus, string> = {
       'approved': 'Active',
       'pending': 'Under Review',
@@ -531,7 +534,7 @@ export default function SoftwareManagement() {
           >
             Previous
           </Button>
-          
+
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
             <Button
               key={page}
@@ -542,7 +545,7 @@ export default function SoftwareManagement() {
               {page}
             </Button>
           ))}
-          
+
           <Button
             variant="outline"
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
@@ -555,7 +558,7 @@ export default function SoftwareManagement() {
 
       {/* View Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[80vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Software Details</DialogTitle>
           </DialogHeader>
@@ -587,7 +590,7 @@ export default function SoftwareManagement() {
                   <p>{format(new Date(selectedSoftware.created_at), 'MMM dd, yyyy')}</p>
                 </div>
               </div>
-              
+
               <div>
                 <Label className="font-semibold">Description</Label>
                 <p className="mt-1">{selectedSoftware.description}</p>
@@ -612,9 +615,9 @@ export default function SoftwareManagement() {
               {selectedSoftware.documentation_link && (
                 <div>
                   <Label className="font-semibold">Documentation</Label>
-                  <a 
-                    href={selectedSoftware.documentation_link} 
-                    target="_blank" 
+                  <a
+                    href={selectedSoftware.documentation_link}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline mt-1 block"
                   >
@@ -636,7 +639,7 @@ export default function SoftwareManagement() {
 
       {/* Edit Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[80vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Software</DialogTitle>
           </DialogHeader>
@@ -732,6 +735,59 @@ export default function SoftwareManagement() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-category">Category</Label>
+                  <Select
+                    value={editFormData.category_id?.toString() || ''}
+                    onValueChange={(value) => setEditFormData(prev => ({ ...prev, category_id: parseInt(value) }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(categories || []).map((cat: Category) => (
+                        <SelectItem key={cat.id} value={cat.id.toString()}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-platform">Platform</Label>
+                  <Input
+                    id="edit-platform"
+                    value={Array.isArray(editFormData.platform) ? editFormData.platform.join(', ') : ''}
+                    onChange={(e) => setEditFormData(prev => ({
+                      ...prev,
+                      platform: e.target.value.split(',').map(p => p.trim()).filter(Boolean)
+                    }))}
+                    placeholder="windows, mac, linux"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-download-link">Download Link</Label>
+                <Input
+                  id="edit-download-link"
+                  value={editFormData.download_link || ''}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, download_link: e.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-image-url">Image URL</Label>
+                <Input
+                  id="edit-image-url"
+                  value={editFormData.image_url || ''}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+
               <div>
                 <Label htmlFor="edit-admin-notes">Admin Notes</Label>
                 <Textarea
@@ -748,7 +804,7 @@ export default function SoftwareManagement() {
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleSaveEdit}
               disabled={updateSoftwareMutation.isPending}
             >

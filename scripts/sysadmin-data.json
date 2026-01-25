@@ -1,0 +1,4912 @@
+[
+  {
+    "name": "Apache Ant",
+    "description": "Automation build tool, similar to make, a library and command-line tool whose mission is to drive processes described in build files as targets and extension points dependent upon each other",
+    "category": "System Administration",
+    "subcategory": "Automation",
+    "url": "https://ant.apache.org/",
+    "sourceUrl": "https://github.com/apache/ant",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Apache Maven",
+    "description": "Build automation tool mainly for Java. A software project management and comprehension tool. Based on the concept of a project object model (POM), Maven can manage a project's build, reporting and documentation from a central piece of information",
+    "category": "System Administration",
+    "subcategory": "Automation",
+    "url": "https://maven.apache.org/",
+    "sourceUrl": "https://github.com/apache/maven",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Bazel",
+    "description": "A fast, scalable, multi-language and extensible build system. Used by Google",
+    "category": "System Administration",
+    "subcategory": "Automation",
+    "url": "https://www.bazel.io/",
+    "sourceUrl": "https://github.com/bazelbuild/bazel/",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Bolt",
+    "description": "You can use Bolt to run one-off tasks, scripts to automate the provisioning and management of some nodes, you can use Bolt to move a step beyond scripts, and make them shareable",
+    "category": "System Administration",
+    "subcategory": "Automation",
+    "url": "https://www.puppet.com/community/open-source/bolt",
+    "sourceUrl": "https://github.com/puppetlabs/bolt",
+    "license": "Apache-2.0",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "GNU Make",
+    "description": "The most popular automation build tool for many purposes, make is a tool which controls the generation of executables and other non-source files of a program from the program's source files",
+    "category": "System Administration",
+    "subcategory": "Automation",
+    "url": "https://www.gnu.org/software/make/",
+    "sourceUrl": "https://git.savannah.gnu.org/cgit/make.git",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Gradle",
+    "description": "Another build automation system",
+    "category": "System Administration",
+    "subcategory": "Automation",
+    "url": "https://gradle.org/",
+    "sourceUrl": "https://github.com/gradle/gradle",
+    "license": "Apache-2.0",
+    "language": "Groovy/Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Rake",
+    "description": "Build automation tool similar to Make, written in and extensible in Ruby",
+    "category": "System Administration",
+    "subcategory": "Automation",
+    "url": "https://ruby.github.io/rake/",
+    "sourceUrl": "https://github.com/ruby/rake",
+    "license": "MIT",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Backupninja",
+    "description": "Lightweight, extensible meta-backup system, provides a centralized way to configure and coordinate many different backup utilities. `GPL-2.0` `Shell`",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://0xacab.org/liberate/backupninja",
+    "license": "GPL-2.0",
+    "language": "Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Backrest",
+    "description": "Backrest is a web UI and orchestrator for restic backup",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://garethgeorge.github.io/backrest/",
+    "sourceUrl": "https://github.com/garethgeorge/backrest",
+    "license": "GPL-3.0",
+    "language": "Docker/Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Bareos",
+    "description": "Cross-network backup solution which preserves, archives, and recovers data from all major operating systems",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://www.bareos.org/",
+    "sourceUrl": "https://github.com/bareos/bareos",
+    "license": "AGPL-3.0",
+    "language": "C++/C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Barman",
+    "description": "Backup and Recovery Manager for PostgreSQL",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://pgbarman.org",
+    "sourceUrl": "https://github.com/EnterpriseDB/barman",
+    "license": "GPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "BorgBackup",
+    "description": "Deduplicating archiver with compression and authenticated encryption",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://www.borgbackup.org/",
+    "sourceUrl": "https://github.com/borgbackup/borg",
+    "license": "BSD-3-Clause",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Burp",
+    "description": "Network backup and restore program",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://burp.grke.org/",
+    "sourceUrl": "https://github.com/grke/burp",
+    "license": "AGPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dar",
+    "description": "Which stands for Disk ARchive, is a robust and rich featured archiving and backup software of the tar style",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "http://dar.linux.free.fr/",
+    "sourceUrl": "https://github.com/Edrusb/DAR",
+    "license": "GPL-2.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Duplicati",
+    "description": "Backup client that securely stores encrypted, incremental, compressed backups on cloud storage services and remote file servers",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://www.duplicati.com",
+    "sourceUrl": "https://github.com/duplicati/duplicati",
+    "license": "LGPL-2.1",
+    "language": "C#",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Duplicity",
+    "description": "Encrypted bandwidth-efficient backup using the rsync algorithm",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://duplicity.gitlab.io/",
+    "sourceUrl": "https://gitlab.com/duplicity/duplicity",
+    "license": "GPL-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Minarca",
+    "description": "Client–server backup platform with a centralized web console to manage and restore Linux, Windows, and macOS backups via GUI or CLI",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://minarca.org/",
+    "sourceUrl": "https://gitlab.com/ikus-soft/minarca",
+    "license": "AGPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Windows",
+      "Mac",
+      "Linux"
+    ]
+  },
+  {
+    "name": "Proxmox Backup Server",
+    "description": "Proxmox Backup Server is an enterprise-class, client-server backup solution thatis capable of backing up virtual machines, containers, and physical hosts",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://www.proxmox.com/en/proxmox-backup-server",
+    "sourceUrl": "https://git.proxmox.com/?p=proxmox-backup.git;a=tree",
+    "license": "GPL-3.0",
+    "language": "Rust",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "rclone",
+    "description": "Command-line program to sync files and directories to and from different cloud storage providers.",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://rclone.org/",
+    "sourceUrl": "https://github.com/rclone/rclone",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Rdiff-backup",
+    "description": "Reverse differential backup tool, over a network or locally",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://rdiff-backup.net/",
+    "sourceUrl": "https://github.com/rdiff-backup/rdiff-backup",
+    "license": "GPL-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Restic",
+    "description": "Easy, fast, verifiable, secure and efficient remote backup tool",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://restic.net/",
+    "sourceUrl": "https://github.com/restic/restic",
+    "license": "BSD-2-Clause",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Rsnapshot",
+    "description": "Filesystem snapshot utility based on rsync",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://rsnapshot.org/",
+    "sourceUrl": "https://github.com/rsnapshot/rsnapshot",
+    "license": "GPL-2.0",
+    "language": "Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Shield",
+    "description": "A pluggable architecture for backup and restore of database systems. `MIT` `Go`",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://github.com/starkandwayne/shield",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "UrBackup",
+    "description": "Client/Server Open Source Network Backup for Windows, MacOS and Linux",
+    "category": "System Administration",
+    "subcategory": "Backups",
+    "url": "https://www.urbackup.org/",
+    "sourceUrl": "https://github.com/uroni/urbackup_backend",
+    "license": "AGPL-3.0",
+    "language": "C/C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Windows",
+      "Mac",
+      "Linux"
+    ]
+  },
+  {
+    "name": "EasyBuild",
+    "description": "EasyBuild builds software and modulefiles for High Performance Computing (HPC) systems in an efficient way",
+    "category": "System Administration",
+    "subcategory": "Build and software organization tools",
+    "url": "https://easybuild.io/",
+    "sourceUrl": "https://github.com/easybuilders/easybuild-easyconfigs",
+    "license": "GPL-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Environment Modules",
+    "description": "Environment Modules provides for the dynamic modification of a user's environment via modulefiles",
+    "category": "System Administration",
+    "subcategory": "Build and software organization tools",
+    "url": "https://cea-hpc.github.io/modules/",
+    "sourceUrl": "https://github.com/cea-hpc/modules",
+    "license": "GPL-2.0",
+    "language": "Tcl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Lmod",
+    "description": "Lmod is a Lua based module system that easily handles the MODULEPATH Hierarchical problem",
+    "category": "System Administration",
+    "subcategory": "Build and software organization tools",
+    "url": "https://www.tacc.utexas.edu/research-development/tacc-projects/lmod",
+    "sourceUrl": "https://github.com/TACC/Lmod",
+    "license": "MIT",
+    "language": "Lua",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Spack",
+    "description": "A flexible package manager that supports multiple versions, configurations, platforms, and compilers",
+    "category": "System Administration",
+    "subcategory": "Build and software organization tools",
+    "url": "https://spack.io/",
+    "sourceUrl": "https://github.com/spack/spack",
+    "license": "MIT/Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Eggdrop",
+    "description": "The oldest Internet Relay Chat (IRC) bot still in active development",
+    "category": "System Administration",
+    "subcategory": "ChatOps",
+    "url": "https://www.eggheads.org/",
+    "sourceUrl": "https://github.com/eggheads/eggdrop",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Errbot",
+    "description": "Plugin based chatbot designed to be easily deployable, extensible and maintainable",
+    "category": "System Administration",
+    "subcategory": "ChatOps",
+    "url": "https://errbot.io/",
+    "sourceUrl": "https://github.com/errbotio/errbot",
+    "license": "GPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Hubot",
+    "description": "A customizable, life embetterment robot",
+    "category": "System Administration",
+    "subcategory": "ChatOps",
+    "url": "https://hubot.github.com/",
+    "sourceUrl": "https://github.com/hubotio/hubot",
+    "license": "MIT",
+    "language": "Nodejs",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Ansible",
+    "description": "Provisioning, configuration management, and application-deployment tool",
+    "category": "System Administration",
+    "subcategory": "Configuration Management",
+    "url": "https://www.ansible.com/",
+    "sourceUrl": "https://github.com/ansible/ansible",
+    "license": "GPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "CFEngine",
+    "description": "Configuration management system for automated configuration and maintenance of large-scale computer systems",
+    "category": "System Administration",
+    "subcategory": "Configuration Management",
+    "url": "https://cfengine.com/",
+    "sourceUrl": "https://github.com/cfengine/core",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Chef",
+    "description": "Configuration management tool using a pure-Ruby, domain-specific language (DSL) for writing system configuration \"recipes\"",
+    "category": "System Administration",
+    "subcategory": "Configuration Management",
+    "url": "https://www.chef.io/products/chef-infra",
+    "sourceUrl": "https://github.com/chef/chef",
+    "license": "Apache-2.0",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "cloud-init",
+    "description": "Initialization tool to automate the configuration of VMs, cloud instances, or machines on a network",
+    "category": "System Administration",
+    "subcategory": "Configuration Management",
+    "url": "https://cloud-init.io/",
+    "sourceUrl": "https://github.com/canonical/cloud-init",
+    "license": "GPL-3.0/Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Puppet",
+    "description": "Software configuration management tool which includes its own declarative language to describe system configuration",
+    "category": "System Administration",
+    "subcategory": "Configuration Management",
+    "url": "https://www.puppet.com/",
+    "sourceUrl": "https://github.com/puppetlabs/puppet",
+    "license": "Apache-2.0",
+    "language": "Ruby/C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Rudder",
+    "description": "Scalable and dynamic configuration management system for patching, security & compliance, based on CFEngine",
+    "category": "System Administration",
+    "subcategory": "Configuration Management",
+    "url": "https://www.rudder.io/",
+    "sourceUrl": "https://github.com/Normation/rudder",
+    "license": "GPL-3.0",
+    "language": "Scala",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Salt",
+    "description": "Event-driven IT automation, remote task execution, and configuration management software",
+    "category": "System Administration",
+    "subcategory": "Configuration Management",
+    "url": "https://docs.saltproject.io/",
+    "sourceUrl": "https://github.com/saltstack/salt",
+    "license": "Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Collins",
+    "description": "At Tumblr, it's the infrastructure source of truth and knowledge",
+    "category": "System Administration",
+    "subcategory": "Configuration Management Database",
+    "url": "https://tumblr.github.io/collins/",
+    "sourceUrl": "https://github.com/tumblr/collins",
+    "license": "Apache-2.0",
+    "language": "Docker/Scala",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "i-doit",
+    "description": "IT Documentation and CMDB. `AGPL-3.0` `PHP`",
+    "category": "System Administration",
+    "subcategory": "Configuration Management Database",
+    "url": "https://www.i-doit.org/",
+    "license": "AGPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "iTop",
+    "description": "Complete ITIL web based service management tool",
+    "category": "System Administration",
+    "subcategory": "Configuration Management Database",
+    "url": "https://www.combodo.com/itop-193",
+    "sourceUrl": "https://sourceforge.net/projects/itop/files/",
+    "license": "AGPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "netbox",
+    "description": "IP address management (IPAM) and data center infrastructure management (DCIM) tool. ([Demo](https://demo.netbox.dev/), [Source Code](https://github.com/netbox-community/netbox)) `Apache-2.0` `Python`",
+    "category": "System Administration",
+    "subcategory": "Configuration Management Database",
+    "url": "https://netbox.dev/",
+    "sourceUrl": "https://github.com/netbox-community/netbox",
+    "license": "Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ArgoCD",
+    "description": "Declarative, GitOps continuous delivery tool for Kubernetes",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://argo-cd.readthedocs.io/en/stable/",
+    "sourceUrl": "https://github.com/argoproj/argo-cd",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Buildbot",
+    "description": "Python-based toolkit for continuous integration",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://buildbot.net/",
+    "sourceUrl": "https://github.com/buildbot/buildbot",
+    "license": "GPL-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "CDS",
+    "description": "Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://ovh.github.io/cds/",
+    "sourceUrl": "https://github.com/ovh/cds",
+    "license": "BSD-3-Clause",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Concourse",
+    "description": "Concourse is a CI tool that treats pipelines as first class objects and containerizes every step along the way. ([Demo](https://ci.concourse-ci.org/), [Source Code](https://github.com/concourse/concourse)) `Apache-2.0` `Go`",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://concourse-ci.org/",
+    "sourceUrl": "https://github.com/concourse/concourse",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "drone",
+    "description": "Drone is a Continuous Delivery platform built on Docker, written in Go",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://drone.io/",
+    "sourceUrl": "https://github.com/drone/drone",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Factor",
+    "description": "Programmatically define and run workflows to connect configuration management, source code management, build, continuous integration, continuous deployment and communication tools",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://www.factor.io/",
+    "sourceUrl": "https://github.com/factor-io/factor",
+    "license": "MIT",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "GitLab CI",
+    "description": "Gitlab's built-in, full-featured CI/CD solution",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://about.gitlab.com/solutions/continuous-integration/",
+    "sourceUrl": "https://gitlab.com/gitlab-org/gitlab-foss",
+    "license": "MIT",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "GoCD",
+    "description": "Continuous delivery server",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://www.go.cd/",
+    "sourceUrl": "https://github.com/gocd/gocd",
+    "license": "Apache-2.0",
+    "language": "Java/Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Jenkins",
+    "description": "Continuous Integration Server",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://jenkins-ci.org/",
+    "sourceUrl": "https://github.com/jenkinsci/jenkins/",
+    "license": "MIT",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Laminar",
+    "description": "Fast, lightweight, simple and flexible Continuous Integration",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://laminar.ohwg.net",
+    "sourceUrl": "https://github.com/ohwgiles/laminar",
+    "license": "GPL-3.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "PHP Censor",
+    "description": "Open source self-hosted continuous integration server for PHP projects. `BSD-2-Clause` `PHP`",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://github.com/php-censor/php-censor",
+    "license": "BSD-2-Clause",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Strider",
+    "description": "Open Source Continuous Deployment / Continuous Integration platform",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://strider-cd.github.io/",
+    "sourceUrl": "https://github.com/Strider-CD/strider",
+    "license": "MIT",
+    "language": "Nodejs",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Terrateam",
+    "description": "GitOps-first automation platform for Terraform and OpenTofu workflows with support for self-hosted runners",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://terrateam.io",
+    "sourceUrl": "https://github.com/terrateamio/terrateam",
+    "license": "MPL-2.0",
+    "language": "OCaml/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "werf",
+    "description": "Open Source CI/CD tool for building Docker images and deploying to Kubernetes via GitOps",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://werf.io/",
+    "sourceUrl": "https://github.com/werf/werf",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Woodpecker",
+    "description": "Community fork of Drone that uses Docker containers",
+    "category": "System Administration",
+    "subcategory": "Continuous Integration & Continuous Deployment",
+    "url": "https://woodpecker-ci.org/",
+    "sourceUrl": "https://github.com/woodpecker-ci/woodpecker",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ajenti",
+    "description": "Control panel for Linux and BSD",
+    "category": "System Administration",
+    "subcategory": "Control Panels",
+    "url": "https://ajenti.org/",
+    "sourceUrl": "https://github.com/ajenti/ajenti",
+    "license": "MIT",
+    "language": "Python/Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Cockpit",
+    "description": "Web-based graphical interface for servers",
+    "category": "System Administration",
+    "subcategory": "Control Panels",
+    "url": "https://cockpit-project.org/",
+    "sourceUrl": "https://github.com/cockpit-project/cockpit",
+    "license": "LGPL-2.1",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Froxlor",
+    "description": "Lightweight server management software with Nginx and PHP-FPM support",
+    "category": "System Administration",
+    "subcategory": "Control Panels",
+    "url": "https://froxlor.org/",
+    "sourceUrl": "https://github.com/Froxlor/Froxlor/",
+    "license": "GPL-2.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "HestiaCP",
+    "description": "Web server control panel (fork of VestaCP). ([Demo](https://demo.hestiacp.com:8083/login/), [Source Code](https://github.com/hestiacp/hestiacp)) `GPL-3.0` `PHP/Shell/Other`",
+    "category": "System Administration",
+    "subcategory": "Control Panels",
+    "url": "https://hestiacp.com/",
+    "sourceUrl": "https://github.com/hestiacp/hestiacp",
+    "license": "GPL-3.0",
+    "language": "PHP/Shell/Other",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "ISPConfig",
+    "description": "Manage Linux servers directly through your browser",
+    "category": "System Administration",
+    "subcategory": "Control Panels",
+    "url": "https://www.ispconfig.org",
+    "sourceUrl": "https://git.ispconfig.org/ispconfig/ispconfig3",
+    "license": "BSD-3-Clause",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Sentora",
+    "description": "Open-Source Web hosting control panel for Linux, BSD (fork of ZPanel)",
+    "category": "System Administration",
+    "subcategory": "Control Panels",
+    "url": "https://sentora.org/",
+    "sourceUrl": "https://github.com/sentora/sentora-core",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Virtualmin",
+    "description": "Powerful and flexible web hosting control panel for Linux and BSD systems",
+    "category": "System Administration",
+    "subcategory": "Control Panels",
+    "url": "https://www.virtualmin.com/",
+    "sourceUrl": "https://github.com/virtualmin",
+    "license": "GPL-3.0",
+    "language": "Shell/Perl/Other",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Webmin",
+    "description": "Web-based interface for system administration for Unix",
+    "category": "System Administration",
+    "subcategory": "Control Panels",
+    "url": "https://www.webmin.com/",
+    "sourceUrl": "https://github.com/webmin/webmin",
+    "license": "BSD-3-Clause",
+    "language": "Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Capistrano",
+    "description": "Deploy your application to any number of machines simultaneously, in sequence or as a rolling set via SSH (rake based)",
+    "category": "System Administration",
+    "subcategory": "Deployment Automation",
+    "url": "https://capistranorb.com/",
+    "sourceUrl": "https://github.com/capistrano/capistrano",
+    "license": "MIT",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "CloudSlang",
+    "description": "Flow-based orchestration tool for managing deployed applications, with Docker capabilities",
+    "category": "System Administration",
+    "subcategory": "Deployment Automation",
+    "url": "https://www.cloudslang.io/",
+    "sourceUrl": "https://github.com/CloudSlang/score",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "CloudStack",
+    "description": "Cloud computing software for creating, managing, and deploying infrastructure cloud services",
+    "category": "System Administration",
+    "subcategory": "Deployment Automation",
+    "url": "https://cloudstack.apache.org/",
+    "sourceUrl": "https://github.com/apache/cloudstack",
+    "license": "Apache-2.0",
+    "language": "Java/Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Cobbler",
+    "description": "Cobbler is a Linux installation server that allows for rapid setup of network installation environments",
+    "category": "System Administration",
+    "subcategory": "Deployment Automation",
+    "url": "https://cobbler.github.io/",
+    "sourceUrl": "https://github.com/cobbler/cobbler",
+    "license": "GPL-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Fabric",
+    "description": "Python library and cli tool for streamlining the use of SSH for application deployment or systems administration tasks",
+    "category": "System Administration",
+    "subcategory": "Deployment Automation",
+    "url": "https://www.fabfile.org/",
+    "sourceUrl": "https://github.com/fabric/fabric",
+    "license": "BSD-2-Clause",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Genesis",
+    "description": "A template framework for multi-environment BOSH deployments. `MIT` `Perl`",
+    "category": "System Administration",
+    "subcategory": "Deployment Automation",
+    "url": "https://github.com/starkandwayne/genesis",
+    "license": "MIT",
+    "language": "Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "munki",
+    "description": "Webserver-based repository of packages and package metadata, that allows macOS administrators to manage software installs",
+    "category": "System Administration",
+    "subcategory": "Deployment Automation",
+    "url": "https://www.munki.org/munki/",
+    "sourceUrl": "https://github.com/munki/munki",
+    "license": "Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Mac"
+    ]
+  },
+  {
+    "name": "Overcast",
+    "description": "Deploy VMs across different cloud providers, and run commands and scripts across any or all of them in parallel via SSH",
+    "category": "System Administration",
+    "subcategory": "Deployment Automation",
+    "url": "https://andrewchilds.github.io/overcast/",
+    "sourceUrl": "https://github.com/andrewchilds/overcast",
+    "license": "MIT",
+    "language": "Nodejs",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Diagrams.net",
+    "description": "A.K.A. [Draw.io](https://app.diagrams.net/). Easy to use Diagram UI with a plethora of templates",
+    "category": "System Administration",
+    "subcategory": "Diagramming",
+    "url": "https://app.diagrams.net/",
+    "sourceUrl": "https://github.com/jgraph/drawio",
+    "license": "Apache-2.0",
+    "language": "JavaScript/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kroki",
+    "description": "API for generating diagrams from textual descriptions",
+    "category": "System Administration",
+    "subcategory": "Diagramming",
+    "url": "https://kroki.io",
+    "sourceUrl": "https://github.com/yuzutech/kroki",
+    "license": "MIT",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Mermaid",
+    "description": "Javascript module with a unique, easy, shorthand syntax. Integrates into several other tools like Grafana",
+    "category": "System Administration",
+    "subcategory": "Diagramming",
+    "url": "https://mermaid-js.github.io/mermaid-live-editor/",
+    "sourceUrl": "https://github.com/mermaid-js/mermaid-live-editor",
+    "license": "MIT",
+    "language": "Nodejs/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ceph",
+    "description": "Distributed object, block, and file storage platform",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://ceph.com/en/",
+    "sourceUrl": "https://github.com/ceph/ceph",
+    "license": "LGPL-3.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "DRBD",
+    "description": "Distributed replicated storage system, implemented as a Linux kernel driver",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://linbit.com/drbd/",
+    "sourceUrl": "https://github.com/LINBIT/drbd",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "GlusterFS",
+    "description": "Software-defined distributed storage that can scale to several petabytes, with interfaces for object, block and file storage",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://www.gluster.org/",
+    "sourceUrl": "https://github.com/gluster/glusterfs",
+    "license": "GPL-2.0/LGPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Hadoop Distributed Filesystem (HDFS)",
+    "description": "Distributed file system that provides high-throughput access to application data",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://hadoop.apache.org/",
+    "sourceUrl": "https://github.com/apache/hadoop",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "JuiceFS",
+    "description": "Distributed POSIX file system built on top of Redis and S3",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://juicefs.com/",
+    "sourceUrl": "https://github.com/juicedata/juicefs",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kubo",
+    "description": "Implementation of IPFS, a global, versioned, peer-to-peer filesystem that seeks to connect all computing devices with the same system of files. `Apache-2.0/MIT` `Go`",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://github.com/ipfs/kubo",
+    "license": "Apache-2.0/MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LeoFS",
+    "description": "Highly available, distributed, replicated eventually consistent object/blob store",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://leo-project.net",
+    "sourceUrl": "https://github.com/leo-project/leofs",
+    "license": "Apache-2.0",
+    "language": "Erlang",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Lustre",
+    "description": "Parallel distributed file system, generally used for large-scale cluster computing",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://www.lustre.org/",
+    "sourceUrl": "https://git.whamcloud.com/?p=fs/lustre-release.git;a=summary",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Minio",
+    "description": "High-performance, S3 compatible object store built for large scale AI/ML, data lake and database workloads",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://min.io/",
+    "sourceUrl": "https://github.com/minio/minio",
+    "license": "AGPL-3.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "MooseFS",
+    "description": "Fault tolerant, network distributed file system",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://moosefs.com/",
+    "sourceUrl": "https://github.com/moosefs/moosefs",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenAFS",
+    "description": "Distributed network file system with read-only replicas and multi-OS support",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://www.openafs.org/",
+    "sourceUrl": "https://git.openafs.org/?p=openafs.git;a=summary",
+    "license": "IPL-1.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Openstack Swift",
+    "description": "A highly available, distributed, eventually consistent object/blob store",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://docs.openstack.org/developer/swift/",
+    "sourceUrl": "https://opendev.org/openstack/swift",
+    "license": "Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Perkeep",
+    "description": "A set of open source formats, protocols, and software for modeling, storing, searching, sharing and synchronizing data (previously Camlistore)",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://perkeep.org/",
+    "sourceUrl": "https://github.com/perkeep/perkeep",
+    "license": "Apache-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "TahoeLAFS",
+    "description": "Secure, decentralized, fault-tolerant, peer-to-peer distributed data store and distributed file system",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://tahoe-lafs.org/trac/tahoe-lafs",
+    "sourceUrl": "https://github.com/tahoe-lafs/tahoe-lafs",
+    "license": "GPL-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "XtreemFS",
+    "description": "Distributed, replicated and fault-tolerant file system for federated IT infrastructures.",
+    "category": "System Administration",
+    "subcategory": "Distributed Filesystems",
+    "url": "https://www.xtreemfs.org/",
+    "sourceUrl": "https://github.com/xtreemfs/xtreemfs",
+    "license": "BSD-3-Clause",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Atomia DNS",
+    "description": "DNS management system. `ISC` `Perl`",
+    "category": "System Administration",
+    "subcategory": "DNS - Control Panels & Domain Management",
+    "url": "https://github.com/atomia/atomiadns/",
+    "license": "ISC",
+    "language": "Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Designate",
+    "description": "DNSaaS services for OpenStack",
+    "category": "System Administration",
+    "subcategory": "DNS - Control Panels & Domain Management",
+    "url": "https://wiki.openstack.org/wiki/Designate",
+    "sourceUrl": "https://opendev.org/openstack/designate",
+    "license": "Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "DNSControl",
+    "description": "Synchronize your DNS to multiple providers from a simple DSL",
+    "category": "System Administration",
+    "subcategory": "DNS - Control Panels & Domain Management",
+    "url": "https://stackexchange.github.io/dnscontrol/",
+    "sourceUrl": "https://github.com/StackExchange/dnscontrol",
+    "license": "MIT",
+    "language": "Go/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "DomainMOD",
+    "description": "Manage your domains and other internet assets in a central location",
+    "category": "System Administration",
+    "subcategory": "DNS - Control Panels & Domain Management",
+    "url": "https://domainmod.org",
+    "sourceUrl": "https://github.com/domainmod/domainmod",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "nsupdate.info",
+    "description": "Dynamic DNS service. ([Demo](https://www.nsupdate.info/account/register/), [Source Code](https://github.com/nsupdate-info/nsupdate.info)) `BSD-3-Clause` `Python`",
+    "category": "System Administration",
+    "subcategory": "DNS - Control Panels & Domain Management",
+    "url": "https://www.nsupdate.info/",
+    "sourceUrl": "https://github.com/nsupdate-info/nsupdate.info",
+    "license": "BSD-3-Clause",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "octoDNS",
+    "description": "DNS as code - Tools for managing DNS across multiple providers. `MIT` `Python`",
+    "category": "System Administration",
+    "subcategory": "DNS - Control Panels & Domain Management",
+    "url": "https://github.com/github/octodns",
+    "license": "MIT",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Poweradmin",
+    "description": "Web-based DNS control panel for PowerDNS server",
+    "category": "System Administration",
+    "subcategory": "DNS - Control Panels & Domain Management",
+    "url": "https://www.poweradmin.org/",
+    "sourceUrl": "https://github.com/poweradmin/poweradmin",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "SPF Toolbox",
+    "description": "Application to look up DNS records such as SPF, MX, Whois, and more",
+    "category": "System Administration",
+    "subcategory": "DNS - Control Panels & Domain Management",
+    "url": "https://spftoolbox.com",
+    "sourceUrl": "https://github.com/charlesabarnes/SPFtoolbox",
+    "license": "MIT",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Bind",
+    "description": "Versatile, classic, complete name server software",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://www.isc.org/bind/",
+    "sourceUrl": "https://gitlab.isc.org/isc-projects/bind9",
+    "license": "MPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "CoreDNS",
+    "description": "Flexible DNS server",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://coredns.io/",
+    "sourceUrl": "https://github.com/coredns/coredns",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "djbdns",
+    "description": "A collection of DNS applications, including tinydns",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://cr.yp.to/djbdns.html",
+    "sourceUrl": "https://salsa.debian.org/debian/djbdns",
+    "license": "CC0-1.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "dnsmasq",
+    "description": "Provides network infrastructure for small networks: DNS, DHCP, router advertisement and network boot",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://www.thekelleys.org.uk/dnsmasq/doc.html",
+    "sourceUrl": "https://thekelleys.org.uk/gitweb/?p=dnsmasq.git;a=tree",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Knot",
+    "description": "High performance authoritative-only DNS server",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://www.knot-dns.cz/",
+    "sourceUrl": "https://gitlab.nic.cz/knot/knot-dns",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "NSD",
+    "description": "Authoritative DNS name server developed speed, reliability, stability and security",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://www.nlnetlabs.nl/projects/nsd/about/",
+    "sourceUrl": "https://github.com/NLnetLabs/nsd",
+    "license": "BSD-3-Clause",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "PowerDNS Authoritative Server",
+    "description": "Versatile nameserver which supports a large number of backends",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://doc.powerdns.com/authoritative/",
+    "sourceUrl": "https://github.com/PowerDNS/pdns",
+    "license": "GPL-2.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Unbound",
+    "description": "Validating, recursive, and caching DNS resolver",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://nlnetlabs.nl/projects/unbound/about/",
+    "sourceUrl": "https://github.com/NLnetLabs/unbound",
+    "license": "BSD-3-Clause",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Yadifa",
+    "description": "Clean, small, light and RFC-compliant name server implementation developed from scratch by .eu",
+    "category": "System Administration",
+    "subcategory": "DNS - Servers",
+    "url": "https://www.yadifa.eu/",
+    "sourceUrl": "https://github.com/yadifa/yadifa",
+    "license": "BSD-3-Clause",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Atom Community",
+    "description": "A fork of [atom](https://github.com/atom/atom) A hackable text editor from Github. `MIT` `JavaScript`",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://github.com/atom-community/atom",
+    "license": "MIT",
+    "language": "JavaScript",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Brackets",
+    "description": "Code editor for web designers and front-end developers",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://brackets.io/",
+    "sourceUrl": "https://github.com/brackets-cont/brackets",
+    "license": "MIT",
+    "language": "JavaScript",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Eclipse",
+    "description": "IDE written in Java with an extensible plug-in system",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://www.eclipse.org/",
+    "sourceUrl": "https://git.eclipse.org/c/",
+    "license": "EPL-1.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Geany",
+    "description": "GTK2 text editor",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://www.geany.org/",
+    "sourceUrl": "https://github.com/geany/geany",
+    "license": "GPL-2.0",
+    "language": "C/C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GNU Emacs",
+    "description": "An extensible, customizable text editor-and more",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://www.gnu.org/software/emacs/",
+    "sourceUrl": "https://github.com/emacs-mirror/emacs",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Haroopad",
+    "description": "Markdown editor with live preview",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "http://pad.haroopress.com/",
+    "sourceUrl": "https://github.com/rhiokim/haroopad",
+    "license": "GPL-3.0",
+    "language": "JavaScript",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "jotgit",
+    "description": "Git-backed real-time collaborative code editing. `MIT` `Nodejs`",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://github.com/jdleesmiller/jotgit",
+    "license": "MIT",
+    "language": "Nodejs",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "KDevelop",
+    "description": "IDE by the people behind KDE",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://www.kdevelop.org/",
+    "sourceUrl": "https://invent.kde.org/kdevelop/kdevelop",
+    "license": "GFDL-1.2",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Micro",
+    "description": "A modern and intuitive terminal-based text editor",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://micro-editor.github.io/",
+    "sourceUrl": "https://github.com/zyedidia/micro",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nano",
+    "description": "Easy to use, customizable text editor",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://nano-editor.org",
+    "sourceUrl": "https://git.savannah.gnu.org/cgit/nano.git/tree/",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Notepad++",
+    "description": "GPLv2 multi-language editor with syntax highlighting for Windows",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://notepad-plus-plus.org/",
+    "sourceUrl": "https://github.com/notepad-plus-plus/notepad-plus-plus",
+    "license": "GPL-2.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Windows"
+    ]
+  },
+  {
+    "name": "TextMate",
+    "description": "A graphical text editor for OS X",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://macromates.com/",
+    "sourceUrl": "https://github.com/textmate/textmate/",
+    "license": "GPL-3.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Vim",
+    "description": "A highly configurable text editor built to enable efficient editing",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://www.vim.org",
+    "sourceUrl": "https://github.com/vim/vim",
+    "license": "Vim",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "VSCodium",
+    "description": "An open source cross-platform extensible code editor based on [VS Code by Microsoft](https://code.visualstudio.com/) removing their non-free additions",
+    "category": "System Administration",
+    "subcategory": "Editors",
+    "url": "https://vscodium.com/",
+    "sourceUrl": "https://github.com/VSCodium/vscodium",
+    "license": "MIT",
+    "language": "TypeScript",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "389 Directory Server",
+    "description": "Enterprise-class Open Source LDAP server for Linux",
+    "category": "System Administration",
+    "subcategory": "Identity Management - LDAP",
+    "url": "https://www.port389.org/",
+    "sourceUrl": "https://github.com/389ds/389-ds-base",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Apache Directory Server",
+    "description": "Extensible and embeddable directory server, certified LDAPv3 compatible, with Kerberos 5 and Change Password Protocol support, triggers, stored procedures, queues and views",
+    "category": "System Administration",
+    "subcategory": "Identity Management - LDAP",
+    "url": "https://directory.apache.org/apacheds/",
+    "sourceUrl": "https://github.com/apache/directory-server",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "FreeIPA",
+    "description": "Integrated security information management solution combining Linux (Fedora), 389 Directory Server, Kerberos, NTP, DNS, and Dogtag Certificate System (web interface and command-line administration tools)",
+    "category": "System Administration",
+    "subcategory": "Identity Management - LDAP",
+    "url": "https://www.freeipa.org/",
+    "sourceUrl": "https://pagure.io/freeipa",
+    "license": "GPL-3.0",
+    "language": "Python/C/JavaScript",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "FreeRADIUS",
+    "description": "Multi-protocol policy server (radiusd) that implements RADIUS, DHCP, BFD, and ARP and associated client/PAM library/Apache module",
+    "category": "System Administration",
+    "subcategory": "Identity Management - LDAP",
+    "url": "https://freeradius.org/",
+    "sourceUrl": "https://github.com/FreeRADIUS/freeradius-server",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "lldap",
+    "description": "Light (simplified) LDAP implementation with a simple, intuitive web interface and GraphQL support. `GPL-3.0` `Rust`",
+    "category": "System Administration",
+    "subcategory": "Identity Management - LDAP",
+    "url": "https://github.com/nitnelave/lldap",
+    "license": "GPL-3.0",
+    "language": "Rust",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenLDAP",
+    "description": "Open-source implementation of the Lightweight Directory Access Protocol (server, libraries and clients)",
+    "category": "System Administration",
+    "subcategory": "Identity Management - LDAP",
+    "url": "https://www.openldap.org/",
+    "sourceUrl": "https://git.openldap.org/openldap/openldap",
+    "license": "OLDAP-2.8",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Authelia",
+    "description": "The Single Sign-On Multi-Factor portal for web apps",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Single Sign-On (SSO)",
+    "url": "https://www.authelia.com/",
+    "sourceUrl": "https://github.com/authelia/authelia",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Authentik",
+    "description": "Flexible identity provider with support for different protocols. (OAuth 2.0, SAML, LDAP and Radius)",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Single Sign-On (SSO)",
+    "url": "https://goauthentik.io/",
+    "sourceUrl": "https://github.com/goauthentik/authentik",
+    "license": "MIT",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "KeyCloak",
+    "description": "Open Source Identity and Access Management",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Single Sign-On (SSO)",
+    "url": "https://www.keycloak.org",
+    "sourceUrl": "https://github.com/keycloak/keycloak",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "BounCA",
+    "description": "A personal SSL Key / Certificate Authority web-based tool for creating self-signed certificates",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://bounca.org/",
+    "sourceUrl": "https://gitlab.com/bounca/bounca/",
+    "license": "Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "easy-rsa",
+    "description": "Bash script to build and manage a PKI CA. `GPL-2.0` `Shell`",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://github.com/OpenVPN/easy-rsa",
+    "license": "GPL-2.0",
+    "language": "Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Fusion Directory",
+    "description": "Improve the Management of the services and the company directory based on OpenLDAP",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://www.fusiondirectory.org",
+    "sourceUrl": "https://github.com/fusiondirectory/fusiondirectory",
+    "license": "GPL-2.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "LDAP Account Manager (LAM)",
+    "description": "Web frontend for managing entries (e.g. users, groups, DHCP settings) stored in an LDAP directory",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://www.ldap-account-manager.org/lamcms/",
+    "sourceUrl": "https://github.com/LDAPAccountManager/lam/",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Libravatar",
+    "description": "Libravatar is a service which delivers your avatar (profile picture) to other websites",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://www.libravatar.org/",
+    "sourceUrl": "https://git.linux-kernel.at/oliver/ivatar/",
+    "license": "AGPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Pomerium",
+    "description": "An identity and context aware access-proxy inspired by BeyondCorp",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://www.pomerium.io/",
+    "sourceUrl": "https://github.com/pomerium/pomerium",
+    "license": "Apache-2.0",
+    "language": "Docker/Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Samba",
+    "description": "Active Directory and CIFS protocol implementation",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://www.samba.org/",
+    "sourceUrl": "https://download.samba.org/pub/samba/",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Smallstep Certificates",
+    "description": "A private certificate authority (X.509 & SSH) and related tools for secure automated certificate management",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://smallstep.com/certificates/",
+    "sourceUrl": "https://github.com/smallstep/certificates",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ZITADEL",
+    "description": "Cloud-native Identity & Access Management solution providing a platform for secure authentication, authorization and identity management",
+    "category": "System Administration",
+    "subcategory": "Identity Management - Tools and web interfaces",
+    "url": "https://zitadel.com/",
+    "sourceUrl": "https://github.com/zitadel/zitadel",
+    "license": "Apache-2.0",
+    "language": "Go/Docker/K8S",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GLPI",
+    "description": "Information Resource-Manager with an additional Administration Interface",
+    "category": "System Administration",
+    "subcategory": "IT Asset Management",
+    "url": "https://www.glpi-project.org/",
+    "sourceUrl": "https://github.com/glpi-project/glpi",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "OCS Inventory NG",
+    "description": "Asset management and deployment solution for all devices in your IT Department",
+    "category": "System Administration",
+    "subcategory": "IT Asset Management",
+    "url": "https://ocsinventory-ng.org/",
+    "sourceUrl": "https://github.com/OCSInventory-NG",
+    "license": "GPL-2.0",
+    "language": "PHP/Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "OPSI",
+    "description": "Hardware and software inventory, client management, deployment, and patching for Linux and Windows",
+    "category": "System Administration",
+    "subcategory": "IT Asset Management",
+    "url": "https://www.opsi.org",
+    "sourceUrl": "https://github.com/opsi-org/",
+    "license": "GPL-3.0/AGPL-3.0",
+    "language": "OVF/Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Windows",
+      "Linux"
+    ]
+  },
+  {
+    "name": "RackTables",
+    "description": "Datacenter and server room asset management like document hardware assets, network addresses, space in racks, networks configuration. ([Demo](https://www.racktables.org/demo.php), [Source Code](https://github.com/RackTables/racktables)) `GPL-2.0` `PHP`",
+    "category": "System Administration",
+    "subcategory": "IT Asset Management",
+    "url": "https://racktables.org/",
+    "sourceUrl": "https://github.com/RackTables/racktables",
+    "license": "GPL-2.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Ralph",
+    "description": "Asset management, DCIM and CMDB system for large Data Centers as well as smaller LAN networks. ([Demo](https://github.com/allegro/ralph#live-demo), [Source Code](https://github.com/allegro/ralph)) `Apache-2.0` `Python/Docker`",
+    "category": "System Administration",
+    "subcategory": "IT Asset Management",
+    "url": "https://ralph.allegro.tech/",
+    "sourceUrl": "https://github.com/allegro/ralph",
+    "license": "Apache-2.0",
+    "language": "Python/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Snipe IT",
+    "description": "Asset & license management software",
+    "category": "System Administration",
+    "subcategory": "IT Asset Management",
+    "url": "https://snipeitapp.com/",
+    "sourceUrl": "https://github.com/snipe/snipe-it",
+    "license": "AGPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Fluentd",
+    "description": "Data collector for unified logging layer",
+    "category": "System Administration",
+    "subcategory": "Log Management",
+    "url": "https://www.fluentd.org/",
+    "sourceUrl": "https://github.com/fluent/fluentd",
+    "license": "Apache-2.0",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Flume",
+    "description": "Distributed, reliable, and available service for efficiently collecting, aggregating, and moving large amounts of log data",
+    "category": "System Administration",
+    "subcategory": "Log Management",
+    "url": "https://flume.apache.org/",
+    "sourceUrl": "https://github.com/apache/flume",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GoAccess",
+    "description": "Real-time web log analyzer and interactive viewer that runs in a terminal or through the browser",
+    "category": "System Administration",
+    "subcategory": "Log Management",
+    "url": "https://goaccess.io/",
+    "sourceUrl": "https://github.com/allinurl/goaccess",
+    "license": "MIT",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Loki",
+    "description": "Log aggregation system designed to store and query logs from all your applications and infrastructure",
+    "category": "System Administration",
+    "subcategory": "Log Management",
+    "url": "https://grafana.com/oss/loki/",
+    "sourceUrl": "https://github.com/grafana/loki",
+    "license": "AGPL-3.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "rsyslog",
+    "description": "Rocket-fast system for log processing",
+    "category": "System Administration",
+    "subcategory": "Log Management",
+    "url": "https://www.rsyslog.com/",
+    "sourceUrl": "https://github.com/rsyslog/rsyslog",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "aerc",
+    "description": "Terminal MUA with a focus on plaintext and features for developers",
+    "category": "System Administration",
+    "subcategory": "Mail Clients",
+    "url": "https://aerc-mail.org/",
+    "sourceUrl": "https://git.sr.ht/~rjarry/aerc",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Claws Mail",
+    "description": "Old school email client (and news reader), based on GTK+",
+    "category": "System Administration",
+    "subcategory": "Mail Clients",
+    "url": "http://www.claws-mail.org/",
+    "sourceUrl": "https://git.claws-mail.org/?p=claws.git;a=tree",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ImapSync",
+    "description": "Simple IMAP migration tool for copying mailboxes to other servers",
+    "category": "System Administration",
+    "subcategory": "Mail Clients",
+    "url": "http://imapsync.lamiral.info/",
+    "sourceUrl": "https://github.com/imapsync/imapsync",
+    "license": "NLPL",
+    "language": "Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Mutt",
+    "description": "Small but very powerful text-based mail client",
+    "category": "System Administration",
+    "subcategory": "Mail Clients",
+    "url": "http://www.mutt.org/",
+    "sourceUrl": "https://gitlab.com/muttmua/mutt",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Sylpheed",
+    "description": "Still developed predecessor to Claws Mail, lightweight mail client",
+    "category": "System Administration",
+    "subcategory": "Mail Clients",
+    "url": "https://sylpheed.sraoss.jp/en/",
+    "sourceUrl": "https://github.com/sylpheed-mail/sylpheed",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Thunderbird",
+    "description": "Free email application that's easy to set up and customize",
+    "category": "System Administration",
+    "subcategory": "Mail Clients",
+    "url": "https://www.thunderbird.net/",
+    "sourceUrl": "https://hg.mozilla.org/comm-central/file",
+    "license": "MPL-2.0",
+    "language": "C/C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Beats",
+    "description": "Single-purpose data shippers that send data from hundreds or thousands of machines and systems to Logstash or Elasticsearch",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "https://www.elastic.co/beats/",
+    "sourceUrl": "https://github.com/elastic/beats",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Collectd",
+    "description": "System statistics collection daemon",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "https://collectd.org/",
+    "sourceUrl": "https://github.com/collectd/collectd",
+    "license": "MIT",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Diamond",
+    "description": "Daemon that collects system metrics and publishes them to Graphite (and others). `MIT` `Python`",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "https://github.com/python-diamond/Diamond",
+    "license": "MIT",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Grafana",
+    "description": "A Graphite & InfluxDB Dashboard and Graph Editor",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "https://grafana.com/",
+    "sourceUrl": "https://github.com/grafana/grafana",
+    "license": "AGPL-3.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Graphite",
+    "description": "Scalable graphing server",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "https://graphite.readthedocs.org/en/latest/",
+    "sourceUrl": "https://github.com/graphite-project/graphite-web",
+    "license": "Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "RRDtool",
+    "description": "Industry standard, high performance data logging and graphing system for time series data",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "https://oss.oetiker.ch/rrdtool/",
+    "sourceUrl": "https://github.com/oetiker/rrdtool-1.x",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Statsd",
+    "description": "Daemon that listens for statistics like counters and timers, sent over UDP or TCP, and sends aggregates to one or more pluggable backend services. `MIT` `Nodejs`",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "https://github.com/etsy/statsd/",
+    "license": "MIT",
+    "language": "Nodejs",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "tcollector",
+    "description": "Gathers data from local collectors and pushes the data to OpenTSDB",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "http://opentsdb.net/docs/build/html/user_guide/utilities/tcollector.html",
+    "sourceUrl": "https://github.com/OpenTSDB/tcollector/",
+    "license": "LGPL-3.0/GPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Telegraf",
+    "description": "Plugin-driven server agent for collecting, processing, aggregating, and writing metrics. `MIT` `Go`",
+    "category": "System Administration",
+    "subcategory": "Metrics & Metric Collection",
+    "url": "https://github.com/influxdata/telegraf",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Chocolatey",
+    "description": "The package manager for Windows",
+    "category": "System Administration",
+    "subcategory": "Miscellaneous",
+    "url": "https://chocolatey.org/",
+    "sourceUrl": "https://github.com/chocolatey/choco",
+    "license": "Apache-2.0",
+    "language": "C#/PowerShell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Windows"
+    ]
+  },
+  {
+    "name": "Clonezilla",
+    "description": "Partition and disk imaging/cloning program",
+    "category": "System Administration",
+    "subcategory": "Miscellaneous",
+    "url": "https://clonezilla.org/",
+    "sourceUrl": "https://clonezilla.org/downloads/src/",
+    "license": "GPL-2.0",
+    "language": "Perl/Shell/Other",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "DadaMail",
+    "description": "Mailing List Manager, written in Perl",
+    "category": "System Administration",
+    "subcategory": "Miscellaneous",
+    "url": "https://dadamailproject.com/",
+    "sourceUrl": "https://sourceforge.net/projects/dadamail/files/",
+    "license": "GPL-2.0",
+    "language": "Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Fog",
+    "description": "Cloning/imaging solution/rescue suite",
+    "category": "System Administration",
+    "subcategory": "Miscellaneous",
+    "url": "https://www.fogproject.org/",
+    "sourceUrl": "https://github.com/FOGProject/fogproject",
+    "license": "GPL-3.0",
+    "language": "PHP/Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "phpList",
+    "description": "Newsletter and email marketing software",
+    "category": "System Administration",
+    "subcategory": "Miscellaneous",
+    "url": "https://www.phplist.org/",
+    "sourceUrl": "https://github.com/phpList/phplist3",
+    "license": "AGPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Adagios",
+    "description": "Web based Nagios interface for configuration and monitoring (replacement to the standard interface), and a REST interface",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "http://adagios.org/",
+    "sourceUrl": "https://github.com/opinkerfi/adagios",
+    "license": "AGPL-3.0",
+    "language": "Docker/Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Alerta",
+    "description": "Distributed, scalable and flexible monitoring system",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://alerta.io/",
+    "sourceUrl": "https://github.com/alerta/alerta",
+    "license": "Apache-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Beszel",
+    "description": "Lightweight server monitoring platform that includes Docker statistics, historical data, and alert functions",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://beszel.dev/",
+    "sourceUrl": "https://github.com/henrygd/beszel",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Cacti",
+    "description": "Web-based network monitoring and graphing tool",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.cacti.net",
+    "sourceUrl": "https://github.com/Cacti/cacti",
+    "license": "GPL-2.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "cadvisor",
+    "description": "Analyzes resource usage and performance characteristics of running containers. `Apache-2.0` `Go`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://github.com/google/cadvisor",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "checkmk",
+    "description": "Comprehensive solution for monitoring of applications, servers, and networks",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://checkmk.com/",
+    "sourceUrl": "https://github.com/Checkmk/checkmk",
+    "license": "GPL-2.0",
+    "language": "Python/PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "dashdot",
+    "description": "A simple, modern server dashboard for smaller private servers. ([Demo](https://dash.mauz.dev/)) `MIT` `Nodejs/Docker`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://github.com/MauriceNino/dashdot",
+    "license": "MIT",
+    "language": "Nodejs/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "EdMon",
+    "description": "A command-line monitoring application helping you to check that your hosts and services are available, with notifications support. `MIT` `Java`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://github.com/Edraens/EdMon",
+    "license": "MIT",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "eZ Server Monitor",
+    "description": "A lightweight and simple dashboard monitor for Linux, available in Web and Bash application",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.ezservermonitor.com",
+    "sourceUrl": "https://github.com/shevabam/ezservermonitor-web",
+    "license": "GPL-3.0",
+    "language": "PHP/Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "glances",
+    "description": "Open-source, cross-platform real-time monitoring tool with CLI and web dashboard interfaces and many exporting options",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://nicolargo.github.io/glances/",
+    "sourceUrl": "https://github.com/nicolargo/glances",
+    "license": "GPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Healthchecks",
+    "description": "Monitoring for cron jobs, background services and scheduled tasks",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://healthchecks.io/docs/self_hosted/",
+    "sourceUrl": "https://github.com/healthchecks/healthchecks",
+    "license": "BSD-3-Clause",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Icinga",
+    "description": "Nagios fork that has since lapped nagios several times. Comes with the possibility of clustered monitoring",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.icinga.com/",
+    "sourceUrl": "https://github.com/Icinga/icinga2",
+    "license": "GPL-2.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LibreNMS",
+    "description": "Fully featured network monitoring system that provides a wealth of features and device support",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.librenms.org",
+    "sourceUrl": "https://github.com/librenms/librenms",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Linux Dash",
+    "description": "A low-overhead monitoring web dashboard for a GNU/Linux machine. `MIT` `Nodejs/Go/Python/PHP`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://github.com/afaqurk/linux-dash",
+    "license": "MIT",
+    "language": "Nodejs/Go/Python/PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Monit",
+    "description": "Small utility for managing and monitoring Unix systems",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://mmonit.com/monit/#home",
+    "sourceUrl": "https://bitbucket.org/tildeslash/monit/src/master/",
+    "license": "AGPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Munin",
+    "description": "Networked resource monitoring tool",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://munin-monitoring.org/",
+    "sourceUrl": "https://github.com/munin-monitoring/munin",
+    "license": "GPL-2.0",
+    "language": "Perl/Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Naemon",
+    "description": "Network monitoring tool based on the Nagios 4 core with performance enhancements and new features",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.naemon.org/",
+    "sourceUrl": "https://github.com/naemon/naemon-core",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nagios",
+    "description": "Computer system, network and infrastructure monitoring software application",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.nagios.org/",
+    "sourceUrl": "https://github.com/NagiosEnterprises/nagioscore",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Netdata",
+    "description": "Distributed, real-time, performance and health monitoring for systems and applications. Runs on Linux, FreeBSD, and MacOS",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.netdata.cloud/",
+    "sourceUrl": "https://github.com/netdata/netdata",
+    "license": "GPL-3.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Mac",
+      "Linux"
+    ]
+  },
+  {
+    "name": "NetXMS",
+    "description": "Open Source network and infrastructure monitoring and management",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.netxms.org/",
+    "sourceUrl": "https://github.com/netxms/netxms",
+    "license": "LGPL-3.0/GPL-3.0",
+    "language": "Java/C++/C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Observium Community Edition",
+    "description": "Network monitoring and management platform that provides real-time insight into network health and performance. `QPL-1.0` `PHP`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "http://www.observium.org/",
+    "license": "QPL-1.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "openITCOCKPIT Community Edition",
+    "description": "Monitoring Suite featuring seamless integrations with Naemon, Checkmk, Grafana and more. ([Demo](https://demo.openitcockpit.io/), [Source Code](https://github.com/openITCOCKPIT/openITCOCKPIT)) `GPL-3.0` `deb/Docker`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://openitcockpit.io/",
+    "sourceUrl": "https://github.com/openITCOCKPIT/openITCOCKPIT",
+    "license": "GPL-3.0",
+    "language": "deb/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Performance Co-Pilot",
+    "description": "Lightweight, distributed system performance and analysis framework",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "http://pcp.io",
+    "sourceUrl": "https://github.com/performancecopilot/pcp",
+    "license": "LGPL-2.1/GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "PHP Server Monitor",
+    "description": "Open source tool to monitor your servers and websites",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.phpservermonitor.org/",
+    "sourceUrl": "https://github.com/phpservermon/phpservermon",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "PhpSysInfo",
+    "description": "A customizable PHP script that displays information about your system nicely",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://phpsysinfo.github.io/phpsysinfo/",
+    "sourceUrl": "https://github.com/phpsysinfo/phpsysinfo",
+    "license": "GPL-2.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Prometheus",
+    "description": "Service monitoring system and time series database",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://prometheus.io/",
+    "sourceUrl": "https://github.com/prometheus/prometheus",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Riemann",
+    "description": "Flexible and fast events processor allowing complex events/metrics analysis",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://riemann.io/",
+    "sourceUrl": "https://github.com/riemann/riemann",
+    "license": "EPL-1.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "rtop",
+    "description": "Interactive, remote system monitoring tool based on SSH. `MIT` `Go`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://github.com/rapidloop/rtop",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ruptime",
+    "description": "Classic system status server. `AGPL-3.0` `Shell`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://github.com/alexmyczko/ruptime",
+    "license": "AGPL-3.0",
+    "language": "Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Scrutiny",
+    "description": "Web UI for hard drive S.M.A.R.T monitoring, historical trends & real-world failure thresholds. `MIT` `Go`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://github.com/AnalogJ/scrutiny",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Sensu",
+    "description": "Monitoring tool for ephemeral infrastructure and distributed applications",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://sensu.io/",
+    "sourceUrl": "https://github.com/sensu/sensu-go",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Status",
+    "description": "Simple and lightweight system monitoring tool for small homeservers with a pleasant web interface. ([Demo](https://status.enshittification.social/) `MIT` `Python`",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://github.com/dani3l0/Status",
+    "license": "MIT",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Thruk",
+    "description": "Multibackend monitoring web interface with support for Naemon, Nagios, Icinga and Shinken",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.thruk.org/",
+    "sourceUrl": "https://github.com/sni/Thruk",
+    "license": "GPL-1.0",
+    "language": "Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Uptime Kuma",
+    "description": "Modern, self-hosted monitoring tool with a clean UI and rich notification support",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://uptime.kuma.pet/",
+    "sourceUrl": "https://github.com/louislam/uptime-kuma",
+    "license": "MIT",
+    "language": "NodeJS",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Wazuh",
+    "description": "Unified XDR and SIEM protection for endpoints and cloud workloads",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://wazuh.com/",
+    "sourceUrl": "https://github.com/wazuh/wazuh",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Zabbix",
+    "description": "Enterprise-class software for monitoring of networks and applications",
+    "category": "System Administration",
+    "subcategory": "Monitoring",
+    "url": "https://www.zabbix.com/",
+    "sourceUrl": "https://git.zabbix.com/projects/ZBX/repos/zabbix/browse",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GNS3",
+    "description": "Graphical network simulator that provides a variety of virtual appliances",
+    "category": "System Administration",
+    "subcategory": "Network Configuration Management",
+    "url": "https://www.gns3.com/",
+    "sourceUrl": "https://github.com/GNS3/gns3-gui/",
+    "license": "GPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenWISP",
+    "description": "Open Source Network Management System for OpenWRT based routers and access points. ([Demo](https://openwisp.org/demo.html), [Source Code](https://github.com/openwisp)) `GPL-3.0` `Python`",
+    "category": "System Administration",
+    "subcategory": "Network Configuration Management",
+    "url": "https://openwisp.org/",
+    "sourceUrl": "https://github.com/openwisp",
+    "license": "GPL-3.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Oxidized",
+    "description": "Network device configuration backup tool. `Apache-2.0` `Ruby`",
+    "category": "System Administration",
+    "subcategory": "Network Configuration Management",
+    "url": "https://github.com/ytti/oxidized",
+    "license": "Apache-2.0",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "phpIPAM",
+    "description": "Open source IP address management with PowerDNS integration",
+    "category": "System Administration",
+    "subcategory": "Network Configuration Management",
+    "url": "https://phpipam.net/",
+    "sourceUrl": "https://github.com/phpipam/phpipam",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "RANCID",
+    "description": "Monitor network devices configuration and maintain history of changes",
+    "category": "System Administration",
+    "subcategory": "Network Configuration Management",
+    "url": "https://www.shrubbery.net/rancid/",
+    "sourceUrl": "https://github.com/haussli/rancid",
+    "license": "BSD-3-Clause",
+    "language": "Perl/Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "rConfig",
+    "description": "Network device configuration management tool",
+    "category": "System Administration",
+    "subcategory": "Network Configuration Management",
+    "url": "https://www.rconfig.com/",
+    "sourceUrl": "https://github.com/rconfig/rconfig",
+    "license": "GPL-3.0",
+    "language": "PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "CapRover",
+    "description": "Build your own PaaS in a few minutes. ([Demo](https://captain.server.demo.caprover.com/#/login), [Source Code](https://github.com/caprover/caprover)) `Apache-2.0` `Docker/Nodejs`",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://caprover.com/",
+    "sourceUrl": "https://github.com/caprover/caprover",
+    "license": "Apache-2.0",
+    "language": "Docker/Nodejs",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Coolify",
+    "description": "An open-source & self-hostable Heroku / Netlify alternative (and even more)",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://coolify.io/",
+    "sourceUrl": "https://github.com/coollabsio/coolify",
+    "license": "Apache-2.0",
+    "language": "Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dokku",
+    "description": "An open-source PaaS (alternative to Heroku)",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://dokku.com/",
+    "sourceUrl": "https://github.com/dokku/dokku",
+    "license": "MIT",
+    "language": "Docker/Shell/Go/deb",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "fx",
+    "description": "A tool to help you do Function as a Service with painless on your own servers. `MIT` `Go`",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://github.com/metrue/fx",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kubero",
+    "description": "A self-hosted Heroku PaaS alternative for Kubernetes that implements GitOps. ([Demo](https://demo.kubero.dev/), [Source Code](https://github.com/kubero-dev/kubero)) `GPL-3.0` `K8S/Nodejs/Go`",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://www.kubero.dev/",
+    "sourceUrl": "https://github.com/kubero-dev/kubero",
+    "license": "GPL-3.0",
+    "language": "K8S/Nodejs/Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LocalStack",
+    "description": "LocalStack is a fully functional local AWS cloud stack. This includes Lambda for serverless computation",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://localstack.cloud/",
+    "sourceUrl": "https://github.com/localstack/localstack",
+    "license": "Apache-2.0",
+    "language": "Python/Docker/K8S",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nhost",
+    "description": "Firebase Alternative with GraphQL. Get a database and backend configured and ready in minutes",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://nhost.io/",
+    "sourceUrl": "https://github.com/nhost/nhost",
+    "license": "MIT",
+    "language": "Docker/Nodejs/Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenFaaS",
+    "description": "Serverless Functions Made Simple for Docker & Kubernetes",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://www.openfaas.com/",
+    "sourceUrl": "https://github.com/openfaas/faas",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Tau",
+    "description": "Easily build Cloud Computing Platforms with features like Serverless WebAssembly Functions, Frontend Hosting, CI/CD, Object Storage, K/V Database, and Pub-Sub Messaging",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://taubyte.com",
+    "sourceUrl": "https://github.com/taubyte/tau",
+    "license": "BSD-3-Clause",
+    "language": "Go/Rust/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Trusted-CGI",
+    "description": "Lightweight self-hosted lambda/applications/cgi/serverless-functions platform. `MIT` `Go/deb/Docker`",
+    "category": "System Administration",
+    "subcategory": "PaaS",
+    "url": "https://github.com/reddec/trusted-cgi",
+    "license": "MIT",
+    "language": "Go/deb/Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "aptly",
+    "description": "Swiss army knife for Debian repository management",
+    "category": "System Administration",
+    "subcategory": "Packaging",
+    "url": "https://www.aptly.info/",
+    "sourceUrl": "https://github.com/aptly-dev/aptly",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "fpm",
+    "description": "Versatile multi format package creator",
+    "category": "System Administration",
+    "subcategory": "Packaging",
+    "url": "https://fpm.readthedocs.io/en/latest/",
+    "sourceUrl": "https://github.com/jordansissel/fpm",
+    "license": "MIT",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "omnibus-ruby",
+    "description": "Easily create full-stack installers for your project across a variety of platforms. `Apache-2.0` `Ruby`",
+    "category": "System Administration",
+    "subcategory": "Packaging",
+    "url": "https://github.com/chef/omnibus",
+    "license": "Apache-2.0",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "tito",
+    "description": "Builds RPMs for git-based projects. `GPL-2.0` `Python`",
+    "category": "System Administration",
+    "subcategory": "Packaging",
+    "url": "https://github.com/dgoodwin/tito",
+    "license": "GPL-2.0",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ActiveMQ",
+    "description": "Java message broker",
+    "category": "System Administration",
+    "subcategory": "Queuing",
+    "url": "https://activemq.apache.org/",
+    "sourceUrl": "https://github.com/apache/activemq",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "BeanstalkD",
+    "description": "A simple, fast work queue",
+    "category": "System Administration",
+    "subcategory": "Queuing",
+    "url": "https://beanstalkd.github.io/",
+    "sourceUrl": "https://github.com/beanstalkd/beanstalkd",
+    "license": "MIT",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Gearman",
+    "description": "Fast multi-language queuing/job processing platform",
+    "category": "System Administration",
+    "subcategory": "Queuing",
+    "url": "http://gearman.org/",
+    "sourceUrl": "https://github.com/gearman/gearmand",
+    "license": "BSD-3-Clause",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "NSQ",
+    "description": "A realtime distributed messaging platform",
+    "category": "System Administration",
+    "subcategory": "Queuing",
+    "url": "https://nsq.io/",
+    "sourceUrl": "https://github.com/nsqio/nsq",
+    "license": "MPL-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ZeroMQ",
+    "description": "Lightweight queuing system",
+    "category": "System Administration",
+    "subcategory": "Queuing",
+    "url": "https://zeromq.org/",
+    "sourceUrl": "https://github.com/zeromq",
+    "license": "GPL-3.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Remmina",
+    "description": "Feature-rich remote desktop application for linux and other unixes",
+    "category": "System Administration",
+    "subcategory": "Remote Desktop Clients",
+    "url": "https://www.remmina.org/",
+    "sourceUrl": "https://gitlab.com/Remmina/Remmina",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Tiger VNC",
+    "description": "High-performance, multi-platform VNC client and server",
+    "category": "System Administration",
+    "subcategory": "Remote Desktop Clients",
+    "url": "https://tigervnc.org/",
+    "sourceUrl": "https://github.com/TigerVNC/tigervnc",
+    "license": "GPL-2.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "X2go",
+    "description": "X2Go is an open source remote desktop software for Linux that uses the NoMachine/NX technology protocol",
+    "category": "System Administration",
+    "subcategory": "Remote Desktop Clients",
+    "url": "https://wiki.x2go.org/doku.php",
+    "sourceUrl": "https://code.x2go.org/gitweb",
+    "license": "GPL-2.0",
+    "language": "Perl",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "DD-WRT",
+    "description": "A Linux-based firmware for wireless routers and access points, originally designed for the Linksys WRT54G series",
+    "category": "System Administration",
+    "subcategory": "Router",
+    "url": "https://dd-wrt.com/",
+    "sourceUrl": "https://svn.dd-wrt.com/",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "IPFire",
+    "description": "Free network firewall distribution, based on the Linux operating system with easy-to-use web management console",
+    "category": "System Administration",
+    "subcategory": "Router",
+    "url": "https://www.ipfire.org/",
+    "sourceUrl": "https://github.com/ipfire/ipfire-2.x",
+    "license": "GPL-2.0",
+    "language": "Shell/PHP/Other",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "OpenWrt",
+    "description": "A Linux-based router featuring Mesh networking, IPS via snort and AQM among many other features",
+    "category": "System Administration",
+    "subcategory": "Router",
+    "url": "https://openwrt.org/",
+    "sourceUrl": "https://git.openwrt.org/openwrt/openwrt.git",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "OPNsense",
+    "description": "An open source FreeBSD-based firewall and router with traffic shaping, load balancing, and virtual private network capabilities",
+    "category": "System Administration",
+    "subcategory": "Router",
+    "url": "https://opnsense.org/",
+    "sourceUrl": "https://github.com/opnsense",
+    "license": "BSD-2-Clause",
+    "language": "C/PHP",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "pfSense CE",
+    "description": "Free network firewall distribution, based on the FreeBSD operating system with a custom kernel and including third party free software packages for additional functionality",
+    "category": "System Administration",
+    "subcategory": "Router",
+    "url": "https://www.pfsense.org/",
+    "sourceUrl": "https://github.com/pfsense/pfsense",
+    "license": "Apache-2.0",
+    "language": "Shell/PHP/Other",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Consul",
+    "description": "Consul is a tool for service discovery, monitoring and configuration",
+    "category": "System Administration",
+    "subcategory": "Service Discovery",
+    "url": "https://www.consul.io/",
+    "sourceUrl": "https://github.com/hashicorp/consul",
+    "license": "MPL-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "etcd",
+    "description": "Distributed K/V-Store, authenticating via SSL PKI and a REST HTTP Api for shared configuration and service discovery",
+    "category": "System Administration",
+    "subcategory": "Service Discovery",
+    "url": "https://etcd.io/",
+    "sourceUrl": "https://github.com/coreos/etcd",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ZooKeeper",
+    "description": "ZooKeeper is a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services",
+    "category": "System Administration",
+    "subcategory": "Service Discovery",
+    "url": "https://zookeeper.apache.org/",
+    "sourceUrl": "https://github.com/apache/zookeeper",
+    "license": "Apache-2.0",
+    "language": "Java/C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Docker Compose",
+    "description": "Define and run multi-container Docker applications",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://docs.docker.com/compose/",
+    "sourceUrl": "https://github.com/docker/compose",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Docker Swarm",
+    "description": "Manage cluster of Docker Engines",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://docs.docker.com/engine/swarm/",
+    "sourceUrl": "https://github.com/moby/swarmkit",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Docker",
+    "description": "Platform for developers and sysadmins to build, ship, and run distributed applications",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://www.docker.com/",
+    "sourceUrl": "https://www.docker.com/community/open-source/",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LXC",
+    "description": "Userspace interface for the Linux kernel containment features",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://linuxcontainers.org/lxc/",
+    "sourceUrl": "https://github.com/lxc/lxc",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "LXD",
+    "description": "Container \"hypervisor\" and a better UX for LXC",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://linuxcontainers.org/lxd/",
+    "sourceUrl": "https://github.com/lxc/lxd",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenVZ",
+    "description": "Container-based virtualization for Linux",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://openvz.org",
+    "sourceUrl": "https://src.openvz.org/projects/OVZ",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Podman",
+    "description": "Daemonless container engine for developing, managing, and running OCI Containers on your Linux System. Containers can either be run as root or in rootless mode. Simply put: `alias docker=podman`",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://podman.io",
+    "sourceUrl": "https://github.com/containers/podman",
+    "license": "Apache-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Portainer Community Edition",
+    "description": "Simple management UI for Docker",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://www.portainer.io/",
+    "sourceUrl": "https://github.com/portainer/portainer",
+    "license": "Zlib",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "systemd-nspawn",
+    "description": "Lightweight, chroot-like, environment to run an OS or command directly under systemd",
+    "category": "System Administration",
+    "subcategory": "Software Containers",
+    "url": "https://www.freedesktop.org/software/systemd/man/systemd-nspawn.html",
+    "sourceUrl": "https://github.com/systemd/systemd",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "grml",
+    "description": "Bootable Debian Live CD with powerful CLI tools",
+    "category": "System Administration",
+    "subcategory": "Troubleshooting",
+    "url": "https://grml.org",
+    "sourceUrl": "https://github.com/grml/",
+    "license": "GPL-3.0",
+    "language": "Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "mitmproxy",
+    "description": "A Python tool used for intercepting, viewing and modifying network traffic. Invaluable in troubleshooting certain problems",
+    "category": "System Administration",
+    "subcategory": "Troubleshooting",
+    "url": "https://mitmproxy.org/",
+    "sourceUrl": "https://github.com/mitmproxy/mitmproxy",
+    "license": "MIT",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "mtr",
+    "description": "Network utility that combines traceroute and ping",
+    "category": "System Administration",
+    "subcategory": "Troubleshooting",
+    "url": "https://www.bitwizard.nl/mtr/",
+    "sourceUrl": "https://github.com/traviscross/mtr",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Sysdig",
+    "description": "Capture system state and activity from a running Linux instance, then save, filter and analyze",
+    "category": "System Administration",
+    "subcategory": "Troubleshooting",
+    "url": "https://www.sysdig.com/",
+    "sourceUrl": "https://github.com/draios/sysdig",
+    "license": "Apache-2.0",
+    "language": "Docker/Lua/C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Wireshark",
+    "description": "The world's foremost network protocol analyzer",
+    "category": "System Administration",
+    "subcategory": "Troubleshooting",
+    "url": "https://www.wireshark.org/",
+    "sourceUrl": "https://gitlab.com/wireshark/wireshark",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Darcs",
+    "description": "Cross-platform version control system, like git, mercurial or svn but with a very different approach: focus on changes rather than snapshots",
+    "category": "System Administration",
+    "subcategory": "Version control",
+    "url": "https://darcs.net/",
+    "sourceUrl": "https://darcs.net/releases/",
+    "license": "GPL-2.0",
+    "language": "Haskell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Fossil",
+    "description": "Distributed version control with built-in wiki and bug tracking",
+    "category": "System Administration",
+    "subcategory": "Version control",
+    "url": "https://www.fossil-scm.org/",
+    "sourceUrl": "https://www.fossil-scm.org/home/dir?ci=trunk",
+    "license": "BSD-2-Clause",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Git",
+    "description": "Distributed revision control and source code management (SCM) with an emphasis on speed",
+    "category": "System Administration",
+    "subcategory": "Version control",
+    "url": "https://git-scm.com/",
+    "sourceUrl": "https://github.com/git/git",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Mercurial",
+    "description": "Distributed source control management tool",
+    "category": "System Administration",
+    "subcategory": "Version control",
+    "url": "https://www.mercurial-scm.org/",
+    "sourceUrl": "https://repo.mercurial-scm.org/hg/file/tip",
+    "license": "GPL-2.0",
+    "language": "Python/C/Rust",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Subversion",
+    "description": "Client-server revision control system",
+    "category": "System Administration",
+    "subcategory": "Version control",
+    "url": "https://subversion.apache.org/",
+    "sourceUrl": "https://svn.apache.org/repos/asf/subversion/trunk/",
+    "license": "Apache-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ganeti",
+    "description": "Cluster virtual server management software tool built on top of KVM and Xen",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.ganeti.org/",
+    "sourceUrl": "https://github.com/ganeti/ganeti",
+    "license": "BSD-2-Clause",
+    "language": "Python/Haskell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "KVM",
+    "description": "Linux kernel virtualization infrastructure",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.linux-kvm.org",
+    "sourceUrl": "https://git.kernel.org/pub/scm/virt/kvm/kvm.git/",
+    "license": "GPL-2.0/LGPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "OpenNebula",
+    "description": "Build and manage enterprise clouds for virtualized services, containerized applications and serverless computing",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://opennebula.org/",
+    "sourceUrl": "https://github.com/OpenNebula/one",
+    "license": "Apache-2.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "oVirt",
+    "description": "Manages virtual machines, storage and virtual networks",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.ovirt.org/",
+    "sourceUrl": "https://github.com/oVirt",
+    "license": "Apache-2.0",
+    "language": "Java",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Packer",
+    "description": "A tool for creating identical machine images for multiple platforms from a single source configuration",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.packer.io/",
+    "sourceUrl": "https://github.com/hashicorp/packer",
+    "license": "MPL-2.0",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Proxmox VE",
+    "description": "Virtualization management solution",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.proxmox.com/proxmox-ve",
+    "sourceUrl": "https://git.proxmox.com/",
+    "license": "GPL-2.0",
+    "language": "Perl/Shell",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "QEMU",
+    "description": "QEMU is a generic machine emulator and virtualizer",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.qemu.org/",
+    "sourceUrl": "https://gitlab.com/qemu-project/qemu",
+    "license": "LGPL-2.1",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Vagrant",
+    "description": "Tool for building complete development environments",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.vagrantup.com/",
+    "sourceUrl": "https://github.com/hashicorp/vagrant",
+    "license": "BUSL-1.1",
+    "language": "Ruby",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "VirtualBox",
+    "description": "Virtualization product from Oracle Corporation",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.virtualbox.org/",
+    "sourceUrl": "https://www.virtualbox.org/browser/vbox",
+    "license": "GPL-3.0/CDDL-1.0",
+    "language": "C++",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "XCP-ng",
+    "description": "Virtualization platform based on Xen Source and Citrix® Hypervisor (formerly XenServer)",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.xcp-ng.org/",
+    "sourceUrl": "https://github.com/xcp-ng",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Xen",
+    "description": "Virtual machine monitor for 32/64 bit Intel / AMD (IA 64) and PowerPC 970 architectures",
+    "category": "System Administration",
+    "subcategory": "Virtualization",
+    "url": "https://www.xenproject.org/",
+    "sourceUrl": "https://xenbits.xenproject.org/gitweb/?p=xen.git;a=tree;hb=HEAD",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "DefGuard",
+    "description": "True enterprise WireGuard with MFA/2FA and SSO",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://defguard.net/",
+    "sourceUrl": "https://github.com/DefGuard",
+    "license": "Apache-2.0",
+    "language": "Rust",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dockovpn",
+    "description": "Out-of-the-box stateless dockerized OpenVPN server which starts in less than 2 seconds",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://dockovpn.io",
+    "sourceUrl": "https://github.com/dockovpn/dockovpn",
+    "license": "GPL-2.0",
+    "language": "Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Firezone",
+    "description": "WireGuard based VPN Server and Firewall",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://www.firezone.dev/",
+    "sourceUrl": "https://github.com/firezone/firezone",
+    "license": "Apache-2.0",
+    "language": "Docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Gluetun VPN client",
+    "description": "VPN client in a thin Docker container for multiple VPN providers, written in Go, and using OpenVPN or Wireguard, DNS over TLS, with a few proxy servers built-in.  `MIT` `docker`",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://github.com/qdm12/gluetun",
+    "license": "MIT",
+    "language": "docker",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Headscale",
+    "description": "Self-hostable fork of [Tailscale](https://tailscale.com), cross-platform clients, simple to use, built-in (currently experimental) monitoring tools. `BSD-3-Clause` `Go`",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://github.com/juanfont/headscale",
+    "license": "BSD-3-Clause",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nebula",
+    "description": "A scalable p2p VPN with a focus on performance, simplicity and security. `MIT` `Go`",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://github.com/slackhq/nebula",
+    "license": "MIT",
+    "language": "Go",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ocserv",
+    "description": "Cisco AnyConnect-compatible VPN server",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://www.infradead.org/ocserv/",
+    "sourceUrl": "https://gitlab.com/ocserv/ocserv",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenVPN",
+    "description": "Uses a custom security protocol that utilizes SSL/TLS for key exchange",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://community.openvpn.net",
+    "sourceUrl": "https://github.com/OpenVPN/openvpn",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "SoftEther",
+    "description": "Multi-protocol software VPN with advanced features",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://www.softether.org/",
+    "sourceUrl": "https://github.com/SoftEtherVPN/SoftEtherVPN/",
+    "license": "Apache-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "sshuttle",
+    "description": "Poor man's VPN. `LGPL-2.1` `Python`",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://github.com/sshuttle/sshuttle",
+    "license": "LGPL-2.1",
+    "language": "Python",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "strongSwan",
+    "description": "Complete IPsec implementation for Linux",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://www.strongswan.org/",
+    "sourceUrl": "https://github.com/strongswan/strongswan",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "WireGuard",
+    "description": "Very fast VPN based on elliptic curve and public key crypto",
+    "category": "System Administration",
+    "subcategory": "VPN",
+    "url": "https://www.wireguard.com/",
+    "sourceUrl": "https://www.wireguard.com/repositories/",
+    "license": "GPL-2.0",
+    "language": "C",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ArsTechnica OpenForum",
+    "description": "IT Forum which is attached to a large news site",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://arstechnica.com/civis/",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Reddit",
+    "description": "Really, really large bulletin board system",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://www.reddit.com",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "/r/Linux",
+    "description": "News and information about Linux",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://www.reddit.com/r/linux",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Spiceworks Community",
+    "description": "General enterprise IT news and small articles",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://community.spiceworks.com/start",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "StackExchange Network",
+    "description": "Q&A communities",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://stackexchange.com/sites#technology",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Server Fault",
+    "description": "StackExchange community for system and network administrators",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://serverfault.com/",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "AlternativeTo",
+    "description": "Find alternatives to software you know and discover new software",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://alternativeto.net",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "deb.sury.org",
+    "description": "Repository with LAMP updated packages for Debian and Ubuntu",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://deb.sury.org/",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "ElRepo",
+    "description": "Community Repo for Enterprise Linux (RHEL, CentOS, etc)",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://elrepo.org/tiki/tiki-index.php",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "EPEL",
+    "description": "Repository for RHEL and compatibles (CentOS, Scientific Linux)",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://fedoraproject.org/wiki/EPEL",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "IUS",
+    "description": "Community project that provides RPM packages for newer versions of select software for Enterprise Linux distributions",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://ius.io/",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Remi",
+    "description": "Repository with LAMP updated packages for RHEL/Centos/Fedora",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "http://rpms.famillecollet.com/",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Software Collections",
+    "description": "Community Release of [Red Hat Software Collections](https://access.redhat.com/documentation/en/red-hat-software-collections/). Provides updated packages of Ruby, Python, etc. for CentOS/Scientific Linux 6.x",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://www.softwarecollections.org",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Cloud Native Software Landscape",
+    "description": "Compilation of software and tools for cloud computing",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://landscape.cncf.io/?group=projects-and-products&view-mode=card",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "ArchWiki",
+    "description": "Arch Linux Wiki which has really nice written articles valid for other distros",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://wiki.archlinux.org/",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Gentoo Wiki",
+    "description": "Gentoo Linux Wiki with a lot in-detail description of Linux components",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://wiki.gentoo.org/",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Awesome SysAdmin @ LibHunt",
+    "description": "Your go-to SysAdmin Toolbox. Based on the list here",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://sysadmin.libhunt.com",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Ops School",
+    "description": "Comprehensive program that will help you learn to be an operations engineer",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://www.opsschool.org",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  },
+  {
+    "name": "Digital Ocean Tutorials",
+    "description": "6,000+ tutorials for getting the basics of certain applications/tools/systems administration topics",
+    "category": "System Administration",
+    "subcategory": "Web",
+    "url": "https://www.digitalocean.com/community/tutorials",
+    "license": "",
+    "language": "",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux"
+    ]
+  }
+]

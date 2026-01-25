@@ -1,0 +1,4109 @@
+[
+  {
+    "name": "Akira",
+    "description": "Linux application for UI and UX design",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/akiraux",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Albert launcher",
+    "description": "Keyboard launcher written in C++/Qt",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/albertlauncher",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "bcachefs",
+    "description": "Linux filesystem",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/bcachefs",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Blender",
+    "description": "3D creation suite",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://fund.blender.org/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Bottles",
+    "description": "Easily manage and run Windows apps on Linux",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://usebottles.com/funding/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Calibre",
+    "description": "E-books manager",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/kovidgoyal",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Compiler Explorer",
+    "description": "Online decompiler and compiler explorer",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/mattgodbolt",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Deluge",
+    "description": "BitTorrent client",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/deluge_cas",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "DokuWiki",
+    "description": "Wiki application",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/dokuwiki",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Duplicati",
+    "description": "Backup client",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/duplicati",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "F-Droid",
+    "description": "An installable catalogue of FOSS applications for the Android platform",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/f-droid",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Firezone",
+    "description": "Self-hosted VPN server using WireGuard",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://github.com/orgs/firezone/sponsoring",
+    "sourceUrl": "https://github.com/orgs/firezone/sponsoring",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "FreeCAD",
+    "description": "Parametric 3D modeler made primarily to design real-life objects of any size",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://freecadweb.org/wiki/Donate",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Freeter",
+    "description": "Productivity app for Developers, Designers and other professionals",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://freeter.io/sponsor/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Godot Engine",
+    "description": "Complete 3D engine",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/godotengine",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "HaxeFlixel",
+    "description": "Cross-platform 2D game engine",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/haxeflixel",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Homebrew",
+    "description": "Package manager for macOS",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/homebrew",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "iTerm2",
+    "description": "macOS terminal replacement",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/gnachman",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "JabRef",
+    "description": "Software for bibliography management",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://liberapay.com/JabRef",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "JHipster",
+    "description": "Open Source application platform for creating Spring Boot + Angular/React/Vue projects in seconds",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/generator-jhipster",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kismet",
+    "description": "Kismet wireless tool",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/kismetwireless",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Laigter",
+    "description": "Automatic normal/specular/occlussion/parallax map generator for 2D game sprites",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/azagaya",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LogSeq",
+    "description": "Knowledge management",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/logseq",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Memcode",
+    "description": "Platform for flashcards",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/memcode",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "MuseScore",
+    "description": "Music notation software",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/musescore",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "NativeScript-Vue",
+    "description": "Native mobile applications with NativeScript and Vue",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/rigor789",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Neovim",
+    "description": "Vim-fork focused on extensibility and usability",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/neovim",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "NewPipe",
+    "description": "FLOSS video player on Android for services like YouTube, Soundcloud etc",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://liberapay.com/TeamNewPipe",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Olive",
+    "description": "High quality video editing and compositing software",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/olivevideoeditor",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Open Broadcaster Software",
+    "description": "Video recording and live streaming software",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/obsproject",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Open Chemistry",
+    "description": "Umbrella of multiple open source chemistry projects including Avogadro, cclib, DeepChem, MSDK, Open Babel, RDKit, and 3DMol.js",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/open-chemistry",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Open Source BIM Collective",
+    "description": "Tools for building information modeling",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/opensourcebim",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "openage",
+    "description": "Real time strategy game engine",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://liberapay.com/SFTtech/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenFAAS",
+    "description": "Serverless platform",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://github.com/users/alexellis/sponsorship",
+    "sourceUrl": "https://github.com/users/alexellis/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenShot",
+    "description": "Video editor",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/openshot",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OptiKey",
+    "description": "Full computer control and speech with your eyes",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/OptiKey",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Paperwork",
+    "description": "Personal document manager",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/openpaper",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Perkeep",
+    "description": "Personal storage system",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/perkeep",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "PHPStan",
+    "description": "PHP static analyzer",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://github.com/phpstan",
+    "sourceUrl": "https://github.com/phpstan",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "PHPUnit",
+    "description": "PHPUnit and related projects",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://github.com/sponsors/sebastianbergmann",
+    "sourceUrl": "https://github.com/sponsors/sebastianbergmann",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Pixelorama",
+    "description": "A free & open-source 2D sprite editor, made with the Godot Engine",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/OramaInteractive",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "PlantUML",
+    "description": "UML diagram creation software",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/plantuml",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Project Lombok",
+    "description": "Java editor plugin",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/lombok",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Remmina",
+    "description": "Remote desktop client",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://remmina.org/donations/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ShareX Team",
+    "description": "Screen capture and screen sharing tool",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/ShareX",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Sonic Pi",
+    "description": "Code-based music creation and performance tool",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/samaaron",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "SysV init",
+    "description": "System V init implementation",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/sysvinit",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Termux",
+    "description": "Android terminal emulator",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://termux.dev/en/donate",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Thirty Bees",
+    "description": "Ecommerce software",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://forum.thirtybees.com/support-thirty-bees/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Tiled",
+    "description": "A 2D game level editor",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/bjorn",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Transmission",
+    "description": "BitTorrent client",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://transmissionbt.com/donate/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "V Programming Language",
+    "description": "Statically typed compiled programming language similar to Go, influenced by Oberon, Rust, Swift",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/vlang",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "VideoLAN",
+    "description": "Maker of the VLC video player",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "http://www.videolan.org/contribute.html#paypal",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Vim-Go",
+    "description": "Go plugin for VIM",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/bhcleek",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Weblate",
+    "description": "Localization tool with tight version control integration",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://liberapay.com/Weblate",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Webpack",
+    "description": "JavaScript module bundler",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/webpack",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Wiki.js",
+    "description": "Wiki platform built with Node.js",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://github.com/users/NGPixel/sponsorship",
+    "sourceUrl": "https://github.com/users/NGPixel/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "WireGuard",
+    "description": "Next generation secure network tunnel",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/zx2c4",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Wireshark",
+    "description": "Helping as many people as possible understand their networks as much as possible",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://wiresharkfoundation.org/donate/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Xfce",
+    "description": "Desktop environment for UNIX-like operating systems",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://opencollective.com/xfce",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Zig",
+    "description": "System programming language which prioritizes robustness, optimality, and clarity",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://www.patreon.com/andrewrk",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Zrythm",
+    "description": "A highly automated and intuitive digital audio workstation",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://liberapay.com/Zrythm",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kitbashery",
+    "description": "3D kitbashing solution & CC0 model library",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Projects",
+    "url": "https://github.com/sponsors/Kitbashery",
+    "sourceUrl": "https://github.com/sponsors/Kitbashery",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "BookWyrm",
+    "description": "Social reading and reviewing, decentralized with ActivityPub",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/bookwyrm",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dekko Project",
+    "description": "Ubuntu email client",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/dekkoproject",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Flarum",
+    "description": "Forum platform",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://opencollective.com/flarum/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Funkwhale",
+    "description": "A free, federated and social music server",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://opencollective.com/funkwhale",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "The Lounge",
+    "description": "Modern web IRC client",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://opencollective.com/thelounge",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Mastodon",
+    "description": "Federated social network server",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/mastodon",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Matrix",
+    "description": "An open network for secure, decentralized communication",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/matrixdotorg",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "MissKey",
+    "description": "Federated microblogging platform",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/syuilo",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nitter",
+    "description": "Free and open source Twitter client focused on privacy",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/nitter",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "PixelFed",
+    "description": "Federated image sharing powered by the ActivityPub protocol",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/dansup",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "postActiv",
+    "description": "Microblogging platform",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/postActiv",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Reddit Enhancement Suite",
+    "description": "Reddit browser extension",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://www.patreon.com/honestbleeps",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Retrospring",
+    "description": "A social network following the Q/A (question and answer) principle",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://patreon.com/retrospring",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Secure Scuttlebutt",
+    "description": "A distributed and secure peer-to-peer protocol and social network",
+    "category": "Software Patreons",
+    "subcategory": "Messaging and social media",
+    "url": "https://opencollective.com/secure-scuttlebutt-consortium",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ApexCharts",
+    "description": "JavaScript charts library",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://opencollective.com/apexchartsjs",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Asset-Importer-Lib",
+    "description": "Loads 40+ 3D file formats into one unified and clean data structure for game-developers",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/assimp",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Babel",
+    "description": "JavaScript compiler",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/henryzhu",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dear ImGui",
+    "description": "Immediate Mode Graphical User interface for C++",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://github.com/ocornut/imgui/wiki/Sponsors",
+    "sourceUrl": "https://github.com/ocornut/imgui/wiki/Sponsors",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Hapi.js",
+    "description": "Node.js framework",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://opencollective.com/hapijs",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "HaxeUI",
+    "description": "User interface toolkit",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/haxeui",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Iced",
+    "description": "A cross-platform GUI library for Rust, inspired by Elm",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://github.com/sponsors/hecrj",
+    "sourceUrl": "https://github.com/sponsors/hecrj",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Laravel",
+    "description": "PHP framework",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/taylorotwell",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LibGDX",
+    "description": "Game development framework",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/libgdx",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "MicroG",
+    "description": "A free-as-in-freedom re-implementation of Google's proprietary Android user space apps and libraries",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://github.com/sponsors/mar-v-in",
+    "sourceUrl": "https://github.com/sponsors/mar-v-in",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Moleculer",
+    "description": "Progressive microservices framework for Node.js",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/moleculer",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Musl libc",
+    "description": "The Musl libc project",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/musl",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OpenFL",
+    "description": "Cross-platform application framework",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/openfl",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Phalcon",
+    "description": "Web framework delivered as a C extension for PHP",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://opencollective.com/phalcon",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "stdlib",
+    "description": "Standard library for JavaScript and Node.js with an emphasis on scientific computing",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/athan",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Tabulator",
+    "description": "JavaScript library for building interactive tables",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/olifolkerd",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Vapor",
+    "description": "Server-side Swift framework",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://github.com/tanner0101",
+    "sourceUrl": "https://github.com/tanner0101",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Yii framework",
+    "description": "PHP framework",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/samdark",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Zappa",
+    "description": "A server-less Python framework",
+    "category": "Software Patreons",
+    "subcategory": "Libraries",
+    "url": "https://www.patreon.com/zappa",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "/e/",
+    "description": "Privacy-focused mobile OS",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/eelo",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Elementary OS",
+    "description": "Ubuntu variant",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/elementary",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "FreeDOS",
+    "description": "MS-DOS compatible operating system",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/freedos",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GhostBSD",
+    "description": "Desktop-focused BSD OS",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/GhostBSD",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GrapheneOS",
+    "description": "A privacy and security focused mobile OS with Android app compatibility",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://github.com/sponsors/thestinger",
+    "sourceUrl": "https://github.com/sponsors/thestinger",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LineageOS",
+    "description": "Fork of CyanogenMod",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.paypal.me/LineageOS",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Linux Lite",
+    "description": "Linux distribution",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/linuxlite",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Mobian",
+    "description": "Debian for mobile",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://liberapay.com/mobian/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Parrot",
+    "description": "Security-related Debian distribution",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/parrot",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "PostmarketOS",
+    "description": "A real Linux distribution for phones",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://opencollective.com/postmarketos",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Qubes OS",
+    "description": "A reasonably secure operating system",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://opencollective.com/qubes-os",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ReactOS",
+    "description": "A free Windows-compatible Operating System",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://liberapay.com/ReactOS/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Redox OS",
+    "description": "OS written in Rust",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/redox_os",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Serenity OS",
+    "description": "A graphical Unix-like OS for x86, with 90s aesthetics",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://github.com/sponsors/awesomekling",
+    "sourceUrl": "https://github.com/sponsors/awesomekling",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Slackware Linux",
+    "description": "Linux distribution",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/slackwarelinux",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Solus",
+    "description": "Linux distibution",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://opencollective.com/getsolus",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ubuntu Mate",
+    "description": "Ubuntu variant",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/ubuntu_mate",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ubuntu Studio",
+    "description": "Ubuntu variant for creating audio, video, graphics etc",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/ubuntustudio",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ubuntu Touch",
+    "description": "Touch-friendly mobile version of Ubuntu",
+    "category": "Software Patreons",
+    "subcategory": "Operating Systems",
+    "url": "https://www.patreon.com/ubports",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Battle for Wesnoth",
+    "description": "Turn-based strategy game",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://liberapay.com/Wesnoth",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Cemu",
+    "description": "Nintendo Wii U emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/cemu",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Citra",
+    "description": "Nintendo 3DS emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/citraemu",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Citybound",
+    "description": "City building game",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/citybound",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Cxbx-reloaded",
+    "description": "Xbox emulator for Windows",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/LukeUsher",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Eigengrau's Generator",
+    "description": "TTRPG/Dungeons and Dragons Town and NPC Generator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/EigengrausGenerator",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Fheroes2",
+    "description": "Free Heroes of Might and Magic II engine",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/fheroes2",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Heroic Games Launcher",
+    "description": "Open source GOG and Epic Games launcher",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/heroicgameslauncher",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Improved Initiative",
+    "description": "D&D tabletop role-playing game combat tracker",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/improvedinitiative",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Libretro Team",
+    "description": "Libretro, RetroArch and Lakka",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/libretro",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Lutris",
+    "description": "Game launcher & platform",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/lutris",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "MelonDS",
+    "description": "Nintendo DS emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/m/Arisotura",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Play!",
+    "description": "PS2 emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/jpd002",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Rpcs3",
+    "description": "PS3 emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/Nekotekina",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ryujinx",
+    "description": "Nintendo Switch emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/ryujinx",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Xemu",
+    "description": "Xbox emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/mborgerson",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Xenia",
+    "description": "Xbox 360 emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/xenia_project",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "yuzu",
+    "description": "Nintendo Switch emulator",
+    "category": "Software Patreons",
+    "subcategory": "Games",
+    "url": "https://www.patreon.com/yuzuteam",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Alexandre Prokoudine",
+    "description": "GIMP contributor, editor of Libre Graphics World online magazine",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/prokoudine",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Andrea Ferrero",
+    "description": "Developer of PhotoFlow image editor, maintains various Appimage packages",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/andreaferrero",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Duduf",
+    "description": "Tools for animations and motion pictures production",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/duduf",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GIMP",
+    "description": "GNU Image Manipulation Program",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://liberapay.com/GIMP/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Inochi2D",
+    "description": "Opensource editor and libraries for realtime 2D puppet animation and rendering, e.g. VTubers",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/clipsey",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Marc Jeanmougin",
+    "description": "Inkscape contributor",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/marcjeanmougin",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Morevna Project",
+    "description": "Various contributions to open source animation tools and animated shorts sources released under CC",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/morevna",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "MyPaint",
+    "description": "Painting and drawing program that works nicely with pressure-sensitive tablets, and its dynamic brush engine library",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://opencollective.com/mypaint",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Øyvind Kolås",
+    "description": "Lead developer of babl & GEGL libraries used in the graphics editor GIMP",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/pippin",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Pablo Dobarro",
+    "description": "Sculpting improvements for Blender",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/pablodp606",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Synfig",
+    "description": "2D animation software",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/synfig",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Tavmjong Bah",
+    "description": "Working on Inkscape vector graphics editor",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/tavmjong",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ZeMarmot",
+    "description": "2D animation film project to be released under CC. GIMP contributions from Jehan Pagès, art and direction by Aryeom Han",
+    "category": "Software Patreons",
+    "subcategory": "Open Source Art",
+    "url": "https://www.patreon.com/zemarmot",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Damien Maguire",
+    "description": "Electric vehicle projects",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/evbmw",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "DIGImend",
+    "description": "Improving Linux support for (non-Wacom) graphics tablets",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/spbnick",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Espruino",
+    "description": "JavaScript interpreter for microcontrollers",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/espruino",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Frank Buss",
+    "description": "FPGA and other hardware projects",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/frankbuss",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GitClear",
+    "description": "Improved Linux support for touchpads",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://github.com/sponsors/gitclear",
+    "sourceUrl": "https://github.com/sponsors/gitclear",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Geoffrey D. Bennett",
+    "description": "Linux Focusrite Scarlett software",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://liberapay.com/gdb",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Hector Martin \"marcan\"",
+    "description": "Asahi, Linux support for Apple Silicon Macs",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/marcan",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LibrePCB",
+    "description": "Software to develop printed circuit boards",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/librepcb",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Martin Povišer",
+    "description": "Reverse-engineering and writing Linux drivers for audio hardware on Apple Silicon Macs",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://github.com/sponsors/povik",
+    "sourceUrl": "https://github.com/sponsors/povik",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nefarius Software Solutions",
+    "description": "Windows drivers for the Sony DualShock controller and others",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/nefarius",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "OctoPrint",
+    "description": "Web interface for 3D printers",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/foosel",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "OpenRGB",
+    "description": "RGB lighting control application",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/CalcProgrammer1",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Pinout.xyz",
+    "description": "Pinout diagrams for various microcontrollers",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/gadgetoid",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Professor Abrasive",
+    "description": "Retro gaming",
+    "category": "Software Patreons",
+    "subcategory": "Hardware related",
+    "url": "https://www.patreon.com/prof_abrasive",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Adam King",
+    "description": "RLTrader, Tensortrade and other trading related projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/notadamking",
+    "sourceUrl": "https://github.com/sponsors/notadamking",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Andreas Heinisch",
+    "description": "LibreOffice developer",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/user?u=51471923",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Andreas Kainz",
+    "description": "LibreOffice designer",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/user?u=10071325",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Andreas Pardeike",
+    "description": "Programming tutorials, games and mods",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/pardeike",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Andrius Štikonas",
+    "description": "KDE contributor, mainly KDE Partition Manager",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://liberapay.com/stikonas",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Attogram Project",
+    "description": "Shared Media Tagger, Open Translation Engine, and many more projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/attogram",
+    "sourceUrl": "https://github.com/sponsors/attogram",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Bailey Burnsed",
+    "description": "FOSS Nerd developing open source games in Godot and Rust",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/BaileyBurnsed",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Daniel Gultsch",
+    "description": "Conversations Jabber client",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/iNPUTmice/sponsorship",
+    "sourceUrl": "https://github.com/users/iNPUTmice/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Daniël Klabbers",
+    "description": "Contributor to Flarum and other PHP projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/luceos",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dave Täht",
+    "description": "Working on improving the Internet",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/dtaht",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "David Hewitt",
+    "description": "ElementaryOS contributor, Torrential, Clipped",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/davidmhewitt/sponsorship",
+    "sourceUrl": "https://github.com/users/davidmhewitt/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dimitri Fontaine",
+    "description": "Various contributions to the PostgreSQL ecosystem (pgloader, pg_auto_failover), Emacs libraries (el-get), author",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/dimitri",
+    "sourceUrl": "https://github.com/sponsors/dimitri",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dominik Honnef",
+    "description": "Working on tooling for the Go programming language",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/dominikh",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Dragan Djuric",
+    "description": "Creator of Uncomplicate, a family of Clojure libraries for AI, ML, and GPU high performance computing",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/draganrocks",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Drew DeVault",
+    "description": "sway, wlroots, sr.ht, scdoc, aerc, and more",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/sircmpwn",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Eevee",
+    "description": "Games, applications and articles",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/eevee",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Egoist",
+    "description": "Various JavaScript libraries and tools",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/egoist/overview",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Erik Moqvist",
+    "description": "Moblin, iOS app for IRL streaming and many other libraries",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/eerimoq",
+    "sourceUrl": "https://github.com/sponsors/eerimoq",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Eric S. Raymond",
+    "description": "Nethack, GPSd, author of \"The Cathedral and the Bazaar\"",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/esr",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ethan Lee",
+    "description": "Contributions to FNA, SDL2 C# and other projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/flibitijibibo/sponsorship",
+    "sourceUrl": "https://github.com/users/flibitijibibo/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Fabio Zadrozny",
+    "description": "Working on PyDev and related projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/fabioz",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Felipe Lima",
+    "description": "Various projects and libraries like OkReplay, AirMapView, AsymmetricGridView, GifImageView, Wombat",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/felipecsl",
+    "sourceUrl": "https://github.com/sponsors/felipecsl",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Feross Aboukhadijeh",
+    "description": "WebTorrent, StandardJS, and other JavaScript projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/feross",
+    "sourceUrl": "https://github.com/sponsors/feross",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Flammie",
+    "description": "Apertium, linguistic tools for minority languages",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/flammie",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Franck Nijhof",
+    "description": "Creates Home Assistant add-ons and helps out on the main project",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/frenck",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Gabriel Gonzalez",
+    "description": "Dhall language, Nix and Haskell educational projects and Haskell libraries and tool",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/Gabriel439/sponsorship",
+    "sourceUrl": "https://github.com/users/Gabriel439/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Gilbert Pellegrom",
+    "description": "Raneto, Vue.js libraries and more",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/gilbitron/sponsorship",
+    "sourceUrl": "https://github.com/users/gilbitron/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Jacky Alcine",
+    "description": "Projects in the IndieWeb sphere, Koype and contributions to other open source projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/jackyalcine",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "James 'Purpleidea'",
+    "description": "mgmt config, articles and more",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/purpleidea/sponsorship",
+    "sourceUrl": "https://github.com/users/purpleidea/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "JeanHeyd Meneide",
+    "description": "Creates C++ libraries and standards proposals",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/thephd",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Joey Hess",
+    "description": "git-annex, keysafe, other Linux software",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/joeyh",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Johann-S",
+    "description": "Bootstrap JavaScript developer and various plugins and projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/Johann-S",
+    "sourceUrl": "https://github.com/sponsors/Johann-S",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Jorge Bucaran",
+    "description": "Hyperapp and many other JavaScript projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/jorgebucaran",
+    "sourceUrl": "https://github.com/sponsors/jorgebucaran",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Jonathan Müller",
+    "description": "Various C++ libraries, tools, articles",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/foonathan",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kevin Cozens",
+    "description": "Contributor to projects such as GIMP, OpenSimulator, KiCad and TinyScheme",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/KevinCozens",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kévin Dunglas",
+    "description": "API Platform, Vulcain, Mercure and Symfony contributions",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/dunglas",
+    "sourceUrl": "https://github.com/sponsors/dunglas",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Khoa Pham",
+    "description": "A multitude of libraries, applications and articles about iOS/Cocoa,",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/onmyway133/sponsorship",
+    "sourceUrl": "https://github.com/users/onmyway133/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kozec",
+    "description": "Syncthing-GTK and SC-Controller",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/kozec",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kurt Kremitzki",
+    "description": "FreeCAD contributor and Debian packager",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/kkremitzki",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Lars Moelleken",
+    "description": "Various PHP libraries and OSS contributions",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/voku",
+    "sourceUrl": "https://github.com/sponsors/voku",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Luke Dashjr",
+    "description": "Author of bfgminer and other substantial contributions to Bitcoin",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/luke-jr",
+    "sourceUrl": "https://github.com/sponsors/luke-jr",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Matt Lewis",
+    "description": "Angular-calendar and other angular components",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/mattlewis92/sponsorship",
+    "sourceUrl": "https://github.com/users/mattlewis92/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Matthieu Napoli",
+    "description": "Bref, PHP-DI and other PHP libraries",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/mnapoli/sponsorship",
+    "sourceUrl": "https://github.com/users/mnapoli/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Max Bridgland",
+    "description": "Various pentesting frameworks and tools",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/M4cs/sponsorship",
+    "sourceUrl": "https://github.com/users/M4cs/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Max Howell",
+    "description": "Creator of Homebrew, maintainer of PromiseKit and a multitude of other project for Apple platforms",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/mxcl",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Michal Čihař",
+    "description": "Contributor to Weblate and phpMyAdmin",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://liberapay.com/nijel/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Nate Graham",
+    "description": "KDE contributor",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://liberapay.com/ngraham",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nick Sweeting",
+    "description": "ArchiveBox and OSS contributions but also articles and documentation",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/pirate",
+    "sourceUrl": "https://github.com/sponsors/pirate",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nicolas Hafner",
+    "description": "Various Common Lisp libraries",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/Shinmera/sponsorship",
+    "sourceUrl": "https://github.com/users/Shinmera/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Nils Maier",
+    "description": "Download Them All! Firefox and Chrome extension",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/nmaier",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Oleh Krehel",
+    "description": "GNU Emacs plugins, maintainer of Ivy/Swiper/Counsel, Hydra, Avy, Lispy, and more",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/abo-abo/sponsorship",
+    "sourceUrl": "https://github.com/users/abo-abo/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ondřej Surý",
+    "description": "Debian packager",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/oerdnj",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Patrick Wardle",
+    "description": "Owner of Objective-See, various macOS security tools and articles",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/objective_see",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Pedro Piñera",
+    "description": "Tuist and XcodeProj libraries, articles",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/pepibumur/sponsorship",
+    "sourceUrl": "https://github.com/users/pepibumur/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Pedro Carrasco",
+    "description": "Various iOS libraries and projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/pedrommcarrasco",
+    "sourceUrl": "https://github.com/sponsors/pedrommcarrasco",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Povilas Kanapickas",
+    "description": "X server, Buildbot CI, Barrier and many others",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/p12tic",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Raph Levien",
+    "description": "druid and other Rust projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/raphlinus",
+    "sourceUrl": "https://github.com/sponsors/raphlinus",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Reini Urban",
+    "description": "Maintaining and developing software such as cperl, parrot, a lot of perl5 modules, safeclib and libredwg",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/rurban",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "René Rebe",
+    "description": "T2 System Development Environment",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/user?u=9504919",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Rekka Bellum & Devine Lu Linvega",
+    "description": "Open source tools and games",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/100",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Rob Landley",
+    "description": "Working on Toybox, mkroot and various other projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/landley",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Ryan C. Gordon",
+    "description": "Linux ports of games, game-related utilities",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/icculus",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Sanjay Madan",
+    "description": "Mowglii apps, author of Itsycal and Snk",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://paypal.me/mowgliiapps",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Scarlett Moore",
+    "description": "KDE contributor",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/sgclark",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Scott Lahteine",
+    "description": "Contributor to Marlin Firmware for 3D printers",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/thinkyhead",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Sindre Sorhus",
+    "description": "Countless open source projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/sindresorhus",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "skypjack",
+    "description": "C++ libraries such as uvw and EnTT",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/skypjack",
+    "sourceUrl": "https://github.com/sponsors/skypjack",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Stéphane Peter",
+    "description": "AudioKit contributor, Makeself and other libraries and projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/megastep",
+    "sourceUrl": "https://github.com/sponsors/megastep",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Steve Purcell",
+    "description": "MELPA lisp package archive and other software tooling",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/sanityinc",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Steven Troughton-Smith",
+    "description": "Various iOS/macOS software",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/steventroughtonsmith",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Thomas M. Edwards",
+    "description": "Gaming related projects",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/thomasmedwards",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Tim Oliver",
+    "description": "Multitude of iOS libraries and various contribution to the iOS ecosystem",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/sponsors/TimOliver",
+    "sourceUrl": "https://github.com/sponsors/TimOliver",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Timothée Giet",
+    "description": "GCompris contributor",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/animtim",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Tobias Koppers",
+    "description": "Founder and maintainer of Webpack",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://github.com/users/sokra/sponsorship",
+    "sourceUrl": "https://github.com/users/sokra/sponsorship",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Web"
+    ]
+  },
+  {
+    "name": "Yorik van Havre",
+    "description": "FreeCAD contributor",
+    "category": "Software Patreons",
+    "subcategory": "People Doing Open Source Work",
+    "url": "https://www.patreon.com/yorikvanhavre",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Alecaddd",
+    "description": "Various programming tutorials",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/alecaddd",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Boiling Steam",
+    "description": "Linux gaming news, reviews, guides",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/boiling_steam_linux",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Chris Bradfield",
+    "description": "Programming tutorials for kids",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/kidscancode",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "DistroWatch",
+    "description": "Reviews and tutorials for Linux/BSD",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/distrowatch",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Fluent C++",
+    "description": "C++ articles",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/fluentcpp",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "GamingOnLinux",
+    "description": "articles and videos about Linux, Steam Deck, SteamOS gaming",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/liamdawe",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Kyle Simpson",
+    "description": "Author of the \"You Don't Know JS\" book series. Doing articles, podcasts and OSS contributions",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/getify",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Meeting C++",
+    "description": "C++ articles",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/meetingcpp",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Modernes C++",
+    "description": "C++ articles",
+    "category": "Software Patreons",
+    "subcategory": "Articles and Tutorials",
+    "url": "https://www.patreon.com/rainer_grimm",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Corey Schafer",
+    "description": "Python tutorials",
+    "category": "Software Patreons",
+    "subcategory": "Videos",
+    "url": "https://www.patreon.com/coreyms",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Fun Fun Function",
+    "description": "JavaScript and general programming videos",
+    "category": "Software Patreons",
+    "subcategory": "Videos",
+    "url": "https://patreon.com/funfunfunction",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Joel Yliluoma",
+    "description": "Programming videos",
+    "category": "Software Patreons",
+    "subcategory": "Videos",
+    "url": "https://www.patreon.com/Bisqwit",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "LiveOverflow",
+    "description": "IT security videos",
+    "category": "Software Patreons",
+    "subcategory": "Videos",
+    "url": "https://www.patreon.com/liveoverflow",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "The Coding Train",
+    "description": "Programming tutorials",
+    "category": "Software Patreons",
+    "subcategory": "Videos",
+    "url": "https://www.patreon.com/codingtrain",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "ThreatWire",
+    "description": "Hak5 security show",
+    "category": "Software Patreons",
+    "subcategory": "Videos",
+    "url": "https://www.patreon.com/ThreatWire",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Destination Linux",
+    "description": "Linux discussion and news related podcast",
+    "category": "Software Patreons",
+    "subcategory": "Podcasts",
+    "url": "https://www.patreon.com/destinationlinux",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "Late Night Linux",
+    "description": "Linux and news",
+    "category": "Software Patreons",
+    "subcategory": "Podcasts",
+    "url": "https://www.patreon.com/LateNightLinux",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "More Than Just Code",
+    "description": "Podcast for iOS developers",
+    "category": "Software Patreons",
+    "subcategory": "Podcasts",
+    "url": "https://www.patreon.com/mtjc",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "The Debug Log",
+    "description": "Game development",
+    "category": "Software Patreons",
+    "subcategory": "Podcasts",
+    "url": "https://www.patreon.com/thedebuglog",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  },
+  {
+    "name": "This Week in Linux",
+    "description": "Linux News Podcast, 2-3 times more topics per episode than other podcasts",
+    "category": "Software Patreons",
+    "subcategory": "Podcasts",
+    "url": "https://www.patreon.com/tuxdigital",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  }
+]

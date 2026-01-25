@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, Download, Monitor, Tag, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { getShortDescription } from "@/lib/translations";
 
 interface SoftwareDetailModalProps {
   software: Software | null;
@@ -59,8 +60,8 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
     },
     onSuccess: () => {
       toast({
-        title: "Review submitted",
-        description: "Your review has been submitted successfully.",
+        title: "Đã gửi đánh giá",
+        description: "Đánh giá của bạn đã được gửi thành công.",
       });
       setReviewComment("");
       // Invalidate the reviews query to reload the data
@@ -70,7 +71,7 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to submit review",
+        title: "Gửi đánh giá thất bại",
         description: error.message,
         variant: "destructive",
       });
@@ -79,23 +80,23 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
 
   const handleSubmitReview = () => {
     if (!software || !user) return;
-    
+
     if (!reviewComment.trim()) {
       toast({
-        title: "Review required",
-        description: "Please write a comment for your review.",
+        title: "Cần có đánh giá",
+        description: "Vui lòng viết nhận xét cho đánh giá của bạn.",
         variant: "destructive",
       });
       return;
     }
-    
+
     const reviewData: InsertReview = {
       target_type: "software",
       target_id: software.id,
       rating: userRating,
       comment: reviewComment,
     };
-    
+
     submitReviewMutation.mutate(reviewData);
   };
 
@@ -121,148 +122,148 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
           <>
             <DialogTitle className="sr-only">{software.name} Details</DialogTitle>
             <div className="flex flex-col md:flex-row">
-            {/* Software image */}
-            <div className="flex-shrink-0 relative bg-gray-100 md:w-2/5">
-              {software.image_url ? (
-                <img 
-                  src={software.image_url} 
-                  alt={`${software.name} screenshot`} 
-                  className="w-full object-cover h-48 md:h-full" 
-                />
-              ) : (
-                <div className="w-full h-48 md:h-full flex items-center justify-center bg-gray-100">
-                  <Monitor className="h-16 w-16 text-gray-400" />
-                </div>
-              )}
-              <div className="absolute top-0 right-0 mt-2 mr-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Free
-                </span>
-              </div>
-            </div>
-            
-            {/* Software details */}
-            <div className="p-6 flex-1 overflow-y-auto max-h-[70vh]">
-              <div className="flex justify-between items-start">
-                <h3 className="text-2xl font-bold text-gray-900">{software.name}</h3>
-                <div className="flex items-center">
-                  <StarRating value={averageRating || 0} size="lg" />
-                  <span className="ml-1 font-medium text-gray-700">{averageRating ? averageRating.toFixed(1) : "No ratings"}</span>
-                </div>
-              </div>
-              
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
-                <div className="flex items-center">
-                  <Monitor className="h-5 w-5 mr-1.5 text-gray-400" />
-                  <span>{software.platform.join(", ")}</span>
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="h-5 w-5 mr-1.5 text-gray-400" />
-                  <span>Added: {format(new Date(software.created_at), "MMM d, yyyy")}</span>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <h4 className="text-lg font-medium text-gray-900">Description</h4>
-                <p className="mt-2 text-gray-600">{software.description}</p>
-              </div>
-              
-              <div className="mt-6">
-                <a 
-                  href={software.download_link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  <Download className="h-5 w-5 mr-2" />
-                  Download
-                </a>
-              </div>
-              
-              {/* Reviews section */}
-              <div className="mt-8 border-t border-gray-200 pt-6">
-                <h4 className="text-lg font-medium text-gray-900">Reviews</h4>
-                
-                {user ? (
-                  <div className="mt-4 border border-gray-300 rounded-md p-4">
-                    <div className="flex items-center mb-2">
-                      <span className="text-sm text-gray-600 mr-2">Your rating:</span>
-                      <StarRating 
-                        value={userRating} 
-                        onChange={setUserRating} 
-                        readonly={false}
-                      />
-                    </div>
-                    <div>
-                      <Textarea
-                        id="comment"
-                        placeholder="Write your review..."
-                        value={reviewComment}
-                        onChange={(e) => setReviewComment(e.target.value)}
-                        rows={3}
-                        className="resize-none"
-                      />
-                    </div>
-                    <div className="mt-2 flex justify-end">
-                      <Button 
-                        onClick={handleSubmitReview}
-                        disabled={submitReviewMutation.isPending}
-                        className="inline-flex items-center"
-                      >
-                        {submitReviewMutation.isPending && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        Submit Review
-                      </Button>
-                    </div>
-                  </div>
+              {/* Software image */}
+              <div className="flex-shrink-0 relative bg-gray-100 md:w-2/5">
+                {software.image_url ? (
+                  <img
+                    src={software.image_url}
+                    alt={`${software.name} screenshot`}
+                    className="w-full object-cover h-48 md:h-full"
+                  />
                 ) : (
-                  <div className="mt-4 bg-gray-50 rounded-md p-4 text-center">
-                    <p className="text-gray-600">
-                      Please <Button variant="link" className="p-0 h-auto" onClick={() => {
-                        onOpenChange(false);
-                        window.location.href = "/auth";
-                      }}>login</Button> to leave a review.
-                    </p>
+                  <div className="w-full h-48 md:h-full flex items-center justify-center bg-gray-100">
+                    <Monitor className="h-16 w-16 text-gray-400" />
                   </div>
                 )}
-                
-                <div className="mt-6 space-y-6">
-                  {isLoadingReviews ? (
-                    <div className="flex justify-center py-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                    </div>
-                  ) : reviews?.length ? (
-                    reviews.map((review) => (
-                      <div key={review.id} className="border-b border-gray-200 pb-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <Avatar className="h-8 w-8 rounded-full">
-                              <AvatarFallback>{getInitials(review.user_name || "User")}</AvatarFallback>
-                            </Avatar>
-                            <span className="ml-2 font-medium text-gray-900">{review.user_name || "User"}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <StarRating value={review.rating} size="sm" />
-                            <span className="ml-2 text-sm text-gray-500">
-                              {format(new Date(review.created_at), "MMM d, yyyy")}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <p className="text-gray-600">{review.comment}</p>
-                        </div>
+                <div className="absolute top-0 right-0 mt-2 mr-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Free
+                  </span>
+                </div>
+              </div>
+
+              {/* Software details */}
+              <div className="p-6 flex-1 overflow-y-auto max-h-[70vh]">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-2xl font-bold text-gray-900">{software.name}</h3>
+                  <div className="flex items-center">
+                    <StarRating value={averageRating || 0} size="lg" />
+                    <span className="ml-1 font-medium text-gray-700">{averageRating ? averageRating.toFixed(1) : "Chưa có đánh giá"}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
+                  <div className="flex items-center">
+                    <Monitor className="h-5 w-5 mr-1.5 text-gray-400" />
+                    <span>{software.platform.join(", ")}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="h-5 w-5 mr-1.5 text-gray-400" />
+                    <span>Ngày thêm: {format(new Date(software.created_at), "dd/MM/yyyy")}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <h4 className="text-lg font-medium text-gray-900">Mô tả chi tiết</h4>
+                  <p className="mt-2 text-gray-600">{getShortDescription(software.description, 500)}</p>
+                </div>
+
+                <div className="mt-6">
+                  <a
+                    href={software.download_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  >
+                    <Download className="h-5 w-5 mr-2" />
+                    Tải ngay
+                  </a>
+                </div>
+
+                {/* Reviews section */}
+                <div className="mt-8 border-t border-gray-200 pt-6">
+                  <h4 className="text-lg font-medium text-gray-900">Đánh giá</h4>
+
+                  {user ? (
+                    <div className="mt-4 border border-gray-300 rounded-md p-4">
+                      <div className="flex items-center mb-2">
+                        <span className="text-sm text-gray-600 mr-2">Đánh giá của bạn:</span>
+                        <StarRating
+                          value={userRating}
+                          onChange={setUserRating}
+                          readonly={false}
+                        />
                       </div>
-                    ))
+                      <div>
+                        <Textarea
+                          id="comment"
+                          placeholder="Viết đánh giá của bạn..."
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          rows={3}
+                          className="resize-none"
+                        />
+                      </div>
+                      <div className="mt-2 flex justify-end">
+                        <Button
+                          onClick={handleSubmitReview}
+                          disabled={submitReviewMutation.isPending}
+                          className="inline-flex items-center"
+                        >
+                          {submitReviewMutation.isPending && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          Gửi đánh giá
+                        </Button>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="text-center py-4 text-gray-500">
-                      No reviews yet. Be the first to leave a review!
+                    <div className="mt-4 bg-gray-50 rounded-md p-4 text-center">
+                      <p className="text-gray-600">
+                        Vui lòng <Button variant="link" className="p-0 h-auto" onClick={() => {
+                          onOpenChange(false);
+                          window.location.href = "/auth";
+                        }}>đăng nhập</Button> để viết đánh giá.
+                      </p>
                     </div>
                   )}
+
+                  <div className="mt-6 space-y-6">
+                    {isLoadingReviews ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+                      </div>
+                    ) : reviews?.length ? (
+                      reviews.map((review) => (
+                        <div key={review.id} className="border-b border-gray-200 pb-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <Avatar className="h-8 w-8 rounded-full">
+                                <AvatarFallback>{getInitials(review.user_name || "User")}</AvatarFallback>
+                              </Avatar>
+                              <span className="ml-2 font-medium text-gray-900">{review.user_name || "User"}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <StarRating value={review.rating} size="sm" />
+                              <span className="ml-2 text-sm text-gray-500">
+                                {format(new Date(review.created_at), "MMM d, yyyy")}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-gray-600">{review.comment}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           </>
         )}
       </DialogContent>

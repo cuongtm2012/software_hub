@@ -3,8 +3,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
+import { AdminLayout } from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,15 +12,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Bell, 
-  MessageSquare, 
-  Settings, 
-  ShoppingCart, 
-  Calendar, 
-  Gift, 
-  Shield, 
-  Users, 
+import {
+  Bell,
+  MessageSquare,
+  Settings,
+  ShoppingCart,
+  Calendar,
+  Gift,
+  Shield,
+  Users,
   Loader2,
   ArrowLeft,
   Send,
@@ -53,7 +52,7 @@ export default function PushNotificationTestPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [testLogs, setTestLogs] = useState<TestLog[]>([]);
-  
+
   // Form states for different test scenarios
   const [userActivityForms, setUserActivityForms] = useState({
     newMessage: { userId: '', senderName: '', messagePreview: '' },
@@ -95,24 +94,20 @@ export default function PushNotificationTestPage() {
 
   if (!user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
-            <Card className="max-w-md mx-auto">
-              <CardContent className="pt-6 text-center">
-                <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-                <p className="text-gray-600 mb-4">
-                  Only administrators can access the push notification testing page.
-                </p>
-                <Button onClick={() => navigate('/auth')}>Login as Admin</Button>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <AdminLayout>
+        <div className="container mx-auto px-4 py-8">
+          <Card className="max-w-md mx-auto">
+            <CardContent className="pt-6 text-center">
+              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+              <p className="text-gray-600 mb-4">
+                Only administrators can access the push notification testing page.
+              </p>
+              <Button onClick={() => navigate('/auth')}>Login as Admin</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
     );
   }
 
@@ -130,8 +125,9 @@ export default function PushNotificationTestPage() {
   const sendNotification = async (endpoint: string, data: any, testType: string) => {
     setIsLoading(true);
     try {
-      const result = await apiRequest('POST', endpoint, data) as unknown as NotificationResult;
-      
+      const response = await apiRequest('POST', endpoint, data);
+      const result = await response.json() as NotificationResult;
+
       if (result.success) {
         addTestLog(testType, 'success', `Notification sent successfully`, result);
         toast({
@@ -146,7 +142,7 @@ export default function PushNotificationTestPage() {
           variant: 'destructive',
         });
       }
-      
+
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -189,10 +185,8 @@ export default function PushNotificationTestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="pt-16">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
           {/* Header Section */}
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -993,11 +987,10 @@ export default function PushNotificationTestPage() {
                       </div>
                     ) : (
                       testLogs.map((log, index) => (
-                        <div key={index} className={`p-3 rounded-lg border ${
-                          log.status === 'success' 
-                            ? 'bg-green-50 border-green-200' 
+                        <div key={index} className={`p-3 rounded-lg border ${log.status === 'success'
+                            ? 'bg-green-50 border-green-200'
                             : 'bg-red-50 border-red-200'
-                        }`}>
+                          }`}>
                           <div className="flex items-center gap-2 mb-1">
                             {log.status === 'success' ? (
                               <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1029,8 +1022,6 @@ export default function PushNotificationTestPage() {
             </div>
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+      </AdminLayout>
   );
 }

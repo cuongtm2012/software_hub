@@ -1,0 +1,19 @@
+[
+  {
+    "name": "pull request",
+    "description": "on data/software.yaml",
+    "category": "Official Statistics Software",
+    "subcategory": "Contributions",
+    "url": "https://help.github.com/articles/creating-a-pull-request/",
+    "sourceUrl": "https://help.github.com/articles/creating-a-pull-request/",
+    "license": "Open Source",
+    "language": "Unknown",
+    "isOpenSource": true,
+    "isFree": true,
+    "platform": [
+      "Linux",
+      "Mac",
+      "Windows"
+    ]
+  }
+]

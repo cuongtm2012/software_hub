@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, X, Search, Store, Wallet } from "lucide-react";
+import { Menu, X, Search, Store, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notification-bell";
 import { CartTrigger } from "@/components/cart-sidebar";
@@ -56,35 +56,42 @@ export function Header() {
   };
 
   return (
-    <header className="bg-[#004080] text-white shadow-sm sticky top-0 z-50 transition-shadow duration-200">
+    <header className="gradient-slate shadow-lg sticky top-0 z-50 transition-shadow duration-200 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center space-x-3">
               <Link to="/">
-                <span className="font-bold text-xl cursor-pointer">
-                  <span className="text-white">Software</span>
-                  <span className="text-[#ffcc00]">Hub</span>
-                </span>
+                <img
+                  src="/software-hub-logo.png"
+                  alt="Software Hub Logo"
+                  className="h-12 w-auto cursor-pointer hover:opacity-90 transition-opacity"
+                />
               </Link>
               {user && <NotificationBell />}
             </div>
-            <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
+            <nav className="hidden sm:ml-6 sm:flex sm:space-x-2 items-center">
               <Link
                 to="/"
-                className={`${location === "/" ? "text-[#ffcc00]" : "text-white hover:text-[#ffcc00]"} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}
+                className={`${location === "/" ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
               >
                 Home
               </Link>
               <Link
                 to="/it-services#projects"
-                className={`${location.startsWith("/projects") || location.startsWith("/it-services") ? "text-[#ffcc00]" : "text-white hover:text-[#ffcc00]"} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}
+                className={`${location.startsWith("/projects") || location.startsWith("/it-services") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
               >
                 IT Services
               </Link>
               <Link
+                to="/courses"
+                className={`${location.startsWith("/courses") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
+              >
+                Tài liệu
+              </Link>
+              <Link
                 to="/marketplace"
-                className={`${location.startsWith("/marketplace") ? "text-[#ffcc00]" : "text-white hover:text-[#ffcc00]"} nav-item inline-flex items-center px-3 py-2 font-medium transition-colors whitespace-nowrap`}
+                className={`${location.startsWith("/marketplace") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
               >
                 Marketplace
               </Link>
@@ -93,34 +100,40 @@ export function Header() {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <form className="relative" onSubmit={handleSearch}>
               <Input
-                className="w-64 rounded-md bg-white border-gray-300 py-2 pl-10 pr-4 placeholder:text-gray-500 text-gray-900 focus-visible:ring-2 focus-visible:ring-[#ffcc00] focus-visible:border-[#ffcc00] focus-visible:outline-none"
-                placeholder="Search software..."
+                className="w-64 rounded-lg bg-slate-900/50 border-slate-600 py-2 pl-10 pr-4 placeholder:text-slate-400 text-white focus-visible:ring-2 focus-visible:ring-[#ffcc00] focus-visible:border-transparent focus-visible:outline-none transition-all"
+                placeholder="Tìm kiếm phần mềm, tài liệu..."
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
+                <Search className="h-4 w-4 text-slate-400" />
               </div>
             </form>
 
             {!user ? (
               <div className="flex items-center space-x-3 ml-4">
+                {/* Shopping Cart */}
+                <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors relative">
+                  <ShoppingCart className="w-5 h-5 text-slate-200" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-slate-900 text-xs font-bold rounded-full flex items-center justify-center">
+                    0
+                  </span>
+                </button>
+
                 <Button
                   onClick={() => navigate("/auth")}
                   variant="ghost"
-                  className="btn-secondary"
+                  className="text-slate-200 hover:bg-slate-700 hover:text-white px-4 py-2"
                 >
-                  Login
+                  Đăng nhập
                 </Button>
-                <div className="relative">
-                  <Button
-                    onClick={() => navigate("/auth?tab=register")}
-                    className="btn-primary"
-                  >
-                    Sign up
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => navigate("/auth?tab=register")}
+                  className="bg-[#ffcc00] hover:bg-[#ffcc00]/90 text-slate-900 font-semibold px-4 py-2"
+                >
+                  Đăng ký
+                </Button>
               </div>
             ) : (
               <div className="ml-4 flex items-center space-x-3">
