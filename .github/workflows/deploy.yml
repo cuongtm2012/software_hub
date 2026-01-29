@@ -31,13 +31,16 @@ jobs:
       - name: Create deployment package
         run: |
           mkdir -p deploy
-          # Copy built files
+          # Copy built files (dist contains both client and server)
           cp -r dist deploy/
-          cp -r server deploy/
+          # Copy shared code if needed at runtime
           cp -r shared deploy/
+          # Copy services (microservices)
           cp -r services deploy/
+          # Copy package files
           cp package*.json deploy/
-          cp tsconfig.json deploy/
+          # Copy ecosystem config for PM2
+          cp ecosystem.config.js deploy/
           # Create tarball
           tar -czf software-hub.tar.gz -C deploy .
 
@@ -100,7 +103,10 @@ jobs:
             # Restart application with PM2
             echo "Restarting application..."
             if command -v pm2 &> /dev/null; then
-              pm2 restart software-hub || pm2 start npm --name "software-hub" -- start
+              # Stop all existing processes
+              pm2 delete all || true
+              # Start with ecosystem config
+              pm2 start ecosystem.config.js --env production
               pm2 save
             else
               echo "PM2 not found. Please install PM2 or configure your process manager."

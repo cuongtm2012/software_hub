@@ -103,7 +103,7 @@ server {
     }
 
     location /api {
-        proxy_pass http://localhost:5000;
+        proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -167,7 +167,7 @@ DATABASE_URL=postgresql://software_hub_user:changeme_secure_password@localhost:5
 
 # Application
 NODE_ENV=production
-PORT=5000
+PORT=3000
 SESSION_SECRET=CHANGE_ME_TO_RANDOM_STRING
 
 # Email

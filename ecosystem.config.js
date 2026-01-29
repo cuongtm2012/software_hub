@@ -2,16 +2,16 @@ module.exports = {
     apps: [
         {
             name: 'software-hub-server',
-            script: './server/index.js',
+            script: './dist/server/index.js',
             instances: 2,
             exec_mode: 'cluster',
             env: {
                 NODE_ENV: 'production',
-                PORT: 5000
+                PORT: 3000
             },
             env_production: {
                 NODE_ENV: 'production',
-                PORT: 5000
+                PORT: 3000
             },
             max_memory_restart: '500M',
             error_file: '/var/log/software-hub-error.log',

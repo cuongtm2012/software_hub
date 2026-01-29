@@ -1,311 +1,357 @@
-# 📋 Docker Deployment Checklist
+# VPS Deployment Checklist
 
-## Pre-Deployment Checklist
+Quick checklist để deploy Software Hub lên VPS thành công.
 
-### ✅ Files Created/Updated
+## ✅ Pre-Deployment (Trên Máy Local)
 
-- [x] `package.json` - Updated build scripts
-  - `build:client`: Vite build
-  - `build:server`: TypeScript compilation
-  - `start`: Run compiled server
-  
-- [x] `tsconfig.server.json` - Server TypeScript config
-  
-- [x] `Dockerfile.prod` - Production multi-stage Dockerfile
-  - Stage 1: Install dependencies
-  - Stage 2: Build application
-  - Stage 3: Production runtime
-  
-- [x] `docker-compose.prod.yml` - Production compose file
-  - PostgreSQL service
-  - Redis service
-  - Application service
-  
-- [x] `.dockerignore` - Optimize build context
-  
-- [x] `.env.production.example` - Environment template
-  
-- [x] `deploy.sh` - Deployment automation script
-  
-- [x] `DOCKER_README.md` - Quick start guide
+### 1. Chuẩn Bị Code
+- [ ] Code đã được test local (`npm run dev` chạy OK)
+- [ ] Build thành công (`npm run build` không lỗi)
+- [ ] Port đã thống nhất là 3000 (check `.env`, `ecosystem.config.js`, `nginx config`)
+- [ ] Tất cả changes đã commit
 
-### 📝 Configuration Checklist
+### 2. Chuẩn Bị Database Dumps
+- [ ] Export database dumps mới nhất
+  ```bash
+  ./scripts/export-database.sh
+  ```
+- [ ] Verify dumps tồn tại trong `database/dumps/`
+  - `schema_*.sql`
+  - `data_*.sql`
 
-Before deploying, ensure you have:
+### 3. Chuẩn Bị SSH Keys
+- [ ] Tạo SSH key pair cho deployment
+  ```bash
+  ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/vps_deploy
+  ```
+- [ ] Copy public key lên VPS
+  ```bash
+  ssh-copy-id -i ~/.ssh/vps_deploy.pub root@95.111.253.111
+  ```
+- [ ] Test SSH connection
+  ```bash
+  ssh -i ~/.ssh/vps_deploy root@95.111.253.111
+  ```
 
-#### 1. Environment Variables (.env.production)
+## ✅ VPS Setup (Lần Đầu)
 
+### 1. Chạy Setup Script
 ```bash
-# Required
-- [ ] DATABASE_URL
-- [ ] SESSION_SECRET
-- [ ] NODE_ENV=production
+# Copy script lên VPS
+scp scripts/setup-vps-complete.sh root@95.111.253.111:/tmp/
 
-# OAuth (if using)
-- [ ] GOOGLE_CLIENT_ID
-- [ ] GOOGLE_CLIENT_SECRET
-- [ ] FACEBOOK_APP_ID
-- [ ] FACEBOOK_APP_SECRET
+# SSH vào VPS
+ssh root@95.111.253.111
 
-# Email (if using)
-- [ ] RESEND_API_KEY
-
-# Payment (if using)
-- [ ] STRIPE_SECRET_KEY
-- [ ] STRIPE_PUBLISHABLE_KEY
-
-# Storage (if using)
-- [ ] AWS_ACCESS_KEY_ID
-- [ ] AWS_SECRET_ACCESS_KEY
-- [ ] AWS_S3_BUCKET
+# Chạy script
+chmod +x /tmp/setup-vps-complete.sh
+/tmp/setup-vps-complete.sh
 ```
 
-#### 2. System Requirements
+- [ ] Script chạy thành công
+- [ ] Lưu credentials từ `/root/software-hub-credentials.txt`
+- [ ] Xóa file credentials sau khi lưu: `rm /root/software-hub-credentials.txt`
 
-- [ ] Docker installed (>= 20.10.0)
-- [ ] Docker Compose installed (>= 2.0.0)
-- [ ] At least 2GB RAM available
-- [ ] At least 10GB disk space
-- [ ] Ports 5000, 5432, 6379 available
-
-#### 3. Security
-
-- [ ] Strong database password set
-- [ ] SESSION_SECRET is random and long (>32 chars)
-- [ ] .env.production is in .gitignore
-- [ ] OAuth callback URLs configured correctly
-- [ ] Firewall rules configured (if applicable)
-
-## Deployment Steps
-
-### Step 1: Prepare Environment
-
+### 2. Cấu Hình Environment Variables
 ```bash
-# 1. Copy environment file
-cp .env.production.example .env.production
-
-# 2. Edit with your values
-nano .env.production
-
-# 3. Make deploy script executable
-chmod +x deploy.sh
+nano /var/www/software-hub/.env.production
 ```
 
-### Step 2: Build and Deploy
+Cập nhật các keys sau:
+- [ ] `SENDGRID_API_KEY` - Email service
+- [ ] `SENDGRID_FROM_EMAIL` - Email gửi đi
+- [ ] `FIREBASE_PROJECT_ID` - Push notifications
+- [ ] `FIREBASE_CLIENT_EMAIL` - Firebase service account
+- [ ] `FIREBASE_PRIVATE_KEY` - Firebase private key
+- [ ] `CLOUDFLARE_R2_*` - File storage (nếu dùng)
+- [ ] `STRIPE_*` - Payment gateway (nếu dùng)
 
+### 3. Import Database
 ```bash
-# Option A: Use automated script (Recommended)
-./deploy.sh
-# Select option 1: Build and start containers
+# Copy dumps lên VPS
+scp -r database/dumps root@95.111.253.111:/tmp/
 
-# Option B: Manual deployment
-docker-compose -f docker-compose.prod.yml build
-docker-compose -f docker-compose.prod.yml up -d
+# SSH vào VPS và import
+ssh root@95.111.253.111
+
+# Import schema
+sudo -u postgres psql -d software_hub < /tmp/dumps/schema_20260129_222356.sql
+
+# Import data
+sudo -u postgres psql -d software_hub < /tmp/dumps/data_20260129_222356.sql
+
+# Verify
+sudo -u postgres psql -d software_hub -c "SELECT COUNT(*) FROM users;"
 ```
 
-### Step 3: Run Migrations
+- [ ] Schema imported successfully
+- [ ] Data imported successfully
+- [ ] Tables có data (users, products, softwares, etc.)
 
+## ✅ GitHub Configuration
+
+### 1. Cấu Hình GitHub Secrets
+Vào: `https://github.com/cuongtm2012/software_hub/settings/secrets/actions`
+
+Thêm secrets:
+- [ ] `SSH_HOST` = `95.111.253.111`
+- [ ] `SSH_USERNAME` = `root`
+- [ ] `SSH_KEY` = `<nội dung file ~/.ssh/vps_deploy>` (private key)
+- [ ] `SSH_PORT` = `22` (optional)
+
+### 2. Test GitHub Actions
+- [ ] Workflow file tồn tại: `.github/workflows/deploy.yml`
+- [ ] Workflow được enable trên GitHub
+- [ ] Có quyền write cho Actions
+
+## ✅ Deployment
+
+### 1. Push Code
 ```bash
-# Access app container
-docker-compose -f docker-compose.prod.yml exec app sh
-
-# Run database migrations
-npm run db:push
-
-# Exit container
-exit
+git add .
+git commit -m "chore: prepare for VPS deployment"
+git push origin main
 ```
 
-### Step 4: Verify Deployment
+- [ ] Push thành công
+- [ ] GitHub Actions workflow triggered
+- [ ] Workflow chạy thành công (check tab Actions)
 
+### 2. Monitor Deployment
+Trên GitHub:
+- [ ] Build client step: ✅
+- [ ] Build server step: ✅
+- [ ] Deploy to VPS step: ✅
+- [ ] Execute deployment script: ✅
+- [ ] Health check: ✅
+
+Trên VPS:
 ```bash
-# 1. Check container status
-docker-compose -f docker-compose.prod.yml ps
+ssh root@95.111.253.111
 
-# All services should show "Up" and "healthy"
+# Check PM2
+pm2 list
+# Should show: software-hub-server, email-service, chat-service, notification-service
 
-# 2. Check health endpoint
-curl http://localhost:5000/api/health
+# Check logs
+pm2 logs --lines 50
 
-# Should return: {"status":"ok",...}
+# Check Nginx
+systemctl status nginx
 
-# 3. Check logs
-docker-compose -f docker-compose.prod.yml logs -f app
-
-# Should show "SoftwareHub application serving on port 5000"
-
-# 4. Access application
-# Open browser: http://localhost:5000
+# Test application
+curl http://localhost:3000/health
 ```
 
-## Post-Deployment Checklist
+- [ ] PM2 processes running
+- [ ] No errors in logs
+- [ ] Nginx running
+- [ ] Health check returns OK
 
-- [ ] Health check returns 200 OK
-- [ ] Can access homepage
-- [ ] Can login/register
-- [ ] Database connection working
-- [ ] Static files loading correctly
-- [ ] API endpoints responding
-- [ ] Logs show no errors
-
-## Monitoring
-
-### Daily Checks
-
+### 3. Verify Website
 ```bash
-# Container status
-docker-compose -f docker-compose.prod.yml ps
+# Test từ local
+curl http://95.111.253.111
+curl http://95.111.253.111/api/softwares
 
-# Resource usage
-docker stats --no-stream
-
-# Recent logs
-docker-compose -f docker-compose.prod.yml logs --tail=100
+# Hoặc mở browser
+open http://95.111.253.111
 ```
 
-### Weekly Tasks
+- [ ] Website loads
+- [ ] API returns data
+- [ ] Can login
+- [ ] Can browse products/softwares
 
-- [ ] Review logs for errors
-- [ ] Check disk usage
-- [ ] Backup database
-- [ ] Update Docker images
+## ✅ Post-Deployment
 
-### Backup Database
-
+### 1. Setup SSL (Optional but Recommended)
 ```bash
-# Create backup
-docker-compose -f docker-compose.prod.yml exec postgres \
-  pg_dump -U postgres software_hub > backup_$(date +%Y%m%d).sql
+ssh root@95.111.253.111
 
-# Verify backup
-ls -lh backup_*.sql
+# Install Certbot
+apt-get install certbot python3-certbot-nginx
+
+# Get certificate (nếu có domain)
+certbot --nginx -d yourdomain.com
+
+# Test auto-renewal
+certbot renew --dry-run
 ```
 
-## Troubleshooting
+- [ ] SSL certificate installed
+- [ ] HTTPS working
+- [ ] Auto-renewal configured
+
+### 2. Setup Monitoring
+```bash
+# PM2 monitoring
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:max_size 10M
+pm2 set pm2-logrotate:retain 7
+
+# Setup alerts (optional)
+pm2 link <secret> <public>
+```
+
+- [ ] Log rotation configured
+- [ ] Monitoring setup (optional)
+
+### 3. Backup Strategy
+```bash
+# Create backup script
+nano /root/backup-database.sh
+```
+
+```bash
+#!/bin/bash
+BACKUP_DIR="/root/backups"
+mkdir -p $BACKUP_DIR
+DATE=$(date +%Y%m%d_%H%M%S)
+sudo -u postgres pg_dump software_hub > $BACKUP_DIR/db_$DATE.sql
+# Keep only last 7 backups
+ls -t $BACKUP_DIR/db_*.sql | tail -n +8 | xargs rm -f
+```
+
+```bash
+chmod +x /root/backup-database.sh
+
+# Add to crontab (daily at 2 AM)
+crontab -e
+# Add: 0 2 * * * /root/backup-database.sh
+```
+
+- [ ] Backup script created
+- [ ] Cron job configured
+- [ ] Test backup: `./backup-database.sh`
+
+## ✅ Troubleshooting
 
 ### Common Issues
 
-#### 1. Container won't start
+#### 1. Build Failed on GitHub Actions
+- [ ] Check Node version (should be 20.x)
+- [ ] Check `package.json` scripts
+- [ ] Test build locally: `npm run build`
+- [ ] Check workflow logs for specific error
 
+#### 2. PM2 Processes Not Starting
 ```bash
 # Check logs
-docker-compose -f docker-compose.prod.yml logs app
+pm2 logs
 
-# Common causes:
-# - Missing environment variables
-# - Database connection failed
-# - Port already in use
+# Check environment
+cat /var/www/software-hub/.env.production
+
+# Restart manually
+cd /var/www/software-hub
+pm2 delete all
+pm2 start ecosystem.config.js --env production
 ```
 
-#### 2. Database connection error
-
+#### 3. 502 Bad Gateway
 ```bash
-# Verify DATABASE_URL format
-# Should be: postgresql://user:password@postgres:5432/database
-# Note: Use 'postgres' as host (service name), not 'localhost'
+# Check if app is running
+pm2 list
+curl http://localhost:3000/health
 
-# Check if postgres is running
-docker-compose -f docker-compose.prod.yml ps postgres
+# Check Nginx config
+nginx -t
+
+# Check Nginx logs
+tail -f /var/log/nginx/error.log
 ```
 
-#### 3. Build fails
-
+#### 4. Database Connection Error
 ```bash
-# Clear cache and rebuild
-docker builder prune -a
-docker-compose -f docker-compose.prod.yml build --no-cache
+# Check PostgreSQL
+systemctl status postgresql
+
+# Test connection
+sudo -u postgres psql -d software_hub -c "SELECT 1;"
+
+# Check credentials in .env.production
 ```
 
-#### 4. Out of memory
-
+#### 5. Port Already in Use
 ```bash
-# Check memory usage
-docker stats
+# Find process
+lsof -i:3000
 
-# Increase memory limit in docker-compose.prod.yml:
-# deploy:
-#   resources:
-#     limits:
-#       memory: 2G
+# Kill if needed
+kill -9 <PID>
+
+# Restart PM2
+pm2 restart all
 ```
 
-## Rollback Procedure
+## 📝 Useful Commands
 
-If deployment fails:
-
+### PM2
 ```bash
-# 1. Stop new containers
-docker-compose -f docker-compose.prod.yml down
-
-# 2. Restore database backup (if needed)
-docker-compose -f docker-compose.prod.yml exec -T postgres \
-  psql -U postgres software_hub < backup_YYYYMMDD.sql
-
-# 3. Check out previous version
-git checkout <previous-commit>
-
-# 4. Rebuild and deploy
-docker-compose -f docker-compose.prod.yml up -d --build
+pm2 list                    # List all processes
+pm2 logs                    # View logs
+pm2 logs software-hub-server # View specific service logs
+pm2 restart all             # Restart all services
+pm2 stop all                # Stop all services
+pm2 delete all              # Delete all processes
+pm2 monit                   # Monitor resources
 ```
 
-## Performance Optimization
+### Nginx
+```bash
+nginx -t                    # Test config
+systemctl reload nginx      # Reload config
+systemctl restart nginx     # Restart Nginx
+systemctl status nginx      # Check status
+tail -f /var/log/nginx/error.log  # View error logs
+```
 
-### Recommended Settings
+### Database
+```bash
+# Connect
+sudo -u postgres psql -d software_hub
 
-1. **Enable Redis for sessions**
-   - Set `REDIS_URL` in .env.production
-   - Uncomment Redis session store in server code
+# Backup
+sudo -u postgres pg_dump software_hub > backup.sql
 
-2. **Configure connection pooling**
-   - Set appropriate `DATABASE_POOL_SIZE`
+# Restore
+sudo -u postgres psql -d software_hub < backup.sql
 
-3. **Enable gzip compression**
-   - Already configured in Express
+# Check size
+sudo -u postgres psql -c "SELECT pg_size_pretty(pg_database_size('software_hub'));"
+```
 
-4. **Set up CDN for static assets**
-   - Configure AWS CloudFront or similar
+### System
+```bash
+df -h                       # Disk space
+free -h                     # Memory
+top                         # CPU/Memory usage
+netstat -tulpn | grep LISTEN # Open ports
+```
 
-## Security Hardening
+## 🎯 Success Criteria
 
-- [ ] Use HTTPS in production (configure reverse proxy)
-- [ ] Enable rate limiting
-- [ ] Configure CORS properly
-- [ ] Set secure cookie flags
-- [ ] Enable helmet.js middleware
-- [ ] Regular security updates
+Deployment is successful when:
+- [✅] All PM2 processes are running
+- [✅] Website accessible at http://95.111.253.111
+- [✅] API endpoints returning data
+- [✅] Can login and use features
+- [✅] No errors in PM2 logs
+- [✅] No errors in Nginx logs
+- [✅] Database has data
+- [✅] Health check returns OK
 
-## Next Steps
+## 📞 Support
 
-After successful deployment:
-
-1. **Set up monitoring**
-   - Configure logging service (e.g., LogDNA, Papertrail)
-   - Set up uptime monitoring (e.g., UptimeRobot)
-   - Configure error tracking (e.g., Sentry)
-
-2. **Configure CI/CD**
-   - Set up GitHub Actions
-   - Automate testing
-   - Automate deployment
-
-3. **Set up backups**
-   - Automate database backups
-   - Store backups off-site
-   - Test restore procedure
-
-4. **Configure domain**
-   - Point domain to server
-   - Set up SSL certificate
-   - Configure reverse proxy (Nginx/Caddy)
-
-## Resources
-
-- [Docker Documentation](https://docs.docker.com/)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [Production Best Practices](https://docs.docker.com/develop/dev-best-practices/)
-- [DOCKER_DEPLOYMENT.md](./docs/DOCKER_DEPLOYMENT.md) - Detailed guide
+If you encounter issues:
+1. Check logs: `pm2 logs`, `tail -f /var/log/nginx/error.log`
+2. Review this checklist
+3. Check docs/VPS_DEPLOYMENT_GUIDE.md
+4. Contact: cuongtm2012@gmail.com
 
 ---
 
-**Last Updated**: 2026-01-25
-**Version**: 1.0.0
+**Last Updated**: 2026-01-29
+**VPS IP**: 95.111.253.111
+**Repository**: https://github.com/cuongtm2012/software_hub
