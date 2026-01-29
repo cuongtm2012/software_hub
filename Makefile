@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs ps clean migrate backup restore
+.PHONY: help build up down restart logs ps clean migrate backup restore db-export
 
 # Docker Compose file
 COMPOSE_FILE=docker-compose.production.yml
@@ -71,6 +71,11 @@ restore: ## Restore database from backup (use BACKUP=filename)
 	@echo "$(BLUE)Restoring database from $(BACKUP)...$(NC)"
 	@cat $(BACKUP) | docker-compose -f $(COMPOSE_FILE) exec -T db psql -U software_hub_user -d software_hub
 	@echo "$(GREEN)Database restored!$(NC)"
+
+db-export: ## Export full database dump to /database folder
+	@echo "$(BLUE)Exporting database...$(NC)"
+	@./scripts/export-database.sh
+	@echo "$(GREEN)Database export complete! Check database/dumps/ folder$(NC)"
 
 shell-app: ## Open shell in app container
 	@docker-compose -f $(COMPOSE_FILE) exec app sh
