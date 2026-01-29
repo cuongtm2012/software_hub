@@ -1,304 +1,311 @@
-# Deployment Checklist - Contabo VPS
+# 📋 Docker Deployment Checklist
 
 ## Pre-Deployment Checklist
 
-### 1. GitHub Secrets Configuration ✓
-- [ ] `SSH_HOST` = `95.111.253.111`
-- [ ] `SSH_USERNAME` = `root`
-- [ ] `SSH_KEY` = Private SSH key (với header và footer đầy đủ)
-- [ ] `SSH_PORT` = `22` (hoặc custom port)
+### ✅ Files Created/Updated
 
-**Cách kiểm tra:**
-- Vào GitHub Repository > Settings > Secrets and variables > Actions
-- Đảm bảo tất cả 4 secrets đã được tạo
+- [x] `package.json` - Updated build scripts
+  - `build:client`: Vite build
+  - `build:server`: TypeScript compilation
+  - `start`: Run compiled server
+  
+- [x] `tsconfig.server.json` - Server TypeScript config
+  
+- [x] `Dockerfile.prod` - Production multi-stage Dockerfile
+  - Stage 1: Install dependencies
+  - Stage 2: Build application
+  - Stage 3: Production runtime
+  
+- [x] `docker-compose.prod.yml` - Production compose file
+  - PostgreSQL service
+  - Redis service
+  - Application service
+  
+- [x] `.dockerignore` - Optimize build context
+  
+- [x] `.env.production.example` - Environment template
+  
+- [x] `deploy.sh` - Deployment automation script
+  
+- [x] `DOCKER_README.md` - Quick start guide
 
-### 2. SSH Key Setup ✓
-- [ ] Đã tạo SSH key pair trên máy local
-- [ ] Public key đã được thêm vào `~/.ssh/authorized_keys` trên VPS
-- [ ] Private key đã được thêm vào GitHub Secret `SSH_KEY`
-- [ ] Permissions đúng: `~/.ssh` (700), `authorized_keys` (600)
+### 📝 Configuration Checklist
 
-**Cách kiểm tra:**
+Before deploying, ensure you have:
+
+#### 1. Environment Variables (.env.production)
+
 ```bash
-# Trên local
-ssh -i ~/.ssh/contabo_deploy root@95.111.253.111
-# Nếu kết nối thành công mà không cần password = OK
+# Required
+- [ ] DATABASE_URL
+- [ ] SESSION_SECRET
+- [ ] NODE_ENV=production
+
+# OAuth (if using)
+- [ ] GOOGLE_CLIENT_ID
+- [ ] GOOGLE_CLIENT_SECRET
+- [ ] FACEBOOK_APP_ID
+- [ ] FACEBOOK_APP_SECRET
+
+# Email (if using)
+- [ ] RESEND_API_KEY
+
+# Payment (if using)
+- [ ] STRIPE_SECRET_KEY
+- [ ] STRIPE_PUBLISHABLE_KEY
+
+# Storage (if using)
+- [ ] AWS_ACCESS_KEY_ID
+- [ ] AWS_SECRET_ACCESS_KEY
+- [ ] AWS_S3_BUCKET
 ```
 
-### 3. VPS Configuration ✓
-- [ ] Node.js v20 đã được cài đặt
-- [ ] npm đã được cài đặt
-- [ ] PM2 đã được cài đặt globally
-- [ ] PostgreSQL đã được cài đặt và đang chạy
-- [ ] Nginx đã được cài đặt và cấu hình
-- [ ] Firewall đã mở port 22, 80, 443
+#### 2. System Requirements
 
-**Cách kiểm tra:**
-```bash
-# Upload và chạy script health check
-scp scripts/vps-health-check.sh root@95.111.253.111:/tmp/
-ssh root@95.111.253.111 "bash /tmp/vps-health-check.sh"
-```
+- [ ] Docker installed (>= 20.10.0)
+- [ ] Docker Compose installed (>= 2.0.0)
+- [ ] At least 2GB RAM available
+- [ ] At least 10GB disk space
+- [ ] Ports 5000, 5432, 6379 available
 
-### 4. Project Directory ✓
-- [ ] Thư mục `/root/Cuongtm2012` đã được tạo
-- [ ] Permissions: `755`
-- [ ] Owner: `root:root`
+#### 3. Security
 
-**Cách kiểm tra:**
-```bash
-ssh root@95.111.253.111 "ls -la /root/Cuongtm2012"
-```
-
-### 5. Environment Variables ✓
-- [ ] File `.env` đã được tạo trong `/root/Cuongtm2012`
-- [ ] `DATABASE_URL` đã được cấu hình đúng
-- [ ] `SESSION_SECRET` đã được set
-- [ ] Các API keys cần thiết đã được thêm
-
-**Cách kiểm tra:**
-```bash
-ssh root@95.111.253.111 "cat /root/Cuongtm2012/.env"
-```
-
-### 6. Database Setup ✓
-- [ ] PostgreSQL database `software_hub` đã được tạo
-- [ ] User `software_hub_user` đã được tạo với password
-- [ ] User có đủ quyền trên database
-
-**Cách kiểm tra:**
-```bash
-ssh root@95.111.253.111 "sudo -u postgres psql -c '\l' | grep software_hub"
-```
-
-### 7. Nginx Configuration ✓
-- [ ] Nginx config file đã được tạo
-- [ ] Config đã được enable (symlink)
-- [ ] Nginx đã được restart
-- [ ] Reverse proxy đến port 3000 hoạt động
-
-**Cách kiểm tra:**
-```bash
-ssh root@95.111.253.111 "nginx -t"
-curl http://95.111.253.111
-```
+- [ ] Strong database password set
+- [ ] SESSION_SECRET is random and long (>32 chars)
+- [ ] .env.production is in .gitignore
+- [ ] OAuth callback URLs configured correctly
+- [ ] Firewall rules configured (if applicable)
 
 ## Deployment Steps
 
-### Step 1: Test SSH Connection
+### Step 1: Prepare Environment
+
 ```bash
-ssh -i ~/.ssh/contabo_deploy root@95.111.253.111
+# 1. Copy environment file
+cp .env.production.example .env.production
+
+# 2. Edit with your values
+nano .env.production
+
+# 3. Make deploy script executable
+chmod +x deploy.sh
 ```
-**Expected:** Kết nối thành công không cần password
 
-### Step 2: Run Health Check
+### Step 2: Build and Deploy
+
 ```bash
-# Upload script
-scp scripts/vps-health-check.sh root@95.111.253.111:/tmp/
+# Option A: Use automated script (Recommended)
+./deploy.sh
+# Select option 1: Build and start containers
 
-# Run check
-ssh root@95.111.253.111 "bash /tmp/vps-health-check.sh"
+# Option B: Manual deployment
+docker-compose -f docker-compose.prod.yml build
+docker-compose -f docker-compose.prod.yml up -d
 ```
-**Expected:** Tất cả checks đều pass (✓)
 
-### Step 3: Manual Test Deploy (Optional)
+### Step 3: Run Migrations
+
 ```bash
-# Build locally
-npm run build
+# Access app container
+docker-compose -f docker-compose.prod.yml exec app sh
 
-# Create package
-tar -czf software-hub.tar.gz dist server shared services package*.json tsconfig.json
+# Run database migrations
+npm run db:push
 
-# Upload
-scp software-hub.tar.gz root@95.111.253.111:/tmp/
-
-# Deploy manually
-ssh root@95.111.253.111 << 'EOF'
-cd /root/Cuongtm2012
-tar -xzf /tmp/software-hub.tar.gz
-npm ci --production
-npm run db:migrate
-pm2 start npm --name "software-hub" -- start
-pm2 save
-EOF
+# Exit container
+exit
 ```
-**Expected:** Application starts successfully
 
-### Step 4: Trigger GitHub Actions
-1. Go to GitHub Repository
-2. Navigate to **Actions** tab
-3. Select **Deploy to Contabo VPS** workflow
-4. Click **Run workflow** > **Run workflow**
+### Step 4: Verify Deployment
 
-**Expected:** All steps complete successfully
-
-### Step 5: Verify Deployment
 ```bash
-# Check application status
-ssh root@95.111.253.111 "pm2 list"
+# 1. Check container status
+docker-compose -f docker-compose.prod.yml ps
 
+# All services should show "Up" and "healthy"
+
+# 2. Check health endpoint
+curl http://localhost:5000/api/health
+
+# Should return: {"status":"ok",...}
+
+# 3. Check logs
+docker-compose -f docker-compose.prod.yml logs -f app
+
+# Should show "SoftwareHub application serving on port 5000"
+
+# 4. Access application
+# Open browser: http://localhost:5000
+```
+
+## Post-Deployment Checklist
+
+- [ ] Health check returns 200 OK
+- [ ] Can access homepage
+- [ ] Can login/register
+- [ ] Database connection working
+- [ ] Static files loading correctly
+- [ ] API endpoints responding
+- [ ] Logs show no errors
+
+## Monitoring
+
+### Daily Checks
+
+```bash
+# Container status
+docker-compose -f docker-compose.prod.yml ps
+
+# Resource usage
+docker stats --no-stream
+
+# Recent logs
+docker-compose -f docker-compose.prod.yml logs --tail=100
+```
+
+### Weekly Tasks
+
+- [ ] Review logs for errors
+- [ ] Check disk usage
+- [ ] Backup database
+- [ ] Update Docker images
+
+### Backup Database
+
+```bash
+# Create backup
+docker-compose -f docker-compose.prod.yml exec postgres \
+  pg_dump -U postgres software_hub > backup_$(date +%Y%m%d).sql
+
+# Verify backup
+ls -lh backup_*.sql
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Container won't start
+
+```bash
 # Check logs
-ssh root@95.111.253.111 "pm2 logs software-hub --lines 50"
+docker-compose -f docker-compose.prod.yml logs app
 
-# Test endpoint
-curl http://95.111.253.111
-```
-**Expected:** Application is running and responding
-
-## Troubleshooting Guide
-
-### Issue: Connection Refused
-**Symptoms:** GitHub Actions cannot connect to VPS
-
-**Solutions:**
-1. Check firewall:
-```bash
-ssh root@95.111.253.111 "ufw status"
-ssh root@95.111.253.111 "ufw allow 22/tcp"
+# Common causes:
+# - Missing environment variables
+# - Database connection failed
+# - Port already in use
 ```
 
-2. Check SSH service:
-```bash
-ssh root@95.111.253.111 "systemctl status sshd"
-```
-
-3. Verify SSH key format in GitHub Secret
-
-### Issue: Permission Denied
-**Symptoms:** SSH connection fails with permission error
-
-**Solutions:**
-1. Fix permissions:
-```bash
-ssh root@95.111.253.111 "chmod 700 ~/.ssh"
-ssh root@95.111.253.111 "chmod 600 ~/.ssh/authorized_keys"
-```
-
-2. Check authorized_keys content:
-```bash
-ssh root@95.111.253.111 "cat ~/.ssh/authorized_keys"
-```
-
-### Issue: Deployment Fails
-**Symptoms:** Files uploaded but application doesn't start
-
-**Solutions:**
-1. Check PM2 logs:
-```bash
-ssh root@95.111.253.111 "pm2 logs software-hub --err"
-```
-
-2. Check environment variables:
-```bash
-ssh root@95.111.253.111 "cat /root/Cuongtm2012/.env"
-```
-
-3. Check database connection:
-```bash
-ssh root@95.111.253.111 "cd /root/Cuongtm2012 && npm run db:migrate"
-```
-
-### Issue: Application Crashes
-**Symptoms:** PM2 shows app in error state
-
-**Solutions:**
-1. Check application logs:
-```bash
-ssh root@95.111.253.111 "pm2 logs software-hub --lines 100"
-```
-
-2. Try starting manually:
-```bash
-ssh root@95.111.253.111 "cd /root/Cuongtm2012 && npm start"
-```
-
-3. Check dependencies:
-```bash
-ssh root@95.111.253.111 "cd /root/Cuongtm2012 && npm ci --production"
-```
-
-## Post-Deployment Verification
-
-### 1. Application Health
-- [ ] PM2 shows app as "online"
-- [ ] No errors in PM2 logs
-- [ ] Application responds to HTTP requests
-
-### 2. Database
-- [ ] Migrations ran successfully
-- [ ] Can connect to database
-- [ ] Tables are created
-
-### 3. Nginx
-- [ ] Reverse proxy working
-- [ ] Can access via IP: http://95.111.253.111
-- [ ] Static files served correctly
-
-### 4. Monitoring
-- [ ] PM2 monitoring enabled
-- [ ] Log rotation configured
-- [ ] Backup directory created
-
-## Quick Commands Reference
+#### 2. Database connection error
 
 ```bash
-# SSH into VPS
-ssh root@95.111.253.111
+# Verify DATABASE_URL format
+# Should be: postgresql://user:password@postgres:5432/database
+# Note: Use 'postgres' as host (service name), not 'localhost'
 
-# Check PM2 status
-pm2 list
-
-# View logs
-pm2 logs software-hub
-
-# Restart application
-pm2 restart software-hub
-
-# Stop application
-pm2 stop software-hub
-
-# View Nginx logs
-tail -f /var/log/nginx/access.log
-tail -f /var/log/nginx/error.log
-
-# Check database
-sudo -u postgres psql software_hub
-
-# Check disk space
-df -h
-
-# Check memory
-free -h
-
-# View running processes
-htop
+# Check if postgres is running
+docker-compose -f docker-compose.prod.yml ps postgres
 ```
 
-## Emergency Rollback
-
-If deployment fails and you need to rollback:
+#### 3. Build fails
 
 ```bash
-ssh root@95.111.253.111 << 'EOF'
-# Find latest backup
-LATEST_BACKUP=$(ls -dt /root/software-hub-backup-* | head -1)
-echo "Rolling back to: $LATEST_BACKUP"
-
-# Stop current app
-pm2 stop software-hub
-
-# Restore backup
-rm -rf /root/Cuongtm2012
-cp -r $LATEST_BACKUP /root/Cuongtm2012
-
-# Restart app
-cd /root/Cuongtm2012
-pm2 restart software-hub
-EOF
+# Clear cache and rebuild
+docker builder prune -a
+docker-compose -f docker-compose.prod.yml build --no-cache
 ```
+
+#### 4. Out of memory
+
+```bash
+# Check memory usage
+docker stats
+
+# Increase memory limit in docker-compose.prod.yml:
+# deploy:
+#   resources:
+#     limits:
+#       memory: 2G
+```
+
+## Rollback Procedure
+
+If deployment fails:
+
+```bash
+# 1. Stop new containers
+docker-compose -f docker-compose.prod.yml down
+
+# 2. Restore database backup (if needed)
+docker-compose -f docker-compose.prod.yml exec -T postgres \
+  psql -U postgres software_hub < backup_YYYYMMDD.sql
+
+# 3. Check out previous version
+git checkout <previous-commit>
+
+# 4. Rebuild and deploy
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+## Performance Optimization
+
+### Recommended Settings
+
+1. **Enable Redis for sessions**
+   - Set `REDIS_URL` in .env.production
+   - Uncomment Redis session store in server code
+
+2. **Configure connection pooling**
+   - Set appropriate `DATABASE_POOL_SIZE`
+
+3. **Enable gzip compression**
+   - Already configured in Express
+
+4. **Set up CDN for static assets**
+   - Configure AWS CloudFront or similar
+
+## Security Hardening
+
+- [ ] Use HTTPS in production (configure reverse proxy)
+- [ ] Enable rate limiting
+- [ ] Configure CORS properly
+- [ ] Set secure cookie flags
+- [ ] Enable helmet.js middleware
+- [ ] Regular security updates
+
+## Next Steps
+
+After successful deployment:
+
+1. **Set up monitoring**
+   - Configure logging service (e.g., LogDNA, Papertrail)
+   - Set up uptime monitoring (e.g., UptimeRobot)
+   - Configure error tracking (e.g., Sentry)
+
+2. **Configure CI/CD**
+   - Set up GitHub Actions
+   - Automate testing
+   - Automate deployment
+
+3. **Set up backups**
+   - Automate database backups
+   - Store backups off-site
+   - Test restore procedure
+
+4. **Configure domain**
+   - Point domain to server
+   - Set up SSL certificate
+   - Configure reverse proxy (Nginx/Caddy)
+
+## Resources
+
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Production Best Practices](https://docs.docker.com/develop/dev-best-practices/)
+- [DOCKER_DEPLOYMENT.md](./docs/DOCKER_DEPLOYMENT.md) - Detailed guide
 
 ---
 
-**Last Updated:** 2026-01-25
-**VPS IP:** 95.111.253.111
-**Project Path:** /root/Cuongtm2012
+**Last Updated**: 2026-01-25
+**Version**: 1.0.0

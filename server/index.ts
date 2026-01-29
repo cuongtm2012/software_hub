@@ -189,8 +189,8 @@ app.use((req, res, next) => {
       });
     });
 
-    // ALWAYS serve the app on port 5000
-    const port = 5000;
+    // Use PORT from environment variable or default to 3000
+    const port = parseInt(process.env.PORT || '3000', 10);
     server.listen(port, () => {
       log(`SoftwareHub application serving on port ${port}`);
       log(`Environment: ${process.env.NODE_ENV || 'development'}`);
