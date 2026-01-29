@@ -81,20 +81,47 @@ echo ""
 # Step 7: Install MongoDB (for chat service)
 echo -e "${BLUE}[7/10] Installing MongoDB...${NC}"
 if ! command -v mongod &> /dev/null; then
-  # Import MongoDB GPG key
-  curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-    gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+  # Detect Ubuntu version
+  UBUNTU_VERSION=$(lsb_release -cs)
   
-  # Add MongoDB repository
-  echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" | \
-    tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+  # MongoDB 7.0 doesn't support Ubuntu Noble yet, use Jammy repository
+  if [ "$UBUNTU_VERSION" = "noble" ]; then
+    echo -e "${YELLOW}⚠️  Ubuntu Noble detected, using Jammy repository for MongoDB${NC}"
+    MONGO_UBUNTU_VERSION="jammy"
+  else
+    MONGO_UBUNTU_VERSION="$UBUNTU_VERSION"
+  fi
   
-  apt-get update -qq
-  apt-get install -y mongodb-org
-  systemctl enable mongod
-  systemctl start mongod
+  # Try to install MongoDB from official repository
+  if curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
+     gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor 2>/dev/null; then
+    
+    echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $MONGO_UBUNTU_VERSION/mongodb-org/7.0 multiverse" | \
+      tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+    
+    apt-get update -qq
+    
+    if apt-get install -y mongodb-org 2>/dev/null; then
+      systemctl enable mongod
+      systemctl start mongod
+      echo -e "${GREEN}✓ MongoDB 7.0 installed from official repository${NC}"
+    else
+      # Fallback to Ubuntu's MongoDB package
+      echo -e "${YELLOW}⚠️  Official MongoDB failed, installing from Ubuntu repository${NC}"
+      apt-get install -y mongodb
+      systemctl enable mongodb
+      systemctl start mongodb
+      echo -e "${GREEN}✓ MongoDB installed from Ubuntu repository${NC}"
+    fi
+  else
+    # Fallback to Ubuntu's MongoDB package
+    echo -e "${YELLOW}⚠️  Installing MongoDB from Ubuntu repository${NC}"
+    apt-get install -y mongodb
+    systemctl enable mongodb
+    systemctl start mongodb
+    echo -e "${GREEN}✓ MongoDB installed from Ubuntu repository${NC}"
+  fi
 fi
-echo -e "${GREEN}✓ MongoDB installed${NC}"
 echo ""
 
 # Step 8: Install Git
