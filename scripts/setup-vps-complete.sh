@@ -64,8 +64,25 @@ if ! command -v psql &> /dev/null; then
   apt-get install -y postgresql postgresql-contrib
   systemctl enable postgresql
   systemctl start postgresql
+  # Wait for PostgreSQL to be ready
+  sleep 2
+else
+  # Ensure PostgreSQL is running even if already installed
+  if ! systemctl is-active --quiet postgresql; then
+    echo -e "${YELLOW}⚠️  PostgreSQL is installed but not running. Starting...${NC}"
+    systemctl start postgresql
+    sleep 2
+  fi
 fi
-echo -e "${GREEN}✓ PostgreSQL installed${NC}"
+
+# Verify PostgreSQL is running
+if systemctl is-active --quiet postgresql; then
+  echo -e "${GREEN}✓ PostgreSQL installed and running${NC}"
+else
+  echo -e "${RED}❌ PostgreSQL failed to start${NC}"
+  systemctl status postgresql --no-pager | head -10
+  exit 1
+fi
 echo ""
 
 # Step 6: Install Redis (for sessions and caching)
