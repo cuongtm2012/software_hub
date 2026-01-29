@@ -1,398 +1,405 @@
-# Docker Deployment Guide
+# Docker Deployment Guide for VPS
 
-## 📦 Overview
+Complete guide for deploying Software Hub to VPS using Docker for databases and PM2 for the Node.js application.
 
-This guide covers deploying the Software Hub application using Docker and Docker Compose.
-
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│           Nginx (Port 80/443)           │
-│         Reverse Proxy & SSL             │
-└──────────────┬──────────────────────────┘
-               │
-       ┌───────┴────────┐
-       │                │
-┌──────▼──────┐  ┌─────▼──────┐
-│     App     │  │    Chat    │
-│  (Port 3000)│  │(Port 3001) │
-│   Node.js   │  │  WebSocket │
-└──────┬──────┘  └─────┬──────┘
-       │                │
-       └───────┬────────┘
-               │
-        ┌──────▼──────┐
-        │ PostgreSQL  │
-        │ (Port 5432) │
-        │   Database  │
-        └─────────────┘
+┌─────────────────────────────────────────────────────┐
+│                    VPS (Host)                       │
+│                                                     │
+│  ┌──────────────┐         ┌──────────────────────┐ │
+│  │    Nginx     │────────▶│    PM2 (Host)        │ │
+│  │   (Port 80)  │         │  ├─ Main App (3000)  │ │
+│  └──────────────┘         │  ├─ Email Svc (3001) │ │
+│         │                 │  ├─ Chat Svc (3002)  │ │
+│         │                 │  └─ Notif Svc (3003) │ │
+│         │                 └──────────────────────┘ │
+│         │                           │              │
+│         │                           ▼              │
+│  ┌──────────────────────────────────────────────┐  │
+│  │         Docker Containers                    │  │
+│  │  ┌─────────────┐  ┌──────────┐  ┌─────────┐ │  │
+│  │  │ PostgreSQL  │  │ MongoDB  │  │  Redis  │ │  │
+│  │  │  (5432)     │  │  (27017) │  │ (6379)  │ │  │
+│  │  └─────────────┘  └──────────┘  └─────────┘ │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Quick Start
+**Why Hybrid?**
+- ✅ Docker for databases: Easy management, isolation, backups
+- ✅ PM2 for Node.js app: Better performance, clustering, zero-downtime restarts
+- ✅ Nginx on host: Simpler SSL/TLS management
 
-### 1. Setup VPS with Docker
+## Quick Start
+
+### 1. Initial VPS Setup (One-time)
 
 ```bash
-# Upload setup script
-scp scripts/setup-vps-docker.sh root@95.111.253.111:/tmp/
+# Copy setup script to VPS
+scp scripts/setup-vps-docker-hybrid.sh root@95.111.253.111:/tmp/
 
-# SSH and run
+# SSH to VPS
 ssh root@95.111.253.111
-bash /tmp/setup-vps-docker.sh
+
+# Run setup script
+chmod +x /tmp/setup-vps-docker-hybrid.sh
+/tmp/setup-vps-docker-hybrid.sh
 ```
 
-### 2. Configure Environment
+This script will:
+- Stop manual PostgreSQL/MongoDB/Redis services
+- Install Docker + Docker Compose
+- Install Node.js 20.x + PM2
+- Install Nginx
+- Configure firewall
+- Generate secure credentials
+- Create `.env.production`
+
+### 2. Save Credentials
 
 ```bash
+# View and save credentials
+cat /root/software-hub-credentials.txt
+
+# Delete after saving
+rm /root/software-hub-credentials.txt
+```
+
+### 3. Update Environment Variables
+
+```bash
+nano /var/www/software-hub/.env.production
+```
+
+Update these keys:
+- `SENDGRID_API_KEY` - Email service
+- `FIREBASE_*` - Push notifications
+- `CLOUDFLARE_R2_*` - File storage (optional)
+- `STRIPE_*` - Payment (optional)
+
+### 4. Configure GitHub Secrets
+
+Go to: https://github.com/cuongtm2012/software_hub/settings/secrets/actions
+
+Add:
+- `SSH_HOST` = `95.111.253.111`
+- `SSH_USERNAME` = `root`
+- `SSH_KEY` = `<your private SSH key>`
+
+### 5. Deploy
+
+```bash
+# From local machine
+git push origin main
+```
+
+GitHub Actions will automatically:
+1. Build application
+2. Create deployment package
+3. Upload to VPS
+4. Run deployment script
+5. Start Docker containers
+6. Import database
+7. Start PM2 processes
+
+## Manual Deployment
+
+If you prefer to deploy manually:
+
+### 1. Clone Repository
+
+```bash
+ssh root@95.111.253.111
+cd /var/www/software-hub
+git clone https://github.com/cuongtm2012/software_hub.git .
+```
+
+### 2. Install Dependencies
+
+```bash
+npm ci --production
+```
+
+### 3. Build Application
+
+```bash
+npm run build
+```
+
+### 4. Start Docker Containers
+
+```bash
+docker-compose -f docker-compose.vps.yml up -d
+```
+
+### 5. Import Database
+
+```bash
+# Copy dumps to VPS
+scp -r database/dumps root@95.111.253.111:/var/www/software-hub/database/
+
+# SSH to VPS
+ssh root@95.111.253.111
 cd /var/www/software-hub
 
-# Copy template
-cp .env.production.template .env.production
+# Import schema
+docker exec -i softwarehub-postgres psql -U postgres -d softwarehub < database/dumps/schema_20260129_222356.sql
 
-# Edit with your values
-nano .env.production
+# Import data
+docker exec -i softwarehub-postgres psql -U postgres -d softwarehub < database/dumps/data_20260129_222356.sql
 ```
 
-**Required variables:**
-- `DB_PASSWORD`: Secure database password
-- `SESSION_SECRET`: Random secret (generate with `openssl rand -base64 32`)
-- `RESEND_API_KEY`: Email service API key
-
-### 3. Deploy
+### 6. Start PM2 Processes
 
 ```bash
-# Build and start containers
-docker-compose -f docker-compose.production.yml up -d --build
-
-# Check status
-docker-compose -f docker-compose.production.yml ps
-
-# View logs
-docker-compose -f docker-compose.production.yml logs -f
+pm2 start ecosystem.config.js --env production
+pm2 save
 ```
 
-## 📋 Detailed Setup
-
-### Prerequisites
-
-- Ubuntu 20.04+ or Debian 11+
-- Docker 20.10+
-- Docker Compose 2.0+
-- 2GB+ RAM
-- 20GB+ disk space
-
-### Installation Steps
-
-#### Step 1: Install Docker
+### 7. Restart Nginx
 
 ```bash
-# Update system
-apt update && apt upgrade -y
-
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-
-# Start Docker
-systemctl start docker
-systemctl enable docker
+systemctl restart nginx
 ```
 
-#### Step 2: Install Docker Compose
+## Verification
+
+### Check Docker Containers
 
 ```bash
-# Install Docker Compose plugin
-apt install docker-compose-plugin
+docker ps
+# Expected: 3 containers (postgres, mongo, redis)
 
-# Or install standalone
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+docker-compose -f docker-compose.vps.yml ps
+# Expected: All containers "healthy"
 ```
 
-#### Step 3: Clone Repository
+### Check PM2 Processes
 
 ```bash
-cd /var/www
-git clone <your-repo-url> software-hub
-cd software-hub
+pm2 list
+# Expected: 4 processes (main, email, chat, notification)
+
+pm2 logs --lines 20
+# Expected: No errors
 ```
 
-#### Step 4: Configure Environment
+### Test Application
 
 ```bash
-# Create .env.production
-cp .env.production.template .env.production
+# Health check
+curl http://localhost:3000/health
+# Expected: {"status":"ok"}
 
-# Generate secrets
-echo "DB_PASSWORD=$(openssl rand -base64 32)" >> .env.production
-echo "SESSION_SECRET=$(openssl rand -base64 32)" >> .env.production
+# API test
+curl http://localhost:3000/api/softwares | jq '.' | head -20
+# Expected: JSON array of softwares
 
-# Edit other variables
-nano .env.production
+# From browser
+open http://95.111.253.111
 ```
 
-#### Step 5: Build and Deploy
+## Maintenance
+
+### View Logs
 
 ```bash
-# Build images
-docker-compose -f docker-compose.production.yml build
+# PM2 logs
+pm2 logs
+pm2 logs software-hub-server
 
-# Start services
-docker-compose -f docker-compose.production.yml up -d
-
-# Check logs
-docker-compose -f docker-compose.production.yml logs -f app
+# Docker logs
+docker-compose -f docker-compose.vps.yml logs -f
+docker logs softwarehub-postgres
 ```
 
-## 🔄 Database Migration
-
-### Migrate from Host PostgreSQL to Docker
+### Restart Services
 
 ```bash
-# Run migration script
-bash scripts/migrate-db-to-docker.sh software_hub software_hub_user
+# Restart PM2 processes
+pm2 restart all
+
+# Restart Docker containers
+docker-compose -f docker-compose.vps.yml restart
+
+# Restart Nginx
+systemctl restart nginx
 ```
 
-### Manual Migration
+### Update Application
 
 ```bash
-# 1. Backup existing database
-pg_dump -U software_hub_user -d software_hub > backup.sql
-
-# 2. Start Docker database
-docker-compose -f docker-compose.production.yml up -d db
-
-# 3. Wait for database to be ready
-sleep 10
-
-# 4. Restore backup
-cat backup.sql | docker-compose -f docker-compose.production.yml exec -T db psql -U software_hub_user -d software_hub
-
-# 5. Start all services
-docker-compose -f docker-compose.production.yml up -d
-```
-
-## 🛠️ Management Commands
-
-### Container Management
-
-```bash
-# Start all services
-docker-compose -f docker-compose.production.yml up -d
-
-# Stop all services
-docker-compose -f docker-compose.production.yml down
-
-# Restart specific service
-docker-compose -f docker-compose.production.yml restart app
-
-# View logs
-docker-compose -f docker-compose.production.yml logs -f app
-
-# Execute command in container
-docker-compose -f docker-compose.production.yml exec app npm run db:migrate
-```
-
-### Database Management
-
-```bash
-# Access PostgreSQL
-docker-compose -f docker-compose.production.yml exec db psql -U software_hub_user -d software_hub
-
-# Backup database
-docker-compose -f docker-compose.production.yml exec db pg_dump -U software_hub_user software_hub > backup-$(date +%Y%m%d).sql
-
-# Restore database
-cat backup.sql | docker-compose -f docker-compose.production.yml exec -T db psql -U software_hub_user -d software_hub
-```
-
-### Cleanup
-
-```bash
-# Remove stopped containers
-docker-compose -f docker-compose.production.yml down
-
-# Remove unused images
-docker image prune -a
-
-# Remove unused volumes (CAREFUL!)
-docker volume prune
-
-# Full cleanup
-docker system prune -af
-```
-
-## 🔍 Monitoring
-
-### Health Checks
-
-```bash
-# Check container health
-docker-compose -f docker-compose.production.yml ps
-
-# View container stats
-docker stats
-
-# Check specific service health
-curl http://localhost:3000/api/health
-```
-
-### Logs
-
-```bash
-# All services
-docker-compose -f docker-compose.production.yml logs -f
-
-# Specific service
-docker-compose -f docker-compose.production.yml logs -f app
-
-# Last 100 lines
-docker-compose -f docker-compose.production.yml logs --tail=100 app
-```
-
-## 🔒 Security
-
-### Best Practices
-
-1. **Use secrets management**
-```bash
-# Don't commit .env.production
-echo ".env.production" >> .gitignore
-```
-
-2. **Regular updates**
-```bash
-# Update images
-docker-compose -f docker-compose.production.yml pull
-docker-compose -f docker-compose.production.yml up -d
-```
-
-3. **Limit exposed ports**
-```yaml
-# In docker-compose.yml, only expose necessary ports
-ports:
-  - "127.0.0.1:5432:5432"  # Only localhost can access
-```
-
-4. **Use Docker secrets** (for Docker Swarm)
-```bash
-echo "my_secret_password" | docker secret create db_password -
-```
-
-## 🚨 Troubleshooting
-
-### Container won't start
-
-```bash
-# Check logs
-docker-compose -f docker-compose.production.yml logs app
-
-# Check container status
-docker-compose -f docker-compose.production.yml ps
-
-# Rebuild without cache
-docker-compose -f docker-compose.production.yml build --no-cache
-```
-
-### Database connection issues
-
-```bash
-# Check database is running
-docker-compose -f docker-compose.production.yml ps db
-
-# Test connection
-docker-compose -f docker-compose.production.yml exec app ping db
-
-# Check environment variables
-docker-compose -f docker-compose.production.yml exec app env | grep DATABASE
-```
-
-### Out of disk space
-
-```bash
-# Check disk usage
-df -h
-
-# Clean up Docker
-docker system df
-docker system prune -af --volumes
-```
-
-### Port already in use
-
-```bash
-# Find process using port
-lsof -i :3000
-
-# Change port in docker-compose.yml
-ports:
-  - "3001:3000"  # Map to different host port
-```
-
-## 📊 Performance Optimization
-
-### Resource Limits
-
-```yaml
-# In docker-compose.yml
-services:
-  app:
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-```
-
-### Caching
-
-```dockerfile
-# In Dockerfile, optimize layer caching
-COPY package*.json ./
-RUN npm ci
-COPY . .
-```
-
-## 🔄 CI/CD Integration
-
-### GitHub Actions
-
-The workflow is configured in `.github/workflows/deploy-docker.yml`
-
-**Trigger deployment:**
-1. Push to `main` branch
-2. Or manually trigger from Actions tab
-
-### Manual Deployment
-
-```bash
-# On VPS
 cd /var/www/software-hub
 git pull origin main
-docker-compose -f docker-compose.production.yml up -d --build
+npm ci --production
+npm run build
+pm2 restart all
 ```
 
-## 📚 Additional Resources
+### Backup Database
 
-- [Docker Documentation](https://docs.docker.com/)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [PostgreSQL Docker Image](https://hub.docker.com/_/postgres)
-- [Node.js Docker Best Practices](https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md)
+```bash
+# PostgreSQL
+docker exec softwarehub-postgres pg_dump -U postgres softwarehub > backup_$(date +%Y%m%d).sql
 
-## 🆘 Support
+# MongoDB
+docker exec softwarehub-mongo mongodump --out=/tmp/mongo-backup
+docker cp softwarehub-mongo:/tmp/mongo-backup ./mongo-backup_$(date +%Y%m%d)
+```
+
+## Troubleshooting
+
+### Port Already in Use
+
+```bash
+# Check what's using the port
+lsof -i:5432
+
+# Stop manual PostgreSQL
+systemctl stop postgresql
+systemctl disable postgresql
+```
+
+### Docker Container Won't Start
+
+```bash
+# Check logs
+docker logs softwarehub-postgres
+
+# Remove and recreate
+docker-compose -f docker-compose.vps.yml down
+docker-compose -f docker-compose.vps.yml up -d
+```
+
+### PM2 Process Crashed
+
+```bash
+# Check logs
+pm2 logs software-hub-server --lines 100
+
+# Restart
+pm2 restart software-hub-server
+
+# Or restart all
+pm2 restart all
+```
+
+### Database Connection Error
+
+```bash
+# Check if PostgreSQL is running
+docker ps | grep postgres
+
+# Check connection
+docker exec softwarehub-postgres psql -U postgres -d softwarehub -c "SELECT 1;"
+
+# Check environment variables
+cat /var/www/software-hub/.env.production | grep DATABASE_URL
+```
+
+### 502 Bad Gateway
+
+```bash
+# Check if app is running
+pm2 list
+curl http://localhost:3000/health
+
+# Check Nginx config
+nginx -t
+
+# Check Nginx logs
+tail -f /var/log/nginx/error.log
+```
+
+## Useful Commands
+
+```bash
+# Docker
+docker ps                                              # List containers
+docker-compose -f docker-compose.vps.yml ps           # List compose services
+docker-compose -f docker-compose.vps.yml logs -f      # Follow logs
+docker-compose -f docker-compose.vps.yml restart      # Restart all
+docker-compose -f docker-compose.vps.yml down         # Stop all
+docker-compose -f docker-compose.vps.yml up -d        # Start all
+
+# PM2
+pm2 list                    # List processes
+pm2 logs                    # View logs
+pm2 restart all             # Restart all
+pm2 stop all                # Stop all
+pm2 delete all              # Delete all
+pm2 monit                   # Monitor resources
+
+# Nginx
+nginx -t                    # Test config
+systemctl reload nginx      # Reload config
+systemctl restart nginx     # Restart
+systemctl status nginx      # Check status
+
+# System
+df -h                       # Disk space
+free -h                     # Memory
+top                         # CPU/Memory usage
+netstat -tulpn | grep LISTEN # Open ports
+```
+
+## Security
+
+### SSL/TLS (Recommended)
+
+```bash
+# Install Certbot
+apt-get install certbot python3-certbot-nginx
+
+# Get certificate (replace with your domain)
+certbot --nginx -d yourdomain.com
+
+# Test auto-renewal
+certbot renew --dry-run
+```
+
+### Firewall
+
+```bash
+# Check status
+ufw status
+
+# Only allow necessary ports
+ufw allow 22/tcp   # SSH
+ufw allow 80/tcp   # HTTP
+ufw allow 443/tcp  # HTTPS
+ufw enable
+```
+
+### Update Passwords
+
+```bash
+# Generate new passwords
+openssl rand -base64 32
+
+# Update .env.production
+nano /var/www/software-hub/.env.production
+
+# Restart services
+docker-compose -f docker-compose.vps.yml restart
+pm2 restart all
+```
+
+## Files Reference
+
+- `docker-compose.vps.yml` - Docker Compose for databases
+- `.env.vps.template` - Environment variables template
+- `scripts/setup-vps-docker-hybrid.sh` - Initial VPS setup
+- `scripts/deploy-vps-docker.sh` - Deployment script
+- `ecosystem.config.js` - PM2 configuration
+- `.github/workflows/deploy.yml` - GitHub Actions workflow
+
+## Support
 
 For issues:
-1. Check logs: `docker-compose logs -f`
-2. Verify configuration: `docker-compose config`
+1. Check logs: `pm2 logs`, `docker logs`
+2. Review this guide
 3. Check GitHub Issues
-4. Contact support team
-
----
-
-**Last Updated:** 2026-01-25  
-**Docker Version:** 24.0+  
-**Docker Compose Version:** 2.24+
+4. Contact: cuongtm2012@gmail.com
