@@ -45,14 +45,11 @@ COPY package*.json ./
 RUN npm ci --only=production && \
     npm cache clean --force
 
-# Copy built application from builder
+# Copy built application from builder (includes both server and client)
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
 # Copy shared schema (needed at runtime)
 COPY --from=builder --chown=nodejs:nodejs /app/shared ./shared
-
-# Copy client build (static files served by Express)
-COPY --from=builder --chown=nodejs:nodejs /app/dist/public ./dist/public
 
 # Switch to nodejs user
 USER nodejs
