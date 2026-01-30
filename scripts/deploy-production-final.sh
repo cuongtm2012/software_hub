@@ -27,7 +27,33 @@ cd "$APP_DIR"
 # Step 2: Pull latest code (if using git)
 if [ -d ".git" ]; then
     echo -e "${YELLOW}📥 Pulling latest code from Git...${NC}"
-    git pull origin main || git pull origin master
+    
+    # Check for local changes
+    if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+        echo -e "${YELLOW}⚠️  Local changes detected. Stashing...${NC}"
+        git stash --include-untracked
+        LOCAL_CHANGES_STASHED=true
+    else
+        LOCAL_CHANGES_STASHED=false
+    fi
+    
+    # Fetch latest from remote
+    echo -e "${YELLOW}📡 Fetching from remote...${NC}"
+    git fetch origin
+    
+    # Reset to remote branch (force update)
+    echo -e "${YELLOW}🔄 Resetting to latest remote code...${NC}"
+    git reset --hard origin/main 2>/dev/null || git reset --hard origin/master 2>/dev/null
+    
+    # Clean untracked files
+    git clean -fd
+    
+    # Show current commit
+    echo -e "${GREEN}✅ Updated to commit: $(git log -1 --oneline)${NC}"
+    
+    if [ "$LOCAL_CHANGES_STASHED" = true ]; then
+        echo -e "${YELLOW}💾 Local changes were stashed. To restore: git stash pop${NC}"
+    fi
 else
     echo -e "${YELLOW}⚠️  Not a git repository, skipping pull${NC}"
 fi
