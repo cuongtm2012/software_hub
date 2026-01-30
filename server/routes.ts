@@ -1,30 +1,30 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import crypto from "crypto";
-import { db } from "./db";
+import { db } from "./db.js";
 import { users } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
-import { storage } from "./storage";
-import { sendWelcomeEmail, sendPasswordResetEmail } from "./email";
+import { storage } from "./storage.js";
+import { sendWelcomeEmail, sendPasswordResetEmail } from "./email.js";
 
 // Import default exports (Router instances)
-import authRouter from "./routes/auth.routes";
-import reviewRouter from "./routes/review.routes";
-import sellerRouter from "./routes/seller.routes";
-import buyerRouter from "./routes/buyer.routes";
-import notificationRouter from "./routes/notification.routes";
-import chatRouter from "./routes/chat.routes";
-import orderRouter from "./routes/order.routes";
-import adminRouter from "./routes/admin.routes";
-import productRouter from "./routes/product.routes";
-import softwareRouter from "./routes/software.routes";
-import coursesRouter from "./routes/courses.routes";
+import authRouter from "./routes/auth.routes.js";
+import reviewRouter from "./routes/review.routes.js";
+import sellerRouter from "./routes/seller.routes.js";
+import buyerRouter from "./routes/buyer.routes.js";
+import notificationRouter from "./routes/notification.routes.js";
+import chatRouter from "./routes/chat.routes.js";
+import orderRouter from "./routes/order.routes.js";
+import adminRouter from "./routes/admin.routes.js";
+import productRouter from "./routes/product.routes.js";
+import softwareRouter from "./routes/software.routes.js";
+import coursesRouter from "./routes/courses.routes.js";
 
 // Import named exports (register functions)
-import { registerMarketplaceRoutes } from "./routes/marketplace.routes";
-import { registerUserRoutes } from "./routes/user.routes";
-import { registerPaymentRoutes } from "./routes/payment.routes";
-import { registerServiceRoutes } from "./routes/service.routes";
+import { registerMarketplaceRoutes } from "./routes/marketplace.routes.js";
+import { registerUserRoutes } from "./routes/user.routes.js";
+import { registerPaymentRoutes } from "./routes/payment.routes.js";
+import { registerServiceRoutes } from "./routes/service.routes.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ==========================================

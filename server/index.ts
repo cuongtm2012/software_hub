@@ -12,7 +12,7 @@ import session from 'express-session';
 import { randomBytes } from 'crypto';
 
 // Initialize database connection first
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 
 async function initializeDatabase() {
   try {
