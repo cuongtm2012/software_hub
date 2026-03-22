@@ -170,6 +170,16 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
+    // Health check endpoint (MUST be before serveStatic catch-all)
+    app.get('/health', (_req, res) => {
+      res.json({
+        status: 'ok',
+        service: 'softwarehub-app',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+      });
+    });
+
     // Setup Vite or static serving
     const isProduction = process.env.NODE_ENV === "production";
 
@@ -180,16 +190,6 @@ app.use((req, res, next) => {
     } else {
       serveStatic(app);
     }
-
-    // Health check endpoint
-    app.get('/health', (req, res) => {
-      res.json({
-        status: 'ok',
-        service: 'softwarehub-app',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-      });
-    });
 
     // ALWAYS serve the app on port 5000
     const port = 5000;
