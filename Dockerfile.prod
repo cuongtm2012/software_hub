@@ -51,6 +51,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 # Copy server and shared source (tsx runs TS directly, resolves @shared paths)
 COPY --from=builder --chown=nodejs:nodejs /app/server ./server
 COPY --from=builder --chown=nodejs:nodejs /app/shared ./shared
+COPY --from=builder --chown=nodejs:nodejs /app/tsconfig.json ./tsconfig.json
+COPY --from=builder --chown=nodejs:nodejs /app/tsconfig.server.json ./tsconfig.server.json
 
 # Install tsx for running TypeScript with path alias support
 RUN npm install tsx --save
