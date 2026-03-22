@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
-import { registerRoutes } from "./routes.js";
-import { serveStatic, log } from "./vite.js";
+import { registerRoutes } from "./routes";
+import { serveStatic, log } from "./vite";
 
 const app = express();
 app.use(express.json());
@@ -12,7 +12,7 @@ import session from 'express-session';
 import { randomBytes } from 'crypto';
 
 // Initialize database connection first
-import { storage } from "./storage.js";
+import { storage } from "./storage";
 
 async function initializeDatabase() {
   try {
@@ -152,9 +152,11 @@ app.use((req, res, next) => {
       console.warn('Firebase Admin SDK initialization skipped:', error);
     }
 
-    // Wait for external services in production
-    if (process.env.NODE_ENV === 'production') {
+    // Wait for external services in production (skip if microservices not in this stack)
+    if (process.env.NODE_ENV === 'production' && process.env.SKIP_EXTERNAL_SERVICE_WAIT !== 'true') {
       await waitForExternalServices();
+    } else if (process.env.SKIP_EXTERNAL_SERVICE_WAIT === 'true') {
+      console.log('Skipping external microservice wait (SKIP_EXTERNAL_SERVICE_WAIT=true)');
     }
 
     // Register routes after database is ready
@@ -189,8 +191,8 @@ app.use((req, res, next) => {
       });
     });
 
-    // Use PORT from environment variable or default to 3000
-    const port = parseInt(process.env.PORT || '3000', 10);
+    // ALWAYS serve the app on port 5000
+    const port = 5000;
     server.listen(port, () => {
       log(`SoftwareHub application serving on port ${port}`);
       log(`Environment: ${process.env.NODE_ENV || 'development'}`);

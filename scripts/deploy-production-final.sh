@@ -84,8 +84,8 @@ docker-compose -f "$COMPOSE_FILE" logs --tail=50 app
 
 # Step 9: Health check
 echo -e "${YELLOW}🏥 Running health check...${NC}"
-sleep 5
-if curl -f http://localhost:5000/api/health > /dev/null 2>&1; then
+sleep 8
+if curl -f http://localhost:5000/health > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Health check passed!${NC}"
 else
     echo -e "${RED}❌ Health check failed!${NC}"
