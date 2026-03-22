@@ -477,7 +477,7 @@ export default function ProjectRequestPage() {
                     Team của chúng tôi sẵn sàng giúp bạn hiểu rõ hơn về quy trình.
                   </p>
                   <div className="space-y-2 text-sm">
-                    <p className="text-gray-700">📧 hello@softwarehub.com</p>
+                    <p className="text-gray-700">📧 admin@in2sight.com</p>
                     <p className="text-gray-700">📞 +84 123 456 789</p>
                   </div>
                 </div>
