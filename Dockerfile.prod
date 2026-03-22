@@ -45,11 +45,15 @@ COPY package*.json ./
 RUN npm ci --only=production && \
     npm cache clean --force
 
-# Copy built application from builder (includes both server and client)
+# Copy built application from builder (client static files in dist/)
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
-# Copy shared schema (needed at runtime)
+# Copy server and shared source (tsx runs TS directly, resolves @shared paths)
+COPY --from=builder --chown=nodejs:nodejs /app/server ./server
 COPY --from=builder --chown=nodejs:nodejs /app/shared ./shared
+
+# Install tsx for running TypeScript with path alias support
+RUN npm install tsx --save
 
 # Switch to nodejs user
 USER nodejs
@@ -64,5 +68,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["node", "dist/server/index.js"]
+# Run with tsx - resolves @shared/schema from tsconfig paths
+CMD ["npx", "tsx", "server/index.ts"]
