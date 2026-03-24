@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, X, Search, Store, ShoppingCart } from "lucide-react";
+import { Menu, X, Search, Store, ShoppingCart, Wallet } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notification-bell";
 import { CartTrigger } from "@/components/cart-sidebar";

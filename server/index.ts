@@ -164,7 +164,11 @@ app.use((req, res, next) => {
     // Register routes after database is ready
     const server = await registerRoutes(app);
     initializeChatSocket(server);
-    await initializeMonolithQueue();
+    try {
+      await initializeMonolithQueue();
+    } catch (error) {
+      console.warn("Monolith queue initialization skipped (Redis unavailable):", error);
+    }
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;

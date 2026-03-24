@@ -4,9 +4,15 @@
   "type": "module",
   "license": "MIT",
   "imports": {
-    "@shared/schema": ["./dist/shared/schema.js"],
-    "@shared/schema/*": ["./dist/shared/*"],
-    "@shared/*": ["./shared/*"]
+    "@shared/schema": [
+      "./dist/shared/schema.js"
+    ],
+    "@shared/schema/*": [
+      "./dist/shared/*"
+    ],
+    "@shared/*": [
+      "./shared/*"
+    ]
   },
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
@@ -26,6 +32,7 @@
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
+    "@prisma/client": "^7.5.0",
     "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.7",
     "@radix-ui/react-aspect-ratio": "^1.1.3",
@@ -87,6 +94,7 @@
     "lucide-react": "^0.453.0",
     "memoizee": "^0.4.17",
     "memorystore": "^1.6.7",
+    "mongodb": "^7.1.1",
     "multer": "^2.0.2",
     "next-themes": "^0.4.6",
     "openid-client": "^6.6.3",
@@ -102,6 +110,7 @@
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.2",
+    "redis": "^5.11.0",
     "resend": "^6.6.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
