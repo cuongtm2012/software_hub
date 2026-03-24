@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
-import { registerRoutes } from "./routes";
-import { serveStatic, log } from "./vite";
+import { registerRoutes } from "./routes.js";
+import { serveStatic, log } from "./vite.js";
 
 const app = express();
 app.use(express.json());
@@ -10,9 +10,11 @@ app.use(express.urlencoded({ extended: false }));
 // Session configuration for test login
 import session from 'express-session';
 import { randomBytes } from 'crypto';
+import { initializeChatSocket } from "./socket/chat-socket.js";
+import { initializeMonolithQueue } from "./lib/monolith-queue.js";
 
 // Initialize database connection first
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 
 async function initializeDatabase() {
   try {
@@ -146,19 +148,23 @@ app.use((req, res, next) => {
 
     // Initialize Firebase Admin SDK for push notifications
     try {
-      const { initializeFirebaseAdmin } = await import("./lib/firebase-admin");
+      const { initializeFirebaseAdmin } = await import("./lib/firebase-admin.js");
       initializeFirebaseAdmin();
     } catch (error) {
       console.warn('Firebase Admin SDK initialization skipped:', error);
     }
 
-    // Wait for external services in production
-    if (process.env.NODE_ENV === 'production') {
+    // Monolith-first mode: only wait external services when explicitly enabled.
+    if (process.env.ENABLE_EXTERNAL_SERVICES === 'true') {
       await waitForExternalServices();
+    } else {
+      console.log('Monolith mode: skipping external microservice wait');
     }
 
     // Register routes after database is ready
     const server = await registerRoutes(app);
+    initializeChatSocket(server);
+    await initializeMonolithQueue();
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
@@ -168,19 +174,8 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
-    // Setup Vite or static serving
-    const isProduction = process.env.NODE_ENV === "production";
-
-    if (!isProduction) {
-      // Dynamic import to avoid bundling Vite in production
-      const { setupVite } = await import("./vite");
-      await setupVite(app, server);
-    } else {
-      serveStatic(app);
-    }
-
-    // Health check endpoint
-    app.get('/health', (req, res) => {
+    // Health check endpoint (MUST be before serveStatic catch-all)
+    app.get('/health', (_req, res) => {
       res.json({
         status: 'ok',
         service: 'softwarehub-app',
@@ -189,8 +184,19 @@ app.use((req, res, next) => {
       });
     });
 
-    // ALWAYS serve the app on port 5000
-    const port = 5000;
+    // Setup Vite or static serving
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (!isProduction) {
+      // Dynamic import to avoid bundling Vite in production
+      const { setupVite } = await import("./vite.js");
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    // Prefer env port; default to 5005 to avoid common local conflicts.
+    const port = Number(process.env.PORT || 5005);
     server.listen(port, () => {
       log(`SoftwareHub application serving on port ${port}`);
       log(`Environment: ${process.env.NODE_ENV || 'development'}`);

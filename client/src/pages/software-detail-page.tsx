@@ -12,7 +12,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Download, Monitor, Calendar, ArrowLeft, ExternalLink, FileText, Shield } from "lucide-react";
+import { Loader2, Download, Monitor, Calendar, ArrowLeft, FileText, Shield, Layers, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
 import { useState } from "react";
@@ -126,6 +126,10 @@ export default function SoftwareDetailPage() {
             .substring(0, 2);
     };
 
+    const platformText = Array.isArray(software?.platform)
+        ? software.platform.map((platform) => platform.charAt(0).toUpperCase() + platform.slice(1)).join(" · ")
+        : "N/A";
+
     // Scroll to top on mount
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -187,7 +191,7 @@ export default function SoftwareDetailPage() {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {/* Left Column - Image and Quick Actions */}
                             <div className="lg:col-span-1">
-                                <div className="bg-white rounded-xl shadow-sm overflow-hidden sticky top-20">
+                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-20">
                                     {/* Software Image */}
                                     <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200">
                                         {software.image_url ? (
@@ -202,8 +206,8 @@ export default function SoftwareDetailPage() {
                                             </div>
                                         )}
                                         <div className="absolute top-4 right-4">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                                Free
+                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                {software.license || "Free"}
                                             </span>
                                         </div>
                                     </div>
@@ -215,7 +219,7 @@ export default function SoftwareDetailPage() {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             title={`Tải xuống ${software.name}`}
-                                            className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-[#004080] hover:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#004080] transition-all cursor-pointer"
+                                            className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-xl shadow-sm text-white bg-[#004080] hover:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#004080] transition-all cursor-pointer"
                                         >
                                             <Download className="h-5 w-5 mr-2" />
                                             Tải ngay
@@ -227,7 +231,7 @@ export default function SoftwareDetailPage() {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 title="Xem tài liệu hướng dẫn"
-                                                className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#004080] transition-all cursor-pointer"
+                                                className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#004080] transition-all cursor-pointer"
                                             >
                                                 <FileText className="h-5 w-5 mr-2" />
                                                 Tài liệu
@@ -237,20 +241,20 @@ export default function SoftwareDetailPage() {
                                         {/* Software Info */}
                                         <div className="pt-4 border-t border-gray-200 space-y-3">
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-600">Phiên bản:</span>
-                                                <span className="font-medium text-gray-900">{software.version || "N/A"}</span>
+                                                <span className="text-gray-500">Phiên bản</span>
+                                                <span className="font-semibold text-gray-900">{software.version || "N/A"}</span>
                                             </div>
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-600">Nhà phát triển:</span>
-                                                <span className="font-medium text-gray-900">{software.vendor || "N/A"}</span>
+                                                <span className="text-gray-500">Nhà phát triển</span>
+                                                <span className="font-semibold text-gray-900 text-right">{software.vendor || "N/A"}</span>
                                             </div>
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-600">Giấy phép:</span>
-                                                <span className="font-medium text-gray-900">{software.license || "Free"}</span>
+                                                <span className="text-gray-500">Giấy phép</span>
+                                                <span className="font-semibold text-gray-900">{software.license || "Free"}</span>
                                             </div>
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-600">Nền tảng:</span>
-                                                <span className="font-medium text-gray-900">{software.platform.join(", ")}</span>
+                                            <div className="flex items-start justify-between text-sm gap-4">
+                                                <span className="text-gray-500">Nền tảng</span>
+                                                <span className="font-semibold text-gray-900 text-right">{platformText}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -260,18 +264,35 @@ export default function SoftwareDetailPage() {
                             {/* Right Column - Details and Reviews */}
                             <div className="lg:col-span-2 space-y-6">
                                 {/* Header */}
-                                <div className="bg-white rounded-xl shadow-sm p-6">
+                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1">
-                                            <h1 className="text-3xl font-bold text-gray-900 mb-2">{software.name}</h1>
-                                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#004080]/10 text-[#004080]">
+                                                    <BadgeCheck className="h-3.5 w-3.5 mr-1" />
+                                                    Đã kiểm duyệt
+                                                </span>
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                                    <Layers className="h-3.5 w-3.5 mr-1" />
+                                                    {software.type || "Software"}
+                                                </span>
+                                            </div>
+                                            <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">{software.name}</h1>
+                                            <p className="text-gray-600 mb-4">
+                                                {getShortDescription(software.description, 140)}
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                                                 <div className="flex items-center">
                                                     <Calendar className="h-4 w-4 mr-1.5 text-gray-400" />
                                                     <span>Ngày thêm: {format(new Date(software.created_at), "dd/MM/yyyy")}</span>
                                                 </div>
+                                                <div className="flex items-center">
+                                                    <Monitor className="h-4 w-4 mr-1.5 text-gray-400" />
+                                                    <span>{platformText}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center">
+                                        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
                                             <StarRating value={averageRating || 0} size="lg" />
                                             <span className="ml-2 text-lg font-medium text-gray-700">
                                                 {averageRating ? averageRating.toFixed(1) : "Chưa có đánh giá"}
@@ -284,14 +305,14 @@ export default function SoftwareDetailPage() {
                                 </div>
 
                                 {/* Description */}
-                                <div className="bg-white rounded-xl shadow-sm p-6">
+                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                                     <h2 className="text-xl font-bold text-gray-900 mb-4">Mô tả chi tiết</h2>
                                     <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{software.description}</p>
                                 </div>
 
                                 {/* Installation Instructions */}
                                 {software.installation_instructions && (
-                                    <div className="bg-white rounded-xl shadow-sm p-6">
+                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                                         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
                                             <Shield className="h-5 w-5 mr-2 text-[#004080]" />
                                             Hướng dẫn cài đặt
@@ -303,7 +324,7 @@ export default function SoftwareDetailPage() {
                                 )}
 
                                 {/* Reviews Section */}
-                                <div className="bg-white rounded-xl shadow-sm p-6">
+                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                                     <h2 className="text-xl font-bold text-gray-900 mb-6">Đánh giá</h2>
 
                                     {user ? (

@@ -395,7 +395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/seller", sellerRouter);
   app.use("/api/buyer", buyerRouter);
   app.use("/api/notifications", notificationRouter);
-  // app.use("/api/chat", chatRouter); // REMOVED - Chat is WebSocket-only via Chat Service
+  app.use("/api/chat", chatRouter);
   app.use("/api/orders", orderRouter);
   app.use("/api/admin", adminRouter);
   app.use("/api/products", productRouter);

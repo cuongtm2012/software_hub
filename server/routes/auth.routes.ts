@@ -5,7 +5,8 @@ import { db } from "../db";
 import { users } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
 import crypto from "crypto";
-import { sendWelcomeEmail, sendPasswordResetEmail, sendVerificationEmail } from "../email";
+import { sendWelcomeEmail } from "../email";
+import { enqueuePasswordResetEmailJob, enqueueVerificationEmailJob } from "../lib/monolith-queue.js";
 import { isAuthenticated, adminMiddleware } from "../middleware/auth.middleware";
 
 const router = Router();
@@ -249,14 +250,8 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 
         const verificationUrl = `${req.protocol}://${req.get('host')}/auth/set-password?token=${verificationToken}`;
 
-        sendVerificationEmail(email, verificationUrl).then(result => {
-          if (result.success) {
-            console.log(`Verification email resent to ${email} (${result.messageId})`);
-          } else {
-            console.error(`Failed to resend verification email to ${email}:`, result.error);
-          }
-        }).catch(error => {
-          console.error(`Verification email error for ${email}:`, error);
+        enqueueVerificationEmailJob({ email, verificationUrl }).catch(error => {
+          console.error(`Verification email queue error for ${email}:`, error);
         });
 
         return res.status(200).json({
@@ -291,14 +286,8 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     // Send verification email
     const verificationUrl = `${req.protocol}://${req.get('host')}/auth/set-password?token=${verificationToken}`;
 
-    sendVerificationEmail(email, verificationUrl).then(result => {
-      if (result.success) {
-        console.log(`Verification email sent to ${email} (${result.messageId})`);
-      } else {
-        console.error(`Failed to send verification email to ${email}:`, result.error);
-      }
-    }).catch(error => {
-      console.error(`Verification email error for ${email}:`, error);
+    enqueueVerificationEmailJob({ email, verificationUrl }).catch(error => {
+      console.error(`Verification email queue error for ${email}:`, error);
     });
 
     res.status(201).json({
@@ -450,14 +439,12 @@ router.post("/forgot-password", async (req: Request, res: Response, next: NextFu
     // Send password reset email
     const resetUrl = `${req.protocol}://${req.get('host')}/auth/reset-password?token=${resetToken}`;
 
-    sendPasswordResetEmail(user.email, user.name, resetUrl).then(result => {
-      if (result.success) {
-        console.log(`Password reset email sent to ${user.email} (${result.messageId})`);
-      } else {
-        console.error(`Failed to send password reset email to ${user.email}:`, result.error);
-      }
+    enqueuePasswordResetEmailJob({
+      email: user.email,
+      name: user.name,
+      resetUrl
     }).catch(error => {
-      console.error(`Password reset email error for ${user.email}:`, error);
+      console.error(`Password reset email queue error for ${user.email}:`, error);
     });
 
   } catch (error) {

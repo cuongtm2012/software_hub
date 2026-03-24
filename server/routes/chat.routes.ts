@@ -1,57 +1,72 @@
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
+import { storage } from "../storage.js";
 
 const router = Router();
 
-// ==========================================
-// CHAT ROUTES REMOVED - USE WEBSOCKET ONLY
-// ==========================================
-// Chat functionality is now handled entirely via WebSocket
-// Client should connect directly to Chat Service at ws://localhost:3002
-// 
-// No REST API proxy needed - Chat Service is WebSocket-only
-// ==========================================
+// Monolith chat routes (REST fallback for local monolith mode).
+// NOTE: Realtime WebSocket events are still optional; these endpoints
+// allow the chat UI to function without external chat microservice.
 
-// Health check endpoint to verify chat service is accessible
-router.get('/health', async (req: Request, res: Response) => {
-  try {
-    const CHAT_SERVICE_URL = process.env.CHAT_SERVICE_URL || 'http://localhost:3002';
-    const response = await fetch(`${CHAT_SERVICE_URL}/health`);
-    const data = await response.json();
-
-    res.json({
-      success: true,
-      chatService: data,
-      message: 'Chat service is reachable. Use WebSocket for chat functionality.'
-    });
-  } catch (error: any) {
-    res.status(503).json({
-      success: false,
-      error: 'Chat service unavailable',
-      message: error.message
-    });
-  }
+router.get('/health', async (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    mode: "monolith",
+    message: "Chat API is served by the main app"
+  });
 });
 
 // Get user's chat rooms
 router.get('/rooms/:userId', async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
-    const CHAT_SERVICE_URL = process.env.CHAT_SERVICE_URL || 'http://localhost:3002';
-
-    const response = await fetch(`${CHAT_SERVICE_URL}/api/chat/rooms/${userId}`);
-
-    if (!response.ok) {
-      throw new Error(`Chat service returned ${response.status}`);
+    const userId = Number(req.params.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid userId"
+      });
     }
 
-    const data = await response.json();
-    res.json(data);
+    const rooms = await storage.getUserChatRooms(userId);
+    res.json({
+      success: true,
+      rooms,
+      totalCount: rooms.length
+    });
   } catch (error: any) {
     console.error('Error fetching chat rooms:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch chat rooms',
+      message: error.message
+    });
+  }
+});
+
+// Get room messages
+router.get('/messages/:roomId', async (req: Request, res: Response) => {
+  try {
+    const roomId = Number(req.params.roomId);
+    if (!Number.isFinite(roomId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid roomId"
+      });
+    }
+
+    const limit = Number(req.query.limit) || 50;
+    const before = req.query.before ? Number(req.query.before) : undefined;
+    const messages = await storage.getChatMessages(roomId, limit, before);
+
+    res.json({
+      success: true,
+      messages
+    });
+  } catch (error: any) {
+    console.error('Error fetching chat messages:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch chat messages',
       message: error.message
     });
   }

@@ -69,6 +69,7 @@ import AdminUsersChatPage from "@/pages/admin/users-chat-page";
 import AdminSoftwareManagementPage from "@/pages/admin/software-management-page";
 import EmailTestPage from "@/pages/admin/email-test-page";
 import PushNotificationTestPage from "@/pages/admin/push-notification-test-page";
+import AdminQueuesPage from "@/pages/admin/queues-page";
 import AdminProjectsPage from "@/pages/admin/projects-page";
 import EndToEndTestPage from "@/pages/admin/end-to-end-test-page";
 import { SellerApprovalPage } from "@/pages/admin/seller-approval-page";
@@ -116,6 +117,7 @@ function Router() {
       <ProtectedRoute path="/admin/seller-approvals" component={SellerApprovalPage} roles={['admin']} />
       <ProtectedRoute path="/admin/email-tests" component={EmailTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/push-notifications" component={PushNotificationTestPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/queues" component={AdminQueuesPage} roles={['admin']} />
       <ProtectedRoute path="/admin/end-to-end-tests" component={EndToEndTestPage} roles={['admin']} />
 
 

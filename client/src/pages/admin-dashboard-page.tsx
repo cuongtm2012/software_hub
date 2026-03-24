@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { StatsCard } from "@/components/StatsCard";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Users,
   Package,
@@ -37,9 +41,23 @@ interface AdminStats {
   revenueTrend?: { value: number; isPositive: boolean };
 }
 
+type QueueName = "email:verification" | "email:password-reset" | "push:notification" | string;
+
+interface QueueCounters {
+  pending: number;
+  failed: number;
+  delayed: number;
+}
+
+interface QueueStatsResponse {
+  queues: QueueName[];
+  stats: Record<string, QueueCounters>;
+}
+
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
 
   // Redirect if not admin
   if (user?.role !== "admin") {
@@ -55,6 +73,55 @@ export default function AdminDashboardPage() {
       totalSoftware: 0,
       totalOrders: 0,
       totalRevenue: 0,
+    },
+  });
+
+  const { data: queueData, isLoading: queueLoading, refetch: refetchQueue } = useQuery<QueueStatsResponse>({
+    queryKey: ["/api/admin/queue/stats"],
+    refetchInterval: 10000,
+  });
+
+  const retryFailedMutation = useMutation({
+    mutationFn: async ({ queueName, limit }: { queueName: string; limit?: number }) => {
+      const response = await apiRequest("POST", `/api/admin/queue/${encodeURIComponent(queueName)}/retry-failed`, {
+        limit: limit ?? 50,
+      });
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Retry queued",
+        description: data?.message || "Failed jobs moved to active queue",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/queue/stats"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Retry failed",
+        description: error?.message || "Could not retry failed jobs",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const clearFailedMutation = useMutation({
+    mutationFn: async (queueName: string) => {
+      const response = await apiRequest("DELETE", `/api/admin/queue/${encodeURIComponent(queueName)}/failed`);
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Failed queue cleared",
+        description: data?.message || "Removed failed jobs",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/queue/stats"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Clear failed",
+        description: error?.message || "Could not clear failed jobs",
+        variant: "destructive",
+      });
     },
   });
 
@@ -188,7 +255,90 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </a>
+
+          <a href="/admin/queues" className="block">
+            <div className="p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-slate-500 dark:hover:border-slate-500 transition-colors cursor-pointer">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-slate-100 dark:bg-slate-900 rounded-lg">
+                  <RefreshCw className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Queue Operations</h3>
+                  <p className="text-sm text-muted-foreground">Retry and clear failed jobs</p>
+                </div>
+              </div>
+            </div>
+          </a>
         </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl">Queue Management</CardTitle>
+              <CardDescription>
+                Monitor async jobs for email and push notifications
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetchQueue()}>
+              Refresh Queue
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {queueLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(queueData?.queues || []).map((queueName) => {
+                  const q = queueData?.stats?.[queueName] || { pending: 0, failed: 0, delayed: 0 };
+                  return (
+                    <div
+                      key={queueName}
+                      className="flex flex-col gap-3 rounded-lg border p-3 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="space-y-2">
+                        <p className="font-medium">{queueName}</p>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Badge variant="secondary">Pending: {q.pending}</Badge>
+                          <Badge variant="outline">Delayed: {q.delayed}</Badge>
+                          <Badge variant={q.failed > 0 ? "destructive" : "secondary"}>
+                            Failed: {q.failed}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={q.failed === 0 || retryFailedMutation.isPending}
+                          onClick={() => retryFailedMutation.mutate({ queueName })}
+                        >
+                          Retry Failed
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={q.failed === 0 || clearFailedMutation.isPending}
+                          onClick={() => clearFailedMutation.mutate(queueName)}
+                        >
+                          Clear Failed
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {(queueData?.queues?.length || 0) === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No queue processors registered yet. Start the monolith server to initialize queues.
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Footer */}
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-4 border-t">

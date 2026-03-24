@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "imports": {
+    "@shared/schema": ["./dist/shared/schema.js"],
+    "@shared/schema/*": ["./dist/shared/*"],
+    "@shared/*": ["./shared/*"]
+  },
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "npm run build:client && npm run build:server",

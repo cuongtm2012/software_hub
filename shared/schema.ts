@@ -702,7 +702,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   created_at: true,
   updated_at: true,
   profile_data: true,
-});
+} as any);
 
 // Forgot password schemas
 export const forgotPasswordSchema = z.object({
@@ -724,24 +724,24 @@ export const insertSoftwareSchema = createInsertSchema(softwares).omit({
   created_by: true,
   status: true,
   type: true, // type will be set based on category or explicitly
-});
+} as any);
 
 export const insertReviewSchema = createInsertSchema(reviews).omit({
   id: true,
   created_at: true,
   user_id: true,
-});
+} as any);
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
-});
+} as any);
 
 // External request schema
 export const insertExternalRequestSchema = createInsertSchema(externalRequests).omit({
   id: true,
   created_at: true,
   status: true,
-});
+} as any);
 
 // Phase 2 schemas - Project schema now uses externalRequests as unified table
 export const insertProjectSchema = createInsertSchema(externalRequests).omit({
@@ -751,32 +751,32 @@ export const insertProjectSchema = createInsertSchema(externalRequests).omit({
   status: true,
   client_id: true,
   assigned_developer_id: true,
-});
+} as any);
 
 export const insertQuoteSchema = createInsertSchema(quotes).omit({
   id: true,
   created_at: true,
   status: true,
   developer_id: true,
-});
+} as any);
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   created_at: true,
   sender_id: true,
-});
+} as any);
 
 export const insertPortfolioSchema = createInsertSchema(portfolios).omit({
   id: true,
   created_at: true,
   developer_id: true,
-});
+} as any);
 
 export const insertPortfolioReviewSchema = createInsertSchema(portfolioReviews).omit({
   id: true,
   created_at: true,
   user_id: true,
-});
+} as any);
 
 // Phase 3 schemas
 export const insertProductSchema = createInsertSchema(products).omit({
@@ -784,7 +784,7 @@ export const insertProductSchema = createInsertSchema(products).omit({
   created_at: true,
   updated_at: true,
   seller_id: true,
-});
+} as any);
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
@@ -792,30 +792,30 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   updated_at: true,
   status: true,
   buyer_id: true,
-});
+} as any);
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   id: true,
-});
+} as any);
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
   created_at: true,
   status: true,
   escrow_release: true,
-});
+} as any);
 
 export const insertProductReviewSchema = createInsertSchema(productReviews).omit({
   id: true,
   created_at: true,
   buyer_id: true,
-});
+} as any);
 
 export const insertUserDownloadSchema = createInsertSchema(userDownloads).omit({
   id: true,
   downloaded_at: true,
   user_id: true,
-});
+} as any);
 
 // New marketplace schemas
 export const insertSellerProfileSchema = createInsertSchema(sellerProfiles).omit({
@@ -827,25 +827,25 @@ export const insertSellerProfileSchema = createInsertSchema(sellerProfiles).omit
   total_sales: true,
   rating: true,
   total_reviews: true,
-});
+} as any);
 
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   id: true,
   created_at: true,
   user_id: true,
-});
+} as any);
 
 export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
   id: true,
   created_at: true,
   updated_at: true,
   buyer_id: true,
-});
+} as any);
 
 export const insertSalesAnalyticsSchema = createInsertSchema(salesAnalytics).omit({
   id: true,
   created_at: true,
-});
+} as any);
 
 // IT Services schemas
 export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({
@@ -854,7 +854,7 @@ export const insertServiceRequestSchema = createInsertSchema(serviceRequests).om
   updated_at: true,
   status: true,
   client_id: true,
-});
+} as any);
 
 export const insertServiceQuotationSchema = createInsertSchema(serviceQuotations).omit({
   id: true,
@@ -862,7 +862,7 @@ export const insertServiceQuotationSchema = createInsertSchema(serviceQuotations
   updated_at: true,
   status: true,
   admin_id: true,
-});
+} as any);
 
 export const insertServiceProjectSchema = createInsertSchema(serviceProjects).omit({
   id: true,
@@ -871,7 +871,7 @@ export const insertServiceProjectSchema = createInsertSchema(serviceProjects).om
   status: true,
   client_id: true,
   admin_id: true,
-});
+} as any);
 
 export const insertServicePaymentSchema = createInsertSchema(servicePayments).omit({
   id: true,
@@ -879,7 +879,7 @@ export const insertServicePaymentSchema = createInsertSchema(servicePayments).om
   updated_at: true,
   status: true,
   client_id: true,
-});
+} as any);
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -1064,27 +1064,27 @@ export const insertChatRoomSchema = createInsertSchema(chatRooms).omit({
   id: true,
   created_at: true,
   updated_at: true,
-});
+} as any);
 
 export const insertChatRoomMemberSchema = createInsertSchema(chatRoomMembers).omit({
   id: true,
   joined_at: true,
-});
+} as any);
 
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   id: true,
   created_at: true,
-});
+} as any);
 
 export const insertUserPresenceSchema = createInsertSchema(userPresence).omit({
   id: true,
   last_seen: true,
-});
+} as any);
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   created_at: true,
-});
+} as any);
 
 // Chat types
 export type ChatRoom = typeof chatRooms.$inferSelect;

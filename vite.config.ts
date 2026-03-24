@@ -4,6 +4,9 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ["react-hook-form", "@hookform/resolvers"],
+  },
   plugins: [
     react(),
     runtimeErrorOverlay(),
