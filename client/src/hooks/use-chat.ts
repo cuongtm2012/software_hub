@@ -70,7 +70,9 @@ export function useChat(): UseChatReturn {
   useEffect(() => {
     if (!user) return;
 
-    const CHAT_SERVICE_URL = import.meta.env.VITE_CHAT_SERVICE_URL || 'http://localhost:3002';
+    // Monolith-first default: same-origin socket endpoint.
+    // You can still override with VITE_CHAT_SERVICE_URL when needed.
+    const CHAT_SERVICE_URL = import.meta.env.VITE_CHAT_SERVICE_URL || window.location.origin;
 
     const newSocket = io(CHAT_SERVICE_URL, {
       transports: ['websocket', 'polling'],
@@ -100,11 +102,7 @@ export function useChat(): UseChatReturn {
 
     newSocket.on('connect_error', (error) => {
       console.error('Chat connection error:', error);
-      toast({
-        title: 'Connection Error',
-        description: 'Unable to connect to chat service',
-        variant: 'destructive'
-      });
+      console.warn('Chat socket unavailable, using API fallback mode');
     });
 
     // Authentication response
@@ -115,11 +113,7 @@ export function useChat(): UseChatReturn {
 
     newSocket.on('authentication-failed', (data) => {
       console.error('❌ Authentication failed:', data);
-      toast({
-        title: 'Authentication Failed',
-        description: 'Failed to authenticate with chat service',
-        variant: 'destructive'
-      });
+      console.warn('Chat socket authentication failed');
     });
 
     // Message events

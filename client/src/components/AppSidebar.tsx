@@ -7,6 +7,7 @@ import {
     LogOut,
     BarChart3,
     Bell,
+    ListChecks,
     MessageSquare,
     FileText,
     Heart,
@@ -61,6 +62,11 @@ const adminMenuItems = [
         title: "Notifications",
         url: "/admin/push-notifications",
         icon: Bell,
+    },
+    {
+        title: "Queues",
+        url: "/admin/queues",
+        icon: ListChecks,
     },
 ];
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
 import { isAuthenticated } from "../middleware/auth.middleware";
+import { enqueuePushNotificationJob } from "../lib/monolith-queue.js";
 
 const router = Router();
 
@@ -169,37 +170,18 @@ router.post("/send-push", isAuthenticated, async (req: Request, res: Response, n
       return res.status(400).json({ message: "userId, title, and body are required" });
     }
 
-    const { storage } = await import("../storage");
-    const { sendPushNotificationToMultiple } = await import("../lib/firebase-admin");
+    const jobId = await enqueuePushNotificationJob({
+      userId: Number(userId),
+      title,
+      body,
+      data: data || {}
+    });
 
-    // Get user's FCM tokens
-    const tokens = await storage.getUserFCMTokens(userId);
-
-    if (tokens.length === 0) {
-      return res.status(404).json({
-        message: "No FCM tokens found for user. User needs to enable notifications first."
-      });
-    }
-
-    // Send push notification
-    const result = await sendPushNotificationToMultiple(
-      tokens,
-      { title, body },
-      data || {}
-    );
-
-    // Cleanup invalid tokens
-    if (result.invalidTokens.length > 0) {
-      await storage.cleanupInvalidTokens(result.invalidTokens);
-    }
-
-    console.log(`✅ Sent push notification to user ${userId}: ${result.successCount}/${tokens.length} delivered`);
-
-    res.json({
+    res.status(202).json({
       success: true,
-      delivered: result.successCount,
-      failed: result.failureCount,
-      message: `Push notification sent to ${result.successCount} device(s)`
+      queued: true,
+      jobId,
+      message: "Push notification queued for delivery"
     });
   } catch (error: any) {
     console.error('Send push notification error:', error);
@@ -220,7 +202,7 @@ router.post("/test-push/:userId", isAuthenticated, async (req: Request, res: Res
     }
 
     const { storage } = await import("../storage");
-    const { sendPushNotificationToMultiple, cleanupInvalidTokens } = await import("../lib/firebase-admin");
+    const { sendPushNotificationToMultiple } = await import("../lib/firebase-admin");
 
     // Get user's FCM tokens
     const tokens = await storage.getUserFCMTokens(userId);

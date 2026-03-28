@@ -8,8 +8,67 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { insertSoftwareSchema, insertCategorySchema } from "@shared/schema";
 import { adminMiddleware } from "../middleware/auth.middleware";
+import { queueManager } from "../lib/queue.js";
 
 const router = Router();
+
+// ============ Queue Management ============
+
+router.get("/queue/stats", adminMiddleware, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const queues = queueManager.getRegisteredQueues();
+    const statsEntries = await Promise.all(
+      queues.map(async (name) => [name, await queueManager.getStats(name)] as const),
+    );
+
+    const stats = Object.fromEntries(statsEntries);
+    res.json({ queues, stats });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/queue/:queueName/retry-failed", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { queueName } = req.params;
+    const limit = Number(req.body?.limit) || 50;
+
+    const queues = queueManager.getRegisteredQueues();
+    if (!queues.includes(queueName)) {
+      return res.status(404).json({ message: "Queue not found" });
+    }
+
+    const retried = await queueManager.retryFailedJobs(queueName, limit);
+    res.json({
+      success: true,
+      queue: queueName,
+      retried,
+      message: `Retried ${retried} failed job(s)`
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/queue/:queueName/failed", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { queueName } = req.params;
+    const queues = queueManager.getRegisteredQueues();
+    if (!queues.includes(queueName)) {
+      return res.status(404).json({ message: "Queue not found" });
+    }
+
+    const removed = await queueManager.clearFailedJobs(queueName);
+    res.json({
+      success: true,
+      queue: queueName,
+      removed,
+      message: `Cleared ${removed} failed job(s)`
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ============ Dashboard Statistics ============
 
