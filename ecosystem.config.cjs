@@ -77,7 +77,7 @@ module.exports = {
             ref: 'origin/main',
             repo: 'git@github.com:yourusername/software-hub.git',
             path: '/var/www/software-hub',
-            'post-deploy': 'npm ci --production && pm2 reload ecosystem.config.js --env production && pm2 save'
+            'post-deploy': 'npm ci --omit=dev && pm2 reload ecosystem.config.cjs --env production && pm2 save'
         }
     }
 };

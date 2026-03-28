@@ -39,8 +39,8 @@ jobs:
           cp -r services deploy/
           # Copy package files
           cp package*.json deploy/
-          # Copy ecosystem config for PM2
-          cp ecosystem.config.js deploy/
+          # Copy ecosystem config for PM2 (.cjs so PM2 works with package.json "type": "module")
+          cp ecosystem.config.cjs deploy/
           # Copy Docker Compose for VPS
           cp docker-compose.vps.yml deploy/
           # Copy deployment script
