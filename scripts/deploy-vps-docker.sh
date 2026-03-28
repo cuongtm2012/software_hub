@@ -8,10 +8,18 @@ echo "=================================="
 echo "Software Hub — VPS deploy script"
 echo "=================================="
 
-APP_ROOT="$(cd "$(dirname "$0")" && pwd)"
-cd "$APP_ROOT"
-
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE_FILE="docker-compose.vps.yml"
+# Tarball deploy puts this script next to compose at repo root; a git clone has it under scripts/.
+if [ -f "$SCRIPT_DIR/$COMPOSE_FILE" ]; then
+  APP_ROOT="$SCRIPT_DIR"
+elif [ -f "$SCRIPT_DIR/../$COMPOSE_FILE" ]; then
+  APP_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+  echo "❌ Missing $COMPOSE_FILE (looked in $SCRIPT_DIR and $SCRIPT_DIR/..)"
+  exit 1
+fi
+cd "$APP_ROOT"
 
 compose() {
   if docker compose version &>/dev/null 2>&1; then
