@@ -37,7 +37,7 @@ export function Header() {
 
   const navLinkClass = (active: boolean) =>
     cn(
-      "nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base",
+      "nav-item inline-flex shrink-0 items-center px-1.5 lg:px-2 xl:px-3 py-2 rounded-lg transition-all whitespace-nowrap text-xs lg:text-sm xl:text-base",
       active
         ? "bg-slate-600 text-white font-medium"
         : "text-slate-200 hover:bg-slate-700 hover:text-white",
@@ -88,9 +88,9 @@ export function Header() {
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 gap-2 sm:gap-3">
-          <div className="flex min-w-0 flex-1 items-center">
-            <div className="flex-shrink-0 flex items-center space-x-3">
+        <div className="flex items-center h-16 gap-2 sm:gap-3 min-w-0">
+          <div className="flex min-w-0 flex-1 items-center overflow-hidden">
+            <div className="flex shrink-0 items-center space-x-2 lg:space-x-3">
               <Link to="/">
                 <img
                   src="/software-hub-logo.png"
@@ -100,7 +100,7 @@ export function Header() {
               </Link>
               {user && <NotificationBell />}
             </div>
-            <nav className="hidden lg:ml-4 lg:flex lg:space-x-1 xl:space-x-2 items-center min-w-0 overflow-hidden">
+            <nav className="hidden lg:ml-2 lg:flex lg:min-w-0 lg:flex-1 lg:items-center lg:gap-0.5 xl:gap-1 lg:overflow-x-auto lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] lg:[&::-webkit-scrollbar]:hidden xl:overflow-visible">
               <Link to="/" className={navLinkClass(location === "/")}>
                 Home
               </Link>
@@ -123,11 +123,12 @@ export function Header() {
               </Link>
             </nav>
           </div>
-          <div className="hidden md:flex md:items-center md:flex-shrink-0 md:ml-2">
+          <div className="relative z-10 hidden shrink-0 md:flex md:items-center md:gap-2 md:pl-2">
             <form className="relative" onSubmit={handleSearch}>
               <Input
-                className="w-36 lg:w-48 xl:w-56 rounded-lg bg-slate-900/50 border-slate-600 py-2 pl-10 pr-4 placeholder:text-slate-400 text-white focus-visible:ring-2 focus-visible:ring-[#ffcc00] focus-visible:border-transparent focus-visible:outline-none transition-all"
-                placeholder="Tìm kiếm phần mềm, tài liệu..."
+                className="w-28 lg:w-36 xl:w-48 2xl:w-56 rounded-lg bg-slate-900/50 border-slate-600 py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 text-white focus-visible:ring-2 focus-visible:ring-[#ffcc00] focus-visible:border-transparent focus-visible:outline-none transition-all"
+                placeholder="Tìm kiếm..."
+                title="Tìm kiếm phần mềm, tài liệu..."
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -138,7 +139,7 @@ export function Header() {
             </form>
 
             {!user ? (
-              <div className="flex items-center space-x-3 ml-4">
+              <div className="flex items-center space-x-2 xl:space-x-3">
                 {/* Shopping Cart */}
                 <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors relative">
                   <ShoppingCart className="w-5 h-5 text-slate-200" />
@@ -162,7 +163,7 @@ export function Header() {
                 </Button>
               </div>
             ) : (
-              <div className="ml-4 flex items-center space-x-3">
+              <div className="flex items-center space-x-2 xl:space-x-3">
                 <CartTrigger />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

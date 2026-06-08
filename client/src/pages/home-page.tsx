@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { getShortDescription } from "@/lib/translations";
 import { PageHero } from "@/components/design-system/page-hero";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
+import { HorizontalScrollRow } from "@/components/horizontal-scroll-row";
 
 // Utility function to chunk array into groups
 const chunkArray = <T,>(array: T[], size: number): T[][] => {
@@ -190,10 +191,10 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#f9f9f9]">
       <Header />
 
-      <main className="flex-grow">
+      <main className="min-w-0 flex-grow overflow-x-hidden">
         <PageHero
           align="centered"
           badge="Software Hub Marketplace"
@@ -229,8 +230,8 @@ export default function HomePage() {
         />
 
         {/* Top Downloads Section */}
-        <section className="bg-white border-b py-8">
-          <div className="w-full px-[4%]">
+        <section className="overflow-hidden border-b bg-white py-8">
+          <div className="w-full min-w-0 max-w-full px-[4%]">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-amber-100 rounded-lg">
                 <TrendingUp className="w-6 h-6 text-amber-600" />
@@ -241,13 +242,12 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Horizontal Scroll */}
-            <div className="horizontal-scroll -mx-[4%] px-[4%]">
+            <HorizontalScrollRow>
               {(popularSoftware?.softwares || Array(10).fill(null)).map((software: any, index: number) => (
                 <div
                   key={software?.id || index}
                   onClick={() => software && navigate(`/software/${software.id}`)}
-                  className={`scroll-snap-item bg-white ${productCardClass}`}
+                  className={`w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] bg-white ${productCardClass}`}
                   title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                 >
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -295,14 +295,14 @@ export default function HomePage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </HorizontalScrollRow>
           </div>
         </section>
 
 
         {/* Recent Updates Section */}
-        <section className="bg-gradient-to-br from-slate-50 to-white border-b py-8">
-          <div className="w-full px-[4%]">
+        <section className="overflow-hidden border-b bg-gradient-to-br from-slate-50 to-white py-8">
+          <div className="w-full min-w-0 max-w-full px-[4%]">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Clock className="w-6 h-6 text-green-600" />
@@ -313,13 +313,12 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Horizontal Scroll */}
-            <div className="horizontal-scroll -mx-[4%] px-[4%]">
+            <HorizontalScrollRow>
               {(recentSoftware?.softwares || Array(10).fill(null)).map((software: any, index: number) => (
                 <div
                   key={software?.id || index}
                   onClick={() => software && navigate(`/software/${software.id}`)}
-                  className={`scroll-snap-item bg-white ${productCardClass}`}
+                  className={`w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] bg-white ${productCardClass}`}
                   title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                 >
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -373,7 +372,7 @@ export default function HomePage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </HorizontalScrollRow>
           </div>
         </section>
 

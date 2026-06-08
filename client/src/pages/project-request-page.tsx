@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
   Plus,
   X,
-  Calendar,
   DollarSign,
   Loader2
 } from "lucide-react";
@@ -335,15 +335,14 @@ export default function ProjectRequestPage() {
                           <label className="block text-sm font-semibold text-gray-700 mb-2">
                             Ngày giao dự kiến
                           </label>
-                          <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                              type="date"
-                              value={formData.deliveryDate}
-                              onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
-                              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                            />
-                          </div>
+                          <DatePickerField
+                            value={formData.deliveryDate}
+                            onChange={(deliveryDate) =>
+                              setFormData({ ...formData, deliveryDate })
+                            }
+                            placeholder="Chọn ngày giao dự kiến"
+                            minDate={new Date()}
+                          />
                         </div>
                       </div>
                     </div>
