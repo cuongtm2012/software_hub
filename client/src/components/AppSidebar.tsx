@@ -54,6 +54,16 @@ const adminMenuItems = [
         icon: Package,
     },
     {
+        title: "Blog",
+        url: "/admin/blog",
+        icon: FileText,
+    },
+    {
+        title: "Leads",
+        url: "/admin/leads",
+        icon: Users,
+    },
+    {
         title: "Analytics",
         url: "/admin/analytics",
         icon: BarChart3,

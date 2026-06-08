@@ -19,6 +19,11 @@ import adminRouter from "./routes/admin.routes.js";
 import productRouter from "./routes/product.routes.js";
 import softwareRouter from "./routes/software.routes.js";
 import coursesRouter from "./routes/courses.routes.js";
+import leadsRouter from "./routes/leads.routes.js";
+import blogRouter from "./routes/blog.routes.js";
+import sitemapRouter from "./routes/sitemap.routes.js";
+import uploadRouter from "./routes/upload.routes.js";
+import { authRateLimiter } from "./middleware/rate-limit.js";
 
 // Import named exports (register functions)
 import { registerMarketplaceRoutes } from "./routes/marketplace.routes.js";
@@ -27,182 +32,31 @@ import { registerPaymentRoutes } from "./routes/payment.routes.js";
 import { registerServiceRoutes } from "./routes/service.routes.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // ==========================================
-  // BASIC AUTH ROUTES (Login/Logout/Register)
-  // ==========================================
+  // SEO: sitemap + robots.txt
+  app.use(sitemapRouter);
 
-  // Simple login endpoint
-  app.post("/api/login", async (req, res, next) => {
+  // Logout stub — client uses Supabase signOut; kept for backward compatibility
+  app.post("/api/logout", (_req, res) => {
+    res.json({ message: "Logout successful" });
+  });
+
+  // Get current user (Supabase JWT)
+  app.get("/api/user", async (req, res) => {
     try {
-      const { email, password } = req.body;
-
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email and password required" });
-      }
-
-      const user = await storage.getUserByEmail(email);
+      const { resolveUserFromRequest } = await import("./lib/auth-user.js");
+      const user = await resolveUserFromRequest(req);
       if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({ message: "Unauthorized" });
       }
-
-      // Simple password check for testing
-      const isValidPassword =
-        (email === "seller@test.com" && password === "testpassword") ||
-        (email === "buyer@test.com" && password === "testpassword") ||
-        (email === "cuongeurovnn@gmail.com" && password === "abcd@1234") ||
-        (email === "cuongtm2012@gmail.com" && password === "Cuongtm2012$");
-
-      if (!isValidPassword) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      req.session.userId = user.id;
-      req.session.user = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      };
-
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session save failed" });
-        }
-
-        console.log("✅ Session saved successfully:", {
-          sessionId: req.sessionID,
-          userId: req.session.userId,
-          userEmail: req.session.user?.email
-        });
-
-        res.json({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        });
-      });
+      res.json(user);
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Get user error:", error);
       res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Quick Login endpoints for demo accounts
-  app.post("/api/quick-login/seller", async (req, res, next) => {
-    try {
-      const user = await storage.getUserByEmail("seller@test.com");
-
-      if (!user) {
-        return res.status(404).json({ message: "Demo seller account not found" });
-      }
-
-      req.session.userId = user.id;
-      req.session.user = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      };
-
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session save failed" });
-        }
-
-        console.log("✅ Quick login as Seller successful");
-        res.json({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        });
-      });
-    } catch (error) {
-      console.error("Quick login seller error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/quick-login/buyer", async (req, res, next) => {
-    try {
-      const user = await storage.getUserByEmail("buyer@test.com");
-
-      if (!user) {
-        return res.status(404).json({ message: "Demo buyer account not found" });
-      }
-
-      req.session.userId = user.id;
-      req.session.user = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      };
-
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session save failed" });
-        }
-
-        console.log("✅ Quick login as Buyer successful");
-        res.json({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        });
-      });
-    } catch (error) {
-      console.error("Quick login buyer error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Logout endpoint
-  app.post("/api/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Logout failed" });
-      }
-      res.json({ message: "Logout successful" });
-    });
-  });
-
-  // Get current user
-  app.get("/api/user", (req, res) => {
-    // Dev mode: auto-login if auth is disabled
-    if (process.env.DISABLE_AUTH === 'true') {
-      const mockRole = process.env.MOCK_USER_ROLE || 'seller';
-      const mockUsers: Record<string, any> = {
-        seller: { id: 2, name: "Test Seller", email: "seller@test.com", role: "seller", avatar: "" },
-        buyer: { id: 3, name: "Test Buyer", email: "buyer@test.com", role: "buyer", avatar: "" },
-        admin: { id: 1, name: "Admin User", email: "admin@test.com", role: "admin", avatar: "" },
-      };
-
-      const mockUser = mockUsers[mockRole] || mockUsers.seller;
-
-      // Set session for consistency
-      req.session.userId = mockUser.id;
-      req.session.user = mockUser;
-
-      console.log('🔓 [DEV MODE] Auto-login:', mockUser.email, `(${mockUser.role})`);
-      return res.json(mockUser);
-    }
-
-    // Normal mode: check session
-    if (req.session?.user) {
-      res.json(req.session.user);
-    } else {
-      res.status(401).json({ message: "Unauthorized" });
     }
   });
 
   // Registration endpoint - Email only, sends verification link
-  app.post("/api/register", async (req, res, next) => {
+  app.post("/api/register", authRateLimiter, async (req, res, next) => {
     try {
       const { email } = req.body;
 
@@ -401,6 +255,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/products", productRouter);
   app.use("/api/softwares", softwareRouter);
   app.use("/api/courses", coursesRouter);
+  app.use("/api/leads", leadsRouter);
+  app.use("/api/blog", blogRouter);
+  app.use("/api/storage", uploadRouter);
 
   // Register function-based routes (named exports)
   registerMarketplaceRoutes(app);

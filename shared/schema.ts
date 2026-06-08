@@ -51,9 +51,13 @@ export const messageStatusEnum = pgEnum('message_status', ['sent', 'delivered', 
 // Chat room type enum
 export const roomTypeEnum = pgEnum('room_type', ['direct', 'group']);
 
+// Blog post status enum
+export const blogPostStatusEnum = pgEnum('blog_post_status', ['draft', 'published', 'archived']);
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  supabase_id: text("supabase_id").unique(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
@@ -107,8 +111,11 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
 // Software table
 export const softwares = pgTable("softwares", {
   id: serial("id").primaryKey(),
+  slug: text("slug").unique(),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  seo_description: text("seo_description"),
+  seo_content: text("seo_content"),
   type: softwareTypeEnum("type").default('software').notNull(), // 'software' or 'api'
   category_id: integer("category_id").references(() => categories.id).notNull(),
   platform: text("platform").array().notNull(),
@@ -128,8 +135,11 @@ export const softwares = pgTable("softwares", {
 // Courses table for IT learning resources
 export const courses = pgTable("courses", {
   id: serial("id").primaryKey(),
+  slug: text("slug").unique(),
   title: text("title").notNull(),
   description: text("description"),
+  seo_description: text("seo_description"),
+  seo_content: text("seo_content"),
   topic: text("topic").notNull(), // JavaScript, Python, C, React, etc.
   instructor: text("instructor"), // F8 Official, Hỏi Dân IT, etc.
   youtube_url: text("youtube_url").notNull(),
@@ -140,6 +150,37 @@ export const courses = pgTable("courses", {
   status: statusEnum("status").default('approved').notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Blog posts for content marketing / SEO
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  seo_description: text("seo_description"),
+  cover_image: text("cover_image"),
+  author_id: integer("author_id").references(() => users.id),
+  author_name: text("author_name").default('Software Hub'),
+  tags: text("tags").array(),
+  status: blogPostStatusEnum("status").default('draft').notNull(),
+  published_at: timestamp("published_at"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Lead capture for GTM conversion funnel
+export const leads = pgTable("leads", {
+  id: serial("id").primaryKey(),
+  name: text("name"),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  source: text("source").notNull(), // course_page, software_page, blog, ebook
+  source_id: text("source_id"),
+  status: text("status").default('new').notNull(), // new, contacted, converted, closed
+  notes: text("notes"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Reviews table

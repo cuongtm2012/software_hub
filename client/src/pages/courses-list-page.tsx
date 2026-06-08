@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Pagination } from "@/components/pagination";
 import { CourseThumbnail } from "@/components/course-thumbnail";
+import { getCourseUrl } from "@/lib/course-utils";
+import { PageMeta } from "@/components/seo/page-meta";
 
 export default function CoursesListPage() {
     const [location, navigate] = useLocation();
@@ -80,6 +82,11 @@ export default function CoursesListPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+            <PageMeta
+                title="Khóa học lập trình miễn phí tiếng Việt — Software Hub"
+                description="Học lập trình miễn phí với 50+ khóa học IT tiếng Việt: React, Python, JavaScript, DevOps và nhiều hơn nữa."
+                canonicalUrl={`${window.location.origin}/courses`}
+            />
             <Header />
 
             <main className="flex-grow">
@@ -205,7 +212,7 @@ export default function CoursesListPage() {
                                         <div
                                             key={course.id}
                                             className="group overflow-hidden border border-gray-200 rounded-xl hover:shadow-2xl hover:border-indigo-600 transition-all duration-300 flex flex-col h-full bg-white cursor-pointer"
-                                            onClick={() => navigate(`/courses/${course.id}`)}
+                                            onClick={() => navigate(getCourseUrl(course))}
                                         >
                                             {/* Thumbnail */}
                                             <div className="relative pt-[60%] overflow-hidden">

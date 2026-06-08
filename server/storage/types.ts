@@ -1,7 +1,6 @@
 // Base storage interface types
 export interface IStorage {
   initialize(): Promise<void>;
-  sessionStore: any;
 }
 
 // Re-export common types that storage modules will need

@@ -1,5 +1,6 @@
 import { db } from '../server/db';
 import { courses } from '../shared/schema';
+import { generateCourseSlug } from '../server/lib/slug';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -53,8 +54,8 @@ async function seedITCourses() {
                 }
 
                 if (!dryRun) {
-                    // Insert course
                     await db.insert(courses).values({
+                        slug: generateCourseSlug(course.title, topicData.topic),
                         title: course.title,
                         description: `Khóa học ${topicData.topic} bằng tiếng Việt`,
                         topic: topicData.topic,

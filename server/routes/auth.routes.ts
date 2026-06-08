@@ -8,212 +8,23 @@ import crypto from "crypto";
 import { sendWelcomeEmail } from "../email";
 import { enqueuePasswordResetEmailJob, enqueueVerificationEmailJob } from "../lib/monolith-queue.js";
 import { isAuthenticated, adminMiddleware } from "../middleware/auth.middleware";
+import { authRateLimiter } from "../middleware/rate-limit.js";
+import { resolveUserFromRequest } from "../lib/auth-user.js";
 
 const router = Router();
 
-// Login endpoint
-router.post("/login", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
-    }
-
-    // Find user by email
-    const user = await userStorage.getUserByEmail(email);
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    // Check if email is verified
-    if (!user.email_verified) {
-      return res.status(403).json({
-        message: "Please verify your email before logging in. Check your inbox for the verification link.",
-        emailNotVerified: true
-      });
-    }
-
-    // Simple password check for testing - bypass hashing for test accounts
-    const isValidPassword =
-      (email === "seller@test.com" && password === "testpassword") ||
-      (email === "buyer@test.com" && password === "testpassword") ||
-      (email === "cuongeurovnn@gmail.com" && password === "abcd@1234") ||
-      (email === "cuongtm2012@gmail.com" && password === "Cuongtm2012$") ||
-      (user.password === password); // Direct password comparison for new users
-
-    if (!isValidPassword) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    // Create session and save it explicitly
-    req.session.userId = user.id;
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    };
-
-    // Save session explicitly to ensure persistence
-    req.session.save((err) => {
-      if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ message: "Session save failed" });
-      }
-
-      console.log("✅ Session saved successfully:", {
-        sessionId: req.sessionID,
-        userId: req.session.userId,
-        userEmail: req.session.user?.email
-      });
-
-      res.json({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      });
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+router.post("/logout", (_req: Request, res: Response) => {
+  res.json({ message: "Logout successful" });
 });
 
-// Quick Login endpoints for demo accounts
-router.post("/quick-login/seller", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = await userStorage.getUserByEmail("seller@test.com");
-
-    if (!user) {
-      return res.status(404).json({ message: "Demo seller account not found" });
-    }
-
-    req.session.userId = user.id;
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    };
-
-    req.session.save((err) => {
-      if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ message: "Session save failed" });
-      }
-
-      console.log("✅ Quick login as Seller successful");
-      res.json({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      });
-    });
-  } catch (error) {
-    console.error("Quick login seller error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-router.post("/quick-login/buyer", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = await userStorage.getUserByEmail("buyer@test.com");
-
-    if (!user) {
-      return res.status(404).json({ message: "Demo buyer account not found" });
-    }
-
-    req.session.userId = user.id;
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    };
-
-    req.session.save((err) => {
-      if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ message: "Session save failed" });
-      }
-
-      console.log("✅ Quick login as Buyer successful");
-      res.json({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      });
-    });
-  } catch (error) {
-    console.error("Quick login buyer error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-router.post("/quick-login/admin", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    console.log("🔍 Admin quick login - searching for cuongeurovnn@gmail.com");
-    const user = await userStorage.getUserByEmail("cuongeurovnn@gmail.com");
-    console.log("🔍 User found:", user ? `${user.email} (${user.role})` : "NOT FOUND");
-
-    if (!user) {
-      console.log("❌ Admin account not found");
-      return res.status(404).json({ message: "Demo admin account not found" });
-    }
-
-    req.session.userId = user.id;
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    };
-
-    req.session.save((err) => {
-      if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ message: "Session save failed" });
-      }
-
-      console.log("✅ Quick login as Admin successful");
-      res.json({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      });
-    });
-  } catch (error) {
-    console.error("Quick login admin error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-// Logout endpoint
-router.post("/logout", (req: Request, res: Response) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: "Logout failed" });
-    }
-    res.json({ message: "Logout successful" });
-  });
-});
-
-// Get current user
-router.get("/user", (req: Request, res: Response) => {
-  if (req.session?.user) {
-    res.json(req.session.user);
-  } else {
-    res.status(401).json({ message: "Unauthorized" });
-  }
+router.get("/user", async (req: Request, res: Response) => {
+  const user = await resolveUserFromRequest(req);
+  if (!user) return res.status(401).json({ message: "Unauthorized" });
+  res.json(user);
 });
 
 // Registration endpoint - Email only, sends verification link
-router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/register", authRateLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.body;
 
@@ -559,69 +370,32 @@ router.get("/reviews", isAuthenticated, async (req: Request, res: Response, next
  * Validate auth token and return user info
  * Used by chat service to verify WebSocket connections
  */
-router.post("/validate-token", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/validate-token", async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-
-    console.log('🔐 Token validation request received:', { tokenLength: token?.length });
-
     if (!token) {
-      return res.status(400).json({
-        valid: false,
-        error: "Token is required"
-      });
+      return res.status(400).json({ valid: false, error: "Token is required" });
     }
 
-    // Get session store from app
-    const sessionStore = (req as any).sessionStore;
-
-    if (!sessionStore) {
-      console.error('❌ Session store not available');
-      return res.status(500).json({
-        valid: false,
-        error: "Session store not configured"
-      });
+    const { resolveUserFromToken } = await import("../lib/auth-user.js");
+    const user = await resolveUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ valid: false, error: "Invalid or expired token" });
     }
 
-    // Get session data from store
-    sessionStore.get(token, (err: any, session: any) => {
-      if (err) {
-        console.error('❌ Session store error:', err);
-        return res.status(500).json({
-          valid: false,
-          error: "Session retrieval failed"
-        });
-      }
-
-      if (!session || !session.userId || !session.user) {
-        console.log('❌ Invalid session - no user data found');
-        return res.status(401).json({
-          valid: false,
-          error: "Invalid or expired token"
-        });
-      }
-
-      console.log('✅ Token validated successfully for user:', session.user.email);
-
-      // Token is valid, return user info
-      res.json({
-        valid: true,
-        user: {
-          id: session.user.id,
-          name: session.user.name,
-          email: session.user.email,
-          role: session.user.role,
-          avatar: session.user.avatar || ''
-        }
-      });
+    res.json({
+      valid: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar || "",
+      },
     });
-
   } catch (error) {
-    console.error("❌ Token validation error:", error);
-    res.status(500).json({
-      valid: false,
-      error: "Token validation failed"
-    });
+    console.error("Token validation error:", error);
+    res.status(500).json({ valid: false, error: "Token validation failed" });
   }
 });
 

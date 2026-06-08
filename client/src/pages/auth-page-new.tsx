@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Check, ArrowLeft, Code, Users, Crown, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { queryClient } from "@/lib/queryClient";
+import { DEMO_ACCOUNTS, type DemoRole } from "@shared/demo-accounts";
 
 export default function AuthPageNew() {
-    const { loginMutation, registerMutation } = useAuth();
+    const { loginMutation, registerMutation, googleLoginMutation } = useAuth();
     const [, navigate] = useLocation();
     const [activeTab, setActiveTab] = useState<'login' | 'register'>('register');
     const [showPassword, setShowPassword] = useState(false);
@@ -17,11 +20,25 @@ export default function AuthPageNew() {
 
     // Form states
     const [loginData, setLoginData] = useState({ email: '', password: '' });
-    const [registerData, setRegisterData] = useState({ email: '' });
+    const [registerData, setRegisterData] = useState({ email: '', password: '' });
 
-    // Quick Login mutation
     const quickLoginMutation = useMutation({
-        mutationFn: async (role: 'seller' | 'buyer' | 'admin') => {
+        mutationFn: async (role: DemoRole) => {
+            const creds = DEMO_ACCOUNTS[role];
+            if (supabase) {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email: creds.email,
+                    password: creds.password,
+                });
+                if (error) throw new Error(error.message);
+                const res = await fetch("/api/user", {
+                    headers: {
+                        Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+                    },
+                });
+                if (!res.ok) throw new Error("Failed to sync user profile");
+                return res.json();
+            }
             const response = await fetch(`/api/auth/quick-login/${role}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -33,17 +50,18 @@ export default function AuthPageNew() {
             }
             return response.json();
         },
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
+            queryClient.setQueryData(["/api/user"], data);
             toast({
                 title: "Quick Login Successful",
-                description: `Logged in as demo ${data.role}`,
+                description: `Logged in as ${data.name} (${data.role})`,
             });
-            window.location.href = data.role === 'admin' ? '/admin' : '/dashboard';
+            window.location.href = data.role === "admin" ? "/admin" : "/dashboard";
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             toast({
                 title: "Quick Login Failed",
-                description: error.message || "Failed to login. Please try again.",
+                description: error.message || "Run: npx tsx scripts/seed-demo-users.ts",
                 variant: "destructive",
             });
         },
@@ -67,7 +85,7 @@ export default function AuthPageNew() {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await registerMutation.mutateAsync({ email: registerData.email });
+            await registerMutation.mutateAsync(registerData);
             toast({
                 title: "Registration Successful",
                 description: "Please check your email to set your password",
@@ -228,7 +246,27 @@ export default function AuthPageNew() {
                                         />
                                         <span className="text-sm text-gray-700">Remember me</span>
                                     </label>
-                                    <button type="button" className="text-sm text-slate-700 hover:text-slate-900 font-semibold">
+                                    <button
+                                        type="button"
+                                        className="text-sm text-slate-700 hover:text-slate-900 font-semibold"
+                                        onClick={async () => {
+                                            if (!loginData.email) {
+                                                toast({ title: "Nhập email trước", variant: "destructive" });
+                                                return;
+                                            }
+                                            const { supabase } = await import("@/lib/supabase");
+                                            if (supabase) {
+                                                const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
+                                                    redirectTo: `${window.location.origin}/auth`,
+                                                });
+                                                toast({
+                                                    title: error ? "Lỗi" : "Đã gửi email",
+                                                    description: error?.message || "Kiểm tra email để đặt lại mật khẩu.",
+                                                    variant: error ? "destructive" : "default",
+                                                });
+                                            }
+                                        }}
+                                    >
                                         Forgot password?
                                     </button>
                                 </div>
@@ -247,6 +285,21 @@ export default function AuthPageNew() {
                                     ) : (
                                         'Sign in'
                                     )}
+                                </Button>
+
+                                <div className="relative my-4">
+                                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300" /></div>
+                                    <div className="relative flex justify-center text-sm"><span className="bg-gray-50 px-2 text-gray-500">hoặc</span></div>
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full"
+                                    disabled={googleLoginMutation.isPending}
+                                    onClick={() => googleLoginMutation.mutate()}
+                                >
+                                    Đăng nhập với Google
                                 </Button>
                             </form>
 
@@ -279,20 +332,23 @@ export default function AuthPageNew() {
                                         type="email"
                                         required
                                         value={registerData.email}
-                                        onChange={(e) => setRegisterData({ email: e.target.value })}
+                                        onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                                         placeholder="Enter your email address"
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                                     />
                                 </div>
 
-                                {/* What happens next info box */}
-                                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                                    <p className="text-sm font-semibold text-blue-900 mb-2">What happens next:</p>
-                                    <ul className="text-sm text-blue-800 space-y-1">
-                                        <li>• We'll send a verification email to your inbox</li>
-                                        <li>• Click the link to set your password</li>
-                                        <li>• Complete your registration and start using SoftwareHub</li>
-                                    </ul>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                                    <Input
+                                        type="password"
+                                        required
+                                        minLength={6}
+                                        value={registerData.password}
+                                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                                        placeholder="Tối thiểu 6 ký tự"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                                    />
                                 </div>
 
                                 <Button
@@ -331,6 +387,15 @@ export default function AuthPageNew() {
                         <p className="text-xs text-gray-500 text-center mb-3 uppercase tracking-wider">
                             Quick Login (Development)
                         </p>
+                        <div className="mb-3 rounded-lg bg-slate-100 border border-slate-200 p-3 text-xs text-slate-600 space-y-1">
+                            <p className="font-semibold text-slate-700 text-center mb-2">Tài khoản test — mật khẩu: <code className="bg-white px-1 rounded">testpassword</code></p>
+                            {(Object.entries(DEMO_ACCOUNTS) as [DemoRole, typeof DEMO_ACCOUNTS.seller][]).map(([role, acc]) => (
+                                <p key={role} className="flex justify-between gap-2">
+                                    <span className="font-medium capitalize">{acc.label}</span>
+                                    <span className="text-slate-500 truncate">{acc.email}</span>
+                                </p>
+                            ))}
+                        </div>
                         <div className="grid grid-cols-3 gap-3">
                             <button
                                 type="button"

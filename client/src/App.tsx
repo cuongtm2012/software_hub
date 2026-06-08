@@ -53,6 +53,8 @@ import SoftwareListPage from "@/pages/software-list-page";
 import SoftwareDetailPage from "@/pages/software-detail-page";
 import CoursesListPage from "@/pages/courses-list-page";
 import CourseDetailPage from "@/pages/course-detail-page";
+import BlogListPage from "@/pages/blog-list-page";
+import BlogDetailPage from "@/pages/blog-detail-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
@@ -74,6 +76,12 @@ import AdminProjectsPage from "@/pages/admin/projects-page";
 import EndToEndTestPage from "@/pages/admin/end-to-end-test-page";
 import { SellerApprovalPage } from "@/pages/admin/seller-approval-page";
 import AdminExternalRequestsPage from "@/pages/admin/external-requests-page";
+import BlogManagementPage from "@/pages/admin/blog-management-page";
+import LeadsManagementPage from "@/pages/admin/leads-management-page";
+import EbookPage from "@/pages/ebook-page";
+import BookingPage from "@/pages/booking-page";
+import { Analytics } from "@/components/analytics";
+import { GtmBehaviorTracker } from "@/components/gtm-behavior-tracker";
 import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
@@ -119,6 +127,8 @@ function Router() {
       <ProtectedRoute path="/admin/push-notifications" component={PushNotificationTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/queues" component={AdminQueuesPage} roles={['admin']} />
       <ProtectedRoute path="/admin/end-to-end-tests" component={EndToEndTestPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/blog" component={BlogManagementPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/leads" component={LeadsManagementPage} roles={['admin']} />
 
 
 
@@ -250,19 +260,16 @@ function Router() {
 
       {/* Software List */}
       <Route path="/software" component={SoftwareListPage} />
-      <Route path="/software/:id" component={SoftwareDetailPage} />
+      <Route path="/software/:idOrSlug" component={SoftwareDetailPage} />
+      <Route path="/ebook/fullstack-roadmap" component={EbookPage} />
+      <Route path="/booking" component={BookingPage} />
       <Route path="/courses" component={CoursesListPage} />
-      <Route path="/courses/:id" component={CourseDetailPage} />
+      <Route path="/courses/:idOrSlug" component={CourseDetailPage} />
+      <Route path="/blog" component={BlogListPage} />
+      <Route path="/blog/:slug" component={BlogDetailPage} />
 
       {/* Phase 3: Marketplace */}
-      <Route path="/marketplace" component={() => {
-        const MarketplacePageNew = lazy(() => import("@/pages/marketplace-page-new"));
-        return (
-          <Suspense fallback={<div>Loading...</div>}>
-            <MarketplacePageNew />
-          </Suspense>
-        );
-      }} />
+      <Route path="/marketplace" component={MarketplacePage} />
 
       {/* Seller Registration & Management */}
       <Route path="/seller/register" component={() => {
@@ -373,6 +380,8 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <ShoppingCartSidebar />
+            <Analytics />
+            <GtmBehaviorTracker />
             <FloatingChatButton />
             <Router />
           </TooltipProvider>

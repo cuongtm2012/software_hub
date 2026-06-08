@@ -1,15 +1,16 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { User, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { User } from "@shared/schema";
+import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { getAuthHeaders } from "@/lib/auth-token";
 
-// We omit the password field for security when working with User type in frontend
-type AuthUser = Omit<User, 'password'>;
+type AuthUser = Omit<User, "password">;
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -17,7 +18,8 @@ type AuthContextType = {
   error: Error | null;
   loginMutation: UseMutationResult<AuthUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<AuthUser, Error, RegisterData>;
+  registerMutation: UseMutationResult<void, Error, RegisterData>;
+  googleLoginMutation: UseMutationResult<void, Error, void>;
 };
 
 type LoginData = {
@@ -27,140 +29,136 @@ type LoginData = {
 
 type RegisterData = {
   email: string;
+  password: string;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
+async function fetchCurrentUser(): Promise<AuthUser | null> {
+  const authHeaders = await getAuthHeaders();
+  const res = await fetch("/api/user", {
+    credentials: "include",
+    headers: authHeaders,
+  });
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<AuthUser | undefined, Error>({
+  } = useQuery<AuthUser | null, Error>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-    staleTime: 0, // Always refetch to ensure fresh data
+    queryFn: fetchCurrentUser,
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 
+  useEffect(() => {
+    if (!supabase) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
-    },
-    onSuccess: async (userData: any) => {
-      // Extract user data from response
-      const user = userData.user || userData;
-      console.log("Login success, user data:", user);
-      queryClient.setQueryData(["/api/user"], user);
-      // Force immediate refetch to ensure fresh data
-      await queryClient.refetchQueries({ queryKey: ["/api/user"] });
-
-      // Request notification permission automatically when user logs in
-      if ('Notification' in window && Notification.permission === 'default') {
-        try {
-          const permission = await Notification.requestPermission();
-          console.log('Notification permission result:', permission);
-
-          if (permission === 'granted') {
-            toast({
-              title: "Notifications enabled",
-              description: "You'll now receive notifications for new messages and updates.",
-            });
-
-            // Initialize Firebase messaging if available
-            if (typeof window !== 'undefined' && window.firebase) {
-              try {
-                const { initializeFirebaseMessaging } = await import('@/lib/firebase-messaging');
-                await initializeFirebaseMessaging(user.id);
-              } catch (error) {
-                console.warn('Firebase messaging initialization failed:', error);
-              }
-            }
-          } else if (permission === 'denied') {
-            console.log('User denied notification permission');
-          }
-        } catch (error) {
-          console.error('Error requesting notification permission:', error);
-        }
-      } else if (Notification.permission === 'granted') {
-        // If already granted, just initialize Firebase messaging
-        if (typeof window !== 'undefined' && window.firebase) {
-          try {
-            const { initializeFirebaseMessaging } = await import('@/lib/firebase-messaging');
-            await initializeFirebaseMessaging(user.id);
-          } catch (error) {
-            console.warn('Firebase messaging initialization failed:', error);
-          }
-        }
+      if (!supabase) {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        return await res.json();
       }
 
-      // Auto-redirect based on user role
-      setTimeout(() => {
-        if (user.role === 'admin') {
-          window.location.href = '/admin';
-        } else {
-          window.location.href = '/dashboard';
-        }
-      }, 500);
-
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.name}!`,
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
       });
+      if (signInError) throw new Error(signInError.message);
+
+      const currentUser = await fetchCurrentUser();
+      if (!currentUser) throw new Error("Failed to sync user profile");
+      return currentUser;
+    },
+    onSuccess: async (userData: AuthUser) => {
+      queryClient.setQueryData(["/api/user"], userData);
+      toast({
+        title: "Đăng nhập thành công",
+        description: `Chào mừng trở lại, ${userData.name}!`,
+      });
+      setTimeout(() => {
+        window.location.href = userData.role === "admin" ? "/admin" : "/dashboard";
+      }, 300);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Đăng nhập thất bại", description: error.message, variant: "destructive" });
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", userData);
-      return await res.json();
-    },
-    onSuccess: (responseData: any) => {
-      // New flow: no user data returned, just confirmation
-      // Don't set user data since they need to verify email first
+      if (!supabase) {
+        const res = await apiRequest("POST", "/api/register", { email: userData.email });
+        return await res.json();
+      }
 
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`,
+        },
+      });
+      if (signUpError) throw new Error(signUpError.message);
+    },
+    onSuccess: () => {
       toast({
-        title: "Registration successful!",
-        description: responseData.message || "Please check your email to set your password and complete registration.",
+        title: "Đăng ký thành công!",
+        description: "Kiểm tra email để xác nhận tài khoản, sau đó đăng nhập.",
         duration: 6000,
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
+      toast({ title: "Đăng ký thất bại", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const googleLoginMutation = useMutation({
+    mutationFn: async () => {
+      if (!supabase) throw new Error("Supabase chưa được cấu hình");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/dashboard` },
       });
+      if (error) throw new Error(error.message);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Google login thất bại", description: error.message, variant: "destructive" });
     },
   });
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+      try {
+        await apiRequest("POST", "/api/logout");
+      } catch {
+        // Session logout optional during migration
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
-      });
+      toast({ title: "Đã đăng xuất", description: "Hẹn gặp lại!" });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Đăng xuất thất bại", description: error.message, variant: "destructive" });
     },
   });
 
@@ -173,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        googleLoginMutation,
       }}
     >
       {children}

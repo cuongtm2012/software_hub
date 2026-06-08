@@ -90,6 +90,12 @@ export function Header() {
                 Tài liệu
               </Link>
               <Link
+                to="/blog"
+                className={`${location.startsWith("/blog") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
+              >
+                Blog
+              </Link>
+              <Link
                 to="/marketplace"
                 className={`${location.startsWith("/marketplace") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
               >

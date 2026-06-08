@@ -20,7 +20,7 @@ import {
   X, 
   AlertTriangle 
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { authFetch } from "@/lib/auth-token";
 
 interface DocumentFile {
   file: File;
@@ -66,12 +66,11 @@ export function R2DocumentUploader({
 
       try {
         // Get upload URL from server
-        const response = await fetch("/api/r2/upload-url", {
+        const response = await authFetch("/api/storage/upload-url", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // Important for session cookies
           body: JSON.stringify({
             fileName: file.name,
             contentType: file.type,

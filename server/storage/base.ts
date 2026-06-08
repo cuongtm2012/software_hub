@@ -4,15 +4,10 @@
 
 import { db } from "../db";
 import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
-import session from "express-session";
-import connectPg from "connect-pg-simple";
 import { pool } from "../db";
 
 // Export database utilities
 export { db, eq, and, desc, sql, like, ilike, inArray, or };
-
-// Export session store
-export const PostgresSessionStore = connectPg(session);
 export { pool };
 
 // Re-export all schema types and tables

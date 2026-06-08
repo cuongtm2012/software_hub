@@ -72,7 +72,7 @@ export function VerificationDocumentUploader({
 
       try {
         // Get upload URL from server
-        const response = await fetch("/api/r2/upload-url", {
+        const response = await fetch("/api/storage/upload-url", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

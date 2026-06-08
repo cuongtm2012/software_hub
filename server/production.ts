@@ -7,10 +7,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Session configuration for test login
-import session from 'express-session';
-import { randomBytes } from 'crypto';
-
 // Initialize database connection first
 import { storage } from "./storage";
 
@@ -67,23 +63,6 @@ async function waitForExternalServices(timeout = 60000) {
   
   console.warn('Some external services may not be ready, continuing startup...');
 }
-
-const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
-
-// Use memory store for production to avoid session store hanging issues
-const MemoryStore = session.MemoryStore;
-
-app.use(session({
-  secret: sessionSecret,
-  resave: false,
-  saveUninitialized: false,
-  store: new MemoryStore(), // Use memory store instead of PostgreSQL store
-  cookie: {
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    httpOnly: true,
-    secure: false // Set to false for Docker environment
-  }
-}));
 
 // Logging middleware
 app.use((req, res, next) => {

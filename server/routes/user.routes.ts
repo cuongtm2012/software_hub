@@ -8,13 +8,6 @@ export function registerUserRoutes(app: Express) {
   // TEMPORARY: Remove auth middleware for debugging
   app.get("/api/users", async (req, res, next) => {
     try {
-      console.log('📋 /api/users called - Session:', {
-        sessionId: req.sessionID,
-        userId: req.session?.userId,
-        userEmail: req.session?.user?.email,
-        hasReqUser: !!req.user
-      });
-
       const result = await userStorage.getAllUsers();
 
       console.log('✅ Got all users:', result.users.length, 'total users');

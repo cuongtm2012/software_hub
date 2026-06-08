@@ -5,7 +5,7 @@ import {
   sellerProfiles, cartItems, supportTickets, salesAnalytics,
   serviceRequests, serviceQuotations, serviceProjects, servicePayments,
   userPresence, notifications,
-  chatRooms, chatRoomMembers, chatMessages, courses,
+  chatRooms, chatRoomMembers, chatMessages, courses, leads, blogPosts,
   type User, type InsertUser,
   type Software, type InsertSoftware,
   type Category, type InsertCategory,
@@ -37,12 +37,6 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
-import session from "express-session";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
-
-const PostgresSessionStore = connectPg(session);
-
 export interface IStorage {
   // System
   initialize(): Promise<void>;
@@ -75,6 +69,9 @@ export interface IStorage {
   // Software
   createSoftware(software: InsertSoftware, userId: number): Promise<Software>;
   getSoftwareById(id: number): Promise<Software | undefined>;
+  getSoftwareBySlug(slug: string): Promise<Software | undefined>;
+  getLeads(filters?: { status?: string; limit?: number; offset?: number }): Promise<{ leads: any[]; total: number }>;
+  updateLead(id: number, data: { status?: string; notes?: string }): Promise<any>;
   updateSoftware(id: number, software: Partial<InsertSoftware>): Promise<Software | undefined>;
   updateSoftwareAdmin(id: number, software: Partial<InsertSoftware>): Promise<Software | undefined>;
   deleteSoftware(id: number): Promise<boolean>;
@@ -302,27 +299,24 @@ export interface IStorage {
   getCourses(filters: {
     topic?: string;
     level?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   }): Promise<{ courses: any[], total: number }>;
   getCourseTopics(): Promise<Array<{ topic: string; count: number }>>;
   getCourseById(id: number): Promise<any | undefined>;
+  getCourseBySlug(slug: string): Promise<any | undefined>;
+  createLead(data: { name?: string; email: string; phone: string; source: string; source_id?: string }): Promise<any>;
 
-  // Session store
-  sessionStore: any;
+  // Blog
+  getBlogPosts(filters: { tag?: string; limit?: number; offset?: number; publishedOnly?: boolean }): Promise<{ posts: any[]; total: number }>;
+  getBlogPostBySlug(slug: string): Promise<any | undefined>;
+  createBlogPost(data: any): Promise<any>;
+  updateBlogPost(id: number, data: any): Promise<any | undefined>;
+  deleteBlogPost(id: number): Promise<void>;
 }
 
 class DatabaseStorage implements IStorage {
-  sessionStore: any;
-
-  constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool: pool,
-      tableName: 'session',
-      createTableIfMissing: true
-    });
-  }
-
   // System
   async initialize(): Promise<void> {
     // Initialization logic here
@@ -501,6 +495,14 @@ class DatabaseStorage implements IStorage {
       .select()
       .from(softwares)
       .where(eq(softwares.id, id));
+    return software;
+  }
+
+  async getSoftwareBySlug(slug: string): Promise<Software | undefined> {
+    const [software] = await db
+      .select()
+      .from(softwares)
+      .where(eq(softwares.slug, slug));
     return software;
   }
 
@@ -2695,11 +2697,12 @@ class DatabaseStorage implements IStorage {
   async getCourses(filters: {
     topic?: string;
     level?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   }): Promise<{ courses: any[], total: number }> {
     try {
-      const { topic, level, limit = 12, offset = 0 } = filters;
+      const { topic, level, search, limit = 12, offset = 0 } = filters;
 
       const whereConditions: any[] = [];
 
@@ -2709,6 +2712,16 @@ class DatabaseStorage implements IStorage {
 
       if (level) {
         whereConditions.push(eq(courses.level, level));
+      }
+
+      if (search) {
+        whereConditions.push(
+          or(
+            ilike(courses.title, `%${search}%`),
+            ilike(courses.topic, `%${search}%`),
+            ilike(courses.instructor, `%${search}%`),
+          ),
+        );
       }
 
       // Get total count
@@ -2767,6 +2780,141 @@ class DatabaseStorage implements IStorage {
       console.error('Failed to get course by id:', error);
       throw error;
     }
+  }
+
+  async getCourseBySlug(slug: string): Promise<any | undefined> {
+    try {
+      const [course] = await db
+        .select()
+        .from(courses)
+        .where(eq(courses.slug, slug))
+        .limit(1);
+
+      return course;
+    } catch (error) {
+      console.error('Failed to get course by slug:', error);
+      throw error;
+    }
+  }
+
+  async createLead(data: {
+    name?: string;
+    email: string;
+    phone: string;
+    source: string;
+    source_id?: string;
+  }): Promise<any> {
+    const [lead] = await db
+      .insert(leads)
+      .values({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        source: data.source,
+        source_id: data.source_id,
+      })
+      .returning();
+
+    return lead;
+  }
+
+  async getLeads(filters: { status?: string; limit?: number; offset?: number } = {}): Promise<{ leads: any[]; total: number }> {
+    const { status, limit = 50, offset = 0 } = filters;
+    const whereConditions: any[] = [];
+    if (status) whereConditions.push(eq(leads.status, status));
+
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(leads)
+      .where(whereClause);
+
+    const rows = await db
+      .select()
+      .from(leads)
+      .where(whereClause)
+      .orderBy(desc(leads.created_at))
+      .limit(limit)
+      .offset(offset);
+
+    return { leads: rows, total: countResult?.count ?? 0 };
+  }
+
+  async updateLead(id: number, data: { status?: string; notes?: string }): Promise<any> {
+    const [lead] = await db
+      .update(leads)
+      .set(data)
+      .where(eq(leads.id, id))
+      .returning();
+    return lead;
+  }
+
+  async getBlogPosts(filters: {
+    tag?: string;
+    limit?: number;
+    offset?: number;
+    publishedOnly?: boolean;
+  }): Promise<{ posts: any[]; total: number }> {
+    const { tag, limit = 12, offset = 0, publishedOnly = true } = filters;
+    const whereConditions: any[] = [];
+
+    if (publishedOnly) {
+      whereConditions.push(eq(blogPosts.status, "published"));
+    }
+    if (tag) {
+      whereConditions.push(sql`${tag} = ANY(${blogPosts.tags})`);
+    }
+
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(blogPosts)
+      .where(whereClause);
+
+    const posts = await db
+      .select()
+      .from(blogPosts)
+      .where(whereClause)
+      .orderBy(desc(blogPosts.published_at))
+      .limit(limit)
+      .offset(offset);
+
+    return { posts, total: count };
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<any | undefined> {
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.slug, slug))
+      .limit(1);
+    return post;
+  }
+
+  async createBlogPost(data: any): Promise<any> {
+    const [post] = await db
+      .insert(blogPosts)
+      .values({
+        ...data,
+        published_at: data.status === "published" ? new Date() : data.published_at,
+      })
+      .returning();
+    return post;
+  }
+
+  async updateBlogPost(id: number, data: any): Promise<any | undefined> {
+    const [post] = await db
+      .update(blogPosts)
+      .set({ ...data, updated_at: new Date() })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return post;
+  }
+
+  async deleteBlogPost(id: number): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
   }
 }
 

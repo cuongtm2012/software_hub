@@ -16,7 +16,7 @@
  */
 
 // Re-export from main storage file
-export { storage, sessionStore } from '../storage';
+export { storage } from '../storage';
 
 // Also export domain-specific storages for direct use
 export * from './user';

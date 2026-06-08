@@ -4,7 +4,7 @@ import { storage } from "../storage";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { insertSoftwareSchema } from "@shared/schema";
-import { isAuthenticated } from "../middleware/auth.middleware";
+import { isAuthenticated, optionalAuth } from "../middleware/auth.middleware";
 
 const router = Router();
 
@@ -68,17 +68,21 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// Get software by ID (public)
-router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Get software by ID or slug (public)
+router.get("/:idOrSlug", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
-    const software = await storage.getSoftwareById(parseInt(id));
+    const { idOrSlug } = req.params;
+    const numericId = parseInt(idOrSlug, 10);
+
+    const software =
+      !isNaN(numericId) && String(numericId) === idOrSlug
+        ? await storage.getSoftwareById(numericId)
+        : await storage.getSoftwareBySlug(idOrSlug);
 
     if (!software) {
       return res.status(404).json({ message: "Software not found" });
     }
 
-    // Only show approved software to non-admins
     if (software.status !== 'approved') {
       return res.status(403).json({ message: "Software is not available" });
     }
@@ -132,7 +136,7 @@ router.put("/:id", isAuthenticated, async (req: Request, res: Response, next: Ne
 });
 
 // Download software
-router.post("/:id/download", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/:id/download", optionalAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const software = await storage.getSoftwareById(parseInt(id));
@@ -145,20 +149,18 @@ router.post("/:id/download", async (req: Request, res: Response, next: NextFunct
       return res.status(403).json({ message: "Software is not available for download" });
     }
 
-    // Increment download count
     await storage.incrementSoftwareDownloads(parseInt(id));
 
-    // Track download if user is authenticated
-    if (req.session?.userId) {
+    if (req.user?.id) {
       await storage.createUserDownload(
-        req.session.userId,
+        req.user.id as number,
         parseInt(id),
         software.version || '1.0.0'
       );
     }
 
     res.json({
-      download_url: software.download_url,
+      download_url: software.download_link,
       message: "Download started successfully"
     });
   } catch (error) {

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useParams, useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -16,13 +16,18 @@ import { Loader2, Download, Monitor, Calendar, ArrowLeft, FileText, Shield, Laye
 import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
 import { useState } from "react";
+import { PageMeta } from "@/components/seo/page-meta";
+import { SoftwareSchema } from "@/components/seo/software-schema";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { LeadCaptureForm } from "@/components/lead-capture-form";
 
 interface ReviewWithUser extends Review {
     user_name?: string;
 }
 
 export default function SoftwareDetailPage() {
-    const { id } = useParams();
+    const [, params] = useRoute("/software/:idOrSlug");
+    const idOrSlug = params?.idOrSlug;
     const [, navigate] = useLocation();
     const { user } = useAuth();
     const { toast } = useToast();
@@ -36,9 +41,9 @@ export default function SoftwareDetailPage() {
         isLoading: isLoadingSoftware,
         error: softwareError
     } = useQuery<Software>({
-        queryKey: ["/api/softwares", id],
+        queryKey: ["/api/softwares", idOrSlug],
         queryFn: async () => {
-            const response = await fetch(`/api/softwares/${id}`);
+            const response = await fetch(`/api/softwares/${idOrSlug}`);
             if (!response.ok) {
                 if (response.status === 404) {
                     throw new Error("Software not found");
@@ -47,26 +52,28 @@ export default function SoftwareDetailPage() {
             }
             return response.json();
         },
-        enabled: !!id,
+        enabled: !!idOrSlug,
     });
+
+    const softwareId = software?.id;
 
     // Fetch reviews for the software
     const { data: reviews, isLoading: isLoadingReviews } = useQuery<ReviewWithUser[]>({
-        queryKey: ["/api/reviews/software", id],
+        queryKey: ["/api/reviews/software", softwareId],
         queryFn: async () => {
-            if (!id) return [];
-            const res = await fetch(`/api/reviews/software/${id}`);
+            if (!softwareId) return [];
+            const res = await fetch(`/api/reviews/software/${softwareId}`);
             if (!res.ok) throw new Error("Failed to fetch reviews");
             return res.json();
         },
-        enabled: !!id,
+        enabled: !!softwareId,
     });
 
     // Submit review mutation
     const submitReviewMutation = useMutation({
         mutationFn: async (reviewData: InsertReview) => {
-            if (!id) throw new Error("Software ID not available");
-            const res = await apiRequest("POST", `/api/reviews/software/${id}`, reviewData);
+            if (!softwareId) throw new Error("Software ID not available");
+            const res = await apiRequest("POST", `/api/reviews/software/${softwareId}`, reviewData);
             return res.json();
         },
         onSuccess: () => {
@@ -77,8 +84,8 @@ export default function SoftwareDetailPage() {
             setReviewComment("");
             setUserRating(5);
             // Invalidate the reviews query to reload the data
-            if (id) {
-                queryClient.invalidateQueries({ queryKey: ["/api/reviews/software", id] });
+            if (softwareId) {
+                queryClient.invalidateQueries({ queryKey: ["/api/reviews/software", softwareId] });
             }
         },
         onError: (error: Error) => {
@@ -167,8 +174,33 @@ export default function SoftwareDetailPage() {
         );
     }
 
+    const softwarePath = `/software/${(software as any).slug || software.id}`;
+    const softwareUrl = `${window.location.origin}${softwarePath}`;
+    const seoDesc = (software as any).seo_description || getShortDescription(software.description) || `Tải ${software.name} miễn phí — hướng dẫn cài đặt chi tiết.`;
+
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
+            <PageMeta
+                title={`${software.name} — Tải miễn phí & Hướng dẫn cài đặt`}
+                description={seoDesc}
+                canonicalUrl={softwareUrl}
+                ogImage={software.image_url ?? undefined}
+            />
+            <SoftwareSchema
+                name={software.name}
+                description={seoDesc}
+                url={softwareUrl}
+                image={software.image_url ?? undefined}
+                operatingSystem={Array.isArray(software.platform) ? software.platform : undefined}
+                downloadUrl={software.download_link}
+            />
+            <BreadcrumbSchema
+                items={[
+                    { name: "Trang chủ", url: window.location.origin },
+                    { name: "Phần mềm", url: `${window.location.origin}/software` },
+                    { name: software.name, url: softwareUrl },
+                ]}
+            />
             <Header />
 
             <main className="flex-grow">
@@ -416,6 +448,24 @@ export default function SoftwareDetailPage() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {(software as any).seo_content && (
+                            <div className="mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-8 prose prose-sm max-w-none">
+                                <h2 className="text-xl font-bold text-gray-900 mb-4">Hướng dẫn chi tiết</h2>
+                                {(software as any).seo_content.split("\n").map((line: string, i: number) => (
+                                    <p key={i} className="text-gray-700 leading-relaxed mb-2">{line}</p>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="mt-10">
+                            <LeadCaptureForm
+                                source="software_page"
+                                sourceId={software.id}
+                                title="Cần hỗ trợ cài đặt hoặc tư vấn IT?"
+                                description="Team Software Hub hỗ trợ cài đặt phần mềm và tư vấn giải pháp IT cho doanh nghiệp miễn phí."
+                            />
                         </div>
                     </div>
                 </section>
