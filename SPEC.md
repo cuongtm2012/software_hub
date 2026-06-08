@@ -30,8 +30,9 @@
 - Wouter (lightweight routing)
 - TanStack Query (data fetching)
 - Framer Motion (animations)
+- **Supabase JS SDK** (auth client — thay fetch /api/user)
 - Firebase SDK (push notifications, messaging)
-- Uppy (file uploads)
+- Uppy (file uploads → Supabase Storage)
 - Stripe / VietQR (payments)
 - Recharts (analytics)
 
@@ -39,18 +40,18 @@
 - Node.js 20 + Express (TypeScript via tsx)
 - Drizzle ORM (PostgreSQL)
 - **Supabase** (managed PostgreSQL + Auth + Storage)
-- Redis (message queue — giữ nguyên cho background jobs)
-- Socket.IO (real-time chat — giữ nguyên, DB chạy trên Supabase)
-- **Supabase Auth** (JWT — thay Passport.js + express-session)
-- **Supabase Storage** (file storage — thay S3/R2)
+- **@supabase/supabase-js** (server-side auth verification)
+- Redis (message queue — background jobs)
+- Socket.IO (real-time chat)
 - SendGrid / Resend (email)
 - Firebase Admin SDK (push notifications)
 - Stripe API (payment processing)
 
 **DevOps**
-- Docker + Docker Compose (multi-stage builds)
-- nginx (reverse proxy)
+- Docker (app container only — không cần Postgres/Redis container)
+- Supabase Studio (admin UI — thay custom admin panels)
 - GitHub Actions (CI/CD)
+- nginx (reverse proxy — optional với Supabase)
 
 ---
 
@@ -278,7 +279,66 @@
 
 ---
 
-## 8. Security Considerations
+## 8. Integrations & Third-Party Services
+
+### 8.1. Đã có trong codebase
+
+| Service | Mục đích | Thay đổi khi migrate Supabase? |
+|---|---|---|
+| **Supabase** | Database + Auth + Storage | ✅ Mới thêm |
+| **SendGrid** | Email transactional | Giữ nguyên |
+| **Resend** | Email fallback | Giữ nguyên |
+| **Stripe** | Thanh toán thẻ | Giữ nguyên |
+| **VietQR** | Thanh toán QR ngân hàng | Giữ nguyên |
+| **Firebase Cloud Messaging** | Push notification | Giữ nguyên |
+| **Cloudflare R2** | File storage | ⛔ Bỏ (→ Supabase Storage) |
+| **AWS S3** | File storage backup | ⛔ Bỏ |
+| **Passport.js** | Authentication | ⛔ Bỏ (→ Supabase Auth) |
+| **express-session** | Session management | ⛔ Bỏ |
+| **connect-pg-simple** | Session store | ⛔ Bỏ |
+| **Redis** | Message queue | Giữ nguyên (chỉ cho queue) |
+
+### 8.2. Cần thêm cho go-to-market
+
+| Service | Mục đích | Priority | Ghi chú |
+|---|---|---|---|
+| **Google Search Console** | SEO monitoring | 🔴 Critical | Submit sitemap, theo dõi keyword |
+| **Google Analytics 4** | Traffic tracking | 🔴 Critical | Biết user từ đâu đến, behavior |
+| **Schema.org markup** | Rich snippets Google | 🔴 Critical | Course + Software schema |
+| **Sitemap generator** | SEO crawl | 🟡 Medium | Auto-gen XML sitemap |
+| **Open Graph + Twitter Cards** | Social share đẹp | 🟡 Medium | Khi share Facebook/Zalo có ảnh |
+| **Calendly / alternative** | Booking tư vấn | 🟡 Medium | Cho khách đặt lịch call |
+| **Zalo OA API** | Lead capture + chat | 🟢 Low | Kênh chính cho SME Việt Nam |
+
+### 8.3. Dependencies cần thay đổi
+
+| Package | Action |
+|---|---|
+| `passport`, `passport-local` | ❌ Xoá |
+| `express-session` | ❌ Xoá |
+| `connect-pg-simple` | ❌ Xoá |
+| `@aws-sdk/client-s3`, `@aws-sdk/lib-storage` | ❌ Xoá (nếu không dùng cho việc khác) |
+| `@supabase/supabase-js` | ✅ Thêm |
+| `firebase`, `firebase-admin` | Giữ nguyên |
+
+### 8.4. Environment Variables Update
+
+| Variable | Status | Ghi chú |
+|---|---|---|
+| `DATABASE_URL` | ⛔ Bỏ | Thay bằng Supabase connection |
+| `SUPABASE_URL` | ✅ Thêm | `https://amzruxktxxktvknywbtf.supabase.co` |
+| `SUPABASE_ANON_KEY` | ✅ Thêm | Từ Supabase dashboard |
+| `SUPABASE_SERVICE_KEY` | ✅ Thêm | Server-side, có full quyền |
+| `SESSION_SECRET` | ⛔ Bỏ | Không cần session |
+| `AWS_ACCESS_KEY_ID` | ⛔ Bỏ (nếu không dùng) | |
+| `AWS_SECRET_ACCESS_KEY` | ⛔ Bỏ (nếu không dùng) | |
+| `CLOUDFLARE_R2_*` | ⛔ Bỏ | |
+| `REDIS_URL` | Giữ nguyên | Chỉ cho queue |
+| `SENDGRID_API_KEY` | Giữ nguyên | |
+| `STRIPE_SECRET_KEY` | Giữ nguyên | |
+| `FIREBASE_*` | Giữ nguyên | |
+
+## 9. Security Considerations
 
 ### ⚠️ Known Issues (from code review)
 
@@ -301,9 +361,9 @@
 
 ---
 
-## 9. DevOps & Deployment
+## 10. DevOps & Deployment
 
-### 9.1. Docker Deployments
+### 10.1. Docker Deployments (Legacy — trước khi migrate Supabase)
 
 | Compose File | Purpose |
 |---|---|
@@ -314,14 +374,14 @@
 
 **Lưu ý với Supabase**: Không cần container Postgres/Redis nữa. Docker chỉ cần chạy app + (optional) các microservices. Có thể chạy `supabase start` local bằng Supabase CLI hoặc dùng Supabase cloud + connection string.
 
-### 9.2. CI/CD
+### 10.2. CI/CD
 
 - GitHub Actions (`deploy.yml`, `deploy-docker.yml`)
 - Health check: `GET /health` endpoint
-- Automated database backups via cron (postgres-backup container)
+- Backup database qua Supabase Dashboard (auto daily)
 - Scripts: `deploy.sh` (interactive), `deploy-vps-docker.sh`
 
-### 9.3. Nginx
+### 10.3. Nginx (optional)
 
 - `nginx.conf` — production reverse proxy config
 - SSL setup scripts in `scripts/setup-ssl-certificate.sh`
@@ -329,9 +389,9 @@
 
 ---
 
-## 10. Data & Seeding
+## 11. Data & Seeding
 
-### 10.1. Seed Data Sources
+### 11.1. Seed Data Sources
 
 | Source | Description | Script |
 |---|---|---|
@@ -341,7 +401,7 @@
 | IT courses | YouTube-based course listings | `scripts/seed-it-courses.ts` |
 | APIs | API listing catalogue | `scripts/parse-apis.ts` |
 
-### 10.2. Database Dumps
+### 11.2. Database Dumps
 
 - Location: `database/dumps/` and `shared/data-dumps/`
 - Format: Full SQL dumps + schema-only + data-only
@@ -378,26 +438,25 @@
 
 ### Immediate (High Priority)
 
-1. **Replace hardcoded password matching** with bcrypt/argon2
-2. **Remove committed `cookies.txt`** from repo
-3. **Add rate limiting** to auth routes (express-rate-limit)
-4. **Fix `server/vite.ts`** — referenced but missing from some installs
-5. **Clean up duplicate pages** (`marketplace-page.tsx` vs `marketplace-page-new.tsx`)
+1. **Supabase migration** — ưu tiên #1, kế hoạch trong section 7.3
+2. **Replace hardcoded password matching** — sẽ tự fix khi migrate sang Supabase Auth
+3. **Remove committed `cookies.txt`** from repo
+4. **Add rate limiting** to auth routes (express-rate-limit)
+5. **Fix `server/vite.ts`** — referenced but missing from some installs
+6. **Clean up duplicate pages** (`marketplace-page.tsx` vs `marketplace-page-new.tsx`)
 
 ### Medium Priority
 
-6. **Standardize error handling** — some routes use `next(error)`, others `res.status(500).json()`
-7. **Consolidate storage layers** — `storage/` directory has per-domain sub-modules but main `storage.ts` has fallthrough logic
-8. **Add proper test framework** (Vitest + Playwright)
-9. **Remove unused imports** — many Radix UI components imported but unused
-4. **Fix `DISABLE_AUTH` env variable** — has `=*** 'true'` syntax error in middleware/auth.middleware.ts
-5. **Supabase migration** — kế hoạch trong section 7.3
+7. **Standardize error handling** — some routes use `next(error)`, others `res.status(500).json()`
+8. **Consolidate storage layers** — `storage/` directory has per-domain sub-modules but main `storage.ts` has fallthrough logic
+9. **Add proper test framework** (Vitest + Playwright)
+10. **Remove unused imports** — many Radix UI components imported but unused
 
 ### Low Priority
 
 11. **Deduplicate multiple docker-compose files** into one with profiles
 12. **Add OpenAPI/Swagger** documentation
-13. **Implement proper password hashing** (already declared in README)
+13. **Add Google Analytics + Search Console** — theo dõi traffic cho GTM
 
 ---
 
