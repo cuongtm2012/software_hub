@@ -4,11 +4,14 @@ import { useLocation, useRoute } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import { PageHero } from "@/components/design-system/page-hero";
+import { SectionPanel } from "@/components/design-system/section-panel";
 import { PageMeta } from "@/components/seo/page-meta";
 import { CourseSchema } from "@/components/seo/course-schema";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { LeadCaptureForm } from "@/components/lead-capture-form";
 import { getCourseUrl, buildSeoDescription, buildSeoContent } from "@/lib/course-utils";
+import { getPlaceholderGradient } from "@/components/design-system/tokens";
 import {
   BookOpen,
   ArrowLeft,
@@ -20,26 +23,39 @@ import {
   Loader2,
 } from "lucide-react";
 import { CourseThumbnail } from "@/components/course-thumbnail";
+import { cn } from "@/lib/utils";
+
+const LEVEL_LABEL: Record<string, string> = {
+  beginner: "Cơ bản",
+  intermediate: "Trung cấp",
+  advanced: "Nâng cao",
+};
+
+const LEVEL_BADGE: Record<string, string> = {
+  beginner: "bg-emerald-100 text-emerald-800",
+  intermediate: "bg-amber-100 text-amber-800",
+  advanced: "bg-red-100 text-red-800",
+};
 
 function renderMarkdownContent(content: string) {
   return content.split("\n").map((line, i) => {
     if (line.startsWith("## ")) {
       return (
-        <h3 key={i} className="text-lg font-bold text-gray-900 mt-6 mb-2">
+        <h3 key={i} className="text-base font-semibold text-foreground mt-5 mb-2">
           {line.replace("## ", "")}
         </h3>
       );
     }
     if (line.startsWith("- ")) {
       return (
-        <li key={i} className="text-gray-700 ml-4 list-disc">
+        <li key={i} className="text-muted-foreground ml-4 list-disc text-sm leading-relaxed">
           {line.replace("- ", "")}
         </li>
       );
     }
     if (line.trim() === "") return <br key={i} />;
     return (
-      <p key={i} className="text-gray-700 leading-relaxed mb-2">
+      <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-2">
         {line}
       </p>
     );
@@ -68,13 +84,13 @@ export default function CourseDetailPage() {
       const response = await fetch(`/api/courses?topic=${encodeURIComponent(course.topic)}&limit=4`);
       if (!response.ok) return [];
       const data = await response.json();
-      return data.courses?.filter((c: any) => c.id !== course.id) || [];
+      return data.courses?.filter((c: { id: number }) => c.id !== course.id) || [];
     },
     enabled: !!course?.topic,
   });
 
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<{ id: number; user: string; content: string; createdAt: string }[]>([]);
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,10 +104,10 @@ export default function CourseDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+      <div className="min-h-screen bg-[#f9f9f9] flex flex-col">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-16 w-16 animate-spin text-indigo-600" />
+          <Loader2 className="h-10 w-10 animate-spin text-[#004080]" />
         </main>
         <Footer />
       </div>
@@ -100,13 +116,13 @@ export default function CourseDetailPage() {
 
   if (error || !course) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+      <div className="min-h-screen bg-[#f9f9f9] flex flex-col">
         <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy khóa học</h2>
-            <Button onClick={() => navigate("/courses")}>
+        <main className="flex-grow flex items-center justify-center px-4">
+          <div className="text-center max-w-sm">
+            <BookOpen className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Không tìm thấy khóa học</h2>
+            <Button onClick={() => navigate("/courses")} className="bg-[#004080] hover:bg-[#003366]">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Quay lại danh sách
             </Button>
@@ -123,17 +139,11 @@ export default function CourseDetailPage() {
   const seoTitle = `Học ${course.title} miễn phí — Lộ trình chi tiết cho người mới`;
 
   const playlistId =
-    course.playlist_id || course.youtube_url.match(/list=([^&]+)/)?.[1] || "";
+    course.playlist_id || course.youtube_url?.match(/list=([^&]+)/)?.[1] || "";
   const embedUrl = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
 
-  const levelColors = {
-    beginner: "bg-green-100 text-green-800",
-    intermediate: "bg-yellow-100 text-yellow-800",
-    advanced: "bg-red-100 text-red-800",
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+    <div className="min-h-screen bg-[#f9f9f9] flex flex-col">
       <PageMeta
         title={seoTitle}
         description={seoDescription}
@@ -161,31 +171,28 @@ export default function CourseDetailPage() {
       <Header />
 
       <main className="flex-grow">
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <nav className="text-sm text-gray-500 mb-2">
-              <a href="/" className="hover:text-indigo-600">Trang chủ</a>
-              <span className="mx-2">/</span>
-              <a href="/courses" className="hover:text-indigo-600">Khóa học</a>
-              <span className="mx-2">/</span>
-              <span className="text-gray-900">{course.title}</span>
-            </nav>
+        <PageHero
+          badge={course.topic || "Khóa học"}
+          title={course.title}
+          subtitle={course.instructor ? `Giảng viên: ${course.instructor}` : "Học miễn phí trên YouTube"}
+          actions={
             <Button
-              variant="ghost"
+              variant="outline"
+              size="sm"
               onClick={() => navigate("/courses")}
-              className="text-gray-600 hover:text-gray-900"
+              className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Quay lại danh sách khóa học
+              Danh sách khóa học
             </Button>
-          </div>
-        </div>
+          }
+        />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                <div className="aspect-video bg-black">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="lg:col-span-2 space-y-5">
+              <SectionPanel title="Video khóa học" subtitle="Playlist YouTube — học trực tiếp trên trang">
+                <div className="aspect-video rounded-lg overflow-hidden bg-black border border-[#004080]/10">
                   <iframe
                     src={embedUrl}
                     title={course.title}
@@ -194,67 +201,58 @@ export default function CourseDetailPage() {
                     allowFullScreen
                   />
                 </div>
-              </div>
+              </SectionPanel>
 
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">{course.title}</h1>
-
-                <div className="flex flex-wrap gap-4 mb-6">
+              <SectionPanel title="Giới thiệu khóa học">
+                <div className="flex flex-wrap gap-3 mb-5">
                   {course.instructor && (
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <User className="h-5 w-5" />
-                      <span>{course.instructor}</span>
+                    <div className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <User className="h-4 w-4 text-[#004080]" />
+                      {course.instructor}
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Tag className="h-5 w-5" />
-                    <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium">
+                  {course.topic && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#004080]/8 text-[#004080] rounded-full text-xs font-medium">
+                      <Tag className="h-3 w-3" />
                       {course.topic}
                     </span>
-                  </div>
+                  )}
                   {course.level && (
-                    <div className="flex items-center gap-2">
-                      <BarChart className="h-5 w-5 text-gray-700" />
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-semibold capitalize ${
-                          levelColors[course.level as keyof typeof levelColors] ||
-                          "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {course.level}
-                      </span>
-                    </div>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold",
+                        LEVEL_BADGE[course.level] || "bg-slate-100 text-slate-700",
+                      )}
+                    >
+                      <BarChart className="h-3 w-3" />
+                      {LEVEL_LABEL[course.level] || course.level}
+                    </span>
                   )}
                   {course.language && (
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Globe className="h-5 w-5" />
-                      <span>{course.language}</span>
-                    </div>
+                    <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                      <Globe className="h-4 w-4" />
+                      {course.language}
+                    </span>
                   )}
                 </div>
+                <div>{renderMarkdownContent(seoContent)}</div>
+              </SectionPanel>
 
-                <div className="prose prose-gray max-w-none">
-                  {renderMarkdownContent(seoContent)}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Bình luận ({comments.length})
-                </h2>
-                <form onSubmit={handleSubmitComment} className="mb-8">
+              <SectionPanel title={`Bình luận (${comments.length})`} subtitle="Chia sẻ câu hỏi hoặc ghi chú học tập">
+                <form onSubmit={handleSubmitComment} className="mb-6">
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Viết bình luận của bạn..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none"
+                    placeholder="Viết bình luận của bạn…"
+                    className="w-full px-4 py-3 text-sm border border-[#004080]/15 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004080]/30 resize-none uupm-focus"
                     rows={4}
                   />
                   <div className="mt-3 flex justify-end">
                     <Button
                       type="submit"
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      className="bg-[#004080] hover:bg-[#003366]"
                       disabled={!comment.trim()}
+                      size="sm"
                     >
                       Gửi bình luận
                     </Button>
@@ -262,34 +260,33 @@ export default function CourseDetailPage() {
                 </form>
                 <div className="space-y-4">
                   {comments.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">
-                      Chưa có bình luận nào. Hãy là người đầu tiên!
+                    <p className="text-sm text-muted-foreground text-center py-6">
+                      Chưa có bình luận. Hãy là người đầu tiên!
                     </p>
                   ) : (
                     comments.map((c) => (
-                      <div key={c.id} className="border-b border-gray-200 pb-4 last:border-0">
+                      <div key={c.id} className="border-b border-[#004080]/10 pb-4 last:border-0">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <User className="h-5 w-5 text-indigo-600" />
+                          <div className="w-9 h-9 bg-[#004080]/10 rounded-full flex items-center justify-center">
+                            <User className="h-4 w-4 text-[#004080]" />
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">{c.user}</p>
-                            <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <p className="text-sm font-medium">{c.user}</p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {new Date(c.createdAt).toLocaleDateString("vi-VN")}
                             </p>
                           </div>
                         </div>
-                        <p className="text-gray-700 ml-13">{c.content}</p>
+                        <p className="text-sm text-muted-foreground pl-12">{c.content}</p>
                       </div>
                     ))
                   )}
                 </div>
-              </div>
-
+              </SectionPanel>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               <LeadCaptureForm
                 source="course_page"
                 sourceId={course.slug || course.id}
@@ -297,30 +294,40 @@ export default function CourseDetailPage() {
               />
 
               {relatedCourses && relatedCourses.length > 0 && (
-                <div className="bg-white rounded-xl shadow-md p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Khóa học liên quan</h2>
-                  <div className="space-y-4">
-                    {relatedCourses.map((relatedCourse: any) => (
-                      <div
-                        key={relatedCourse.id}
-                        onClick={() => navigate(getCourseUrl(relatedCourse))}
-                        className="group cursor-pointer border border-gray-200 rounded-lg p-3 hover:border-indigo-600 hover:shadow-md transition-all"
+                <SectionPanel title="Khóa học liên quan" subtitle={`Cùng chủ đề ${course.topic}`}>
+                  <div className="space-y-3">
+                    {relatedCourses.map((related: {
+                      id: number;
+                      title: string;
+                      instructor?: string;
+                      youtube_url?: string;
+                      thumbnail_url?: string;
+                    }) => (
+                      <button
+                        key={related.id}
+                        type="button"
+                        onClick={() => navigate(getCourseUrl(related))}
+                        className="w-full text-left group flex gap-3 p-2 rounded-lg hover:bg-[#004080]/5 transition-colors uupm-focus"
                       >
-                        <div className="aspect-video rounded-lg mb-3 overflow-hidden relative">
+                        <div className="w-24 shrink-0 aspect-video rounded-md overflow-hidden relative border border-[#004080]/10">
                           <CourseThumbnail
-                            videoUrl={relatedCourse.youtube_url || relatedCourse.thumbnail_url || ""}
-                            title={relatedCourse.title}
-                            fallbackGradient="from-indigo-400 to-purple-600"
+                            videoUrl={related.youtube_url || related.thumbnail_url || ""}
+                            title={related.title}
+                            fallbackGradient={getPlaceholderGradient(related.title)}
                           />
                         </div>
-                        <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm group-hover:text-indigo-600 transition-colors">
-                          {relatedCourse.title}
-                        </h3>
-                        <p className="text-xs text-gray-600 mt-1">{relatedCourse.instructor}</p>
-                      </div>
+                        <div className="min-w-0 py-0.5">
+                          <h3 className="text-sm font-medium line-clamp-2 group-hover:text-[#004080] transition-colors">
+                            {related.title}
+                          </h3>
+                          {related.instructor && (
+                            <p className="text-xs text-muted-foreground mt-1 truncate">{related.instructor}</p>
+                          )}
+                        </div>
+                      </button>
                     ))}
                   </div>
-                </div>
+                </SectionPanel>
               )}
             </div>
           </div>

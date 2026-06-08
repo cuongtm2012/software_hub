@@ -6,10 +6,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { PageHero } from "@/components/design-system/page-hero";
+import { SectionPanel } from "@/components/design-system/section-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -29,10 +31,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import {
-  PageBreadcrumb,
-  createBreadcrumbs,
-} from "@/components/page-breadcrumb";
-import {
   Package,
   DollarSign,
   Tag,
@@ -42,15 +40,27 @@ import {
   Upload,
   X,
   Plus,
-  Image as ImageIcon,
+  Shield,
+  Clock,
+  ImageIcon,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useDropzone } from "react-dropzone";
+import { cn } from "@/lib/utils";
+
+const inputClass =
+  "border-[#004080]/15 bg-white focus-visible:ring-[#004080]/30 h-11";
+
+const TIPS = [
+  { icon: Package, title: "Mô tả rõ ràng", desc: "Giải thích tính năng, phiên bản và đối tượng phù hợp" },
+  { icon: ImageIcon, title: "Ảnh chất lượng", desc: "Dùng ảnh sắc nét, tối đa 5MB mỗi file" },
+  { icon: Clock, title: "Chờ duyệt", desc: "Sản phẩm hiển thị sau khi admin phê duyệt" },
+];
 
 const productSchema = z.object({
-  title: z.string().min(3, "Product title must be at least 3 characters"),
-  description: z.string().min(20, "Description must be at least 20 characters"),
-  category: z.string().min(1, "Please select a category"),
+  title: z.string().min(3, "Tên sản phẩm phải có ít nhất 3 ký tự"),
+  description: z.string().min(20, "Mô tả phải có ít nhất 20 ký tự"),
+  category: z.string().min(1, "Vui lòng chọn danh mục"),
   price_type: z.string().optional(), // Legacy field, not required
   price: z.number().optional(), // Legacy field, not required
   stock_quantity: z.number().optional(), // Legacy field, not required
@@ -61,13 +71,13 @@ const productSchema = z.object({
   pricing_rows: z
     .array(
       z.object({
-        price_type: z.string().min(1, "Please specify the price type"),
-        price: z.number().min(1000, "Price must be at least 1,000 VND"),
-        stock_quantity: z.number().min(1, "Stock must be at least 1"),
+        price_type: z.string().min(1, "Vui lòng nhập loại giá"),
+        price: z.number().min(1000, "Giá tối thiểu 1.000 ₫"),
+        stock_quantity: z.number().min(1, "Tồn kho tối thiểu là 1"),
         license_info: z.string().optional(),
       }),
     )
-    .min(1, "At least one pricing row is required"),
+    .min(1, "Cần ít nhất một mức giá"),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -112,7 +122,6 @@ export default function SellerProductNewPage() {
   const { toast } = useToast();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [imageUploadRows, setImageUploadRows] = useState<number[]>([0]);
   const [pricingRows, setPricingRows] = useState<number[]>([0]);
 
   const form = useForm<ProductFormData>({
@@ -184,14 +193,6 @@ export default function SellerProductNewPage() {
     setPricingRows([...pricingRows, nextId]);
   };
 
-  const removePricingRow = () => {
-    if (pricingRows.length > 1) {
-      const currentRows = form.getValues("pricing_rows") || [];
-      form.setValue("pricing_rows", currentRows.slice(0, -1));
-      setPricingRows(pricingRows.slice(0, -1));
-    }
-  };
-
   // Single dropzone for all image uploads
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -207,13 +208,13 @@ export default function SellerProductNewPage() {
         form.setValue("images", newImages);
 
         toast({
-          title: "Images Uploaded",
-          description: `Successfully uploaded ${acceptedFiles.length} image(s)`,
+          title: "Đã tải ảnh lên",
+          description: `Đã tải ${acceptedFiles.length} ảnh thành công`,
         });
-      } catch (error) {
+      } catch {
         toast({
-          title: "Upload Failed",
-          description: "Failed to upload images. Please try again.",
+          title: "Tải ảnh thất bại",
+          description: "Vui lòng thử lại.",
           variant: "destructive",
         });
       } finally {
@@ -240,8 +241,6 @@ export default function SellerProductNewPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      console.log("Mutation started with data:", data);
-      
       const tagsArray = data.tags
         ? data.tags
             .split(",")
@@ -271,31 +270,20 @@ export default function SellerProductNewPage() {
         status: "pending", // Products go for review by default
       };
       
-      console.log("API payload:", payload);
-      
-      try {
-        const result = await apiRequest("POST", "/api/seller/products", payload);
-        console.log("API response:", result);
-        return result;
-      } catch (error) {
-        console.error("API error:", error);
-        throw error;
-      }
+      return apiRequest("POST", "/api/seller/products", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
       toast({
-        title: "Product Created",
-        description:
-          "Your product has been submitted for review and will be live once approved.",
+        title: "Đã tạo sản phẩm",
+        description: "Sản phẩm đang chờ admin duyệt trước khi hiển thị.",
       });
       navigate("/dashboard");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Creation Failed",
-        description:
-          error.message || "Failed to create product. Please try again.",
+        title: "Tạo sản phẩm thất bại",
+        description: error.message || "Vui lòng thử lại.",
         variant: "destructive",
       });
     },
@@ -305,31 +293,33 @@ export default function SellerProductNewPage() {
     createProductMutation.mutate(data);
   };
 
-  const onError = (errors: any) => {
+  const onError = () => {
     toast({
-      title: "Form Validation Failed",
-      description: "Please check all required fields and fix any errors.",
+      title: "Vui lòng kiểm tra form",
+      description: "Còn trường bắt buộc chưa điền hoặc chưa hợp lệ.",
       variant: "destructive",
     });
   };
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-[#f9f9f9]">
         <Header />
-        <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
-            <Card className="max-w-md mx-auto">
-              <CardContent className="p-6 text-center">
-                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Login Required</h2>
-                <p className="text-gray-600 mb-4">
-                  Please log in to add products.
-                </p>
-                <Button onClick={() => navigate("/test-login")}>Login</Button>
-              </CardContent>
-            </Card>
-          </div>
+        <main className="pt-16 flex items-center justify-center px-4 py-16">
+          <Card className="max-w-md w-full uupm-card border-[#004080]/10">
+            <CardContent className="p-8 text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#004080]/8">
+                <Shield className="h-7 w-7 text-[#004080]" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Cần đăng nhập</h2>
+              <p className="text-muted-foreground mb-6 text-sm">
+                Đăng nhập để thêm sản phẩm lên marketplace.
+              </p>
+              <Button onClick={() => navigate("/auth")} className="bg-[#004080] hover:bg-[#003366] w-full">
+                Đăng nhập
+              </Button>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>
@@ -338,61 +328,38 @@ export default function SellerProductNewPage() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-[#f9f9f9]">
         <Header />
-        <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
-            <div className="flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
-            </div>
-          </div>
+        <main className="pt-16 flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
         </main>
         <Footer />
       </div>
     );
   }
 
-  // Check if user is verified seller
-  if (
-    !sellerData?.seller_profile ||
-    sellerData.seller_profile.verification_status !== "verified"
-  ) {
+  const canAddProducts = user.role === "seller" || user.role === "admin";
+  const sellerProfile = sellerData?.seller_profile;
+  const profileNeedsAttention =
+    !sellerProfile || sellerProfile.verification_status !== "verified";
+
+  if (!canAddProducts) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-[#f9f9f9]">
         <Header />
-        <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-500" />
-                  Seller Verification Required
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <p className="text-gray-600">
-                  You must be a verified seller to add products to the
-                  marketplace.
-                </p>
-                {!sellerData?.seller_profile ? (
-                  <Button
-                    onClick={() => navigate("/seller/register")}
-                    className="bg-[#004080] hover:bg-[#003366]"
-                  >
-                    Register as Seller
-                  </Button>
-                ) : (
-                  <div>
-                    <p className="text-sm text-yellow-600 mb-4">
-                      Your seller account is{" "}
-                      {sellerData.seller_profile.verification_status}. Please
-                      wait for verification to complete.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+        <main className="pt-16 px-4 py-12">
+          <Card className="max-w-lg mx-auto uupm-card border-[#004080]/10">
+            <CardContent className="p-8 text-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-amber-500 mx-auto" />
+              <h2 className="text-xl font-semibold">Cần tài khoản Seller</h2>
+              <p className="text-muted-foreground text-sm">
+                Chỉ tài khoản Seller mới có thể thêm sản phẩm lên marketplace.
+              </p>
+              <Button onClick={() => navigate("/seller/register")} className="bg-[#004080] hover:bg-[#003366]">
+                Đăng ký Seller
+              </Button>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>
@@ -400,51 +367,67 @@ export default function SellerProductNewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-[#f9f9f9]">
       <Header />
-      <PageBreadcrumb items={createBreadcrumbs.sellerProductNew()} />
-      <main className="pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Add New Product
-                </h1>
-                <p className="text-gray-600">
-                  Create a new product listing for the marketplace
-                </p>
-              </div>
-            </div>
+      <PageHero
+        badge="Marketplace"
+        title="Thêm sản phẩm mới"
+        subtitle="Điền thông tin sản phẩm — sau khi gửi, admin sẽ duyệt trước khi hiển thị công khai."
+      />
+      <main className="pt-0">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-[#004080] mb-6 transition-colors uupm-focus rounded-md"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại bảng điều khiển
+          </button>
 
-            {/* Product Form */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Product Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit, onError)}
-                    className="space-y-6"
-                  >
-                    {/* Basic Information */}
+          <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="lg:col-span-2 space-y-5">
+              {profileNeedsAttention && (
+                <Alert className="border-amber-200 bg-amber-50">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-900 text-sm">
+                    {!sellerProfile ? (
+                      <>
+                        Bạn chưa hoàn tất hồ sơ Seller. Vẫn có thể thêm sản phẩm — sản phẩm sẽ chờ duyệt.{" "}
+                        <button
+                          type="button"
+                          onClick={() => navigate("/seller/register")}
+                          className="font-medium underline underline-offset-2"
+                        >
+                          Hoàn tất đăng ký
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        Hồ sơ Seller: &quot;{sellerProfile.verification_status}&quot;. Mỗi sản phẩm sẽ được admin duyệt riêng.
+                      </>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-5">
+                  <SectionPanel title="Thông tin cơ bản" subtitle="Tên, mô tả và phân loại sản phẩm">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Basic Information</h3>
 
                       <FormField
                         control={form.control}
                         name="title"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Product Title *</FormLabel>
+                            <FormLabel>
+                              Tên sản phẩm <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Enter product title"
+                                placeholder="VD: Microsoft Office 365 License"
+                                className={inputClass}
                                 {...field}
                               />
                             </FormControl>
@@ -458,11 +441,13 @@ export default function SellerProductNewPage() {
                         name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Description *</FormLabel>
+                            <FormLabel>
+                              Mô tả <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="Describe your product in detail"
-                                className="min-h-[120px]"
+                                placeholder="Mô tả chi tiết tính năng, phiên bản, đối tượng sử dụng…"
+                                className="min-h-[120px] border-[#004080]/15 focus-visible:ring-[#004080]/30 resize-none"
                                 {...field}
                               />
                             </FormControl>
@@ -471,20 +456,19 @@ export default function SellerProductNewPage() {
                         )}
                       />
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
                           name="category"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Category *</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
+                              <FormLabel>
+                                Danh mục <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select category" />
+                                  <SelectTrigger className={inputClass}>
+                                    <SelectValue placeholder="Chọn danh mục" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -505,194 +489,197 @@ export default function SellerProductNewPage() {
                           name="tags"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="flex items-center gap-2">
-                                <Tag className="h-4 w-4" />
-                                Tags (Optional)
+                              <FormLabel className="flex items-center gap-1.5">
+                                <Tag className="h-3.5 w-3.5" />
+                                Tags (tùy chọn)
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="e.g. windows, productivity, business"
+                                  placeholder="windows, productivity, business"
+                                  className={inputClass}
                                   {...field}
                                 />
                               </FormControl>
-                              <p className="text-xs text-gray-500">
-                                Separate tags with commas
-                              </p>
+                              <p className="text-xs text-muted-foreground">Phân cách bằng dấu phẩy</p>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
                     </div>
+                  </SectionPanel>
 
-                    {/* Product Images */}
+                  <SectionPanel title="Hình ảnh sản phẩm" subtitle="JPG, PNG, GIF, WebP — tối đa 5MB mỗi file">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Product Images</h3>
-
-                      {/* Image Upload Rows */}
-                      <div className="space-y-4">
-                        {imageUploadRows.map((rowId, index) => (
-                          <div key={rowId} className="flex items-center">
-                            <div
-                              {...getRootProps()}
-                              className="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-48 h-10"
-                            >
-                              <input {...getInputProps()} />
-                              <div className="flex items-center gap-2">
-                                <Upload className="h-3 w-3 text-[#004080]" />
-                                <span className="text-[#004080] font-medium text-sm">
-                                  Upload File
-                                </span>
-                                <span className="text-gray-500 dark:text-gray-400 text-xs">
-                                  {uploadedImages.length > 0
-                                    ? `${uploadedImages.length} file(s)`
-                                    : "No file"}
-                                </span>
-                              </div>
-                              {uploading && (
-                                <Loader2 className="h-3 w-3 ml-2 animate-spin text-[#004080]" />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Supported formats: JPG, PNG, GIF, WebP (Max 5MB each)
+                      <div
+                        {...getRootProps()}
+                        className={cn(
+                          "flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors",
+                          isDragActive
+                            ? "border-[#004080] bg-[#004080]/5"
+                            : "border-[#004080]/20 bg-[#004080]/[0.02] hover:border-[#004080]/40 hover:bg-[#004080]/5",
+                        )}
+                      >
+                        <input {...getInputProps()} />
+                        {uploading ? (
+                          <Loader2 className="h-8 w-8 animate-spin text-[#004080] mb-2" />
+                        ) : (
+                          <Upload className="h-8 w-8 text-[#004080] mb-2" />
+                        )}
+                        <p className="text-sm font-medium text-foreground">
+                          {isDragActive ? "Thả ảnh vào đây…" : "Kéo thả hoặc bấm để chọn ảnh"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {uploadedImages.length > 0
+                            ? `Đã chọn ${uploadedImages.length} ảnh`
+                            : "Chưa có ảnh nào"}
                         </p>
                       </div>
 
-                      {/* Image Thumbnails */}
                       {uploadedImages.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Uploaded Images ({uploadedImages.length})
-                          </h4>
-                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                            {uploadedImages.map((imageUrl, index) => (
-                              <div
-                                key={index}
-                                className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                          {uploadedImages.map((imageUrl, index) => (
+                            <div
+                              key={index}
+                              className="relative group aspect-square rounded-lg overflow-hidden border border-[#004080]/15 bg-muted/30"
+                            >
+                              <img
+                                src={imageUrl}
+                                alt={`Ảnh ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src =
+                                    "data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%236b7280'%3EẢnh%3C/text%3E%3C/svg%3E";
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute top-1.5 right-1.5 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                title="Xóa ảnh"
                               >
-                                <img
-                                  src={imageUrl}
-                                  alt={`Product image ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    // Fallback for broken images
-                                    e.currentTarget.src =
-                                      "data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%236b7280'%3EImage%3C/text%3E%3C/svg%3E";
-                                  }}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeImage(index)}
-                                  className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                                  title="Remove image"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
+                  </SectionPanel>
 
-                    {/* Pricing & Inventory */}
+                  <SectionPanel title="Giá & tồn kho" subtitle="Thiết lập mức giá và số lượng bán">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">
-                        Pricing & Inventory
-                      </h3>
+                      {pricingRows.map((rowId, index) => (
+                        <div
+                          key={rowId}
+                          className="rounded-xl border border-[#004080]/10 bg-[#004080]/[0.02] p-4 space-y-4"
+                        >
+                          {pricingRows.length > 1 && (
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Mức giá #{index + 1}
+                            </p>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <FormField
+                              control={form.control}
+                              name={`pricing_rows.${index}.price_type`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="flex items-center gap-1.5">
+                                    <Tag className="h-3.5 w-3.5" />
+                                    Loại giá <span className="text-red-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="VD: Mua một lần, Gói tháng"
+                                      className={inputClass}
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
 
-                      {/* Dynamic Pricing Rows */}
-                      <div className="space-y-4">
-                        {pricingRows.map((rowId, index) => (
-                          <div
-                            key={rowId}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
-                          >
-                            {/* Horizontal row: Price Type, Price (VND), and Stock Quantity */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <FormField
-                                control={form.control}
-                                name={`pricing_rows.${index}.price_type`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="flex items-center gap-2">
-                                      <Tag className="h-4 w-4" />
-                                      Price Type *
-                                    </FormLabel>
-                                    <FormControl>
+                            <FormField
+                              control={form.control}
+                              name={`pricing_rows.${index}.price`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="flex items-center gap-1.5">
+                                    <DollarSign className="h-3.5 w-3.5" />
+                                    Giá (VND) <span className="text-red-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <div className="relative">
                                       <Input
-                                        placeholder="e.g. Fixed Price, Subscription, One-time"
-                                        {...field}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={form.control}
-                                name={`pricing_rows.${index}.price`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="flex items-center gap-1">
-                                      <DollarSign className="h-4 w-4" />
-                                      Price (VND) *
-                                    </FormLabel>
-                                    <FormControl>
-                                      <div className="relative">
-                                        <Input
-                                          placeholder="100,000 ₫"
-                                          value={
-                                            field.value
-                                              ? formatVNDInput(
-                                                  field.value.toString(),
-                                                )
-                                              : ""
-                                          }
-                                          onChange={(e) => {
-                                            const numericValue =
-                                              e.target.value.replace(
-                                                /[^\d]/g,
-                                                "",
-                                              );
-                                            field.onChange(
-                                              parseInt(numericValue) || 0,
-                                            );
-                                          }}
-                                          className="pr-8"
-                                        />
-                                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                                          ₫
-                                        </span>
-                                      </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={form.control}
-                                name={`pricing_rows.${index}.stock_quantity`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="flex items-center gap-1">
-                                      Stock Quantity *
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="number"
-                                        min="1"
-                                        placeholder="1"
-                                        {...field}
-                                        onChange={(e) =>
-                                          field.onChange(
-                                            parseInt(e.target.value) || 1,
-                                          )
+                                        placeholder="100.000"
+                                        value={
+                                          field.value
+                                            ? formatVNDInput(field.value.toString())
+                                            : ""
                                         }
+                                        onChange={(e) => {
+                                          const numericValue = e.target.value.replace(/[^\d]/g, "");
+                                          field.onChange(parseInt(numericValue) || 0);
+                                        }}
+                                        className={cn(inputClass, "pr-8")}
+                                      />
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                                        ₫
+                                      </span>
+                                    </div>
+                                  </FormControl>
+                                  {field.value > 0 && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {formatVND(field.value)}
+                                    </p>
+                                  )}
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name={`pricing_rows.${index}.stock_quantity`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    Tồn kho <span className="text-red-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      placeholder="1"
+                                      className={inputClass}
+                                      {...field}
+                                      onChange={(e) =>
+                                        field.onChange(parseInt(e.target.value) || 1)
+                                      }
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="flex gap-3 items-end">
+                            <div className="flex-1">
+                              <FormField
+                                control={form.control}
+                                name={`pricing_rows.${index}.license_info`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Thông tin license (tùy chọn)</FormLabel>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder="Điều khoản license, giới hạn sử dụng…"
+                                        className="min-h-[72px] resize-none border-[#004080]/15 focus-visible:ring-[#004080]/30"
+                                        value={field.value || ""}
+                                        onChange={field.onChange}
                                       />
                                     </FormControl>
                                     <FormMessage />
@@ -700,95 +687,119 @@ export default function SellerProductNewPage() {
                                 )}
                               />
                             </div>
-
-                            {/* License Information row */}
-                            <div className="flex gap-4 items-end">
-                              <div className="flex-1">
-                                <FormField
-                                  control={form.control}
-                                  name={`pricing_rows.${index}.license_info`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>License Information</FormLabel>
-                                      <FormControl>
-                                        <Textarea
-                                          placeholder="Enter license details, terms, or restrictions..."
-                                          className="min-h-[80px] resize-none"
-                                          value={field.value || ""}
-                                          onChange={field.onChange}
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-
-                              {/* Add/Remove buttons */}
-                              <div className="flex gap-2 pb-2">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={addPricingRow}
-                                  className="w-8 h-8 p-0"
-                                  title="Add pricing row"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    if (pricingRows.length > 1) {
-                                      const currentRows =
-                                        form.getValues("pricing_rows") || [];
-                                      form.setValue(
-                                        "pricing_rows",
-                                        currentRows.filter(
-                                          (_, i) => i !== index,
-                                        ),
-                                      );
-                                      setPricingRows(
-                                        pricingRows.filter(
-                                          (_, i) => i !== index,
-                                        ),
-                                      );
-                                    }
-                                  }}
-                                  disabled={pricingRows.length <= 1}
-                                  className="w-8 h-8 p-0"
-                                  title="Remove this pricing row"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
+                            <div className="flex gap-1.5 pb-1 shrink-0">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={addPricingRow}
+                                className="h-9 w-9 p-0 border-[#004080]/20"
+                                title="Thêm mức giá"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (pricingRows.length > 1) {
+                                    const currentRows = form.getValues("pricing_rows") || [];
+                                    form.setValue(
+                                      "pricing_rows",
+                                      currentRows.filter((_, i) => i !== index),
+                                    );
+                                    setPricingRows(pricingRows.filter((_, i) => i !== index));
+                                  }
+                                }}
+                                disabled={pricingRows.length <= 1}
+                                className="h-9 w-9 p-0 border-[#004080]/20"
+                                title="Xóa mức giá"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
+                  </SectionPanel>
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end pt-6">
+                  <SectionPanel title="Gửi sản phẩm">
+                    <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate("/dashboard")}
+                        className="border-[#004080]/20"
+                      >
+                        Hủy
+                      </Button>
                       <Button
                         type="submit"
                         disabled={createProductMutation.isPending}
-                        className="bg-[#004080] hover:bg-[#003366] text-white px-8"
+                        className="bg-[#004080] hover:bg-[#003366] font-semibold min-w-[10rem]"
                       >
-                        {createProductMutation.isPending && (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {createProductMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Đang gửi…
+                          </>
+                        ) : (
+                          <>
+                            <Package className="h-4 w-4 mr-2" />
+                            Tạo sản phẩm
+                          </>
                         )}
-                        {createProductMutation.isPending
-                          ? "Creating..."
-                          : "Create Product"}
                       </Button>
                     </div>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
+                    <p className="text-xs text-muted-foreground text-center sm:text-right mt-3">
+                      <span className="text-red-500">*</span> Trường bắt buộc. Sản phẩm chờ admin duyệt trước khi hiển thị.
+                    </p>
+                  </SectionPanel>
+                </form>
+              </Form>
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-20 space-y-5">
+                <div className="rounded-xl bg-gradient-to-br from-[#004080] to-slate-900 text-white p-5 sm:p-6 border border-[#004080]/20 shadow-sm">
+                  <h3 className="text-lg font-bold mb-4 text-white">Mẹo đăng sản phẩm</h3>
+                  <ul className="space-y-4">
+                    {TIPS.map(({ icon: Icon, title, desc }) => (
+                      <li key={title} className="flex gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#ffcc00]/20 border border-[#ffcc00]/30">
+                          <Icon className="h-4 w-4 text-[#ffcc00]" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm text-white">{title}</div>
+                          <p className="text-white/70 text-xs mt-0.5 leading-relaxed">{desc}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-xl border border-[#004080]/10 bg-card p-5 uupm-card">
+                  <h3 className="text-sm font-semibold mb-3">Quy trình duyệt</h3>
+                  <ol className="space-y-3 text-sm">
+                    <li className="flex gap-2.5">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#004080] text-white text-xs font-bold">1</span>
+                      <span className="text-muted-foreground pt-0.5">Gửi form tạo sản phẩm</span>
+                    </li>
+                    <li className="flex gap-2.5">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#004080] text-white text-xs font-bold">2</span>
+                      <span className="text-muted-foreground pt-0.5">Admin kiểm tra nội dung</span>
+                    </li>
+                    <li className="flex gap-2.5">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#004080] text-white text-xs font-bold">3</span>
+                      <span className="text-muted-foreground pt-0.5">Hiển thị trên marketplace</span>
+                    </li>
+                  </ol>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>

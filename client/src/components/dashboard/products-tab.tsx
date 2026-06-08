@@ -1,6 +1,5 @@
 import { useLocation } from "wouter";
-import { Plus, Package, CheckCircle2, Star, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Package, CheckCircle2, Star, TrendingUp } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ProductRow } from "@/components/dashboard/product-row";
@@ -56,16 +55,6 @@ export function ProductsTab({
           isLoading
             ? "Đang tải…"
             : `${totalItems} sản phẩm trên marketplace`
-        }
-        action={
-          <Button
-            size="sm"
-            onClick={() => navigate("/seller/products/new")}
-            className="bg-[#004080] hover:bg-[#003366] w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Thêm sản phẩm
-          </Button>
         }
         headerClassName="!p-4 sm:!px-5"
         className="!shadow-none border-0 rounded-none"

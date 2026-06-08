@@ -1,14 +1,16 @@
 # Software Hub - Product Specification Document
 
-> Generated from source code review (June 2026) | Updated with go-to-market strategy
+> Generated from source code review | Last updated: June 2026
 
 ---
 
 ## 1. Executive Summary
 
-**Software Hub** is a full-stack multi-tenant platform combining software catalog distribution, digital marketplace, IT service management (freelance/project outsourcing), and educational course listings. Built with React + Express + PostgreSQL + Redis/MongoDB microservices architecture.
+**Software Hub** is a full-stack multi-tenant platform combining software catalog distribution, digital marketplace, IT service management (freelance/project outsourcing), educational course listings, and blog/lead capture for go-to-market.
 
-**Status**: Active development / production-ready monolith with optional microservices.
+**Architecture:** Monolith-first — single Express app serves API + built React SPA. Optional microservices (email, chat, notification) run under PM2. Primary database, auth, and file storage run on **Supabase** (managed PostgreSQL). Redis + MongoDB run locally on VPS via Docker for queue/chat.
+
+**Status:** Production-deployed (`swhubco.com`). Active development on marketplace payments, design system, and GTM features.
 
 ---
 
@@ -16,11 +18,18 @@
 
 ### 2.1. Deployment Models
 
-| Model | Container Layout | When To Use |
+| Model | Layout | When To Use |
 |---|---|---|
-| **Monolith** (default) | Single `app` container + Postgres + Redis | Development, low-traffic production |
-| **Full Microservices** | app + email-service + chat-service + notification-service + worker-service + payment-service + gateweaver | High traffic, team separation |
-| **Monolith + Gateweaver** | app + gateweaver + all microservices | Production with API gateway |
+| **VPS Monolith** (current prod) | PM2 app :5000 + Docker Redis/Mongo + Supabase cloud | Production (Contabo VPS) |
+| **Local Dev** | `npm run dev` (Vite + tsx) + Supabase cloud or local | Development |
+| **Full Microservices** (optional) | app + email + chat + notification + worker | High traffic, team separation |
+
+```
+Internet → Nginx (80/443) → PM2 app :5000
+                              ↓
+                    Supabase (DB + Auth + Storage)
+                    Docker: Redis + Mongo (local on VPS)
+```
 
 ### 2.2. Tech Stack
 
@@ -30,54 +39,63 @@
 - Wouter (lightweight routing)
 - TanStack Query (data fetching)
 - Framer Motion (animations)
-- **Supabase JS SDK** (auth client — thay fetch /api/user)
-- Firebase SDK (push notifications, messaging)
+- **Supabase JS SDK** — primary auth client (`@supabase/supabase-js`)
+- Firebase SDK (push notifications)
 - Uppy (file uploads → Supabase Storage)
-- Stripe / VietQR (payments)
 - Recharts (analytics)
+- Google Tag Manager / GA4 (`VITE_GA_MEASUREMENT_ID`)
 
 **Backend**
-- Node.js 20 + Express (TypeScript via tsx)
-- Drizzle ORM (PostgreSQL)
-- **Supabase** (managed PostgreSQL + Auth + Storage)
-- **@supabase/supabase-js** (server-side auth verification)
-- Redis (message queue — background jobs)
-- Socket.IO (real-time chat)
-- SendGrid / Resend (email)
-- Firebase Admin SDK (push notifications)
-- Stripe API (payment processing)
+- Node.js 20 + Express (TypeScript via `tsx` dev, compiled to `dist/server/`)
+- Drizzle ORM (PostgreSQL via Supabase)
+- **Supabase Auth** — JWT verification server-side (`verifySupabaseToken`)
+- Redis (message queue — background jobs, optional fallback)
+- Socket.IO (real-time chat in monolith)
+- SendGrid / Resend (email via `email-service`)
+- Firebase Admin SDK (push notifications via `notification-service`)
+- **SePay** (`sepay-pg-node`) — primary payment gateway
+- Google Generative AI (`@google/generative-ai`) — chat AI
+
+**Testing**
+- Vitest (unit tests — `npm run test`)
+- Playwright (e2e — `npm run test:e2e`)
 
 **DevOps**
-- Docker (app container only — không cần Postgres/Redis container)
-- Supabase Studio (admin UI — thay custom admin panels)
-- GitHub Actions (CI/CD)
-- nginx (reverse proxy — optional với Supabase)
+- PM2 cluster (`ecosystem.config.cjs`) — app + 3 microservices
+- Docker Compose (`docker-compose.vps.yml`) — Redis + MongoDB on VPS only
+- GitHub Actions (`.github/workflows/deploy.yml`) — CI/CD to Contabo VPS
+- nginx reverse proxy + SSL on VPS
+- Supabase Studio — database admin UI
 
 ---
 
-## 3. Database Schema (PostgreSQL)
+## 3. Database Schema (PostgreSQL via Supabase)
 
-### 3.1. Core Tables (22+ tables via Drizzle ORM)
+Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push`).
+
+### 3.1. Core Tables (28 tables)
 
 **Users & Auth**
 | Table | Purpose | Key Fields |
 |---|---|---|
-| `users` | User accounts | id, name, email, password, role, profile_data, email_verified, reset_token |
+| `users` | User accounts | id, name, email, password, role, supabase_id, profile_data (JSONB — includes `wallet_balance`), email_verified, reset_token |
 | `seller_profiles` | Marketplace seller verification | user_id, business_name, tax_id, verification_status, commission_rate |
 
 **Software Catalog**
 | Table | Purpose | Key Fields |
 |---|---|---|
 | `categories` | Software categories (hierarchical) | id, name, parent_id |
-| `softwares` | Software/API listings | name, description, type (software|api), category_id, platform[], download_link, status |
+| `softwares` | Software/API listings | name, description, type (software\|api), category_id, platform[], download_link, status |
 | `reviews` | Software reviews | user_id, target_type, target_id, rating, comment |
-| `courses` | IT learning courses | title, topic, youtube_url, playlist_id, level, language |
+| `courses` | IT learning courses | title, topic, youtube_url, playlist_id, level, language, slug |
+| `blog_posts` | Blog articles (GTM) | title, slug, content, status, author_id |
+| `leads` | Lead capture forms (GTM) | name, email, phone, source, status |
 | `user_downloads` | Download tracking | user_id, software_id, version |
 
 **Project Management**
 | Table | Purpose | Key Fields |
 |---|---|---|
-| `external_requests` | Unified project requests | name, email, title, project_description, budget, status, client_id, assigned_developer_id |
+| `external_requests` | Unified project requests (replaces legacy `projects`) | name, email, title, project_description, budget, status, client_id, assigned_developer_id |
 | `quotes` | Developer quotes for projects | project_id, developer_id, price, timeline_days, deliverables[], deposit_amount |
 | `messages` | Project communication | project_id, sender_id, content |
 | `portfolios` | Developer portfolios | developer_id, title, images[], demo_link, technologies[] |
@@ -86,16 +104,16 @@
 **Marketplace**
 | Table | Purpose | Key Fields |
 |---|---|---|
-| `products` | Digital products for sale | seller_id, title, price, price_type, stock_quantity, images[], pricing_rows, status |
-| `orders` | Purchase orders | buyer_id, seller_id, status, total_amount, commission_amount, payment_method |
+| `products` | Digital products for sale | seller_id, title, price, price_type, stock_quantity, images[], pricing_rows (JSONB), status |
+| `orders` | Purchase orders | buyer_id, seller_id, status, total_amount, commission_amount, payment_method, buyer_info |
 | `order_items` | Order line items | order_id, product_id, quantity, price |
-| `payments` | Payment records | order_id, project_id, amount, payment_method, status, escrow_release |
-| `cart_items` | Shopping cart | user_id, product_id, quantity |
+| `payments` | Payment records | order_id, project_id, amount, payment_method, status, escrow_release, transaction_id |
+| `cart_items` | DB cart (legacy) | user_id, product_id, quantity |
 | `support_tickets` | Post-purchase support | order_id, buyer_id, seller_id, subject, status |
 | `product_reviews` | Product ratings | order_id, product_id, buyer_id, rating |
 | `sales_analytics` | Seller analytics | seller_id, product_id, date, revenue, units_sold |
 
-**IT Services (Phase 3)**
+**IT Services**
 | Table | Purpose |
 |---|---|
 | `service_requests` | Client service requests |
@@ -103,57 +121,102 @@
 | `service_projects` | In-progress service projects with milestones |
 | `service_payments` | Deposit/final payments for services |
 
-**Chat**
+**Chat & Notifications**
 | Table | Purpose |
 |---|---|
 | `chat_rooms` | Direct/group chat rooms |
 | `chat_room_members` | Room membership |
-| `chat_messages` | Chat messages (also stores in MongoDB) |
+| `chat_messages` | Chat messages (also stored in MongoDB via chat-service) |
 | `user_presence` | Online/offline status |
-
-**Notifications**
-| Table | Purpose |
-|---|---|
 | `notifications` | In-app notifications |
 | `fcm_tokens` | Firebase Cloud Messaging push tokens |
+
+**Enums:** `role` (user, admin, developer, client, seller, buyer), `order_status` (pending → completed), `product_status`, `payment_status`, etc.
+
+**Wallet:** Stored in `users.profile_data.wallet_balance` (JSONB) — credited via SePay IPN on wallet top-up.
+
+**Client-side cart:** `useCart` hook persists to `localStorage` key `shopping-cart` (not `cart_items` table).
 
 ---
 
 ## 4. API Structure
 
+Route registration in `server/routes.ts`. 20 route modules under `server/routes/`.
+
 ### 4.1. Route Map
 
-| Prefix | Module | Type | Description |
+| Prefix | Module | Description |
+|---|---|---|
+| `/api/user` | Inline | Current user from Supabase JWT |
+| `/api/register` | Inline | Email-only registration + verification link |
+| `/api/logout` | Inline | Stub (client uses Supabase `signOut`) |
+| `/api/forgot-password` | Inline | Password reset email flow |
+| `/api/reset-password` | Inline | Token-based password reset |
+| `/api/auth/*` | `auth.routes.ts` | Profile, downloads, reviews, token validation |
+| `/api/reviews/*` | `review.routes.ts` | Software/product/portfolio reviews CRUD |
+| `/api/seller/*` | `seller.routes.ts` | Seller dashboard, product CRUD, analytics |
+| `/api/buyer/*` | `buyer.routes.ts` | Buyer stats, purchases |
+| `/api/notifications/*` | `notification.routes.ts` | Push subscribe, broadcast, FCM tokens |
+| `/api/chat/*` | `chat.routes.ts` | Chat rooms, messages |
+| `/api/orders/*` | `order.routes.ts` | Order CRUD, status updates |
+| `/api/admin/*` | `admin.routes.ts` | Users, software, projects, queues, tests |
+| `/api/products/*` | `product.routes.ts` | Marketplace products CRUD, `POST /:id/purchase` |
+| `/api/softwares/*` | `software.routes.ts` | Software catalog CRUD, download |
+| `/api/courses/*` | `courses.routes.ts` | Course listings, topics, detail by slug |
+| `/api/leads/*` | `leads.routes.ts` | Lead capture (public POST), admin management |
+| `/api/blog/*` | `blog.routes.ts` | Public blog list/detail, admin CRUD |
+| `/api/storage/*` | `upload.routes.ts` | Supabase Storage upload URLs, download |
+| `/api/marketplace/*` | `marketplace.routes.ts` | Marketplace product aliases |
+| `/api/users/*` | `user.routes.ts` | Profile, external requests, projects |
+| `/api/payment/*` | `payment.routes.ts` | **SePay** wallet + checkout + IPN |
+| `/api/payments/*` | `payment.routes.ts` | Payment records management |
+| `/api/services/*` | `service.routes.ts` | IT service request/quotation/project lifecycle |
+| `/sitemap.xml` | `sitemap.routes.ts` | Auto-generated sitemap |
+| `/robots.txt` | `sitemap.routes.ts` | Robots file |
+| `/health` | Inline | Service health check |
+
+### 4.2. Payment API (SePay)
+
+| Method | Path | Auth | Description |
 |---|---|---|---|
-| `/api/login` | Auth | Inline | Login (hardcoded test passwords) |
-| `/api/register` | Auth | Inline | Email-only registration with verification |
-| `/api/logout` | Auth | Inline | Session destroy |
-| `/api/user` | User | Inline | Current user / dev auto-login |
-| `/api/forgot-password` | Auth | Inline | Password reset flow |
-| `/api/reset-password` | Auth | Inline | Token-based reset |
-| `/api/quick-login/seller|buyer` | Demo | Test account quick login |
-| `/api/auth/*` | OAuth | Router | Google/Facebook OAuth routes |
-| `/api/reviews/*` | Reviews | Router | Software reviews CRUD |
-| `/api/seller/*` | Seller | Router | Seller dashboard & management |
-| `/api/buyer/*` | Buyer | Router | Buyer dashboard |
-| `/api/notifications/*` | Notifications | Router | In-app & push notifications |
-| `/api/chat/*` | Chat | Router | Real-time chat endpoints |
-| `/api/orders/*` | Orders | Router | Order management |
-| `/api/admin/*` | Admin | Router | Admin panels (users, software, projects, queues, tests) |
-| `/api/products/*` | Products | Router | Marketplace products CRUD |
-| `/api/softwares/*` | Software | Router | Software catalog CRUD |
-| `/api/courses/*` | Courses | Router | Course listings |
-| `/api/marketplace/*` | Marketplace | Function | Advanced marketplace routes |
-| `/api/users/*` | Users | Function | Profile management |
-| `/api/payments/*` | Payments | Function | Stripe/VietQR payment processing |
-| `/api/services/*` | IT Services | Function | Service request/quotation/project lifecycle |
-| `/health` | Health | Inline | Service health check |
+| `POST` | `/api/payment/initiate` | ✅ | Wallet top-up (min 1.000₫) → SePay checkout form |
+| `POST` | `/api/payment/checkout` | ✅ buyer/admin | Marketplace checkout → creates pending order + SePay form |
+| `POST` | `/api/payment/ipn` | Public (SePay) | Webhook: `ORDER_PAID` → credit wallet or fulfill order |
+| `GET` | `/api/payments` | ✅ | Role-filtered payment list |
+| `POST` | `/api/payments` | ✅ | Manual project/order payment record |
+| `PUT` | `/api/payments/:id/status` | admin | Update payment status |
 
-### 4.2. Key API Design Notes
+**SePay payment methods** (frontend id → SePay):
+- `bank-qr` → `BANK_TRANSFER` (VietQR)
+- `napas-qr` → `NAPAS_BANK_TRANSFER`
 
-- **No real password hashing in `/api/login`** — uses hardcoded plaintext password matching for test accounts. Password in DB is random hex for real accounts.
-- **Session-based auth** with express-session (MemoryStore in dev, PostgreSQL store in prod).
-- **Dev mode**: `DISABLE_AUTH=true` bypasses auth entirely with mock user.
+**Invoice formats:** `DEP-{userId}-{timestamp}` (wallet), `ORD-{orderId}-{timestamp}` (marketplace).
+
+**Pending state:** In-memory Maps (`pendingDeposits`, `pendingOrders`) — 30 min TTL. IPN is source of truth for fulfillment.
+
+**Marketplace checkout flow:**
+1. Client posts cart items + buyer info + payment method
+2. Server validates products (approved, in stock, same seller), creates `pending` order
+3. Returns SePay checkout URL + signed form fields
+4. User pays on SePay → IPN marks order `completed`, creates payment record, decrements stock
+5. Success redirect → `/marketplace/order-success/:orderId`
+
+### 4.3. Auth Design
+
+**Primary: Supabase JWT**
+1. Client (`client/src/lib/supabase.ts`) authenticates via Supabase Auth
+2. API calls send `Authorization: Bearer <access_token>` (`getAuthHeaders()`)
+3. Server (`server/lib/auth-user.ts`) verifies token via Supabase service key
+4. Maps to local `users` row by `supabase_id` or `email`; auto-creates with `role: 'user'` if missing
+5. `isAuthenticated` / `hasRole` middleware attach `req.user`
+
+**Roles:** `user`, `admin`, `developer`, `client`, `seller`, `buyer`
+
+**Legacy email flow:** `/api/register` + `/auth/set-password` for non-Supabase registration (verification token in DB).
+
+**Dev bypass:** `DISABLE_AUTH=true` + `MOCK_USER_ROLE` skips auth middleware.
+
+**Rate limiting:** `authRateLimiter` on `/api/register`.
 
 ---
 
@@ -167,225 +230,259 @@
 | `/auth` | AuthPageNew | Public |
 | `/auth/set-password` | SetPasswordPage | Public (token) |
 | `/request-project` | ProjectRequestPage | Public |
+| `/request-project/success` | ProjectRequestSuccessPage | Public |
 | `/software` | SoftwareListPage | Public |
-| `/software/:id` | SoftwareDetailPage | Public |
+| `/software/:idOrSlug` | SoftwareDetailPage | Public |
 | `/courses` | CoursesListPage | Public |
-| `/courses/:id` | CourseDetailPage | Public |
-| `/marketplace` | MarketplacePageNew | Public |
-| `/marketplace/category/:cat` | MarketplaceCategoryPage | Public |
+| `/courses/:idOrSlug` | CourseDetailPage | Public |
+| `/blog` | BlogListPage | Public |
+| `/blog/:slug` | BlogDetailPage | Public |
+| `/ebook/fullstack-roadmap` | EbookPage | Public |
+| `/booking` | BookingPage | Public |
+| `/marketplace` | MarketplacePage | Public |
+| `/marketplace/category/:category` | MarketplaceCategoryPage | Public |
 | `/marketplace/product/:id` | ProductDetailPage | Public |
-| `/marketplace/checkout` | CheckoutPageNew | Protected |
+| `/marketplace/checkout` | CheckoutPageNew | Protected (login required) |
+| `/marketplace/order-success/:orderId` | OrderSuccessPage | Public |
+| `/marketplace/orders` | MarketplaceOrdersPage | buyer, admin |
+| `/add-funds` | AddFundsPage | Protected |
 | `/portfolios/gallery` | PortfolioGallery | Public |
 | `/portfolios/:id` | PortfolioDetailPage | Public |
 | `/it-services` | ITServicesPage | Public |
 | `/profile` | UserProfilePage | Protected |
 | `/dashboard` | DashboardPage | Protected |
-| `/seller/*` | Seller pages | Seller/Admin |
-| `/buyer` | BuyerDashboardPage | Buyer/User |
-| `/admin/*` | Admin pages | Admin only |
+| `/buyer` | BuyerDashboardPage | buyer, user |
+| `/seller/*` | Seller pages | seller, admin |
+| `/admin/*` | Admin pages | admin |
 | `/test-login` | TestLoginPage | Public |
 
-### 5.2. Shared Components
+### 5.2. Design System (`client/src/components/design-system/`)
+
+| Component | Purpose |
+|---|---|
+| `tokens.ts` | Brand colors: primary `#004080`, accent `#ffcc00`, surface `#f9f9f9` |
+| `page-hero.tsx` | Page hero — `default` or `centered` layout, badge, yellow accent phrase |
+| `section-panel.tsx` | Card panel with titled header + optional action slot |
+| `main-tabs.tsx` | Branded tab layout wrapping Radix Tabs |
+
+**CSS utilities** (`client/src/index.css`): `uupm-card`, `uupm-interactive`, `uupm-focus`
+
+### 5.3. Dashboard Components (`client/src/components/dashboard/`)
+
+Refactored dashboard architecture:
+- `dashboard-shell.tsx`, `metric-card.tsx`, `section-panel` integration
+- `products-tab.tsx`, `projects-tab.tsx` — tab content
+- `use-dashboard-data.ts` — shared data hook
+- `format.ts` — `formatVnd()`, `formatDateVi()`, helpers
+
+### 5.4. Shared Components
 
 - `Header` + `Footer` — site-wide layout
-- `ShoppingCartSidebar` — slide-over cart
+- `ShoppingCartSidebar` — slide-over cart (`useCart`)
+- `PaymentForm` — auto-submit SePay checkout form
+- `LeadCaptureForm` — GTM lead capture (navy/yellow brand)
 - `FloatingChatButton` — real-time chat widget
-- `AppSidebar` — navigation sidebar
 - `Pagination`, `StarRating`, `Breadcrumb`, `Stepper`
 - `SearchWithAutocomplete` — global search
-- `ObjectUploader`, `R2DocumentUploader` — file uploads to R2/S3
-- 50+ shadcn/ui components (accordion, dialog, sheet, table, form, etc.)
+- 50+ shadcn/ui components
 
-### 5.3. Custom Hooks
+### 5.5. Custom Hooks
 
-- `use-auth` — auth context + queries
-- `use-cart` — shopping cart context
-- `use-chat` — real-time chat via Socket.IO
-- `use-profile` — user profile management
-- `use-toast` — toast notifications
-- `use-mobile` — responsive detection
+| Hook | Purpose |
+|---|---|
+| `use-auth` | Supabase auth context + user queries |
+| `use-cart` | Shopping cart (localStorage) |
+| `use-dashboard-data` | Dashboard metrics and lists |
+| `use-chat` | Real-time chat via Socket.IO |
+| `use-profile` | User profile management |
+| `use-toast` | Toast notifications |
+| `use-mobile` | Responsive detection |
 
 ---
 
-## 6. Microservices Architecture
+## 6. Microservices
 
-### 6.1. Services Overview
+### 6.1. Services (PM2 — `ecosystem.config.cjs`)
 
-| Service | Language | Port | Purpose | DB Dependencies |
-|---|---|---|---|---|
-| **app** (monolith) | TypeScript/Node | 5000 | All business logic | PostgreSQL, Redis |
-| **email-service** | JavaScript/Node | 3001 | SendGrid/Resend email dispatch | Redis, SendGrid |
-| **chat-service** | JavaScript/Node | 3002 | Real-time chat (separate from main app) | MongoDB, Redis |
-| **notification-service** | JavaScript/Node | 3003 | FCM push notifications | PostgreSQL, Firebase |
-| **worker-service** | JavaScript/Node | — | Background job processing (RedisSMQ) | Redis, email + notification |
-| **payment-service** | PHP | — | Legacy NL_Checkoutv3 payment processing | N/A (standalone) |
-| **gateweaver** | Go | 8080 | API gateway (replacing APISIX) | None |
-| **postgres-backup** | Shell | — | Daily pg_dump + cleanup | PostgreSQL |
+| Service | Port | Purpose | Dependencies |
+|---|---|---|---|
+| **software-hub-server** | 5000 | Monolith API + SPA | Supabase PostgreSQL |
+| **email-service** | 3001 | SendGrid/Resend dispatch | Redis |
+| **chat-service** | 3002 | Real-time chat | MongoDB, Redis |
+| **notification-service** | 3003 | FCM push notifications | PostgreSQL, Firebase |
+
+**Legacy/unused in prod:** `payment-service` (PHP/NL_Checkout), `gateweaver` (Go API gateway), `worker-service`.
 
 ### 6.2. Message Queue
 
-- **RedisSMQ** for async email/notification dispatching
-- Fallback: monolith queue via Redis (in-app)
-- Workers: emailWorker, notificationWorker, chatWorker
+- **Redis** for async email/notification dispatching
+- Fallback: in-process queue when Redis unavailable
+- Workers: emailWorker, notificationWorker
 
 ### 6.3. Real-Time Communication
 
-- **Socket.IO** (main app) — admin-user chat, presence tracking
-- **Socket.IO** (chat-service) — separate chat microservice for scalability
-- **Firebase Cloud Messaging** — push notifications to mobile/web
+- **Socket.IO** (monolith) — admin-user chat, presence
+- **Socket.IO** (chat-service) — scalable chat microservice
+- **Firebase Cloud Messaging** — push notifications
 
 ---
 
-## 7. Storage
+## 7. Storage & Integrations
 
 ### 7.1. File Storage
 
-| Provider | Purpose | Notes |
+| Provider | Purpose | Status |
 |---|---|---|
-| ✅ **Supabase Storage** | Primary file storage | S3-compatible, tích hợp sẵn với Supabase Auth |
-| Cloudflare R2 | Secondary/backup | S3-compatible |
-| AWS S3 | Tertiary/backup | Via @aws-sdk/client-s3 |
-| Uppy | Client-side uploads | Pre-sign URLs, progress bars, drag-drop |
+| **Supabase Storage** | Primary uploads (`/api/storage/upload-url`) | ✅ Active |
+| Cloudflare R2 | Secondary (env vars present) | Optional |
+| AWS S3 SDK | Legacy code in deps | Optional |
 
-### 7.2. Session Storage
+### 7.2. Third-Party Services
 
-| Environment | Store | Notes |
+| Service | Purpose | Status |
 |---|---|---|
-| Development | MemoryStore | No setup needed |
-| Production | **Supabase → PostgreSQL (connect-pg-simple)** | Supabase quản lý connection pool |
-| Alternative | Redis | Via connect-redis |
+| **Supabase** | PostgreSQL + Auth + Storage | ✅ Primary |
+| **SePay** | Wallet top-up + marketplace checkout | ✅ Primary |
+| SendGrid / Resend | Transactional email | ✅ Active |
+| Firebase FCM | Push notifications | ✅ Active |
+| Google Analytics 4 | Traffic tracking (`VITE_GA_MEASUREMENT_ID`) | ✅ Active |
+| Stripe | Card payments | ⛔ Legacy (env vars only, not wired) |
+| Google Generative AI | Chat AI responses | ✅ Active |
+| Redis | Message queue | ✅ VPS Docker |
+| MongoDB | Chat message store | ✅ VPS Docker |
 
-### 7.3. Supabase Migration Plan
+### 7.3. Supabase Integration (Completed)
 
-| Feature | Hiện tại | Sau khi migrate |
-|---|---|---|
-| Database | PostgreSQL (Docker self-host) | Supabase managed PostgreSQL |
-| Auth | Passport.js + Session + cookie | **Supabase Auth** (JWT) — email + Google OAuth |
-| Real-time chat | Socket.IO (giữ nguyên) | DB chạy trên Supabase PostgreSQL |
-| File storage | AWS S3 / Cloudflare R2 | **Supabase Storage** (bucket per user) |
-| Message queue | Redis (giữ nguyên) | Giữ nguyên cho background jobs |
-| Push notifications | Firebase Admin (giữ nguyên) | Giữ nguyên |
-| Connection pooling | pg Pool | Supabase direct + pgBouncer |
-| Schema management | Drizzle Kit push | Drizzle Kit + Supabase migrations |
-| Admin UI | Custom | Supabase Studio dashboard |
-
-**Lưu ý**: Không migrate tất cả cùng lúc. Thứ tự:
-1. **DB** trước — chỉ đổi connection string, 0 rủi ro
-2. **Auth** — middleware + client hook JWT
-3. **Storage** — upload endpoints
-4. Chat + Queue + Firebase giữ nguyên
-
-**Tác động**: Giảm infra complexity đáng kể. Không cần self-host Postgres. Free tier đủ cho giai đoạn đầu. Khi scale >500MB DB hoặc >50K users mới cần trả $15-25/tháng.
+| Feature | Implementation |
+|---|---|
+| Database | Supabase managed PostgreSQL via `DATABASE_URL` / connection pooler |
+| Auth | Supabase Auth JWT — client SDK + server `verifySupabaseToken` |
+| Storage | Supabase Storage bucket (`SUPABASE_STORAGE_BUCKET`) |
+| Local users sync | `users.supabase_id` links Supabase user → local role/permissions |
+| Schema | Drizzle ORM + `drizzle-kit push` |
+| Admin UI | Supabase Studio dashboard |
 
 ---
 
-## 8. Integrations & Third-Party Services
+## 8. Environment Variables
 
-### 8.1. Đã có trong codebase
+Source of truth: `.env.example` (local), `.env.vps.example` (VPS-specific).
 
-| Service | Mục đích | Thay đổi khi migrate Supabase? |
-|---|---|---|
-| **Supabase** | Database + Auth + Storage | ✅ Mới thêm |
-| **SendGrid** | Email transactional | Giữ nguyên |
-| **Resend** | Email fallback | Giữ nguyên |
-| **Stripe** | Thanh toán thẻ | Giữ nguyên |
-| **VietQR** | Thanh toán QR ngân hàng | Giữ nguyên |
-| **Firebase Cloud Messaging** | Push notification | Giữ nguyên |
-| **Cloudflare R2** | File storage | ⛔ Bỏ (→ Supabase Storage) |
-| **AWS S3** | File storage backup | ⛔ Bỏ |
-| **Passport.js** | Authentication | ⛔ Bỏ (→ Supabase Auth) |
-| **express-session** | Session management | ⛔ Bỏ |
-| **connect-pg-simple** | Session store | ⛔ Bỏ |
-| **Redis** | Message queue | Giữ nguyên (chỉ cho queue) |
+### 8.1. Required
 
-### 8.2. Cần thêm cho go-to-market
-
-| Service | Mục đích | Priority | Ghi chú |
-|---|---|---|---|
-| **Google Search Console** | SEO monitoring | 🔴 Critical | Submit sitemap, theo dõi keyword |
-| **Google Analytics 4** | Traffic tracking | 🔴 Critical | Biết user từ đâu đến, behavior |
-| **Schema.org markup** | Rich snippets Google | 🔴 Critical | Course + Software schema |
-| **Sitemap generator** | SEO crawl | 🟡 Medium | Auto-gen XML sitemap |
-| **Open Graph + Twitter Cards** | Social share đẹp | 🟡 Medium | Khi share Facebook/Zalo có ảnh |
-| **Calendly / alternative** | Booking tư vấn | 🟡 Medium | Cho khách đặt lịch call |
-| **Zalo OA API** | Lead capture + chat | 🟢 Low | Kênh chính cho SME Việt Nam |
-
-### 8.3. Dependencies cần thay đổi
-
-| Package | Action |
+| Variable | Purpose |
 |---|---|
-| `passport`, `passport-local` | ❌ Xoá |
-| `express-session` | ❌ Xoá |
-| `connect-pg-simple` | ❌ Xoá |
-| `@aws-sdk/client-s3`, `@aws-sdk/lib-storage` | ❌ Xoá (nếu không dùng cho việc khác) |
-| `@supabase/supabase-js` | ✅ Thêm |
-| `firebase`, `firebase-admin` | Giữ nguyên |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_ANON_KEY` | Client-side auth |
+| `SUPABASE_SERVICE_KEY` | Server-side JWT verification |
+| `SUPABASE_DB_PASSWORD` or `DATABASE_URL` | Drizzle ORM connection |
+| `SEPAY_MERCHANT_ID` | SePay merchant ID |
+| `SEPAY_SECRET_KEY` | SePay signing key |
+| `SEPAY_ENV` | `sandbox` or `production` |
 
-### 8.4. Environment Variables Update
+### 8.2. App Config
 
-| Variable | Status | Ghi chú |
-|---|---|---|
-| `DATABASE_URL` | ⛔ Bỏ | Thay bằng Supabase connection |
-| `SUPABASE_URL` | ✅ Thêm | `https://amzruxktxxktvknywbtf.supabase.co` |
-| `SUPABASE_ANON_KEY` | ✅ Thêm | Từ Supabase dashboard |
-| `SUPABASE_SERVICE_KEY` | ✅ Thêm | Server-side, có full quyền |
-| `SESSION_SECRET` | ⛔ Bỏ | Không cần session |
-| `AWS_ACCESS_KEY_ID` | ⛔ Bỏ (nếu không dùng) | |
-| `AWS_SECRET_ACCESS_KEY` | ⛔ Bỏ (nếu không dùng) | |
-| `CLOUDFLARE_R2_*` | ⛔ Bỏ | |
-| `REDIS_URL` | Giữ nguyên | Chỉ cho queue |
-| `SENDGRID_API_KEY` | Giữ nguyên | |
-| `STRIPE_SECRET_KEY` | Giữ nguyên | |
-| `FIREBASE_*` | Giữ nguyên | |
+| Variable | Purpose |
+|---|---|
+| `NODE_ENV` | `development` / `production` |
+| `PORT` | Server port (default 5000) |
+| `SITE_URL` / `APP_URL` / `PUBLIC_URL` | Base URL for SePay callbacks |
+| `SUPABASE_STORAGE_BUCKET` | Upload bucket name |
+| `VITE_SUPABASE_URL` | Build-time Supabase URL (client) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Build-time auth key (client) |
+| `VITE_GA_MEASUREMENT_ID` | Google Analytics |
+
+### 8.3. Optional / Microservices
+
+| Variable | Purpose |
+|---|---|
+| `REDIS_URL` | Message queue |
+| `MONGODB_URL` | Chat service |
+| `EMAIL_SERVICE_URL` | Email microservice |
+| `CHAT_SERVICE_URL` | Chat microservice |
+| `NOTIFICATION_SERVICE_URL` | Notification microservice |
+| `SENDGRID_API_KEY` | Email delivery |
+| `FIREBASE_*` | Push notifications |
+| `CLOUDFLARE_R2_*` | R2 storage backup |
+| `STRIPE_*` | Legacy (unused) |
+| `DISABLE_AUTH` | Dev auth bypass |
+| `MOCK_USER_ROLE` | Dev mock user role |
+
+### 8.4. SePay IPN Setup
+
+Configure on [my.sepay.vn](https://my.sepay.vn):
+```
+IPN URL: https://your-domain.com/api/payment/ipn
+```
+
+---
 
 ## 9. Security Considerations
 
-### ⚠️ Known Issues (from code review)
+### ⚠️ Known Issues
 
-1. **Hardcoded passwords in login** (`/api/login` lines 49-53) — plaintext matching, not production grade
-2. **No real password hashing** — bcrypt mentioned in README but NOT implemented in code
-3. **`DISABLE_AUTH=true` in dev mode** — bypasses all auth, exposes full API
-4. **Session MemoryStore in dev** — sessions lost on restart, no persistence
-5. **`.env` files committed to git** — contains placeholder secrets
-6. **No rate limiting** on auth endpoints (brute force possible)
-7. **`cookies.txt` committed** — potentially sensitive data
-8. **No input sanitization** beyond Drizzle ORM parameterization
-9. **Firebase private keys** in env — must be properly secured in production
+1. **Passwords stored as plaintext** in `users.password` — Supabase Auth handles real passwords; local field is legacy/random hex
+2. **`DISABLE_AUTH=true`** in dev — bypasses all auth
+3. **Pending payments in memory** — lost on server restart (IPN still processes via SePay)
+4. **No rate limiting** on most endpoints (only `/api/register`)
+5. **`.env` files must not be committed** — contain secrets (SePay, Supabase service key)
+6. **Firebase private keys** in env — must be secured in production
 
 ### Mitigations In Place
 
 - Drizzle ORM prevents SQL injection
+- Supabase JWT verification on protected routes
 - React XSS protection
 - CORS configurable per environment
-- HttpOnly + Secure session cookies
+- Role-based access control (`hasRole` middleware)
+- SePay signed checkout fields (server-side secret)
 
 ---
 
 ## 10. DevOps & Deployment
 
-### 10.1. Docker Deployments (Legacy — trước khi migrate Supabase)
+### 10.1. VPS Production (Current)
 
-| Compose File | Purpose |
+**Server:** Contabo VPS — `https://swhubco.com`
+
+**Deploy flow** (GitHub Actions → VPS):
+1. Push to `main` triggers `.github/workflows/deploy.yml`
+2. `npm ci` → `npm run build` (with Vite Supabase secrets)
+3. Tarball → SCP to VPS `/var/www/software-hub`
+4. `scripts/deploy-vps-docker.sh`:
+   - `docker compose -f docker-compose.vps.yml up -d` (Redis + Mongo)
+   - `npm ci --omit=dev`
+   - `pm2 reload ecosystem.config.cjs --env production`
+5. Health check: `curl :5000/health`
+
+**GitHub Secrets required:** `SSH_HOST`, `SSH_USERNAME`, `SSH_KEY`, `SSH_PORT`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_ANON_KEY`, `VITE_GA_MEASUREMENT_ID`, `SITE_URL`
+
+### 10.2. Docker Compose Files
+
+| File | Purpose |
 |---|---|
-| `docker-compose.yml` | Full dev: app + all microservices + gateweaver (legacy) |
-| `docker-compose.dev.yml` | Minimal dev: app + postgres + redis (legacy) |
-| `docker-compose.prod.yml` | Production minimal: app + postgres + redis (legacy) |
-| `docker-compose.production.yml` | Full production: all microservices (legacy) |
+| `docker-compose.vps.yml` | **Production VPS** — Redis + MongoDB only |
+| `docker-compose.dev.yml` | Local dev with Postgres + Redis (legacy) |
+| `docker-compose.prod.yml` | Minimal production (legacy) |
+| `docker-compose.production.yml` | Full microservices (legacy) |
+| `docker-compose.yml` | Full dev stack (legacy) |
 
-**Lưu ý với Supabase**: Không cần container Postgres/Redis nữa. Docker chỉ cần chạy app + (optional) các microservices. Có thể chạy `supabase start` local bằng Supabase CLI hoặc dùng Supabase cloud + connection string.
+**Note:** Database is Supabase cloud — no Postgres container needed on VPS.
 
-### 10.2. CI/CD
+### 10.3. Local Development
 
-- GitHub Actions (`deploy.yml`, `deploy-docker.yml`)
-- Health check: `GET /health` endpoint
-- Backup database qua Supabase Dashboard (auto daily)
-- Scripts: `deploy.sh` (interactive), `deploy-vps-docker.sh`
+```bash
+npm install
+cp .env.example .env   # configure Supabase + SePay
+npm run dev            # Vite :5173 + Express :5000 (or PORT from .env)
+```
 
-### 10.3. Nginx (optional)
+### 10.4. Build
 
-- `nginx.conf` — production reverse proxy config
-- SSL setup scripts in `scripts/setup-ssl-certificate.sh`
-- Domain setup: `scripts/setup-domain.sh`
+```bash
+npm run build          # Vite → dist/ + tsc → dist/server/
+npm start              # node dist/server/index.js
+```
 
 ---
 
@@ -393,70 +490,42 @@
 
 ### 11.1. Seed Data Sources
 
-| Source | Description | Script |
-|---|---|---|
-| Awesome Linux/Windows | Curated software lists | `scripts/parse-awesome-*.ts` |
-| Voz forum | Community software reviews | `scripts/scrape-voz-software.ts` |
-| Free apps | Open-source/free software catalogue | `scripts/parse-free-apps.ts` |
-| IT courses | YouTube-based course listings | `scripts/seed-it-courses.ts` |
-| APIs | API listing catalogue | `scripts/parse-apis.ts` |
+| Source | Script |
+|---|---|
+| Awesome Linux/Windows software lists | `scripts/parse-awesome-*.ts` |
+| Voz forum reviews | `scripts/scrape-voz-software.ts` |
+| Free apps catalogue | `scripts/parse-free-apps.ts` |
+| IT courses (YouTube) | `scripts/seed-it-courses.ts` |
+| API listings | `scripts/parse-apis.ts` |
 
 ### 11.2. Database Dumps
 
 - Location: `database/dumps/` and `shared/data-dumps/`
 - Format: Full SQL dumps + schema-only + data-only
-- Latest: `software_hub_dump_20260129_222356.sql` (~400MB+)
 
 ---
 
-## 11. Testing
+## 12. Testing
 
-| Test Type | File | Status |
+| Test Type | Command | Status |
 |---|---|---|
-| E2E | `tests/e2e/comprehensive-e2e-test-suite.js` | Written, manual |
-| Integration | `tests/integration/` (chat, notification, services) | Partial |
-| Manual | `tests/manual/` (chat HTML, test scripts) | For debugging |
-| SendGrid direct | `tests/integration/direct-sendgrid-test.js` | Yes |
-
-**Note**: No automated test framework (Jest/Vitest) is configured — tests are run manually via Node.
+| Unit | `npm run test` (Vitest) | Configured |
+| E2E | `npm run test:e2e` (Playwright) | Configured (`tests/e2e/smoke.spec.ts`) |
+| Integration | `tests/integration/` | Partial, manual |
+| Admin E2E | `/admin/end-to-end-tests` page | Manual via UI |
 
 ---
 
-## 12. Phase Roadmap (from Code)
+## 13. Phase Roadmap
 
 | Phase | Status | Description |
 |---|---|---|
-| Phase 1 | ✅ Done | Software catalog, categories, reviews, user auth |
+| Phase 1 | ✅ Done | Software catalog, categories, reviews, Supabase auth |
 | Phase 2 | ✅ Done | Project management, quotes, portfolios, messaging |
-| Phase 3 | ✅ Done | Marketplace (products, orders, cart, payments) |
+| Phase 3 | ✅ Done | Marketplace (products, orders, cart, SePay payments) |
 | Phase 4 | 🟡 In Progress | IT Services (requests, quotations, service projects) |
-| Phase 5 | 🔄 Evolving | Microservices extraction, gateweaver, FCM push, chat scaling |
-
----
-
-## 13. Recommendations
-
-### Immediate (High Priority)
-
-1. **Supabase migration** — ưu tiên #1, kế hoạch trong section 7.3
-2. **Replace hardcoded password matching** — sẽ tự fix khi migrate sang Supabase Auth
-3. **Remove committed `cookies.txt`** from repo
-4. **Add rate limiting** to auth routes (express-rate-limit)
-5. **Fix `server/vite.ts`** — referenced but missing from some installs
-6. **Clean up duplicate pages** (`marketplace-page.tsx` vs `marketplace-page-new.tsx`)
-
-### Medium Priority
-
-7. **Standardize error handling** — some routes use `next(error)`, others `res.status(500).json()`
-8. **Consolidate storage layers** — `storage/` directory has per-domain sub-modules but main `storage.ts` has fallthrough logic
-9. **Add proper test framework** (Vitest + Playwright)
-10. **Remove unused imports** — many Radix UI components imported but unused
-
-### Low Priority
-
-11. **Deduplicate multiple docker-compose files** into one with profiles
-12. **Add OpenAPI/Swagger** documentation
-13. **Add Google Analytics + Search Console** — theo dõi traffic cho GTM
+| Phase 5 | 🟡 In Progress | GTM (blog, leads, SEO sitemap, lead capture forms) |
+| Phase 6 | 🔄 Evolving | Design system rollout, dashboard refactor, microservices |
 
 ---
 
@@ -475,6 +544,7 @@ Lớp 2: Engagement & Trust
         ↓
 Lớp 3: Monetization
   IT Studio (anh + team code sản phẩm cho khách hàng)
+  Marketplace (bán sản phẩm số qua SePay)
   → Khách SME, startup cần làm web/app/CRM
 ```
 
@@ -484,11 +554,8 @@ Lớp 3: Monetization
 |---|---|---|---|
 | Khóa học free | SEO bait, kéo traffic | $0 (free) | Blog IT Việt Nam, YouTube |
 | Phần mềm free | Social proof, uy tín | $0 (free) | SourceForge, GitHub, AlternativeTo |
+| Marketplace | Bán sản phẩm số | Commission 5% | Envato, ThemeForest |
 | IT Studio | Tiền thật | 15-200tr/project | Agency, freelancer lẻ |
-
-**Lợi thế cạnh tranh của Software Hub**: 
-- Không agency nào có 50+ khóa học free + catalog phần mềm để chứng minh năng lực
-- Social proof tự nhiên: "Nó có cả trăm khóa học, cả trăm phần mềm → nó phải giỏi"
 
 ### 14.3. Target Customer
 
@@ -497,43 +564,30 @@ Lớp 3: Monetization
 | SME Việt Nam (5-50 nv) | Web bán hàng, CRM, landing page | 10-50tr | SEO + Facebook groups SME |
 | Startup gọi vốn | MVP, prototype | 30-200tr | SEO + referral |
 | Chủ shop online | Web bán hàng + quản lý đơn | 5-20tr | Google Maps outreach |
-| Trường/trung tâm | LMS, hệ thống quản lý | 20-100tr | Cold email + case study |
+| Developer/Seller | Bán template, tool, license | 500k-5tr/sản phẩm | Marketplace |
 
 ### 14.4. Chiến thuật SEO
 
 #### A. SEO cho khóa học (ưu tiên #1)
 
-Mỗi khóa học = 1 landing page riêng với URL pattern:
+URL pattern: `/courses/:idOrSlug`
 
-```
-/courses/hoc-reactjs-co-ban
-/courses/lap-trinh-python-cho-nguoi-moi
-```
+- Schema Course markup → rich snippet Google
+- Nội dung 500-800 chữ tiếng Việt
+- Internal links sang course liên quan, blog lộ trình
 
-SEO trên mỗi trang:
-- **Title tag**: "Học [tên khóa] miễn phí — Lộ trình chi tiết cho người mới"
-- **Schema Course markup** → rich snippet Google (rating, duration)
-- **Nội dung 500-800 chữ**: mô tả, lộ trình, kiến thức đạt được
-- **Internal links**: sang course liên quan, sang blog lộ trình
-
-Blog posts dạng "lộ trình":
-- `/blog/lo-trinh-hoc-frontend-6-thang-mien-phi`
-- `/blog/hoc-lap-trinh-web-tu-con-so-0`
-- `/blog/top-10-khoa-hoc-lap-trinh-mien-phi-tieng-viet`
-
-→ Content dạng này share vào group Facebook IT là viral tự nhiên.
+Blog posts: `/blog/:slug` (module đã implement)
 
 #### B. SEO cho phần mềm
 
-Mỗi phần mềm = 1 landing page hướng dẫn tiếng Việt:
-```
-/software/visual-studio-code
-/software/docker-desktop
-```
+URL pattern: `/software/:idOrSlug`
 
-- Schema SoftwareApplication (rating, download count)
-- Content: "Hướng dẫn cài đặt X trên Windows/Mac — 5 bước"
-- Long-tail keywords: "cài đặt docker trên mac m1", "cấu hình vscode cho python"
+- Schema SoftwareApplication
+- Long-tail: "cài đặt docker trên mac m1", "cấu hình vscode cho python"
+
+#### C. Sitemap
+
+Auto-generated: `GET /sitemap.xml`, `GET /robots.txt`
 
 ### 14.5. Conversion Funnel
 
@@ -542,65 +596,80 @@ User search "học react free"
     ↓
 Vào landing page course → đọc, xem video YouTube
     ↓
-Lead capture (mềm):
-  - "Tư vấn lộ trình học miễn phí" → form email + sđt
-  - "Download ebook lộ trình Fullstack 6 tháng" → gate form
-  - Chat popup sau 3+ trang xem course
+Lead capture (đã implement):
+  - LeadCaptureForm trên trang chủ
+  - /api/leads POST endpoint
+  - Admin leads dashboard (/admin/leads)
+  - Ebook gate: /ebook/fullstack-roadmap
+  - Booking: /booking
     ↓
-Anh/team gọi tư vấn → xác định nhu cầu
-    ↓
-Nếu cần làm project → quote → đơn hàng
-Nếu chỉ học → tư vấn thêm → nurture → 1-6 tháng sau quay lại
+Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 ```
 
-### 14.6. Cần implement để go-to-market
+### 14.6. GTM Implementation Status
 
-| Feature | Priority | Impact |
+| Feature | Status | Notes |
 |---|---|---|
-| Landing page riêng từng course + SEO meta | 🔴 Critical | SEO traffic + conversion |
-| Blog module | 🔴 Critical | Content marketing + SEO |
-| Lead capture forms (email + phone) | 🔴 Critical | Từ traffic → lead |
-| Ebook download với gate form | 🟡 Medium | Lead magnet |
-| Booking lịch tư vấn | 🟡 Medium | Chốt đơn |
-| Chat trigger theo behavior (3+ pages) | 🟡 Medium | Lead capture tự động |
-| Dashboard lead tracking | 🟢 Low | Theo dõi hiệu quả |
+| Blog module (`/blog`, `/admin/blog`) | ✅ Done | |
+| Lead capture (`/api/leads`, `/admin/leads`) | ✅ Done | |
+| LeadCaptureForm component | ✅ Done | Navy/yellow brand |
+| Sitemap + robots.txt | ✅ Done | |
+| Ebook download gate | ✅ Done | `/ebook/fullstack-roadmap` |
+| Booking page | ✅ Done | `/booking` |
+| GA4 tracking | ✅ Done | `VITE_GA_MEASUREMENT_ID` |
+| Course landing SEO meta | 🟡 Partial | Slug routes exist, meta needs polish |
+| Schema.org markup | 🟡 Partial | |
+| Chat trigger theo behavior | 🟢 Planned | |
+| Dashboard lead tracking | ✅ Done | `/admin/leads` |
 
 ### 14.7. KPI dự kiến (month 1-3)
 
 - SEO keywords top 10: ~70 long-tail từ course pages
 - Traffic: 500-2000 visitors/tháng
-- Lead capture rate: 3-5% (15-100 leads/tháng)
-- Conversion lead → đơn: 5-10% (1-10 đơn/tháng)
-- Giá trị đơn TB: 15-50tr
-- Chi phí: ~0đ ad spend (organic), chỉ time content
-
-### 14.8. Lộ trình
-
-| Tuần | Việc |
-|---|---|
-| 1 | Tách courses → landing page riêng + SEO meta |
-| 2 | Schema markup + blog module |
-| 3 | Lead capture forms + chat trigger |
-| 4 | 5-10 blog posts lộ trình học (content mồi) |
-| 5 | Booking + lead dashboard |
-| 6-8 | Content định kỳ + SEO monitoring |
+- Lead capture rate: 3-5%
+- Conversion lead → đơn: 5-10%
+- Giá trị đơn TB: 15-50tr (IT Studio) / 500k-5tr (Marketplace)
 
 ---
 
-## 15. Project Stats
+## 15. Recommendations
+
+### Immediate (High Priority)
+
+1. **Configure SePay production** — switch `SEPAY_ENV=production`, register IPN URL on live domain
+2. **Persist pending payments** — move `pendingDeposits`/`pendingOrders` to Redis or DB (survive restarts)
+3. **Add rate limiting** on payment and auth endpoints
+4. **Schema.org markup** on course/software detail pages
+5. **Portfolio API routes** — client references `/api/portfolios` but no route registered
+
+### Medium Priority
+
+6. **Order items in GET /api/orders/:id** — `getOrderById` doesn't join `order_items` (order success page limited)
+7. **Multi-seller cart** — checkout currently requires single seller per order
+8. **Consolidate duplicate pages** — `marketplace-page.tsx` vs legacy variants
+9. **E2E test coverage** — expand Playwright beyond smoke test
+10. **OpenAPI/Swagger** documentation
+
+### Low Priority
+
+11. **Remove legacy Stripe/PHP payment code** from deps if unused
+12. **Deduplicate docker-compose files** into profiles
+13. **Zalo OA API** integration for Vietnamese SME channel
+
+---
+
+## 16. Project Stats
 
 | Metric | Value |
 |---|---|
-| Total source files | ~180 |
-| Frontend pages | ~45 |
-| API routes | ~150+ |
-| Database tables | 22+ |
-| Microservices | 6 |
-| Docker containers (full) | 10+ |
-| Seed data (software entries) | ~2000+ |
-| Scripts | ~50+ |
+| Frontend pages | ~50 |
+| API route modules | 20 |
+| Database tables | 28 |
+| Active microservices | 3 (email, chat, notification) |
+| Payment gateway | SePay (primary) |
+| Production domain | swhubco.com |
 | Documentation files | ~40 |
 
 ---
 
-*Generated from source code by Hermes Agent*
+*Last updated from source code review — June 2026*

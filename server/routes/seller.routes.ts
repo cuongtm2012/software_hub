@@ -82,10 +82,9 @@ router.put("/profile", isAuthenticated, async (req: Request, res: Response, next
 // Seller Product Management
 router.post("/products", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Check if user is a verified seller
-    const sellerProfile = await storage.getSellerProfile(req.user!.id);
-    if (!sellerProfile || sellerProfile.verification_status !== 'verified') {
-      return res.status(403).json({ message: "Only verified sellers can add products" });
+    const role = req.user!.role;
+    if (role !== "seller" && role !== "admin") {
+      return res.status(403).json({ message: "Only sellers can add products" });
     }
 
     const insertData = insertProductSchema.parse({

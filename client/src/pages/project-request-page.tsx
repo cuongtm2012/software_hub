@@ -350,27 +350,29 @@ export default function ProjectRequestPage() {
                   </div>
 
                   {/* Submit Button */}
-                  <div className="border-t pt-6">
+                  <div className="border-t border-[#004080]/10 pt-6">
                     {error && (
                       <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                         <p className="text-sm text-red-600 font-medium">{error}</p>
                       </div>
                     )}
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full px-8 py-4 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
-                      size="lg"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                          Đang gửi...
-                        </>
-                      ) : (
-                        'Gửi yêu cầu dự án'
-                      )}
-                    </Button>
+                    <div className="flex justify-center">
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        size="sm"
+                        className="w-fit min-w-[11rem] bg-[#004080] hover:bg-[#003366] text-white font-semibold disabled:opacity-60"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Đang gửi...
+                          </>
+                        ) : (
+                          "Gửi yêu cầu dự án"
+                        )}
+                      </Button>
+                    </div>
                     <p className="text-sm text-gray-500 text-center mt-3">
                       <span className="text-red-500">*</span> Các trường bắt buộc được đánh dấu. Yêu cầu thường được xem xét trong 24-48 giờ.
                     </p>

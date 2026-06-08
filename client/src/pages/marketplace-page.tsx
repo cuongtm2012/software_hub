@@ -2,19 +2,25 @@ import { useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   SlidersHorizontal,
   Star,
-  ShoppingCart,
   TrendingUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 import { PageHero } from "@/components/design-system/page-hero";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
+import { cn } from "@/lib/utils";
 
 const categories = [
   { id: 'all', name: 'Tất cả sản phẩm', count: 1350 },
@@ -25,13 +31,127 @@ const categories = [
   { id: 'others', name: 'Khác', count: 204 },
 ];
 
+function MarketplaceFilters({
+  className,
+  selectedCategory,
+  onCategoryChange,
+  searchQuery,
+  onSearchChange,
+  priceRange,
+  onPriceRangeChange,
+  onClear,
+}: {
+  className?: string;
+  selectedCategory: string;
+  onCategoryChange: (id: string) => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  priceRange: { min: string; max: string };
+  onPriceRangeChange: (range: { min: string; max: string }) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className={cn("space-y-6", className)}>
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Tìm kiếm</label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Tìm sản phẩm..."
+            className="w-full pl-10 pr-4 py-2 border border-[#004080]/15 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004080]/40 focus:border-transparent uupm-focus"
+          />
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">Danh mục</h4>
+        <div className="space-y-2">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => onCategoryChange(category.id)}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer",
+                selectedCategory === category.id
+                  ? "bg-[#004080] text-white font-medium"
+                  : "text-gray-700 hover:bg-[#004080]/5",
+              )}
+            >
+              <span>{category.name}</span>
+              <span
+                className={cn(
+                  "text-xs",
+                  selectedCategory === category.id ? "text-slate-300" : "text-gray-400",
+                )}
+              >
+                ({category.count})
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">Khoảng giá (VND)</h4>
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="Tối thiểu"
+            value={priceRange.min}
+            onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
+            className="w-full px-3 py-2 border border-[#004080]/15 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004080]/30 text-sm uupm-focus"
+          />
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="Tối đa"
+            value={priceRange.max}
+            onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
+            className="w-full px-3 py-2 border border-[#004080]/15 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004080]/30 text-sm uupm-focus"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          className="w-full px-4 py-2 bg-[#004080]/8 hover:bg-[#004080]/12 text-[#004080] rounded-lg text-sm font-medium transition-colors"
+        >
+          Xóa bộ lọc
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function MarketplacePage() {
   const [, navigate] = useLocation();
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('popular');
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("popular");
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [currentPage, setCurrentPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const clearFilters = () => {
+    setSelectedCategory("all");
+    setSearchQuery("");
+    setPriceRange({ min: "", max: "" });
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (id: string) => {
+    setSelectedCategory(id);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["/api/marketplace", selectedCategory, searchQuery, sortBy],
@@ -68,75 +188,54 @@ export default function MarketplacePage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
-            <aside className="lg:w-72 flex-shrink-0">
+            <aside className="hidden lg:block lg:w-72 shrink-0">
               <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24 border border-[#004080]/10 uupm-card">
                 <h3 className="font-bold text-lg text-gray-900 mb-4">Bộ lọc</h3>
-
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Tìm kiếm</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Tìm sản phẩm..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004080]/40 focus:border-transparent uupm-focus"
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Danh mục:</h4>
-                  <div className="space-y-2">
-                    {categories.map((category) => (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(category.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${selectedCategory === category.id
-                          ? 'bg-[#004080] text-white font-medium'
-                          : 'text-gray-700 hover:bg-[#004080]/5'
-                          }`}
-                      >
-                        <span>{category.name}</span>
-                        <span className={`text-xs ${selectedCategory === category.id ? 'text-slate-300' : 'text-gray-400'}`}>
-                          ({category.count})
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Khoảng giá (VND)</h4>
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      placeholder="Min"
-                      value={priceRange.min}
-                      onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Max"
-                      value={priceRange.max}
-                      onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm"
-                    />
-                  </div>
-                  <button className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
-                    Xóa bộ lọc
-                  </button>
-                </div>
+                <MarketplaceFilters
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={handleCategoryChange}
+                  searchQuery={searchQuery}
+                  onSearchChange={handleSearchChange}
+                  priceRange={priceRange}
+                  onPriceRangeChange={setPriceRange}
+                  onClear={clearFilters}
+                />
               </div>
             </aside>
+
+            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <SheetContent side="left" className="w-full sm:max-w-sm overflow-y-auto">
+                <SheetHeader className="mb-6 text-left">
+                  <SheetTitle>Bộ lọc</SheetTitle>
+                </SheetHeader>
+                <MarketplaceFilters
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={(id) => {
+                    handleCategoryChange(id);
+                  }}
+                  searchQuery={searchQuery}
+                  onSearchChange={handleSearchChange}
+                  priceRange={priceRange}
+                  onPriceRangeChange={setPriceRange}
+                  onClear={() => {
+                    clearFilters();
+                    setFiltersOpen(false);
+                  }}
+                />
+              </SheetContent>
+            </Sheet>
 
             <div className="flex-1">
               <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-gray-100">
                 <div className="flex items-center gap-4 w-full sm:w-auto">
-                  <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    <SlidersHorizontal className="w-4 h-4" />
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(true)}
+                    className="lg:hidden flex items-center gap-2 px-4 py-2 border border-[#004080]/20 rounded-lg hover:bg-[#004080]/5 transition-colors uupm-focus"
+                    aria-expanded={filtersOpen}
+                    aria-controls="marketplace-filters"
+                  >
+                    <SlidersHorizontal className="w-4 h-4 text-[#004080]" />
                     <span className="text-sm font-medium">Bộ lọc</span>
                   </button>
                   <select

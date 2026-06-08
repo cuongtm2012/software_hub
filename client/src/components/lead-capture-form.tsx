@@ -96,14 +96,17 @@ export function LeadCaptureForm({
           onChange={(e) => setPhone(e.target.value)}
         />
       </div>
-      <Button
-        type="submit"
-        className="w-full bg-[#004080] hover:bg-[#003366] font-semibold"
-        disabled={isSubmitting}
-      >
-        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-        Nhận tư vấn miễn phí
-      </Button>
+      <div className="flex justify-center pt-1">
+        <Button
+          type="submit"
+          size="sm"
+          className="w-fit min-w-[10rem] bg-[#004080] hover:bg-[#003366] font-semibold"
+          disabled={isSubmitting}
+        >
+          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+          Nhận tư vấn miễn phí
+        </Button>
+      </div>
     </form>
   );
 

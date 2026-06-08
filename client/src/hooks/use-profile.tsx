@@ -32,14 +32,14 @@ function useProfile() {
       queryClient.setQueryData(["/api/user"], updatedUser);
       
       toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
+        title: "Đã cập nhật hồ sơ",
+        description: "Thông tin của bạn đã được lưu thành công.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Update failed",
-        description: error.message || "Failed to update profile. Please try again.",
+        title: "Cập nhật thất bại",
+        description: error.message || "Không thể cập nhật hồ sơ. Vui lòng thử lại.",
         variant: "destructive",
       });
     },

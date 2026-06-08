@@ -10,13 +10,11 @@ interface CourseThumbnailProps {
 /**
  * Smart YouTube thumbnail component with multi-level fallback and lazy loading
  */
-export function CourseThumbnail({ videoUrl, title, fallbackGradient = 'from-indigo-400 to-purple-600' }: CourseThumbnailProps) {
+export function CourseThumbnail({ videoUrl, title, fallbackGradient = 'from-[#004080] to-[#003366]' }: CourseThumbnailProps) {
     const [currentSrc, setCurrentSrc] = useState<string>('');
     const [fallbackIndex, setFallbackIndex] = useState(0);
     const [showPlaceholder, setShowPlaceholder] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-
-    console.log('[CourseThumbnail] Processing URL for', title, ':', videoUrl);
 
     // Use centralized video ID extraction
     const videoId = extractYouTubeVideoId(videoUrl);
@@ -30,13 +28,11 @@ export function CourseThumbnail({ videoUrl, title, fallbackGradient = 'from-indi
 
     useEffect(() => {
         if (thumbnailUrls.length > 0) {
-            console.log('[CourseThumbnail] Trying thumbnail URLs for', title, ':', thumbnailUrls);
             setCurrentSrc(thumbnailUrls[0]);
             setFallbackIndex(0);
             setShowPlaceholder(false);
             setIsLoading(true);
         } else {
-            console.warn('[CourseThumbnail] No thumbnail URLs available for:', title, '- showing placeholder');
             setShowPlaceholder(true);
             setIsLoading(false);
         }
@@ -44,21 +40,16 @@ export function CourseThumbnail({ videoUrl, title, fallbackGradient = 'from-indi
 
     const handleError = () => {
         const nextIndex = fallbackIndex + 1;
-        console.warn('[CourseThumbnail] ❌ Failed to load:', currentSrc, 'for:', title);
-
         if (nextIndex < thumbnailUrls.length) {
-            console.log('[CourseThumbnail] Trying fallback', nextIndex + 1, ':', thumbnailUrls[nextIndex]);
             setCurrentSrc(thumbnailUrls[nextIndex]);
             setFallbackIndex(nextIndex);
         } else {
-            console.warn('[CourseThumbnail] All thumbnail URLs failed for:', title, '- showing placeholder');
             setShowPlaceholder(true);
             setIsLoading(false);
         }
     };
 
     const handleLoad = () => {
-        console.log('[CourseThumbnail] ✅ Successfully loaded:', currentSrc, 'for:', title);
         setIsLoading(false);
     };
 

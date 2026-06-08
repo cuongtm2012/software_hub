@@ -47,22 +47,24 @@ export default function SellerDashboardPage() {
     enabled: !!user,
   });
 
+  const isSeller = user?.role === "seller" || user?.role === "admin";
+
   // Fetch seller's products
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ["/api/seller/products"],
-    enabled: !!user && sellerData?.seller_profile?.verification_status === "verified",
+    enabled: !!user && isSeller,
   });
 
   // Fetch seller's orders
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/seller/orders"],
-    enabled: !!user && sellerData?.seller_profile?.verification_status === "verified",
+    enabled: !!user && isSeller,
   });
 
   // Fetch sales analytics
   const { data: analyticsData, isLoading: analyticsLoading } = useQuery({
     queryKey: ["/api/seller/analytics"],
-    enabled: !!user && sellerData?.seller_profile?.verification_status === "verified",
+    enabled: !!user && isSeller,
   });
 
   const deleteProductMutation = useMutation({
@@ -116,8 +118,7 @@ export default function SellerDashboardPage() {
     );
   }
 
-  // If user is not a seller, redirect to registration
-  if (!sellerData?.seller_profile) {
+  if (!isSeller) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">
@@ -130,7 +131,7 @@ export default function SellerDashboardPage() {
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-gray-600">
-                You haven't registered as a seller yet. Join our marketplace and start selling your digital products!
+                You need a seller account to access this dashboard.
               </p>
               <Button onClick={() => navigate("/seller/register")} className="bg-[#004080] hover:bg-[#003366]">
                 Register as Seller
@@ -142,7 +143,7 @@ export default function SellerDashboardPage() {
     );
   }
 
-  const sellerProfile = sellerData.seller_profile;
+  const sellerProfile = sellerData?.seller_profile;
   const products = productsData?.products || [];
   const orders = ordersData?.orders || [];
   const analytics = analyticsData || {};
@@ -184,30 +185,35 @@ export default function SellerDashboardPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Seller Dashboard</h1>
               <div className="flex items-center gap-2">
-                <p className="text-gray-600">Welcome back, {sellerProfile.business_name || user.name}</p>
-                {getStatusBadge(sellerProfile.verification_status)}
+                <p className="text-gray-600">Welcome back, {sellerProfile?.business_name || user.name}</p>
+                {sellerProfile && getStatusBadge(sellerProfile.verification_status)}
               </div>
             </div>
-            {sellerProfile.verification_status === "verified" && (
-              <Button onClick={() => navigate("/seller/products/new")} className="bg-[#004080] hover:bg-[#003366]">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
-            )}
+            <Button onClick={() => navigate("/seller/products/new")} className="bg-[#004080] hover:bg-[#003366]">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Product
+            </Button>
           </div>
 
-          {/* Verification Status Alert */}
-          {sellerProfile.verification_status === "pending" && (
+          {!sellerProfile && (
             <Alert className="mb-6">
-              <Clock className="h-4 w-4" />
+              <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Your seller account is being reviewed. This typically takes 1-2 business days. 
-                You'll be able to list products once verified.
+                Hoàn tất hồ sơ Seller để nhận thanh toán. Bạn vẫn có thể thêm sản phẩm ngay bây giờ.
               </AlertDescription>
             </Alert>
           )}
 
-          {sellerProfile.verification_status === "rejected" && (
+          {sellerProfile?.verification_status === "pending" && (
+            <Alert className="mb-6">
+              <Clock className="h-4 w-4" />
+              <AlertDescription>
+                Hồ sơ Seller đang được duyệt. Bạn vẫn có thể thêm sản phẩm — mỗi sản phẩm sẽ chờ admin duyệt trước khi hiển thị.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {sellerProfile?.verification_status === "rejected" && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
@@ -216,7 +222,7 @@ export default function SellerDashboardPage() {
             </Alert>
           )}
 
-          {sellerProfile.verification_status === "verified" && (
+          {isSeller && (
             <>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -226,7 +232,7 @@ export default function SellerDashboardPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{formatPrice(Number(sellerProfile.total_sales || 0))}</div>
+                    <div className="text-2xl font-bold">{formatPrice(Number(sellerProfile?.total_sales || 0))}</div>
                     <p className="text-xs text-muted-foreground">+20.1% from last month</p>
                   </CardContent>
                 </Card>
@@ -264,10 +270,10 @@ export default function SellerDashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {sellerProfile.rating ? Number(sellerProfile.rating).toFixed(1) : "N/A"}
+                      {sellerProfile?.rating ? Number(sellerProfile.rating).toFixed(1) : "N/A"}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {sellerProfile.total_reviews || 0} reviews
+                      {sellerProfile?.total_reviews || 0} reviews
                     </p>
                   </CardContent>
                 </Card>
