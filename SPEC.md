@@ -38,14 +38,15 @@
 **Backend**
 - Node.js 20 + Express (TypeScript via tsx)
 - Drizzle ORM (PostgreSQL)
+- **Supabase** (managed PostgreSQL + Auth + Realtime + Storage)
 - Redis (session cache, message queue)
-- MongoDB (chat history)
-- Socket.IO (real-time chat)
-- Passport.js (local/OAuth auth)
+- MongoDB (chat history — optional, có thể migrate sang Supabase Realtime)
+- Socket.IO (real-time chat — optional, có thể thay bằng Supabase Realtime)
+- Passport.js (local/OAuth auth — optional, có thể thay bằng Supabase Auth)
 - SendGrid / Resend (email)
 - Firebase Admin SDK (push notifications)
 - Stripe API (payment processing)
-- AWS S3 / Cloudflare R2 (file storage)
+- AWS S3 / Cloudflare R2 → **Supabase Storage** (file storage)
 
 **DevOps**
 - Docker + Docker Compose (multi-stage builds)
@@ -241,8 +242,9 @@
 
 | Provider | Purpose | Notes |
 |---|---|---|
-| Cloudflare R2 | Primary file storage | S3-compatible, used for product files, course thumbnails |
-| AWS S3 | Secondary/backup | Via @aws-sdk/client-s3 |
+| ✅ **Supabase Storage** | Primary file storage (ưu tiên) | S3-compatible, tích hợp sẵn với Supabase Auth — permission per user |
+| Cloudflare R2 | Secondary/backup | S3-compatible |
+| AWS S3 | Tertiary/backup | Via @aws-sdk/client-s3 |
 | Uppy | Client-side uploads | Pre-sign URLs, progress bars, drag-drop |
 
 ### 7.2. Session Storage
@@ -250,8 +252,22 @@
 | Environment | Store | Notes |
 |---|---|---|
 | Development | MemoryStore | No setup needed |
-| Production | PostgreSQL (connect-pg-simple) | `session` table auto-created |
+| Production | **Supabase → PostgreSQL (connect-pg-simple)** | Supabase quản lý connection pool |
 | Alternative | Redis | Via connect-redis |
+
+### 7.3. Supabase Migration Plan
+
+| Feature | Hiện tại | Sau khi migrate |
+|---|---|---|
+| Database | PostgreSQL (tự host / Docker) | Supabase managed PostgreSQL |
+| Auth | Passport.js + Session | Supabase Auth (email + OAuth Google/Facebook) |
+| Real-time chat | Socket.IO | Supabase Realtime (WebSocket built-in) |
+| File storage | S3 / R2 | Supabase Storage (bucket per user/permission) |
+| Connection pooling | pg Pool | Supabase direct + pgBouncer |
+| Schema management | Drizzle Kit push | Drizzle Kit + Supabase migrations |
+| Admin UI | Custom | Supabase Studio dashboard |
+
+**Tác động**: Migration này giảm đáng kể infra complexity — anh không cần self-host Postgres, Redis cho session, hay xử lý connection pool. Supabase free tier đủ cho giai đoạn đầu.
 
 ---
 
@@ -284,11 +300,12 @@
 
 | Compose File | Purpose |
 |---|---|
-| `docker-compose.yml` | Full dev: app + all microservices + gateweaver |
-| `docker-compose.dev.yml` | Minimal dev: app + postgres + redis |
-| `docker-compose.prod.yml` | Production: app + postgres + redis (minimal) |
-| `docker-compose.production.yml` | Full production: all microservices |
-| `docker-compose.vps.yml` | VPS-specific deployment |
+| `docker-compose.yml` | Full dev: app + all microservices + gateweaver (legacy) |
+| `docker-compose.dev.yml` | Minimal dev: app + postgres + redis (legacy) |
+| `docker-compose.prod.yml` | Production minimal: app + postgres + redis (legacy) |
+| `docker-compose.production.yml` | Full production: all microservices (legacy) |
+
+**Lưu ý với Supabase**: Không cần container Postgres/Redis nữa. Docker chỉ cần chạy app + (optional) các microservices. Có thể chạy `supabase start` local bằng Supabase CLI hoặc dùng Supabase cloud + connection string.
 
 ### 9.2. CI/CD
 
