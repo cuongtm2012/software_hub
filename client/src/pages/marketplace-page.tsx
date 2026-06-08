@@ -13,6 +13,8 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
+import { PageHero } from "@/components/design-system/page-hero";
+import { getPlaceholderGradient } from "@/components/design-system/tokens";
 
 const categories = [
   { id: 'all', name: 'Tất cả sản phẩm', count: 1350 },
@@ -55,21 +57,19 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
 
       <main className="flex-grow">
-        <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold mb-1 text-white">Digital Marketplace</h1>
-            <p className="text-sm text-slate-200">Khám phá sản phẩm và dịch vụ số cao cấp</p>
-          </div>
-        </div>
+        <PageHero
+          title="Marketplace phần mềm"
+          subtitle="Khám phá sản phẩm số, công cụ và giải pháp từ seller uy tín"
+        />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
             <aside className="lg:w-72 flex-shrink-0">
-              <div className="bg-white rounded-xl shadow-sm p-6 sticky top-20 border border-gray-100">
+              <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24 border border-[#004080]/10 uupm-card">
                 <h3 className="font-bold text-lg text-gray-900 mb-4">Bộ lọc</h3>
 
                 <div className="mb-6">
@@ -81,7 +81,7 @@ export default function MarketplacePage() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Tìm sản phẩm..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004080]/40 focus:border-transparent uupm-focus"
                     />
                   </div>
                 </div>
@@ -93,9 +93,9 @@ export default function MarketplacePage() {
                       <button
                         key={category.id}
                         onClick={() => setSelectedCategory(category.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === category.id
-                          ? 'bg-slate-700 text-white font-medium'
-                          : 'text-gray-700 hover:bg-gray-50'
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${selectedCategory === category.id
+                          ? 'bg-[#004080] text-white font-medium'
+                          : 'text-gray-700 hover:bg-[#004080]/5'
                           }`}
                       >
                         <span>{category.name}</span>
@@ -167,7 +167,7 @@ export default function MarketplacePage() {
                   return (
                     <div
                       key={product.id}
-                      className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-all overflow-hidden group border border-gray-100 flex flex-col"
+                      className="bg-white rounded-lg shadow-sm uupm-card uupm-interactive overflow-hidden group border border-[#004080]/10 flex flex-col"
                     >
                       <div
                         onClick={() => handleProductClick(product)}
@@ -178,11 +178,13 @@ export default function MarketplacePage() {
                             <img
                               src={product.image_url}
                               alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                              <ShoppingCart className="h-12 w-12 text-gray-300" />
+                            <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getPlaceholderGradient(product.name)}`}>
+                              <span className="text-3xl font-bold text-white/90">
+                                {product.name?.charAt(0)?.toUpperCase() ?? "?"}
+                              </span>
                             </div>
                           )}
                           <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded text-xs font-bold">
@@ -215,7 +217,7 @@ export default function MarketplacePage() {
                             e.stopPropagation();
                             handleCheckout();
                           }}
-                          className="w-full bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold"
+                          className="w-full bg-[#004080] hover:bg-[#003366] text-white text-sm font-semibold"
                           size="sm"
                         >
                           Mua ngay

@@ -61,7 +61,7 @@ export default function TestLoginPage() {
                   Login as Test Buyer
                 </Button>
                 <Button 
-                  onClick={() => handleTestLogin("cuongeurovnn@gmail.com", "admin")}
+                  onClick={() => handleTestLogin("admin@test.com", "admin")}
                   disabled={loginMutation.isPending}
                   className="w-full bg-red-600 hover:bg-red-700"
                 >

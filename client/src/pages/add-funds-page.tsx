@@ -10,8 +10,6 @@ import { PaymentForm } from "@/components/payment-form";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
-  CreditCard,
-  Smartphone,
   Building2,
   Wallet,
   QrCode,
@@ -30,7 +28,7 @@ export default function AddFundsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<'success' | 'failure' | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<"success" | "failure" | "cancel" | null>(null);
   const { toast } = useToast();
 
   // Check for payment status in URL parameters
@@ -38,88 +36,57 @@ export default function AddFundsPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get('status');
     const orderCode = urlParams.get('order');
-    const token = urlParams.get('token');
-
-    if (status === 'success') {
-      setPaymentStatus('success');
+    if (status === "success") {
+      setPaymentStatus("success");
       toast({
-        title: "Payment Successful!",
-        description: `Your payment has been processed successfully. Order: ${orderCode}`,
+        title: "Thanh toán thành công",
+        description: orderCode
+          ? `Giao dịch ${orderCode} đã được ghi nhận. Số dư sẽ cập nhật trong giây lát.`
+          : "Giao dịch đã được ghi nhận.",
       });
-    } else if (status === 'failure') {
-      setPaymentStatus('failure');
+    } else if (status === "failure") {
+      setPaymentStatus("failure");
       toast({
-        title: "Payment Failed",
-        description: `Your payment could not be processed. Order: ${orderCode}`,
+        title: "Thanh toán thất bại",
+        description: "Không thể xử lý thanh toán. Vui lòng thử lại.",
         variant: "destructive",
+      });
+    } else if (status === "cancel") {
+      setPaymentStatus("cancel");
+      toast({
+        title: "Đã hủy thanh toán",
+        description: "Bạn đã hủy giao dịch.",
       });
     }
   }, [toast]);
 
   const paymentMethods = [
     {
-      id: "qr-bank",
-      title: "QR Code Bank Transfer",
-      description: "Scan QR code for online bank transfer. Fee: 0%",
+      id: "bank-qr",
+      title: "Chuyển khoản QR (VietQR)",
+      description: "Quét mã QR chuyển khoản ngân hàng qua SePay",
       icon: QrCode,
-      iconBg: "bg-orange-100",
-      iconColor: "text-orange-600",
-      fee: "0%",
+      iconBg: "bg-[#004080]/10",
+      iconColor: "text-[#004080]",
+      fee: "Theo gói SePay",
       popular: true,
     },
     {
-      id: "vnpay-qr",
-      title: "VNPAY-QR Payment",
-      description:
-        "Pay with QR code via Mobile Banking app, transaction fee 2%",
-      icon: QrCode,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
-      fee: "2%",
-    },
-    {
-      id: "atm-balance",
-      title: "ATM Card Balance Transfer",
-      description: "Fee: 0.9% + $0.50",
-      icon: CreditCard,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
-      fee: "0.9% + $0.50",
-    },
-    {
-      id: "credit-card",
-      title: "Credit Card Payment (Master/Visa/JCB)",
-      description: "Fee: 2.36% + $1.50",
-      icon: CreditCard,
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
-      fee: "2.36% + $1.50",
-    },
-    {
-      id: "mobile-card",
-      title: "Mobile Card Top-up",
-      description: "Add funds via mobile carrier, transaction fee 30%",
-      icon: Smartphone,
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
-      fee: "30%",
-    },
-    {
-      id: "bank-transfer",
-      title: "Bank Transfer 24/7",
-      description: "Online bank transfer or counter service",
+      id: "napas-qr",
+      title: "QR NAPAS",
+      description: "Thanh toán qua mạng lưới NAPAS",
       icon: Building2,
-      iconBg: "bg-orange-100",
-      iconColor: "text-orange-600",
-      fee: "Varies by bank",
+      iconBg: "bg-slate-100",
+      iconColor: "text-slate-700",
+      fee: "Theo gói SePay",
     },
   ];
 
   const handlePayment = async () => {
     if (!selectedMethod || !amount || parseInt(amount) < 1000) {
       toast({
-        title: "Invalid Input",
-        description: "Please select a payment method and enter a minimum amount of 1,000₫",
+        title: "Thông tin không hợp lệ",
+        description: "Chọn phương thức thanh toán và nhập tối thiểu 1.000₫",
         variant: "destructive",
       });
       return;
@@ -132,11 +99,6 @@ export default function AddFundsPage() {
       const response = await apiRequest("POST", "/api/payment/initiate", {
         amount: parseInt(amount),
         payment_method: selectedMethod,
-        user_info: {
-          buyer_fullname: "Customer", // Will be filled by backend with user data
-          buyer_email: "customer@example.com",
-          buyer_mobile: "0123456789",
-        },
       });
 
       const data = await response.json();
@@ -148,8 +110,8 @@ export default function AddFundsPage() {
       }
     } catch (error) {
       toast({
-        title: "Payment Error",
-        description: error instanceof Error ? error.message : "Failed to initiate payment",
+        title: "Lỗi thanh toán",
+        description: error instanceof Error ? error.message : "Không thể khởi tạo thanh toán",
         variant: "destructive",
       });
     } finally {
@@ -167,7 +129,7 @@ export default function AddFundsPage() {
     return (
       <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
         <Header />
-        <main className="flex-grow container max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-6 flex items-center justify-center">
+        <main className="flex-grow pt-16 container max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-6 flex items-center justify-center">
           <PaymentForm paymentInfo={paymentInfo} onCancel={handleCancelPayment} />
         </main>
         <Footer />
@@ -179,7 +141,7 @@ export default function AddFundsPage() {
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
 
-      <main className="flex-grow container max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-6">
+      <main className="flex-grow pt-16 container max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-6">
         {/* Header Section */}
         <div className="mb-6">
           <Button
@@ -188,15 +150,15 @@ export default function AddFundsPage() {
             className="mb-4 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
+            Quay lại Dashboard
           </Button>
 
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-[#004080]/10">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              Add Funds to Account
+              Nạp tiền vào ví
             </h1>
             <p className="text-sm text-gray-600">
-              Choose from various payment methods available below
+              Thanh toán an toàn qua cổng SePay
             </p>
           </div>
         </div>
@@ -204,29 +166,59 @@ export default function AddFundsPage() {
         {/* Payment Status Alert */}
         {paymentStatus && (
           <div className="mb-6">
-            <Card className={paymentStatus === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+            <Card className={
+              paymentStatus === "success"
+                ? "border-green-200 bg-green-50"
+                : paymentStatus === "cancel"
+                  ? "border-amber-200 bg-amber-50"
+                  : "border-red-200 bg-red-50"
+            }>
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  {paymentStatus === 'success' ? (
+                  {paymentStatus === "success" ? (
                     <CheckCircle className="h-6 w-6 text-green-600" />
                   ) : (
                     <XCircle className="h-6 w-6 text-red-600" />
                   )}
                   <div>
-                    <h3 className={`font-medium ${paymentStatus === 'success' ? 'text-green-800' : 'text-red-800'}`}>
-                      {paymentStatus === 'success' ? 'Payment Successful!' : 'Payment Failed'}
+                    <h3 className={`font-medium ${
+                      paymentStatus === "success"
+                        ? "text-green-800"
+                        : paymentStatus === "cancel"
+                          ? "text-amber-800"
+                          : "text-red-800"
+                    }`}>
+                      {paymentStatus === "success"
+                        ? "Thanh toán thành công!"
+                        : paymentStatus === "cancel"
+                          ? "Đã hủy thanh toán"
+                          : "Thanh toán thất bại"}
                     </h3>
-                    <p className={`text-sm ${paymentStatus === 'success' ? 'text-green-700' : 'text-red-700'}`}>
-                      {paymentStatus === 'success' 
-                        ? 'Your funds have been added to your account successfully.' 
-                        : 'There was an issue processing your payment. Please try again.'}
+                    <p className={`text-sm ${
+                      paymentStatus === "success"
+                        ? "text-green-700"
+                        : paymentStatus === "cancel"
+                          ? "text-amber-700"
+                          : "text-red-700"
+                    }`}>
+                      {paymentStatus === "success"
+                        ? "Số dư ví sẽ được cập nhật sau khi SePay xác nhận giao dịch."
+                        : paymentStatus === "cancel"
+                          ? "Bạn có thể thử lại bất cứ lúc nào."
+                          : "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại."}
                     </p>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setPaymentStatus(null)}
-                    className={paymentStatus === 'success' ? 'text-green-600 hover:text-green-800' : 'text-red-600 hover:text-red-800'}
+                    className={
+                      paymentStatus === "success"
+                        ? "text-green-600 hover:text-green-800"
+                        : paymentStatus === "cancel"
+                          ? "text-amber-600 hover:text-amber-800"
+                          : "text-red-600 hover:text-red-800"
+                    }
                   >
                     ×
                   </Button>
@@ -243,7 +235,7 @@ export default function AddFundsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wallet className="h-5 w-5" />
-                  Payment Methods
+                  Phương thức thanh toán (SePay)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -275,7 +267,7 @@ export default function AddFundsPage() {
                                 </h3>
                                 {method.popular && (
                                   <span className="px-2 py-1 text-xs bg-orange-100 text-orange-600 rounded-full font-medium">
-                                    Popular
+                                    Phổ biến
                                   </span>
                                 )}
                               </div>
@@ -303,13 +295,13 @@ export default function AddFundsPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <DollarSign className="h-4 w-4" />
-                  Amount
+                  Số tiền
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="amount" className="text-sm">
-                    Enter Amount (VND)
+                    Nhập số tiền (VND)
                   </Label>
                   <Input
                     id="amount"
@@ -344,7 +336,7 @@ export default function AddFundsPage() {
             {selectedMethod && amount && parseInt(amount) >= 1000 && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Payment Summary</CardTitle>
+                  <CardTitle className="text-sm">Tóm tắt thanh toán</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -381,9 +373,9 @@ export default function AddFundsPage() {
                   <Button
                     onClick={handlePayment}
                     disabled={isProcessing}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-[#004080] hover:bg-[#003366]"
                   >
-                    {isProcessing ? "Processing..." : "Proceed to Payment"}
+                    {isProcessing ? "Đang xử lý…" : "Tiếp tục thanh toán"}
                   </Button>
                 </CardContent>
               </Card>
@@ -396,13 +388,13 @@ export default function AddFundsPage() {
                   <Info className="h-4 w-4 text-blue-600 mt-0.5" />
                   <div>
                     <h4 className="font-medium text-blue-900 mb-1 text-sm">
-                      Payment Information
+                      Thông tin thanh toán
                     </h4>
                     <ul className="text-xs text-blue-800 space-y-1">
-                      <li>• Funds available immediately after payment</li>
-                      <li>• All transactions secured with SSL encryption</li>
-                      <li>• Minimum deposit amount is 1,000₫</li>
-                      <li>• Contact support for payment issues</li>
+                      <li>• Thanh toán qua cổng SePay (sandbox/production)</li>
+                      <li>• Số dư cập nhật sau khi IPN xác nhận</li>
+                      <li>• Số tiền nạp tối thiểu: 1.000₫</li>
+                      <li>• Liên hệ hỗ trợ nếu gặp sự cố</li>
                     </ul>
                   </div>
                 </div>
@@ -414,18 +406,11 @@ export default function AddFundsPage() {
         {/* Supported Payment Providers */}
         <div className="mt-6 bg-white rounded-lg shadow-sm p-4">
           <h3 className="text-base font-semibold text-gray-900 mb-3">
-            Supported Payment Providers
+            Đối tác thanh toán
           </h3>
-          <div className="flex items-center justify-center gap-6 opacity-60">
-            <div className="text-sm font-medium">MoMo</div>
-            <div className="text-sm font-medium text-red-600">VNPAY</div>
-            <div className="text-sm font-medium text-blue-600">VISA</div>
-            <div className="text-sm font-medium text-orange-600">
-              Mastercard
-            </div>
-            <div className="text-gray-500 text-xs">
-              and many other payment methods
-            </div>
+          <div className="flex items-center justify-center gap-6">
+            <div className="text-sm font-semibold text-[#004080]">SePay</div>
+            <div className="text-sm text-gray-500">VietQR · NAPAS · Ngân hàng liên kết</div>
           </div>
         </div>
       </main>

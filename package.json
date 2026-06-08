@@ -120,6 +120,7 @@
     "recharts": "^2.15.2",
     "redis": "^5.11.0",
     "resend": "^6.6.0",
+    "sepay-pg-node": "^1.0.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "stripe": "^18.1.0",

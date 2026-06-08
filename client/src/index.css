@@ -519,4 +519,32 @@
       min-width: 220px;
     }
   }
+
+  /* ui-ux-pro-max: Soft UI utilities */
+  .uupm-card {
+    @apply transition-shadow duration-200;
+  }
+
+  .uupm-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .uupm-interactive {
+    @apply cursor-pointer transition-all duration-200;
+  }
+
+  .uupm-interactive:hover {
+    @apply border-[#004080]/25;
+  }
+
+  .uupm-focus {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004080]/40 focus-visible:ring-offset-2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .uupm-card,
+    .uupm-interactive {
+      transition: none !important;
+    }
+  }
 }

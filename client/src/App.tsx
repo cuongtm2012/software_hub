@@ -86,6 +86,7 @@ import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
 import DashboardPage from "@/pages/dashboard-page";
+import AddFundsPage from "@/pages/add-funds-page";
 // import ChatPage from "@/pages/chat-page"; // Disabled - use floating chat widget
 
 function Router() {
@@ -108,6 +109,7 @@ function Router() {
       {/* Protected Routes - Available to logged-in users */}
       <ProtectedRoute path="/profile" component={UserProfilePage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
+      <ProtectedRoute path="/add-funds" component={AddFundsPage} />
 
       {/* Role-Based Dashboards */}
       <ProtectedRoute path="/seller" component={SellerDashboardPage} roles={['seller']} />

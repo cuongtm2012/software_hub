@@ -58,8 +58,8 @@ export function Header() {
   return (
     <header className="gradient-slate shadow-lg sticky top-0 z-50 transition-shadow duration-200 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
+        <div className="flex justify-between items-center h-16 gap-2 sm:gap-3">
+          <div className="flex min-w-0 flex-1 items-center">
             <div className="flex-shrink-0 flex items-center space-x-3">
               <Link to="/">
                 <img
@@ -70,43 +70,43 @@ export function Header() {
               </Link>
               {user && <NotificationBell />}
             </div>
-            <nav className="hidden sm:ml-6 sm:flex sm:space-x-2 items-center">
+            <nav className="hidden lg:ml-4 lg:flex lg:space-x-1 xl:space-x-2 items-center min-w-0 overflow-hidden">
               <Link
                 to="/"
-                className={`${location === "/" ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
+                className={`${location === "/" ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
               >
                 Home
               </Link>
               <Link
                 to="/it-services#projects"
-                className={`${location.startsWith("/projects") || location.startsWith("/it-services") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
+                className={`${location.startsWith("/projects") || location.startsWith("/it-services") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
               >
                 IT Services
               </Link>
               <Link
                 to="/courses"
-                className={`${location.startsWith("/courses") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
+                className={`${location.startsWith("/courses") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
               >
                 Tài liệu
               </Link>
               <Link
                 to="/blog"
-                className={`${location.startsWith("/blog") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
+                className={`${location.startsWith("/blog") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
               >
                 Blog
               </Link>
               <Link
                 to="/marketplace"
-                className={`${location.startsWith("/marketplace") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-4 py-2 rounded-lg transition-all whitespace-nowrap`}
+                className={`${location.startsWith("/marketplace") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
               >
                 Marketplace
               </Link>
             </nav>
           </div>
-          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+          <div className="hidden md:flex md:items-center md:flex-shrink-0 md:ml-2">
             <form className="relative" onSubmit={handleSearch}>
               <Input
-                className="w-64 rounded-lg bg-slate-900/50 border-slate-600 py-2 pl-10 pr-4 placeholder:text-slate-400 text-white focus-visible:ring-2 focus-visible:ring-[#ffcc00] focus-visible:border-transparent focus-visible:outline-none transition-all"
+                className="w-36 lg:w-48 xl:w-56 rounded-lg bg-slate-900/50 border-slate-600 py-2 pl-10 pr-4 placeholder:text-slate-400 text-white focus-visible:ring-2 focus-visible:ring-[#ffcc00] focus-visible:border-transparent focus-visible:outline-none transition-all"
                 placeholder="Tìm kiếm phần mềm, tài liệu..."
                 type="text"
                 value={searchTerm}

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useCart } from "@/hooks/use-cart";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 export default function OrderSuccessPage() {
   const [, navigate] = useLocation();
   const [, params] = useRoute("/marketplace/order-success/:orderId");
+  const { clearCart } = useCart();
 
   // Fetch order details
   const { data: order, isLoading } = useQuery({
@@ -28,13 +30,12 @@ export default function OrderSuccessPage() {
     enabled: !!params?.orderId
   });
 
-  // Confetti effect on success
   useEffect(() => {
-    if (order) {
-      // You can add a confetti library here for celebration effect
-      console.log('Order completed successfully!', order);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("status") === "success") {
+      clearCart();
     }
-  }, [order]);
+  }, [clearCart]);
 
   if (isLoading) {
     return (

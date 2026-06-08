@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Phone, Mail, MessageSquare } from "lucide-react";
+import { Loader2, Phone, Mail, Headphones, Clock, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LeadCaptureFormProps {
   source?: string;
@@ -63,59 +64,97 @@ export function LeadCaptureForm({
     }
   };
 
-  return (
-    <div className={compact ? "" : "bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 md:p-8 border border-indigo-100"}>
+  const formFields = (
+    <form onSubmit={handleSubmit} className="space-y-3">
       {!compact && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="h-5 w-5 text-indigo-600" />
-            <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-          </div>
-          <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
-        </div>
+        <Input
+          placeholder="Họ tên (không bắt buộc)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="bg-white border-[#004080]/15 focus-visible:ring-[#004080]/30"
+        />
       )}
+      <div className="relative">
+        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="email"
+          placeholder="Email *"
+          required
+          className="pl-10 bg-white border-[#004080]/15 focus-visible:ring-[#004080]/30"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+      <div className="relative">
+        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="tel"
+          placeholder="Số điện thoại *"
+          required
+          className="pl-10 bg-white border-[#004080]/15 focus-visible:ring-[#004080]/30"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+      </div>
+      <Button
+        type="submit"
+        className="w-full bg-[#004080] hover:bg-[#003366] font-semibold"
+        disabled={isSubmitting}
+      >
+        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+        Nhận tư vấn miễn phí
+      </Button>
+    </form>
+  );
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        {!compact && (
-          <Input
-            placeholder="Họ tên (không bắt buộc)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        )}
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            type="email"
-            placeholder="Email *"
-            required
-            className="pl-10"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+  if (compact) {
+    return formFields;
+  }
+
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border border-[#004080]/12 bg-white shadow-sm uupm-card",
+      )}
+    >
+      <div className="grid md:grid-cols-5">
+        {/* Value prop */}
+        <div className="md:col-span-2 bg-gradient-to-br from-[#004080] to-[#003566] p-6 md:p-8 text-white antialiased">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 mb-4">
+            <Headphones className="h-5 w-5 text-[#ffcc00]" />
+          </div>
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#ffcc00]/90 mb-2.5">
+            Hỗ trợ miễn phí
+          </p>
+          <h3 className="text-[1.35rem] sm:text-2xl font-semibold tracking-tight leading-[1.4] text-balance text-white mb-3">
+            {title}
+          </h3>
+          <p className="text-[15px] text-white/85 leading-relaxed font-normal mb-6 max-w-sm">
+            {description}
+          </p>
+          <ul className="space-y-2.5 text-[14px] text-white/80 font-normal">
+            <li className="flex items-center gap-2">
+              <Clock className="h-4 w-4 shrink-0 text-[#ffcc00]" />
+              Phản hồi trong vòng 4 giờ
+            </li>
+            <li className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-[#ffcc00]" />
+              Tư vấn miễn phí, không ràng buộc
+            </li>
+          </ul>
         </div>
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            type="tel"
-            placeholder="Số điện thoại *"
-            required
-            className="pl-10"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
+
+        {/* Form */}
+        <div className="md:col-span-3 p-6 md:p-8 bg-[#f9f9f9]">
+          <p className="text-base font-semibold tracking-tight text-[#004080] mb-1">
+            Để lại thông tin liên hệ
+          </p>
+          <p className="text-sm text-muted-foreground mb-5">
+            Chúng tôi sẽ gọi lại trong giờ hành chính.
+          </p>
+          {formFields}
         </div>
-        <Button
-          type="submit"
-          className="w-full bg-indigo-600 hover:bg-indigo-700"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : null}
-          Nhận tư vấn miễn phí
-        </Button>
-      </form>
+      </div>
     </div>
   );
 }

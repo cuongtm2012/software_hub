@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getShortDescription } from "@/lib/translations";
+import { PageHero } from "@/components/design-system/page-hero";
+import { getPlaceholderGradient } from "@/components/design-system/tokens";
 
 // Utility function to chunk array into groups
 const chunkArray = <T,>(array: T[], size: number): T[][] => {
@@ -178,24 +180,8 @@ export default function HomePage() {
     setSelectedCategory(categoryId);
   };
 
-  // Generate gradient colors based on first letter
-  const getGradientColors = (name: string) => {
-    const firstChar = name.charAt(0).toUpperCase();
-    const gradients = [
-      'from-purple-400 via-pink-500 to-red-500',
-      'from-blue-400 via-cyan-500 to-teal-500',
-      'from-green-400 via-emerald-500 to-cyan-500',
-      'from-yellow-400 via-orange-500 to-red-500',
-      'from-indigo-400 via-purple-500 to-pink-500',
-      'from-rose-400 via-fuchsia-500 to-purple-500',
-      'from-amber-400 via-orange-500 to-pink-500',
-      'from-lime-400 via-green-500 to-emerald-500',
-      'from-sky-400 via-blue-500 to-indigo-500',
-      'from-violet-400 via-purple-500 to-fuchsia-500',
-    ];
-    const index = firstChar.charCodeAt(0) % gradients.length;
-    return gradients[index];
-  };
+  const productCardClass =
+    "overflow-hidden border border-gray-200 rounded-xl uupm-card uupm-interactive group cursor-pointer hover:border-[#004080] flex flex-col h-full";
 
   const categories = [
     { id: "all", name: "Tất cả", icon: Sparkles },
@@ -204,31 +190,43 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
 
       <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 text-white py-16">
-          <div className="w-full px-[4%]">
-            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-                Discover Amazing Software
-              </h1>
-              <p className="text-xl text-slate-200 mb-8">
-                Find, download, and explore the best software for your needs
-              </p>
+        <PageHero
+          align="centered"
+          badge="Software Hub Marketplace"
+          title={
+            <>
+              Khám phá{" "}
+              <span className="text-[#ffcc00] drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
+                phần mềm chất lượng
+              </span>
+            </>
+          }
+          subtitle="Tìm, tải và khám phá giải pháp phần mềm phù hợp cho doanh nghiệp của bạn"
+          actions={
+            <>
               <Button
                 size="lg"
                 onClick={() => navigate("/software")}
-                className="bg-white text-slate-900 hover:bg-slate-100"
+                className="bg-[#ffcc00] text-[#004080] hover:bg-[#e6b800] font-semibold shadow-lg shadow-black/10"
               >
-                Browse All Software
+                Xem tất cả phần mềm
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-            </div>
-          </div>
-        </section>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate("/marketplace")}
+                className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+              >
+                Khám phá marketplace
+              </Button>
+            </>
+          }
+        />
 
         {/* Top Downloads Section */}
         <section className="bg-white border-b py-8">
@@ -249,7 +247,7 @@ export default function HomePage() {
                 <div
                   key={software?.id || index}
                   onClick={() => software && navigate(`/software/${software.id}`)}
-                  className="scroll-snap-item bg-white rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-500 group cursor-pointer border border-gray-200 hover:border-[#004080] hover:scale-105 flex flex-col h-full"
+                  className={`scroll-snap-item bg-white ${productCardClass}`}
                   title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                 >
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -257,7 +255,7 @@ export default function HomePage() {
                       <img
                         src={software.image_url}
                         alt={software.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const placeholder = e.currentTarget.nextElementSibling;
@@ -268,7 +266,7 @@ export default function HomePage() {
                       />
                     ) : null}
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${software ? getGradientColors(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
+                      className={`absolute inset-0 bg-gradient-to-br ${software ? getPlaceholderGradient(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
                       style={{ display: software?.image_url ? 'none' : 'flex' }}
                     >
                       <div className="text-center">
@@ -321,7 +319,7 @@ export default function HomePage() {
                 <div
                   key={software?.id || index}
                   onClick={() => software && navigate(`/software/${software.id}`)}
-                  className="scroll-snap-item bg-white rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-500 group cursor-pointer border border-gray-200 hover:border-[#004080] hover:scale-105 flex flex-col h-full"
+                  className={`scroll-snap-item bg-white ${productCardClass}`}
                   title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                 >
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -329,7 +327,7 @@ export default function HomePage() {
                       <img
                         src={software.image_url}
                         alt={software.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const placeholder = e.currentTarget.nextElementSibling;
@@ -340,7 +338,7 @@ export default function HomePage() {
                       />
                     ) : null}
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${software ? getGradientColors(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
+                      className={`absolute inset-0 bg-gradient-to-br ${software ? getPlaceholderGradient(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
                       style={{ display: software?.image_url ? 'none' : 'flex' }}
                     >
                       <div className="text-center">
@@ -528,7 +526,7 @@ export default function HomePage() {
                         <Card
                           key={software?.id || `${rowIndex}-${index}`}
                           onClick={() => software && navigate(`/software/${software.id}`)}
-                          className="overflow-hidden border border-gray-200 rounded-xl hover:shadow-2xl hover:border-[#004080] transition-all duration-500 group cursor-pointer hover:scale-105 flex flex-col h-full"
+                          className={productCardClass}
                           title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                         >
                           <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -536,7 +534,7 @@ export default function HomePage() {
                               <img
                                 src={software.image_url}
                                 alt={software.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                className="w-full h-full object-cover"
                                 onError={(e) => {
                                   e.currentTarget.style.display = 'none';
                                   const placeholder = e.currentTarget.nextElementSibling;
@@ -547,7 +545,7 @@ export default function HomePage() {
                               />
                             ) : null}
                             <div
-                              className={`absolute inset-0 bg-gradient-to-br ${software ? getGradientColors(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
+                              className={`absolute inset-0 bg-gradient-to-br ${software ? getPlaceholderGradient(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
                               style={{ display: software?.image_url ? 'none' : 'flex' }}
                             >
                               <div className="text-center">

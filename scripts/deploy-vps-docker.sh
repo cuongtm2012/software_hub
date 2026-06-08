@@ -37,8 +37,15 @@ if [ ! -f "$COMPOSE_FILE" ]; then
   exit 1
 fi
 
-echo "📦 Starting / updating infrastructure containers..."
+echo "📦 Starting / updating infrastructure containers (Redis + Mongo)..."
+echo "   Database: Supabase cloud (not local Postgres)"
 compose up -d
+
+if [ -f .env ]; then
+  echo "✓ Using existing .env on VPS"
+else
+  echo "⚠️  No .env found — copy .env.vps.example to .env and configure Supabase keys"
+fi
 
 echo "📥 Installing production npm dependencies..."
 if [ -f package-lock.json ]; then
