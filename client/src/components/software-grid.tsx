@@ -17,17 +17,13 @@ export function SoftwareGrid({ softwares, onSoftwareClick, isLoading = false }: 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {[...Array(8)].map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 animate-pulse">
-            <div className="h-48 bg-gray-200"></div>
-            <div className="p-4">
-              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="flex justify-between items-center">
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-              </div>
+          <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden border border-border/50">
+            <div className="h-48 skeleton-shimmer"></div>
+            <div className="p-4 space-y-2">
+              <div className="h-6 skeleton-shimmer rounded w-3/4"></div>
+              <div className="h-4 skeleton-shimmer rounded w-1/2"></div>
+              <div className="h-4 skeleton-shimmer rounded w-full"></div>
+              <div className="h-8 skeleton-shimmer rounded w-1/3 mt-4"></div>
             </div>
           </div>
         ))}
@@ -47,9 +43,9 @@ export function SoftwareGrid({ softwares, onSoftwareClick, isLoading = false }: 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {softwares.map((software) => (
-        <div 
-          key={software.id} 
-          className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-200"
+        <div
+          key={software.id}
+          className="card-border-gradient card-hover bg-white rounded-lg shadow-sm overflow-hidden border border-border/50"
         >
           <div className="relative pb-[56.25%] bg-gray-100">
             <img 
@@ -70,7 +66,7 @@ export function SoftwareGrid({ softwares, onSoftwareClick, isLoading = false }: 
               }}
             />
             <div className="absolute top-0 right-0 mt-2 mr-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-white shadow-sm">
                 Free
               </span>
             </div>

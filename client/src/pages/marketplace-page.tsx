@@ -21,6 +21,12 @@ import {
 import { PageHero } from "@/components/design-system/page-hero";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
+
+function getDisplayPrice(productId: number): number {
+  return ((productId * 2654435761) % 4500000) + 500000;
+}
 
 const categories = [
   { id: 'all', name: 'Tất cả sản phẩm', count: 1350 },
@@ -129,6 +135,8 @@ function MarketplaceFilters({
 
 export default function MarketplacePage() {
   const [, navigate] = useLocation();
+  const { addToCart, closeCart } = useCart();
+  const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("popular");
@@ -172,8 +180,23 @@ export default function MarketplacePage() {
     navigate(`/software/${product.slug || product.id}`);
   };
 
-  const handleCheckout = () => {
-    navigate('/marketplace/checkout');
+  const handleBuyNow = (product: { id: number; name: string; image_url?: string }, price: number) => {
+    addToCart(
+      {
+        id: String(product.id),
+        name: product.name,
+        price,
+        images: product.image_url ? [product.image_url] : [],
+      },
+      "standard",
+    );
+    closeCart();
+    toast({
+      title: "Đang chuyển đến thanh toán",
+      description: product.name,
+      duration: 2000,
+    });
+    navigate("/marketplace/checkout");
   };
 
   return (
@@ -260,7 +283,7 @@ export default function MarketplacePage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
                 {(products?.softwares || []).map((product: any, index: number) => {
                   const discount = [20, 25, 33, 20, 25, 33][index % 6];
-                  const mockPrice = Math.floor(Math.random() * 5000000) + 500000;
+                  const mockPrice = getDisplayPrice(product.id);
                   const originalPrice = Math.floor(mockPrice / (1 - discount / 100));
 
                   return (
@@ -314,7 +337,7 @@ export default function MarketplacePage() {
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCheckout();
+                            handleBuyNow(product, mockPrice);
                           }}
                           className="w-full bg-[#004080] hover:bg-[#003366] text-white text-sm font-semibold"
                           size="sm"

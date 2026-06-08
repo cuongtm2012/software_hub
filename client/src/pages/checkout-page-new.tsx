@@ -68,9 +68,9 @@ export default function CheckoutPage() {
   }, [user]);
 
   useEffect(() => {
-    if (items.length === 0 && !showPaymentForm) {
-      navigate("/marketplace");
-    }
+    if (items.length > 0 || showPaymentForm) return;
+    const timer = window.setTimeout(() => navigate("/marketplace"), 150);
+    return () => window.clearTimeout(timer);
   }, [items.length, showPaymentForm, navigate]);
 
   useEffect(() => {

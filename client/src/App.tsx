@@ -90,7 +90,10 @@ import AddFundsPage from "@/pages/add-funds-page";
 // import ChatPage from "@/pages/chat-page"; // Disabled - use floating chat widget
 
 function Router() {
+  const [location] = useLocation();
+
   return (
+    <div key={location} className="animate-fade-in min-h-screen">
     <Switch>
       {/* Public Routes - Available to all users */}
       <Route path="/" component={HomePage} />
@@ -371,6 +374,7 @@ function Router() {
 
       <Route component={NotFound} />
     </Switch>
+    </div>
   );
 }
 

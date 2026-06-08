@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +26,30 @@ export function Header() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const navLinkClass = (active: boolean) =>
+    cn(
+      "nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base",
+      active
+        ? "bg-slate-600 text-white font-medium"
+        : "text-slate-200 hover:bg-slate-700 hover:text-white",
+    );
+
+  const mobileNavLinkClass = (active: boolean) =>
+    cn(
+      "block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap",
+      active
+        ? "bg-slate-600 border-[#ffcc00] text-white"
+        : "border-transparent text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:text-white",
+    );
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -56,7 +81,12 @@ export function Header() {
   };
 
   return (
-    <header className="gradient-slate shadow-lg sticky top-0 z-50 transition-shadow duration-200 text-white">
+    <header
+      className={cn(
+        "gradient-slate shadow-lg sticky top-0 z-50 transition-shadow duration-200 text-white",
+        scrolled && "shadow-xl",
+      )}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 gap-2 sm:gap-3">
           <div className="flex min-w-0 flex-1 items-center">
@@ -71,34 +101,24 @@ export function Header() {
               {user && <NotificationBell />}
             </div>
             <nav className="hidden lg:ml-4 lg:flex lg:space-x-1 xl:space-x-2 items-center min-w-0 overflow-hidden">
-              <Link
-                to="/"
-                className={`${location === "/" ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
-              >
+              <Link to="/" className={navLinkClass(location === "/")}>
                 Home
               </Link>
               <Link
                 to="/it-services#projects"
-                className={`${location.startsWith("/projects") || location.startsWith("/it-services") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
+                className={navLinkClass(
+                  location.startsWith("/projects") || location.startsWith("/it-services"),
+                )}
               >
                 IT Services
               </Link>
-              <Link
-                to="/courses"
-                className={`${location.startsWith("/courses") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
-              >
+              <Link to="/courses" className={navLinkClass(location.startsWith("/courses"))}>
                 Tài liệu
               </Link>
-              <Link
-                to="/blog"
-                className={`${location.startsWith("/blog") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
-              >
+              <Link to="/blog" className={navLinkClass(location.startsWith("/blog"))}>
                 Blog
               </Link>
-              <Link
-                to="/marketplace"
-                className={`${location.startsWith("/marketplace") ? "bg-slate-600 text-white font-medium" : "text-slate-200 hover:bg-slate-700 hover:text-white"} nav-item inline-flex items-center px-2 xl:px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm xl:text-base`}
-              >
+              <Link to="/marketplace" className={navLinkClass(location.startsWith("/marketplace"))}>
                 Marketplace
               </Link>
             </nav>
@@ -248,7 +268,7 @@ export function Header() {
               variant="ghost"
               size="icon"
               onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+              className="inline-flex items-center justify-center p-2 rounded-md text-slate-200 hover:text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#ffcc00]"
             >
               <span className="sr-only">Open main menu</span>
               {mobileMenuOpen ? (
@@ -263,26 +283,42 @@ export function Header() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="sm:hidden">
+        <div className="sm:hidden border-t border-slate-700">
           <div className="pt-2 pb-3 space-y-1">
             <Link
               to="/"
               onClick={closeMobileMenu}
-              className={`${location === "/" ? "bg-primary/10 border-primary text-primary" : "border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground"} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}
+              className={mobileNavLinkClass(location === "/")}
             >
               Home
             </Link>
             <Link
               to="/it-services#projects"
               onClick={closeMobileMenu}
-              className={`${location.startsWith("/projects") || location.startsWith("/it-services") ? "bg-primary/10 border-primary text-primary" : "border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground"} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}
+              className={mobileNavLinkClass(
+                location.startsWith("/projects") || location.startsWith("/it-services"),
+              )}
             >
               IT Services
             </Link>
             <Link
+              to="/courses"
+              onClick={closeMobileMenu}
+              className={mobileNavLinkClass(location.startsWith("/courses"))}
+            >
+              Tài liệu
+            </Link>
+            <Link
+              to="/blog"
+              onClick={closeMobileMenu}
+              className={mobileNavLinkClass(location.startsWith("/blog"))}
+            >
+              Blog
+            </Link>
+            <Link
               to="/marketplace"
               onClick={closeMobileMenu}
-              className={`${location.startsWith("/marketplace") ? "bg-primary/10 border-primary text-primary" : "border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground"} block pl-3 pr-4 py-2 border-l-4 text-base font-medium whitespace-nowrap`}
+              className={mobileNavLinkClass(location.startsWith("/marketplace"))}
             >
               Marketplace
             </Link>
@@ -291,8 +327,8 @@ export function Header() {
           <div className="pt-2 pb-3 px-4">
             <form className="relative" onSubmit={handleSearch}>
               <Input
-                className="w-full rounded-full bg-muted border-border py-2 pl-4 pr-10 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:bg-background focus-visible:outline-none"
-                placeholder="Search software..."
+                className="w-full rounded-full bg-slate-900/50 border-slate-600 py-2 pl-4 pr-10 placeholder:text-slate-400 text-white focus-visible:ring-2 focus-visible:ring-[#ffcc00] focus-visible:outline-none"
+                placeholder="Tìm kiếm phần mềm, tài liệu..."
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -301,13 +337,13 @@ export function Header() {
                 type="submit"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
-                <Search className="h-5 w-5 text-muted-foreground" />
+                <Search className="h-5 w-5 text-slate-400" />
               </button>
             </form>
           </div>
 
           {!user ? (
-            <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="pt-4 pb-3 border-t border-slate-700">
               <div className="space-y-1 px-4">
                 <Button
                   onClick={() => {
@@ -315,9 +351,9 @@ export function Header() {
                     closeMobileMenu();
                   }}
                   variant="ghost"
-                  className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                 >
-                  Login
+                  Đăng nhập
                 </Button>
                 <Button
                   onClick={() => {
@@ -325,25 +361,27 @@ export function Header() {
                     closeMobileMenu();
                   }}
                   variant="ghost"
-                  className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                 >
-                  Sign up
+                  Đăng ký
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="pt-4 pb-3 border-t border-slate-700">
               <div className="flex items-center px-4">
                 <div className="flex-shrink-0">
-                  <Avatar className="h-10 w-10 rounded-full">
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  <Avatar className="h-10 w-10 rounded-full border border-slate-500">
+                    <AvatarFallback className="bg-slate-600 text-white">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
                   </Avatar>
                 </div>
                 <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800">
+                  <div className="text-base font-medium text-white">
                     {user.name}
                   </div>
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-slate-300">
                     {user.email}
                   </div>
                 </div>
@@ -355,7 +393,7 @@ export function Header() {
                     navigate("/profile");
                     closeMobileMenu();
                   }}
-                  className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                 >
                   Your Profile
                 </Button>
@@ -365,7 +403,7 @@ export function Header() {
                     navigate("/profile/downloads");
                     closeMobileMenu();
                   }}
-                  className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                 >
                   Downloaded Software
                 </Button>
@@ -375,7 +413,7 @@ export function Header() {
                     navigate("/profile/reviews");
                     closeMobileMenu();
                   }}
-                  className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                 >
                   Your Reviews
                 </Button>
@@ -387,7 +425,7 @@ export function Header() {
                         navigate("/projects/developer");
                         closeMobileMenu();
                       }}
-                      className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                      className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                     >
                       My Projects
                     </Button>
@@ -397,7 +435,7 @@ export function Header() {
                         navigate("/it-services#projects");
                         closeMobileMenu();
                       }}
-                      className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                      className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                     >
                       Browse Portfolios
                     </Button>
@@ -410,7 +448,7 @@ export function Header() {
                       navigate("/projects/client");
                       closeMobileMenu();
                     }}
-                    className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                    className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                   >
                     My Projects
                   </Button>
@@ -422,7 +460,7 @@ export function Header() {
                       navigate("/marketplace/seller");
                       closeMobileMenu();
                     }}
-                    className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                    className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                   >
                     My Store
                   </Button>
@@ -434,7 +472,7 @@ export function Header() {
                       navigate("/marketplace/orders");
                       closeMobileMenu();
                     }}
-                    className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                    className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                   >
                     My Orders
                   </Button>
@@ -446,7 +484,7 @@ export function Header() {
                       navigate("/admin");
                       closeMobileMenu();
                     }}
-                    className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                    className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                   >
                     Admin Dashboard
                   </Button>
@@ -457,7 +495,7 @@ export function Header() {
                     handleLogout();
                     closeMobileMenu();
                   }}
-                  className="block w-full text-left py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+                  className="block w-full text-left py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-700 rounded-md"
                 >
                   Sign out
                 </Button>

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { PageMeta } from "@/components/seo/page-meta";
-import { BookOpen, Calendar, Loader2, Tag } from "lucide-react";
+import { Calendar, Loader2, Newspaper, Tag } from "lucide-react";
 
 export default function BlogListPage() {
   const [, navigate] = useLocation();
@@ -30,7 +30,7 @@ export default function BlogListPage() {
         <section className="bg-gradient-to-r from-slate-800 to-slate-700 text-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 mb-4">
-              <BookOpen className="h-8 w-8" />
+              <Newspaper className="h-8 w-8 text-[#ffcc00]" />
               <h1 className="text-4xl font-bold">Blog IT</h1>
             </div>
             <p className="text-xl text-slate-200 max-w-2xl">

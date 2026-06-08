@@ -521,7 +521,7 @@ export default function HomePage() {
                     (allSoftware?.softwares || Array(itemsToDisplay).fill(null)).slice(0, itemsToDisplay),
                     gridColumns
                   ).map((chunk, rowIndex) => (
-                    <div key={rowIndex} className="grid-row">
+                    <div key={rowIndex} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
                       {chunk.map((software: any, index: number) => (
                         <Card
                           key={software?.id || `${rowIndex}-${index}`}
