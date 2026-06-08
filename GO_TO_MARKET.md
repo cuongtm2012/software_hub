@@ -1,6 +1,6 @@
 # Software Hub — Go-to-Market Strategy
 
-> Chiến lược đưa Software Studio ra thị trường, dựa trên source code hiện tại
+> Chiến lược đưa Software Studio ra thị trường | Cập nhật: Supabase fullstack migration
 
 ---
 
@@ -30,6 +30,29 @@
 2. **Uy tín tự nhiên** — khách vào thấy catalog 50+ khóa học + 800+ phần mềm → "nó phải giỏi"
 3. **Lead gen mềm** — tư vấn lộ trình free, download ebook, chat hỗ trợ
 4. **Chốt đơn IT Studio** — gọi tư vấn, quote, nhận project
+
+---
+
+## 1.1. Tech Stack cho GTM
+
+Sau khi migrate toàn bộ lên Supabase, tech stack của Software Hub là:
+
+| Layer | Công nghệ |
+|---|---|
+| **Database** | Supabase PostgreSQL (managed) |
+| **Auth** | Supabase Auth (JWT) — email + Google OAuth |
+| **File storage** | Supabase Storage |
+| **Background queue** | Redis (giữ nguyên) |
+| **Real-time chat** | Socket.IO (giữ nguyên, DB trên Supabase) |
+| **Push notifications** | Firebase Cloud Messaging (giữ nguyên) |
+
+### Lợi thế khi dùng Supabase cho GTM
+
+- **Zero infra ops** — không cần Docker cho DB/auth/storage. Tập trung code + content
+- **Free tier đủ dùng** — 500MB DB, 50K users, 1GB storage. Đủ cho năm đầu
+- **Auth sẵn OAuth** — Google login 1 click, không cần code forgot/reset password
+- **Row Level Security** — an toàn hơn custom middleware
+- **Supabase Studio** — dashboard quản lý user, data, SQL editor không cần build
 
 ---
 
@@ -296,26 +319,52 @@ Gọi điện tư vấn (warm call)
 
 ## 9. Cần implement ngay
 
-### Tuần 1: Course Landing Pages + SEO
+> **Lưu ý**: Thứ tự này đã tính đến Supabase migration. DB + Auth là bước nền tảng, xong mới làm SEO/content.
 
-1. Tách route `/courses/{slug}` riêng cho từng course (hiện là 1 page list)
-2. Thêm SEO meta (title, description, schema)
+### Phase 0: Supabase Migration (ưu tiên tuyệt đối)
+
+| Bước | Mô tả | Files chạm vào | Thời gian |
+|---|---|---|---|
+| 0a | **DB connection** — đổi DATABASE_URL sang Supabase | `server/db.ts`, `drizzle.config.ts`, `.env` | 30 phút |
+| 0b | **Push schema** — Drizzle push lên Supabase | Chạy `npm run db:push` | 5 phút |
+| 0c | **Seed data** — import courses, softwares, users | Chạy seed scripts | 15 phút |
+| 0d | **Auth middleware** — Supabase JWT thay Passport session | ~8 files (middleware, routes, hooks) | 1-2 ngày |
+| 0e | **Storage** — Supabase Storage thay S3/R2 upload | ~3 files (uploader components) | 1 ngày |
+| 0f | **Xoá dependencies cũ** — passport, express-session, aws-sdk | `package.json` | 10 phút |
+
+**Kết quả Phase 0**: App chạy trên Supabase fullstack. Không còn Docker Postgres/Redis cho session. Auth JWT.
+
+### Phase 1: Course Landing Pages + SEO (làm sau khi Supabase ổn định)
+
+| Tuần | Việc |
+|---|---|
+| 1 | Tách route `/courses/{slug}` riêng cho từng course + SEO meta |
+| 2 | Thêm blog module + Schema Course/SoftwareApplication markup |
+| 3 | Lead capture forms + chat trigger theo behavior |
+| 4 | 5-10 blog posts lộ trình học + share Facebook groups |
+| 5 | Google Search Console + GA4 setup |
+| 6-8 | Content định kỳ + SEO monitoring |
+
+### Chi tiết Tuần 1: Course Landing Pages
+
+1. Tách route `/courses/{slug}` riêng (hiện là 1 page list)
+2. Thêm SEO meta (title, description, Course schema)
 3. Thêm nội dung 500-800 chữ + internal links
 4. Thêm CTA lead capture ở cuối
 
-### Tuần 2: Blog Module + Schema
+### Chi tiết Tuần 2: Blog + Schema
 
 5. Thêm `/blog/*` routes + admin CRUD
-6. Thêm Course + SoftwareApplication schema
+6. Thêm SoftwareApplication schema cho phần mềm
 7. Thêm breadcrumb + Open Graph tags
 
-### Tuần 3: Lead Capture System
+### Chi tiết Tuần 3: Lead Capture
 
 8. Form "Tư vấn lộ trình miễn phí" (email + SĐT)
 9. Ebook download với gate form
 10. Chat trigger theo behavior tracking
 
-### Tuần 4: Content + Launch
+### Chi tiết Tuần 4: Launch Content
 
 11. Viết 5-10 blog posts lộ trình học
 12. Viết hướng dẫn cài đặt cho 20 phần mềm phổ biến
