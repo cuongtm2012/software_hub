@@ -1,6 +1,6 @@
 # Software Hub - Product Specification Document
 
-> Generated from source code review (June 2026)
+> Generated from source code review (June 2026) | Updated with go-to-market strategy
 
 ---
 
@@ -376,7 +376,134 @@
 
 ---
 
-## 14. Project Stats
+## 14. Go-to-Market Strategy
+
+### 14.1. Mô hình kinh doanh
+
+**Software Hub Studio** — 3 lớp:
+
+```
+Lớp 1: Traffic (SEO)
+  Khóa học free + phần mềm free → kéo sinh viên IT & SME
+        ↓
+Lớp 2: Engagement & Trust
+  Landing page chi tiết, review, hướng dẫn tiếng Việt → xây uy tín
+        ↓
+Lớp 3: Monetization
+  IT Studio (anh + team code sản phẩm cho khách hàng)
+  → Khách SME, startup cần làm web/app/CRM
+```
+
+### 14.2. Phân tích thị trường
+
+| Mảng | Vai trò | Revenue | Cạnh tranh |
+|---|---|---|---|
+| Khóa học free | SEO bait, kéo traffic | $0 (free) | Blog IT Việt Nam, YouTube |
+| Phần mềm free | Social proof, uy tín | $0 (free) | SourceForge, GitHub, AlternativeTo |
+| IT Studio | Tiền thật | 15-200tr/project | Agency, freelancer lẻ |
+
+**Lợi thế cạnh tranh của Software Hub**: 
+- Không agency nào có 50+ khóa học free + catalog phần mềm để chứng minh năng lực
+- Social proof tự nhiên: "Nó có cả trăm khóa học, cả trăm phần mềm → nó phải giỏi"
+
+### 14.3. Target Customer
+
+| Nhóm | Nhu cầu | Budget | Kênh tiếp cận |
+|---|---|---|---|
+| SME Việt Nam (5-50 nv) | Web bán hàng, CRM, landing page | 10-50tr | SEO + Facebook groups SME |
+| Startup gọi vốn | MVP, prototype | 30-200tr | SEO + referral |
+| Chủ shop online | Web bán hàng + quản lý đơn | 5-20tr | Google Maps outreach |
+| Trường/trung tâm | LMS, hệ thống quản lý | 20-100tr | Cold email + case study |
+
+### 14.4. Chiến thuật SEO
+
+#### A. SEO cho khóa học (ưu tiên #1)
+
+Mỗi khóa học = 1 landing page riêng với URL pattern:
+
+```
+/courses/hoc-reactjs-co-ban
+/courses/lap-trinh-python-cho-nguoi-moi
+```
+
+SEO trên mỗi trang:
+- **Title tag**: "Học [tên khóa] miễn phí — Lộ trình chi tiết cho người mới"
+- **Schema Course markup** → rich snippet Google (rating, duration)
+- **Nội dung 500-800 chữ**: mô tả, lộ trình, kiến thức đạt được
+- **Internal links**: sang course liên quan, sang blog lộ trình
+
+Blog posts dạng "lộ trình":
+- `/blog/lo-trinh-hoc-frontend-6-thang-mien-phi`
+- `/blog/hoc-lap-trinh-web-tu-con-so-0`
+- `/blog/top-10-khoa-hoc-lap-trinh-mien-phi-tieng-viet`
+
+→ Content dạng này share vào group Facebook IT là viral tự nhiên.
+
+#### B. SEO cho phần mềm
+
+Mỗi phần mềm = 1 landing page hướng dẫn tiếng Việt:
+```
+/software/visual-studio-code
+/software/docker-desktop
+```
+
+- Schema SoftwareApplication (rating, download count)
+- Content: "Hướng dẫn cài đặt X trên Windows/Mac — 5 bước"
+- Long-tail keywords: "cài đặt docker trên mac m1", "cấu hình vscode cho python"
+
+### 14.5. Conversion Funnel
+
+```
+User search "học react free"
+    ↓
+Vào landing page course → đọc, xem video YouTube
+    ↓
+Lead capture (mềm):
+  - "Tư vấn lộ trình học miễn phí" → form email + sđt
+  - "Download ebook lộ trình Fullstack 6 tháng" → gate form
+  - Chat popup sau 3+ trang xem course
+    ↓
+Anh/team gọi tư vấn → xác định nhu cầu
+    ↓
+Nếu cần làm project → quote → đơn hàng
+Nếu chỉ học → tư vấn thêm → nurture → 1-6 tháng sau quay lại
+```
+
+### 14.6. Cần implement để go-to-market
+
+| Feature | Priority | Impact |
+|---|---|---|
+| Landing page riêng từng course + SEO meta | 🔴 Critical | SEO traffic + conversion |
+| Blog module | 🔴 Critical | Content marketing + SEO |
+| Lead capture forms (email + phone) | 🔴 Critical | Từ traffic → lead |
+| Ebook download với gate form | 🟡 Medium | Lead magnet |
+| Booking lịch tư vấn | 🟡 Medium | Chốt đơn |
+| Chat trigger theo behavior (3+ pages) | 🟡 Medium | Lead capture tự động |
+| Dashboard lead tracking | 🟢 Low | Theo dõi hiệu quả |
+
+### 14.7. KPI dự kiến (month 1-3)
+
+- SEO keywords top 10: ~70 long-tail từ course pages
+- Traffic: 500-2000 visitors/tháng
+- Lead capture rate: 3-5% (15-100 leads/tháng)
+- Conversion lead → đơn: 5-10% (1-10 đơn/tháng)
+- Giá trị đơn TB: 15-50tr
+- Chi phí: ~0đ ad spend (organic), chỉ time content
+
+### 14.8. Lộ trình
+
+| Tuần | Việc |
+|---|---|
+| 1 | Tách courses → landing page riêng + SEO meta |
+| 2 | Schema markup + blog module |
+| 3 | Lead capture forms + chat trigger |
+| 4 | 5-10 blog posts lộ trình học (content mồi) |
+| 5 | Booking + lead dashboard |
+| 6-8 | Content định kỳ + SEO monitoring |
+
+---
+
+## 15. Project Stats
 
 | Metric | Value |
 |---|---|
