@@ -38,15 +38,14 @@
 **Backend**
 - Node.js 20 + Express (TypeScript via tsx)
 - Drizzle ORM (PostgreSQL)
-- **Supabase** (managed PostgreSQL + Auth + Realtime + Storage)
-- Redis (session cache, message queue)
-- MongoDB (chat history — optional, có thể migrate sang Supabase Realtime)
-- Socket.IO (real-time chat — optional, có thể thay bằng Supabase Realtime)
-- Passport.js (local/OAuth auth — optional, có thể thay bằng Supabase Auth)
+- **Supabase** (managed PostgreSQL + Auth + Storage)
+- Redis (message queue — giữ nguyên cho background jobs)
+- Socket.IO (real-time chat — giữ nguyên, DB chạy trên Supabase)
+- **Supabase Auth** (JWT — thay Passport.js + express-session)
+- **Supabase Storage** (file storage — thay S3/R2)
 - SendGrid / Resend (email)
 - Firebase Admin SDK (push notifications)
 - Stripe API (payment processing)
-- AWS S3 / Cloudflare R2 → **Supabase Storage** (file storage)
 
 **DevOps**
 - Docker + Docker Compose (multi-stage builds)
@@ -242,7 +241,7 @@
 
 | Provider | Purpose | Notes |
 |---|---|---|
-| ✅ **Supabase Storage** | Primary file storage (ưu tiên) | S3-compatible, tích hợp sẵn với Supabase Auth — permission per user |
+| ✅ **Supabase Storage** | Primary file storage | S3-compatible, tích hợp sẵn với Supabase Auth |
 | Cloudflare R2 | Secondary/backup | S3-compatible |
 | AWS S3 | Tertiary/backup | Via @aws-sdk/client-s3 |
 | Uppy | Client-side uploads | Pre-sign URLs, progress bars, drag-drop |
@@ -259,15 +258,23 @@
 
 | Feature | Hiện tại | Sau khi migrate |
 |---|---|---|
-| Database | PostgreSQL (tự host / Docker) | Supabase managed PostgreSQL |
-| Auth | Passport.js + Session | Supabase Auth (email + OAuth Google/Facebook) |
-| Real-time chat | Socket.IO | Supabase Realtime (WebSocket built-in) |
-| File storage | S3 / R2 | Supabase Storage (bucket per user/permission) |
+| Database | PostgreSQL (Docker self-host) | Supabase managed PostgreSQL |
+| Auth | Passport.js + Session + cookie | **Supabase Auth** (JWT) — email + Google OAuth |
+| Real-time chat | Socket.IO (giữ nguyên) | DB chạy trên Supabase PostgreSQL |
+| File storage | AWS S3 / Cloudflare R2 | **Supabase Storage** (bucket per user) |
+| Message queue | Redis (giữ nguyên) | Giữ nguyên cho background jobs |
+| Push notifications | Firebase Admin (giữ nguyên) | Giữ nguyên |
 | Connection pooling | pg Pool | Supabase direct + pgBouncer |
 | Schema management | Drizzle Kit push | Drizzle Kit + Supabase migrations |
 | Admin UI | Custom | Supabase Studio dashboard |
 
-**Tác động**: Migration này giảm đáng kể infra complexity — anh không cần self-host Postgres, Redis cho session, hay xử lý connection pool. Supabase free tier đủ cho giai đoạn đầu.
+**Lưu ý**: Không migrate tất cả cùng lúc. Thứ tự:
+1. **DB** trước — chỉ đổi connection string, 0 rủi ro
+2. **Auth** — middleware + client hook JWT
+3. **Storage** — upload endpoints
+4. Chat + Queue + Firebase giữ nguyên
+
+**Tác động**: Giảm infra complexity đáng kể. Không cần self-host Postgres. Free tier đủ cho giai đoạn đầu. Khi scale >500MB DB hoặc >50K users mới cần trả $15-25/tháng.
 
 ---
 
@@ -383,7 +390,8 @@
 7. **Consolidate storage layers** — `storage/` directory has per-domain sub-modules but main `storage.ts` has fallthrough logic
 8. **Add proper test framework** (Vitest + Playwright)
 9. **Remove unused imports** — many Radix UI components imported but unused
-10. **Fix `DISABLE_AUTH` env variable** — has `=*** 'true'` syntax error on line 178
+4. **Fix `DISABLE_AUTH` env variable** — has `=*** 'true'` syntax error in middleware/auth.middleware.ts
+5. **Supabase migration** — kế hoạch trong section 7.3
 
 ### Low Priority
 
