@@ -376,8 +376,8 @@ export function CartTrigger() {
         onClick={() => setIsOpen(true)}
         className="relative text-slate-200 hover:bg-slate-700 hover:text-white"
       >
-        <ShoppingCart className="mr-1 h-4 w-4" />
-        <span className="hidden xl:inline">Giỏ hàng</span>
+        <ShoppingCart className="h-5 w-5" />
+        <span className="sr-only">Giỏ hàng</span>
         {totalItems > 0 && (
           <Badge className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ffcc00] p-0 px-1 text-xs font-bold text-slate-900 hover:bg-[#ffcc00]">
             {totalItems}

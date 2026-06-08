@@ -37,10 +37,10 @@ export function Header() {
 
   const navLinkClass = (active: boolean) =>
     cn(
-      "nav-item inline-flex shrink-0 items-center px-1.5 lg:px-2 xl:px-3 py-2 rounded-lg transition-all whitespace-nowrap text-xs lg:text-sm xl:text-base",
+      "flex h-10 min-w-0 flex-1 items-center justify-center rounded-lg px-1.5 text-center text-xs font-medium leading-tight tracking-normal transition-colors truncate xl:px-2 xl:text-sm",
       active
-        ? "bg-slate-600 text-white font-medium"
-        : "text-slate-200 hover:bg-slate-700 hover:text-white",
+        ? "bg-slate-600 text-white shadow-sm"
+        : "text-slate-200 hover:bg-slate-700/90 hover:text-white",
     );
 
   const mobileNavLinkClass = (active: boolean) =>
@@ -100,7 +100,7 @@ export function Header() {
               </Link>
               {user && <NotificationBell />}
             </div>
-            <nav className="hidden lg:ml-2 lg:flex lg:min-w-0 lg:flex-1 lg:items-center lg:gap-0.5 xl:gap-1 lg:overflow-x-auto lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] lg:[&::-webkit-scrollbar]:hidden xl:overflow-visible">
+            <nav className="hidden lg:ml-3 lg:flex lg:h-10 lg:min-w-0 lg:flex-1 lg:items-stretch lg:gap-1">
               <Link to="/" className={navLinkClass(location === "/")}>
                 Home
               </Link>
@@ -118,7 +118,10 @@ export function Header() {
               <Link to="/blog" className={navLinkClass(location.startsWith("/blog"))}>
                 Blog
               </Link>
-              <Link to="/marketplace" className={navLinkClass(location.startsWith("/marketplace"))}>
+              <Link
+                to="/marketplace"
+                className={navLinkClass(location.startsWith("/marketplace"))}
+              >
                 Marketplace
               </Link>
             </nav>
