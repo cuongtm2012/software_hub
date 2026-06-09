@@ -48,7 +48,11 @@ export default function PortfolioPage() {
     error: portfoliosError 
   } = useQuery({
     queryKey: ['/api/portfolios/developer', user?.id],
-    queryFn: undefined,
+    queryFn: async () => {
+      const res = await fetch('/api/portfolios/developer', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch portfolios');
+      return res.json();
+    },
     enabled: !!user && user.role === 'developer',
   });
   

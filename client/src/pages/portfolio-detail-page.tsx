@@ -85,7 +85,11 @@ export default function PortfolioDetailPage() {
     error: portfolioError 
   } = useQuery({
     queryKey: ['/api/portfolios', portfolioId],
-    queryFn: undefined,
+    queryFn: async () => {
+      const res = await fetch(`/api/portfolios/${portfolioId}`);
+      if (!res.ok) throw new Error('Portfolio not found');
+      return res.json();
+    },
     enabled: !!portfolioId,
   });
   
@@ -96,7 +100,11 @@ export default function PortfolioDetailPage() {
     error: reviewsError,
   } = useQuery({
     queryKey: ['/api/portfolio-reviews', portfolioId],
-    queryFn: undefined,
+    queryFn: async () => {
+      const res = await fetch(`/api/portfolio-reviews/${portfolioId}`);
+      if (!res.ok) throw new Error('Failed to fetch reviews');
+      return res.json();
+    },
     enabled: !!portfolioId,
   });
   

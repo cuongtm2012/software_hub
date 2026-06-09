@@ -332,6 +332,16 @@ export const payments = pgTable("payments", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
+/** SePay in-flight checkouts — survives server restarts */
+export const pendingCheckouts = pgTable("pending_checkouts", {
+  invoice_number: text("invoice_number").primaryKey(),
+  type: text("type").notNull(), // wallet_deposit | marketplace_order
+  payload: jsonb("payload").notNull(),
+  status: text("status").default("pending").notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  expires_at: timestamp("expires_at").notNull(),
+});
+
 // User Downloads table
 export const userDownloads = pgTable("user_downloads", {
   id: serial("id").primaryKey(),

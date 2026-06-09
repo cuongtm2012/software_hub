@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, Download, Monitor, Calendar, ArrowLeft, FileText, Shield, Layers, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
+import { buildSoftwareSeoDescription, buildSoftwareSeoContent } from "@/lib/software-utils";
 import { useState } from "react";
 import { PageMeta } from "@/components/seo/page-meta";
 import { SoftwareSchema } from "@/components/seo/software-schema";
@@ -176,7 +177,8 @@ export default function SoftwareDetailPage() {
 
     const softwarePath = `/software/${(software as any).slug || software.id}`;
     const softwareUrl = `${window.location.origin}${softwarePath}`;
-    const seoDesc = (software as any).seo_description || getShortDescription(software.description) || `Tải ${software.name} miễn phí — hướng dẫn cài đặt chi tiết.`;
+    const seoDesc = buildSoftwareSeoDescription(software as Parameters<typeof buildSoftwareSeoDescription>[0]);
+    const seoContent = buildSoftwareSeoContent(software as Parameters<typeof buildSoftwareSeoContent>[0]);
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -450,14 +452,24 @@ export default function SoftwareDetailPage() {
                             </div>
                         </div>
 
-                        {(software as any).seo_content && (
-                            <div className="mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-8 prose prose-sm max-w-none">
-                                <h2 className="text-xl font-bold text-gray-900 mb-4">Hướng dẫn chi tiết</h2>
-                                {(software as any).seo_content.split("\n").map((line: string, i: number) => (
-                                    <p key={i} className="text-gray-700 leading-relaxed mb-2">{line}</p>
-                                ))}
+                        <div className="mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">Hướng dẫn chi tiết</h2>
+                            <div className="prose prose-sm max-w-none">
+                                {seoContent.split("\n").map((line, i) => {
+                                    if (line.startsWith("## ")) {
+                                        return (
+                                            <h3 key={i} className="text-base font-semibold text-gray-900 mt-4 mb-2">
+                                                {line.replace("## ", "")}
+                                            </h3>
+                                        );
+                                    }
+                                    if (line.trim() === "") return null;
+                                    return (
+                                        <p key={i} className="text-gray-700 leading-relaxed mb-2">{line}</p>
+                                    );
+                                })}
                             </div>
-                        )}
+                        </div>
 
                         <div className="mt-10">
                             <LeadCaptureForm

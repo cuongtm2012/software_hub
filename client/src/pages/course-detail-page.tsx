@@ -89,6 +89,17 @@ export default function CourseDetailPage() {
     enabled: !!course?.topic,
   });
 
+  const { data: relatedBlog } = useQuery<{ posts: Array<{ id: number; title: string; slug: string; excerpt?: string }> }>({
+    queryKey: ["/api/blog", "related", course?.topic],
+    queryFn: async () => {
+      if (!course?.topic) return { posts: [] };
+      const response = await fetch(`/api/blog?tag=${encodeURIComponent(course.topic)}&limit=3`);
+      if (!response.ok) return { posts: [] };
+      return response.json();
+    },
+    enabled: !!course?.topic,
+  });
+
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<{ id: number; user: string; content: string; createdAt: string }[]>([]);
 
@@ -326,6 +337,35 @@ export default function CourseDetailPage() {
                         </div>
                       </button>
                     ))}
+                  </div>
+                </SectionPanel>
+              )}
+
+              {relatedBlog?.posts && relatedBlog.posts.length > 0 && (
+                <SectionPanel title="Bài viết liên quan" subtitle="Đọc thêm trên blog IT">
+                  <div className="space-y-3">
+                    {relatedBlog.posts.map((post) => (
+                      <button
+                        key={post.id}
+                        type="button"
+                        onClick={() => navigate(`/blog/${post.slug}`)}
+                        className="w-full text-left p-2 rounded-lg hover:bg-[#004080]/5 transition-colors group"
+                      >
+                        <h3 className="text-sm font-medium group-hover:text-[#004080] line-clamp-2">
+                          {post.title}
+                        </h3>
+                        {post.excerpt && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{post.excerpt}</p>
+                        )}
+                      </button>
+                    ))}
+                    <Button
+                      variant="link"
+                      className="text-[#004080] p-0 h-auto"
+                      onClick={() => navigate("/blog")}
+                    >
+                      Xem tất cả bài viết →
+                    </Button>
                   </div>
                 </SectionPanel>
               )}

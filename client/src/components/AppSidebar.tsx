@@ -64,6 +64,11 @@ const adminMenuItems = [
         icon: Users,
     },
     {
+        title: "IT Services",
+        url: "/admin/service-requests",
+        icon: Briefcase,
+    },
+    {
         title: "Analytics",
         url: "/admin/analytics",
         icon: BarChart3,

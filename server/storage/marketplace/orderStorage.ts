@@ -1,6 +1,6 @@
 import { db } from "../../db";
-import { orders, orderItems, type Order, type InsertOrder, type OrderItem, type InsertOrderItem } from "@shared/schema";
-import { eq, and, ilike, sql, inArray } from "drizzle-orm";
+import { orders, orderItems, products, type Order, type InsertOrder, type OrderItem, type InsertOrderItem } from "@shared/schema";
+import { eq, and, sql, inArray } from "drizzle-orm";
 
 export interface IOrderStorage {
   createOrder(order: InsertOrder, items: InsertOrderItem[], buyerId: number): Promise<Order>;
@@ -39,12 +39,28 @@ export class OrderStorage implements IOrderStorage {
     });
   }
 
-  async getOrderById(id: number): Promise<Order | undefined> {
+  async getOrderById(id: number): Promise<(Order & { items: Array<OrderItem & { seller_id: number }> }) | undefined> {
     const [order] = await db
       .select()
       .from(orders)
       .where(eq(orders.id, id));
-    return order;
+
+    if (!order) return undefined;
+
+    const items = await db
+      .select({
+        id: orderItems.id,
+        order_id: orderItems.order_id,
+        product_id: orderItems.product_id,
+        quantity: orderItems.quantity,
+        price: orderItems.price,
+        seller_id: products.seller_id,
+      })
+      .from(orderItems)
+      .innerJoin(products, eq(orderItems.product_id, products.id))
+      .where(eq(orderItems.order_id, id));
+
+    return { ...order, items };
   }
 
   async getAllOrders(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ orders: Order[], total: number }> {

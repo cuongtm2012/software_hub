@@ -1,5 +1,4 @@
 import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   ShoppingCart,
@@ -14,8 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
+import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -24,134 +22,40 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-interface CartItem {
-  id: number;
-  user_id: number;
-  product_id: number;
-  quantity: number;
-  created_at: string;
-  product: {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    image_url: string;
-    category: string;
-    seller_id: number;
-    status: string;
-  };
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price);
 }
 
-interface CartSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+function getItemImage(item: { product: { images?: string[] } }) {
+  const images = item.product.images;
+  if (!images?.length) return null;
+  const first = images[0];
+  return typeof first === "string" ? first : null;
 }
 
-export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
+/** Global cart sheet — single source via useCart (localStorage). */
+export function GlobalCartSidebar() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const {
+    items,
+    isOpen,
+    closeCart,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    getItemCount,
+    getSubtotal,
+  } = useCart();
 
-  // Fetch cart items
-  const { data: cartResponse, isLoading } = useQuery<{ cartItems: CartItem[] }>({
-    queryKey: ["/api/cart"],
-    enabled: !!user,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-
-  const cartItems = cartResponse?.cartItems || [];
-
-  // Update quantity mutation
-  const updateQuantityMutation = useMutation({
-    mutationFn: async ({ itemId, quantity }: { itemId: number; quantity: number }) => {
-      const res = await apiRequest("PUT", `/api/cart/update/${itemId}`, { quantity });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Cập nhật thất bại",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Remove item mutation
-  const removeItemMutation = useMutation({
-    mutationFn: async (itemId: number) => {
-      const res = await apiRequest("DELETE", `/api/cart/remove/${itemId}`);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      toast({
-        title: "Đã xóa khỏi giỏ",
-        description: "Sản phẩm đã được gỡ khỏi giỏ hàng.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Không thể xóa",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Clear cart mutation
-  const clearCartMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("DELETE", "/api/cart/clear");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      toast({
-        title: "Đã xóa giỏ hàng",
-        description: "Tất cả sản phẩm đã được gỡ khỏi giỏ.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Không thể xóa giỏ",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Format price in VND
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
-
-  // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-  const handleUpdateQuantity = (itemId: number, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    updateQuantityMutation.mutate({ itemId, quantity: newQuantity });
-  };
-
-  const handleRemoveItem = (itemId: number) => {
-    removeItemMutation.mutate(itemId);
-  };
-
-  const handleClearCart = () => {
-    if (cartItems.length === 0) return;
-    clearCartMutation.mutate();
-  };
+  const subtotal = getSubtotal();
+  const totalItems = getItemCount();
 
   const handleCheckout = () => {
-    if (cartItems.length === 0) {
+    if (items.length === 0) {
       toast({
         title: "Giỏ hàng trống",
         description: "Vui lòng thêm sản phẩm trước khi thanh toán.",
@@ -159,17 +63,17 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       });
       return;
     }
-    onClose();
+    closeCart();
     navigate("/marketplace/checkout");
   };
 
   const goTo = (path: string) => {
-    onClose();
+    closeCart();
     navigate(path);
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
       <SheetContent
         className={cn(
           "flex w-full flex-col gap-0 border-l border-[#004080]/10 p-0 sm:max-w-md",
@@ -190,20 +94,7 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
           </SheetTitle>
         </SheetHeader>
 
-        {isLoading ? (
-          <div className="flex flex-1 flex-col gap-3 p-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="flex gap-3 rounded-xl border border-[#004080]/10 p-3">
-                <div className="h-16 w-16 shrink-0 rounded-lg skeleton-shimmer" />
-                <div className="flex flex-1 flex-col gap-2 py-1">
-                  <div className="h-4 w-3/4 rounded skeleton-shimmer" />
-                  <div className="h-3 w-1/2 rounded skeleton-shimmer" />
-                  <div className="h-8 w-24 rounded skeleton-shimmer" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : cartItems.length === 0 ? (
+        {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
             <div className="mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#004080]/10 to-[#ffcc00]/15 ring-4 ring-[#004080]/5">
               <ShoppingCart className="h-11 w-11 text-[#004080]/70" />
@@ -232,71 +123,84 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         ) : (
           <>
             <div className="flex-1 space-y-3 overflow-y-auto bg-[#f9f9f9] p-4">
-              {cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl border border-[#004080]/10 bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
-                >
-                  <div className="flex gap-3">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                      {item.product.image_url ? (
-                        <img
-                          src={item.product.image_url}
-                          alt={item.product.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <Package className="h-7 w-7 text-slate-400" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="line-clamp-2 text-sm font-semibold text-gray-900">
-                        {item.product.name}
-                      </h4>
-                      <p className="mt-1 text-sm font-bold text-[#004080]">
-                        {formatPrice(item.product.price)}
-                      </p>
-                      <div className="mt-2 flex items-center justify-between gap-2">
-                        <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50">
+              {items.map((item) => {
+                const imageUrl = getItemImage(item);
+                const unitPrice = item.selectedPackage.price;
+                return (
+                  <div
+                    key={`${item.productId}-${item.packageId}`}
+                    className="rounded-xl border border-[#004080]/10 bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
+                  >
+                    <div className="flex gap-3">
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={item.product.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <Package className="h-7 w-7 text-slate-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="line-clamp-2 text-sm font-semibold text-gray-900">
+                          {item.product.name}
+                        </h4>
+                        {item.selectedPackage.name !== "Standard License" && (
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {item.selectedPackage.name}
+                          </p>
+                        )}
+                        <p className="mt-1 text-sm font-bold text-[#004080]">
+                          {formatPrice(unitPrice)}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() =>
+                                updateQuantity(item.productId, item.packageId, item.quantity - 1)
+                              }
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-8 text-center text-sm font-medium">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() =>
+                                updateQuantity(item.productId, item.packageId, item.quantity + 1)
+                              }
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                            disabled={item.quantity <= 1 || updateQuantityMutation.isPending}
+                            onClick={() => removeFromCart(item.productId, item.packageId)}
+                            className="h-8 px-2 text-red-600 hover:bg-red-50 hover:text-red-700"
                           >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                            disabled={updateQuantityMutation.isPending}
-                          >
-                            <Plus className="h-3 w-3" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveItem(item.id)}
-                          disabled={removeItemMutation.isPending}
-                          className="h-8 px-2 text-red-600 hover:bg-red-50 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
+                    <div className="mt-2 flex justify-end border-t border-gray-100 pt-2 text-sm font-semibold text-gray-700">
+                      {formatPrice(unitPrice * item.quantity)}
+                    </div>
                   </div>
-                  <div className="mt-2 flex justify-end border-t border-gray-100 pt-2 text-sm font-semibold text-gray-700">
-                    {formatPrice(item.product.price * item.quantity)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="shrink-0 space-y-4 border-t bg-white p-4">
@@ -330,8 +234,13 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleClearCart}
-                disabled={clearCartMutation.isPending}
+                onClick={() => {
+                  clearCart();
+                  toast({
+                    title: "Đã xóa giỏ hàng",
+                    description: "Tất cả sản phẩm đã được gỡ khỏi giỏ.",
+                  });
+                }}
                 className="w-full text-red-600 hover:bg-red-50 hover:text-red-700"
               >
                 Xóa tất cả
@@ -350,42 +259,23 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 }
 
 export function CartTrigger() {
-  const { user } = useAuth();
-  const [isOpen, setIsOpen] = React.useState(false);
-
-  // Don't render if user is not logged in
-  if (!user) {
-    return null;
-  }
-
-  // Fetch cart count
-  const { data: cartResponse } = useQuery<{ cartItems: CartItem[] }>({
-    queryKey: ["/api/cart"],
-    enabled: !!user,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const cartItems = cartResponse?.cartItems || [];
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const { getItemCount, openCart } = useCart();
+  const totalItems = getItemCount();
 
   return (
-    <>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsOpen(true)}
-        className="relative text-slate-200 hover:bg-slate-700 hover:text-white"
-      >
-        <ShoppingCart className="h-5 w-5" />
-        <span className="sr-only">Giỏ hàng</span>
-        {totalItems > 0 && (
-          <Badge className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ffcc00] p-0 px-1 text-xs font-bold text-slate-900 hover:bg-[#ffcc00]">
-            {totalItems}
-          </Badge>
-        )}
-      </Button>
-
-      <CartSidebar isOpen={isOpen} onClose={() => setIsOpen(false)} />
-    </>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={openCart}
+      className="relative text-slate-200 hover:bg-slate-700 hover:text-white"
+    >
+      <ShoppingCart className="h-5 w-5" />
+      <span className="sr-only">Giỏ hàng</span>
+      {totalItems > 0 && (
+        <Badge className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ffcc00] p-0 px-1 text-xs font-bold text-slate-900 hover:bg-[#ffcc00]">
+          {totalItems}
+        </Badge>
+      )}
+    </Button>
   );
 }

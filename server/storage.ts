@@ -207,7 +207,10 @@ export interface IStorage {
 
   // Support Tickets
   createSupportTicket(ticket: InsertSupportTicket, buyerId: number): Promise<SupportTicket>;
-  getSupportTickets(userId: number): Promise<SupportTicket[]>;
+  getSupportTicketById(id: number): Promise<SupportTicket | undefined>;
+  getSupportTickets(buyerId: number): Promise<SupportTicket[]>;
+  getSellerSupportTickets(sellerId: number): Promise<SupportTicket[]>;
+  getAllSupportTickets(): Promise<SupportTicket[]>;
   updateSupportTicket(id: number, updates: Partial<SupportTicket>): Promise<SupportTicket | undefined>;
 
   // Sales Analytics
@@ -674,7 +677,6 @@ class DatabaseStorage implements IStorage {
         ...review,
         user_id: userId,
         created_at: new Date(),
-        updated_at: new Date()
       })
       .returning();
     return createdReview;
@@ -684,7 +686,7 @@ class DatabaseStorage implements IStorage {
     const reviewsList = await db
       .select()
       .from(reviews)
-      .where(eq(reviews.software_id, softwareId));
+      .where(and(eq(reviews.target_type, "software"), eq(reviews.target_id, softwareId)));
     return reviewsList;
   }
 
@@ -692,7 +694,7 @@ class DatabaseStorage implements IStorage {
     const reviewsList = await db
       .select()
       .from(reviews)
-      .where(eq(reviews.software_id, softwareId));
+      .where(and(eq(reviews.target_type, "software"), eq(reviews.target_id, softwareId)));
     return reviewsList;
   }
 
@@ -700,7 +702,13 @@ class DatabaseStorage implements IStorage {
     const [review] = await db
       .select()
       .from(reviews)
-      .where(and(eq(reviews.user_id, userId), eq(reviews.software_id, softwareId)));
+      .where(
+        and(
+          eq(reviews.user_id, userId),
+          eq(reviews.target_type, "software"),
+          eq(reviews.target_id, softwareId),
+        ),
+      );
     return review;
   }
 
@@ -1131,7 +1139,6 @@ class DatabaseStorage implements IStorage {
         ...portfolio,
         developer_id: developerId,
         created_at: new Date(),
-        updated_at: new Date()
       })
       .returning();
     return createdPortfolio;
@@ -1182,10 +1189,7 @@ class DatabaseStorage implements IStorage {
   async updatePortfolio(id: number, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
     const [updatedPortfolio] = await db
       .update(portfolios)
-      .set({
-        ...portfolio,
-        updated_at: new Date()
-      })
+      .set(portfolio)
       .where(eq(portfolios.id, id))
       .returning();
     return updatedPortfolio;
@@ -1206,7 +1210,6 @@ class DatabaseStorage implements IStorage {
         ...review,
         user_id: userId,
         created_at: new Date(),
-        updated_at: new Date()
       })
       .returning();
     return createdReview;
@@ -1232,7 +1235,7 @@ class DatabaseStorage implements IStorage {
     const [review] = await db
       .select()
       .from(portfolioReviews)
-      .where(and(eq(portfolioReviews.client_id, clientId), eq(portfolioReviews.portfolio_id, portfolioId)));
+      .where(and(eq(portfolioReviews.user_id, clientId), eq(portfolioReviews.portfolio_id, portfolioId)));
     return review;
   }
 
@@ -1378,25 +1381,41 @@ class DatabaseStorage implements IStorage {
         .returning();
 
       // Create the order items
-      await tx.insert(orderItems).values(
-        items.map(item => ({
-          ...item,
-          order_id: createdOrder.id,
-          created_at: new Date(),
-          updated_at: new Date()
-        }))
-      );
+      if (items.length > 0) {
+        await tx.insert(orderItems).values(
+          items.map(item => ({
+            ...item,
+            order_id: createdOrder.id,
+          })),
+        );
+      }
 
       return createdOrder;
     });
   }
 
-  async getOrderById(id: number): Promise<Order | undefined> {
+  async getOrderById(id: number): Promise<(Order & { items: Array<OrderItem & { seller_id: number }> }) | undefined> {
     const [order] = await db
       .select()
       .from(orders)
       .where(eq(orders.id, id));
-    return order;
+
+    if (!order) return undefined;
+
+    const items = await db
+      .select({
+        id: orderItems.id,
+        order_id: orderItems.order_id,
+        product_id: orderItems.product_id,
+        quantity: orderItems.quantity,
+        price: orderItems.price,
+        seller_id: products.seller_id,
+      })
+      .from(orderItems)
+      .innerJoin(products, eq(orderItems.product_id, products.id))
+      .where(eq(orderItems.order_id, id));
+
+    return { ...order, items };
   }
 
   async getAllOrders(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ orders: Order[], total: number }> {
@@ -1791,12 +1810,35 @@ class DatabaseStorage implements IStorage {
     return createdTicket;
   }
 
-  async getSupportTickets(userId: number): Promise<SupportTicket[]> {
-    const ticketsList = await db
+  async getSupportTickets(buyerId: number): Promise<SupportTicket[]> {
+    return db
       .select()
       .from(supportTickets)
-      .where(eq(supportTickets.user_id, userId));
-    return ticketsList;
+      .where(eq(supportTickets.buyer_id, buyerId))
+      .orderBy(desc(supportTickets.created_at));
+  }
+
+  async getSupportTicketById(id: number): Promise<SupportTicket | undefined> {
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(eq(supportTickets.id, id));
+    return ticket;
+  }
+
+  async getSellerSupportTickets(sellerId: number): Promise<SupportTicket[]> {
+    return db
+      .select()
+      .from(supportTickets)
+      .where(eq(supportTickets.seller_id, sellerId))
+      .orderBy(desc(supportTickets.created_at));
+  }
+
+  async getAllSupportTickets(): Promise<SupportTicket[]> {
+    return db
+      .select()
+      .from(supportTickets)
+      .orderBy(desc(supportTickets.created_at));
   }
 
   async updateSupportTicket(id: number, updates: Partial<SupportTicket>): Promise<SupportTicket | undefined> {
@@ -1931,8 +1973,24 @@ class DatabaseStorage implements IStorage {
     const quotationsList = await db
       .select()
       .from(serviceQuotations)
-      .where(eq(serviceQuotations.request_id, requestId));
+      .where(eq(serviceQuotations.service_request_id, requestId));
     return quotationsList;
+  }
+
+  async getClientServiceRequests(clientId: number): Promise<ServiceRequest[]> {
+    return this.getServiceRequestsByClient(clientId);
+  }
+
+  async getServiceQuotations(requestId: number): Promise<ServiceQuotation[]> {
+    return this.getServiceQuotationsByRequest(requestId);
+  }
+
+  async getClientServiceProjects(clientId: number): Promise<ServiceProject[]> {
+    return this.getServiceProjectsByClient(clientId);
+  }
+
+  async getDeveloperServiceProjects(adminId: number): Promise<ServiceProject[]> {
+    return this.getServiceProjectsByAdmin(adminId);
   }
 
   async getAllServiceQuotations(): Promise<ServiceQuotation[]> {
@@ -2027,7 +2085,7 @@ class DatabaseStorage implements IStorage {
     const [updatedProject] = await db
       .update(serviceProjects)
       .set({
-        progress,
+        progress_percentage: progress,
         admin_notes: adminNotes,
         updated_at: new Date()
       })

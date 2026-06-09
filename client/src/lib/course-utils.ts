@@ -46,5 +46,12 @@ export function buildSeoContent(course: {
     "",
     `## Học miễn phí 100%`,
     `Toàn bộ nội dung khóa học hoàn toàn miễn phí. Software Hub tổng hợp và sắp xếp lộ trình học tối ưu để bạn tiết kiệm thời gian tìm kiếm.`,
+    "",
+    `## Khám phá thêm trên Software Hub`,
+    `- [Tất cả khóa học ${course.topic}](/courses?search=${encodeURIComponent(course.topic)})`,
+    `- [Phần mềm miễn phí & công cụ IT](/software)`,
+    `- [Marketplace — mua license phần mềm](/marketplace)`,
+    `- [Dịch vụ IT thuê ngoài](/services/new)`,
+    `- [Blog IT — tin tức & hướng dẫn](/blog)`,
   ].join("\n");
 }

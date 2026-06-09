@@ -27,7 +27,6 @@ export class PortfolioStorage implements IPortfolioStorage {
         ...portfolio,
         developer_id: developerId,
         created_at: new Date(),
-        updated_at: new Date()
       })
       .returning();
     return createdPortfolio;
@@ -74,10 +73,7 @@ export class PortfolioStorage implements IPortfolioStorage {
   async updatePortfolio(id: number, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
     const [updatedPortfolio] = await db
       .update(portfolios)
-      .set({
-        ...portfolio,
-        updated_at: new Date()
-      })
+      .set(portfolio)
       .where(eq(portfolios.id, id))
       .returning();
     return updatedPortfolio;
@@ -95,9 +91,8 @@ export class PortfolioStorage implements IPortfolioStorage {
       .insert(portfolioReviews)
       .values({
         ...review,
-        client_id: userId,
+        user_id: userId,
         created_at: new Date(),
-        updated_at: new Date()
       })
       .returning();
     return createdReview;
@@ -121,14 +116,14 @@ export class PortfolioStorage implements IPortfolioStorage {
     const [review] = await db
       .select()
       .from(portfolioReviews)
-      .where(and(eq(portfolioReviews.client_id, clientId), eq(portfolioReviews.portfolio_id, portfolioId)));
+      .where(and(eq(portfolioReviews.user_id, clientId), eq(portfolioReviews.portfolio_id, portfolioId)));
     return review;
   }
 
   async deletePortfolioReview(id: number, userId: number): Promise<boolean> {
     const result = await db
       .delete(portfolioReviews)
-      .where(and(eq(portfolioReviews.id, id), eq(portfolioReviews.client_id, userId)));
+      .where(and(eq(portfolioReviews.id, id), eq(portfolioReviews.user_id, userId)));
     return result.rowCount > 0;
   }
 }

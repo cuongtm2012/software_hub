@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { storage } from "../storage";
 import { isAuthenticated, hasRole } from "../middleware/auth.middleware";
+import { paymentRateLimiter } from "../middleware/rate-limit.js";
 import { insertPaymentSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -12,17 +13,15 @@ import {
   getSepayClient,
   isSepayConfigured,
 } from "../lib/sepay.js";
+import {
+  getPendingCheckout,
+  markPendingCheckoutPaid,
+  pruneExpiredPendingCheckouts,
+  savePendingCheckout,
+} from "../storage/payment/pendingCheckoutStorage.js";
 
 const adminMiddleware = hasRole(["admin"]);
 const COMMISSION_RATE = 0.05;
-
-interface PendingDeposit {
-  userId: number;
-  amount: number;
-  paymentMethod: string;
-  createdAt: number;
-  status: "pending" | "paid" | "failed";
-}
 
 interface PendingOrderItem {
   productId: number;
@@ -35,14 +34,7 @@ interface PendingOrder {
   amount: number;
   paymentMethod: string;
   items: PendingOrderItem[];
-  createdAt: number;
-  status: "pending" | "paid" | "failed";
 }
-
-/** Pending wallet deposits — keyed by order_invoice_number */
-const pendingDeposits = new Map<string, PendingDeposit>();
-/** Pending marketplace orders — keyed by order_invoice_number */
-const pendingOrders = new Map<string, PendingOrder>();
 
 function getAppBaseUrl(req: Request) {
   const configured = process.env.APP_URL || process.env.PUBLIC_URL;
@@ -50,20 +42,6 @@ function getAppBaseUrl(req: Request) {
   const host = req.get("host") || "localhost:5001";
   const protocol = req.protocol || "http";
   return `${protocol}://${host}`;
-}
-
-function pruneExpiredPending() {
-  const cutoff = Date.now() - 30 * 60 * 1000;
-  for (const [key, value] of pendingDeposits) {
-    if (value.createdAt < cutoff && value.status === "pending") {
-      pendingDeposits.delete(key);
-    }
-  }
-  for (const [key, value] of pendingOrders) {
-    if (value.createdAt < cutoff && value.status === "pending") {
-      pendingOrders.delete(key);
-    }
-  }
 }
 
 function resolveItemPrice(product: Product, packageId: string): number {
@@ -131,7 +109,7 @@ async function creditWallet(userId: number, amount: number) {
 
 export function registerPaymentRoutes(app: Express) {
   // Wallet top-up via SePay
-  app.post("/api/payment/initiate", isAuthenticated, async (req, res, next) => {
+  app.post("/api/payment/initiate", paymentRateLimiter, isAuthenticated, async (req, res, next) => {
     try {
       if (!isSepayConfigured()) {
         return res.status(503).json({
@@ -183,14 +161,12 @@ export function registerPaymentRoutes(app: Express) {
         custom_data: JSON.stringify({ userId: user.id, type: "wallet_deposit" }),
       });
 
-      pendingDeposits.set(invoiceNumber, {
+      await savePendingCheckout(invoiceNumber, "wallet_deposit", {
         userId: user.id,
         amount,
         paymentMethod: sepayMethod,
-        createdAt: Date.now(),
-        status: "pending",
       });
-      pruneExpiredPending();
+      await pruneExpiredPendingCheckouts();
 
       res.json({
         success: true,
@@ -208,7 +184,7 @@ export function registerPaymentRoutes(app: Express) {
   });
 
   // Marketplace checkout via SePay
-  app.post("/api/payment/checkout", isAuthenticated, async (req, res, next) => {
+  app.post("/api/payment/checkout", paymentRateLimiter, isAuthenticated, async (req, res, next) => {
     try {
       if (!isSepayConfigured()) {
         return res.status(503).json({
@@ -373,16 +349,14 @@ export function registerPaymentRoutes(app: Express) {
         }),
       });
 
-      pendingOrders.set(invoiceNumber, {
+      await savePendingCheckout(invoiceNumber, "marketplace_order", {
         orderId: order.id,
         userId: user.id,
         amount: Math.round(totalAmount),
         paymentMethod: sepayMethod,
         items: pendingItems,
-        createdAt: Date.now(),
-        status: "pending",
       });
-      pruneExpiredPending();
+      await pruneExpiredPendingCheckouts();
 
       res.json({
         success: true,
@@ -416,22 +390,27 @@ export function registerPaymentRoutes(app: Express) {
         const invoice = data.order.order_invoice_number;
         const paidAmount = parseFloat(data.order.order_amount || "0");
 
-        const deposit = pendingDeposits.get(invoice);
-        if (deposit && deposit.status === "pending") {
-          await creditWallet(deposit.userId, paidAmount || deposit.amount);
-          deposit.status = "paid";
-          pendingDeposits.set(invoice, deposit);
-        }
-
-        const marketplaceOrder = pendingOrders.get(invoice);
-        if (marketplaceOrder && marketplaceOrder.status === "pending") {
-          await fulfillMarketplaceOrder(
-            marketplaceOrder,
-            invoice,
-            paidAmount || marketplaceOrder.amount,
-          );
-          marketplaceOrder.status = "paid";
-          pendingOrders.set(invoice, marketplaceOrder);
+        const pending = await getPendingCheckout(invoice);
+        if (pending && pending.status === "pending") {
+          if (pending.type === "wallet_deposit") {
+            const userId = Number(pending.payload.userId);
+            const amount = Number(pending.payload.amount);
+            await creditWallet(userId, paidAmount || amount);
+          } else if (pending.type === "marketplace_order") {
+            const marketplaceOrder: PendingOrder = {
+              orderId: Number(pending.payload.orderId),
+              userId: Number(pending.payload.userId),
+              amount: Number(pending.payload.amount),
+              paymentMethod: String(pending.payload.paymentMethod),
+              items: (pending.payload.items as PendingOrderItem[]) || [],
+            };
+            await fulfillMarketplaceOrder(
+              marketplaceOrder,
+              invoice,
+              paidAmount || marketplaceOrder.amount,
+            );
+          }
+          await markPendingCheckoutPaid(invoice);
         }
       }
 

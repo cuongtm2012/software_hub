@@ -35,11 +35,11 @@ router.post("/software/:id", isAuthenticated, async (req: Request, res: Response
     
     const insertData = insertReviewSchema.parse({
       ...req.body,
-      software_id: parseInt(id),
-      user_id: req.user?.id
+      target_type: "software",
+      target_id: parseInt(id),
     });
     
-    const review = await storage.createReview(insertData);
+    const review = await storage.createReview(insertData, req.user!.id);
     res.status(201).json(review);
   } catch (error) {
     if (error instanceof ZodError) {
@@ -89,7 +89,7 @@ router.delete("/:id", isAuthenticated, async (req: Request, res: Response, next:
       return res.status(403).json({ message: "You do not have permission to delete this review" });
     }
     
-    await storage.deleteReview(parseInt(id));
+    await storage.deleteReview(parseInt(id), req.user!.id);
     res.status(204).end();
   } catch (error) {
     next(error);
@@ -186,10 +186,9 @@ router.post("/portfolio/:id", isAuthenticated, async (req: Request, res: Respons
     const insertData = insertPortfolioReviewSchema.parse({
       ...req.body,
       portfolio_id: parseInt(id),
-      client_id: req.user?.id
     });
     
-    const review = await storage.createPortfolioReview(insertData);
+    const review = await storage.createPortfolioReview(insertData, req.user!.id);
     res.status(201).json(review);
   } catch (error) {
     if (error instanceof ZodError) {

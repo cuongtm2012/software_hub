@@ -17,7 +17,7 @@ export class SupportStorage implements ISupportStorage {
       .insert(supportTickets)
       .values({
         ...ticket,
-        user_id: userId,
+        buyer_id: userId,
         created_at: new Date(),
         updated_at: new Date()
       })
@@ -37,7 +37,7 @@ export class SupportStorage implements ISupportStorage {
     return await db
       .select()
       .from(supportTickets)
-      .where(eq(supportTickets.user_id, userId));
+      .where(eq(supportTickets.buyer_id, userId));
   }
 
   async getAllSupportTickets(params?: { status?: string; limit?: number; offset?: number }): Promise<{ tickets: SupportTicket[], total: number }> {

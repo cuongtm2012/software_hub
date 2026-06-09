@@ -31,6 +31,54 @@
 3. **Lead gen mềm** — tư vấn lộ trình free, download ebook, chat hỗ trợ
 4. **Chốt đơn IT Studio** — gọi tư vấn, quote, nhận project
 
+### Mô hình mở rộng: Software Hub + AI Hub
+
+```
+SOFTWARE HUB (core — evergreen)
+├── Khóa học IT free (React, Node, Python, Supabase, Docker...)
+├── Free tool cho developer (formatter, validator, template...)
+├── Catalog phần mềm + hướng dẫn cài đặt
+└── Dịch vụ IT Studio
+
+        ⊕
+
+AI HUB (growth layer — xu hướng)
+├── Khóa học AI free (Prompt Engineering, AI Workflow, AI Agent)
+├── Free AI Tool (do mình tự build)
+└── Dịch vụ AI Consulting / AI Integration
+```
+
+**Synergy giữa 2 lớp:**
+- Người học AI → thấy cần hiểu code để dùng AI tốt hơn → học IT
+- Người học IT → muốn xây tool AI riêng → thuê IT Studio
+- Dịch vụ AI Integration (chatbot, automation) mở rộng TAM gấp đôi
+
+### AI Products cụ thể nên build
+
+**Nhóm 1: Free AI Tool (kéo traffic SEO)**
+| Tool | Mô tả | SEO keyword mục tiêu |
+|---|---|---|
+| **AI Prompt Generator** | Nhập mục đích → ra prompt tiếng Việt chuẩn | "tạo prompt AI", "công cụ tạo prompt" |
+| **AI Model Comparator** | So sánh ChatGPT vs Claude vs Gemini cho từng tác vụ | "so sánh ChatGPT Claude Gemini" |
+| **AI Image Prompt Translator** | Dịch prompt tiếng Việt sang Anh chuẩn Midjourney | "tạo prompt ảnh AI", "Midjourney prompt tiếng Việt" |
+| **AI Content Checker** | Check content có bị AI detect không | "kiểm tra AI content", "AI detection tool" |
+| **AI Workflow Builder (mini)** | Kéo thả các bước AI tự động | "AI workflow", "tự động hóa AI" |
+
+**Nhóm 2: Khóa học AI Free (content SEO)**
+- "Prompt Engineering cho người mới bắt đầu" — khóa 7 ngày
+- "Cách dùng AI để code nhanh gấp đôi" — target developer
+- "AI cho dân văn phòng: ChatGPT + Claude + Gemini thực chiến"
+- "Tự build AI agent không cần code với n8n + OpenAI"
+- "So sánh các model AI 2026: chọn con nào cho việc gì"
+
+**Nhóm 3: Dịch vụ AI (monetization)**
+| Dịch vụ | Mô tả | Giá tham khảo |
+|---|---|---|
+| **AI Chatbot cho SME** | Chatbot tư vấn bán hàng tự động trên web/Zalo | 15-40tr |
+| **AI Automation Workflow** | Tự động hóa quy trình với AI (n8n, Make, custom) | 20-80tr |
+| **AI Feature Integration** | Gắn AI search, AI recommendation, AI summary vào web có sẵn | 10-50tr |
+| **AI Consulting Setup** | Tư vấn + setup AI tools cho doanh nghiệp | 5-20tr/lần |
+
 ---
 
 ## 1.1. Tech Stack cho GTM
@@ -61,11 +109,13 @@ Sau khi migrate toàn bộ lên Supabase, tech stack của Software Hub là:
 ### 2.1. Đối thủ
 
 | Đối thủ | Điểm mạnh | Điểm yếu của họ |
-|---|---|---|
+|---|---|---|---|
 | **Agency truyền thống** (SmartOSC, Văn Lang, etc.) | Có brand, có team | Giá cao (>100tr), chậm, không có content free |
 | **Freelancer lẻ** (ITViec, TopDev) | Giá rẻ, nhanh | Không trust, dễ bùng, không hỗ trợ sau |
 | **Nền tảng global** (Upwork, Fiverr) | Nhiều lựa chọn | Tiếng Anh, thanh toán quốc tế, không hiểu SME VN |
 | **YouTube/VN blog IT** | Traffic tốt | Chỉ có content, không có dịch vụ → không monetize được |
+| **Trang content AI VN** (findskill.ai, Mona Media blog) | Viết về AI tool nhiều | Không tự build tool, không có course hệ thống, không có dịch vụ code |
+| **Facebook page AI VN** (TiniX AI) | Cập nhật AI tool mới nhanh, workflow thực chiến (n8n, Dify, TikTok automation) | Chỉ content trên Facebook — không có platform riêng, không có tool tự build, không có dịch vụ rõ ràng |
 
 ### 2.2. Lợi thế cạnh tranh của Software Hub
 
@@ -73,6 +123,22 @@ Sau khi migrate toàn bộ lên Supabase, tech stack của Software Hub là:
 - **Funnel tự nhiên**: Content free → trust → dịch vụ. Không agency nào có funnel này
 - **Chi phí vận hành thấp**: Server sẵn có, codebase sẵn có, chỉ tốn thời gian content
 - **SEO moat**: Càng nhiều course/software page → domain authority càng cao → càng khó bị overtake
+- **Ngách trống tại VN**: Không ai kết hợp cả 3 (course free + tool free + dịch vụ). Software Hub là first mover.
+- **AI là growth layer chưa ai khai thác**: Người VN đang đổ đi học AI, nhưng chưa có trang nào vừa có course AI free vừa có free AI tool vừa có dịch vụ tích hợp AI.
+
+### 2.4. Tại sao AI là cú huých tăng trưởng
+
+**Dữ liệu xu hướng:**
+- 5/10 từ khóa xu hướng chung Google VN 2025 liên quan AI
+- 81% người dùng VN tương tác AI mỗi ngày
+- 83% dùng AI để học tập và nâng cao kỹ năng
+- Người VN chuyển từ "AI là gì?" sang "làm sao dùng AI hiệu quả?"
+
+**Cơ hội cho Software Hub:**
+- AI content đang là chủ đề hot nhất — SEO volume cực cao, cạnh tranh còn thấp
+- AI tool free dễ build, kéo traffic nhanh hơn course IT thuần
+- AI course + AI tool cùng funnel về 1 dịch vụ (IT Studio + AI Integration)
+- Kết hợp: người học AI → thấy cần code để tận dụng AI → học IT → thuê IT Studio
 
 ### 2.3. Tổng thị trường (TAM)
 
@@ -212,6 +278,28 @@ Cần implement:
 | **Page speed** | Vite build sẵn tối ưu — kiểm tra Lighthouse |
 | **Mobile-first** | Responsive sẵn có — kiểm tra Google Mobile Test |
 
+### 4.5. SEO keywords AI (growth layer)
+
+**Volume cao, cạnh tranh vừa:**
+- "công cụ AI miễn phí" — 10K+ searches/tháng
+- "học prompt engineering" — 5K+
+- "ChatGPT vs Claude" — 5K+
+- "tạo ảnh AI miễn phí" — 10K+
+- "AI viết content tiếng Việt" — 8K+
+
+**Volume trung bình, cạnh tranh thấp (sweet spot):**
+- "cách dùng AI để code" — 2K+
+- "AI workflow cho dân văn phòng" — 1K+
+- "tự build chatbot AI" — 2K+
+- "công cụ tạo prompt tiếng Việt" — gần như zero đối thủ
+- "so sánh Gemini vs ChatGPT cho lập trình" — zero đối thủ
+- "AI tool cho developer Việt Nam" — zero đối thủ
+
+**Chiến thuật: AI Prompt Generator + bài viết hướng dẫn = double SEO hit.**
+- Tool AI tự build → kéo traffic từ "công cụ AI"
+- Blog hướng dẫn cách dùng tool → kéo traffic từ "hướng dẫn AI"
+- Cả 2 đều có internal link vào course AI + CTA dịch vụ
+
 ---
 
 ## 5. Conversion Funnel
@@ -250,6 +338,9 @@ Gọi điện tư vấn (warm call)
 | Ở lại > 30s trên 1 trang | Slide-in: "Tải lộ trình học PDF" | Slide-in |
 | Scroll đến 70% bài viết | Bottom bar: "Cần team code?" | Fixed bar |
 | Submit form tư vấn | Email auto + gọi trong 4h | Email + Call |
+| Xem AI tool comparator >2 lần | Popup: "Cần AI tích hợp cho business?" | Widget |
+| Học xong course AI free | Email follow-up: "Muốn xây chatbot riêng?" | Email |
+| Dùng AI Prompt Generator >5 lần/tháng | Offer: "Tư vấn AI workflow miễn phí 30 phút" | Email + Call |
 
 ---
 
@@ -283,12 +374,13 @@ Gọi điện tư vấn (warm call)
 ## 7. Timeline & Milestones
 
 | Giai đoạn | Thời gian | Milestone | KPI |
-|---|---|---|---|
+|---|---|---|---|---|
 | **Phase 1: SEO Foundation** | Tuần 1-4 | 50 course landing pages + SEO meta | 50 pages live, schema OK |
 | **Phase 2: Content Engine** | Tuần 5-8 | Blog module + 10 bài lộ trình | 10 blog posts, domain authority tăng |
 | **Phase 3: Lead Capture** | Tuần 9-12 | Forms + Chat trigger + Ebook | Lead capture rate >3% |
-| **Phase 4: First Customers** | Tuần 13-20 | 3-5 đơn đầu tiên | Revenue >50tr |
-| **Phase 5: Scale** | Tháng 6-12 | Content định kỳ, SEO monitoring | Traffic >5000/tháng |
+| **Phase 4: AI Seed** | Tuần 8-12 | AI Prompt Generator + 5 bài AI cơ bản | 1 AI tool live, 5 AI blog posts |
+| **Phase 5: First Customers** | Tuần 13-20 | 3-5 đơn đầu tiên (IT + AI) | Revenue >50tr |
+| **Phase 6: Scale** | Tháng 6-12 | Content định kỳ, AI tool mở rộng, SEO monitoring | Traffic >5000/tháng |
 
 ### KPI dự kiến tháng đầu
 
@@ -308,12 +400,15 @@ Gọi điện tư vấn (warm call)
 ## 8. Rủi ro & Mitigation
 
 | Rủi ro | Mức độ | Cách xử lý |
-|---|---|---|
+|---|---|---|---|
 | SEO lâu có kết quả (3-6 tháng) | Cao | Song song chạy warm outreach Facebook groups |
 | Không có portfolio thật | Cao | Làm 1-2 project free/giá rẻ đầu tiên để lấy case study |
 | Cạnh tranh content từ blog IT | Trung | Mỗi course có schema + nội dung dài hơn, chất hơn |
 | Khách không trust team nhỏ | Trung | Catalog software + courses = evidence sống |
 | Lead không chốt được | Thấp | Quy trình call warm + follow-up chuẩn |
+| Xu hướng AI có thể hạ nhiệt | Thấp | AI layer là growth, IT core vẫn evergreen |
+| AI tool free bị copy nhanh | Trung | Không cạnh tranh tool tính năng — cạnh tranh content + funnel |
+| AI Overview (Google SGE) ăn traffic content nông | Trung | Tập trung content chuyên sâu + tool tương tác thay vì content list |
 
 ---
 

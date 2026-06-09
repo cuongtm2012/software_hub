@@ -13,7 +13,7 @@ import UserProfilePage from "@/pages/user-profile-page";
 import { ProtectedRoute, AdminRoute } from "@/lib/protected-route";
 import { useAuth, AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
-import { ShoppingCartSidebar } from "@/components/shopping-cart-sidebar";
+import { GlobalCartSidebar } from "@/components/cart-sidebar";
 import { FloatingChatButton } from "@/components/floating-chat-button";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
@@ -44,8 +44,15 @@ import ProjectRequestPage from "@/pages/project-request-page";
 import ProjectRequestSuccessPage from "@/pages/project-request-success-page";
 import PortfolioPage from "@/pages/portfolio-page";
 import PortfolioNewPage from "@/pages/portfolio-new-page";
+import PortfolioEditPage from "@/pages/portfolio-edit-page";
 import PortfolioDetailPage from "@/pages/portfolio-detail-page";
 import ITServicesPage from "@/pages/it-services-page";
+import ServiceRequestsPage from "@/pages/service-requests-page";
+import ServiceRequestNewPage from "@/pages/service-request-new-page";
+import ServiceRequestDetailPage from "@/pages/service-request-detail-page";
+import AdminServiceRequestsPage from "@/pages/admin/service-requests-page";
+import SupportTicketsPage from "@/pages/support-tickets-page";
+import SellerSupportPage from "@/pages/seller-support-page";
 
 // Phase 3: Marketplace & Software
 import MarketplacePage from "@/pages/marketplace-page";
@@ -58,7 +65,6 @@ import BlogDetailPage from "@/pages/blog-detail-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
-import { ProductDetailEcommerce } from "@/pages/product-detail-ecommerce";
 import OrderDetailsPage from "@/pages/order-details-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
 
@@ -134,17 +140,24 @@ function Router() {
       <ProtectedRoute path="/admin/end-to-end-tests" component={EndToEndTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/blog" component={BlogManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/leads" component={LeadsManagementPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/service-requests" component={AdminServiceRequestsPage} roles={['admin']} />
 
 
 
-      {/* Phase 2: Code Service & Product Build Module */}
+      {/* Phase 4: IT Services */}
       <Route path="/it-services" component={ITServicesPage} />
+      <ProtectedRoute path="/services/new" component={ServiceRequestNewPage} roles={['buyer', 'user', 'client', 'admin']} />
+      <ProtectedRoute path="/services/:id" component={ServiceRequestDetailPage} roles={['buyer', 'user', 'client', 'admin']} />
+      <ProtectedRoute path="/support" component={SupportTicketsPage} roles={['buyer', 'user', 'client', 'admin']} />
+      <ProtectedRoute path="/seller/support" component={SellerSupportPage} roles={['seller', 'admin']} />
+      <ProtectedRoute path="/services" component={ServiceRequestsPage} roles={['buyer', 'user', 'client', 'admin']} />
 
 
       <ProtectedRoute path="/projects/new" roles={['client', 'admin']} component={ProjectNewPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/portfolios" roles={['developer', 'admin']} component={PortfolioPage} />
       <ProtectedRoute path="/portfolios/new" roles={['developer', 'admin']} component={PortfolioNewPage} />
+      <ProtectedRoute path="/portfolios/edit/:id" roles={['developer', 'admin']} component={PortfolioEditPage} />
       <Route path="/portfolios/gallery" component={() => {
         const [page, setPage] = useState(1);
         const limit = 12;
@@ -385,7 +398,7 @@ function App() {
         <CartProvider>
           <TooltipProvider>
             <Toaster />
-            <ShoppingCartSidebar />
+            <GlobalCartSidebar />
             <Analytics />
             <GtmBehaviorTracker />
             <FloatingChatButton />

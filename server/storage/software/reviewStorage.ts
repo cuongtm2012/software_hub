@@ -21,7 +21,6 @@ export class ReviewStorage implements IReviewStorage {
         ...review,
         user_id: userId,
         created_at: new Date(),
-        updated_at: new Date()
       })
       .returning();
     return createdReview;
@@ -31,21 +30,27 @@ export class ReviewStorage implements IReviewStorage {
     return await db
       .select()
       .from(reviews)
-      .where(eq(reviews.software_id, softwareId));
+      .where(and(eq(reviews.target_type, "software"), eq(reviews.target_id, softwareId)));
   }
 
   async getSoftwareReviews(softwareId: number): Promise<Review[]> {
     return await db
       .select()
       .from(reviews)
-      .where(eq(reviews.software_id, softwareId));
+      .where(and(eq(reviews.target_type, "software"), eq(reviews.target_id, softwareId)));
   }
 
   async getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined> {
     const [review] = await db
       .select()
       .from(reviews)
-      .where(and(eq(reviews.user_id, userId), eq(reviews.software_id, softwareId)));
+      .where(
+        and(
+          eq(reviews.user_id, userId),
+          eq(reviews.target_type, "software"),
+          eq(reviews.target_id, softwareId),
+        ),
+      );
     return review;
   }
 

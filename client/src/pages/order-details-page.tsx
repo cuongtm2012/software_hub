@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ShoppingCart, Star, Package, Clock, Shield, MessageSquare, Plus, Minus } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
+import { useCart } from "@/hooks/use-cart";
 
 interface Product {
   id: number;
@@ -45,6 +46,7 @@ export default function OrderDetailsPage() {
   const [newRating, setNewRating] = useState(5);
 
   const productId = params?.id;
+  const { addToCart, updateQuantity, openCart } = useCart();
 
   // Fetch product details
   const { data: product, isLoading } = useQuery<Product>({
@@ -87,42 +89,6 @@ export default function OrderDetailsPage() {
       toast({
         title: "Purchase Failed",
         description: error.message || "Failed to complete purchase. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Add to cart mutation
-  const addToCartMutation = useMutation({
-    mutationFn: async (data: { productId: number; quantity: number }) => {
-      const response = await fetch("/api/cart/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          product_id: data.productId, 
-          quantity: data.quantity 
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to add to cart");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Added to Cart",
-        description: "Product has been added to your cart successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add to cart. Please try again.",
         variant: "destructive",
       });
     },
@@ -171,7 +137,23 @@ export default function OrderDetailsPage() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    addToCartMutation.mutate({ productId: product.id, quantity });
+    addToCart(
+      {
+        id: String(product.id),
+        name: product.name,
+        price: product.price,
+        images: product.image_url ? [product.image_url] : [],
+      },
+      "standard",
+    );
+    if (quantity > 1) {
+      updateQuantity(String(product.id), "standard", quantity);
+    }
+    toast({
+      title: "Đã thêm vào giỏ",
+      description: `${product.name} đã được thêm vào giỏ hàng.`,
+    });
+    openCart();
   };
 
   const handleReviewSubmit = () => {

@@ -2,6 +2,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import {
     ArrowRight,
     CheckCircle,
@@ -141,6 +142,15 @@ const successProjects = [
 
 export default function ITServicesPage() {
     const [, navigate] = useLocation();
+    const { user } = useAuth();
+
+    const goToServiceRequest = () => {
+        if (user) {
+            navigate("/services/new");
+        } else {
+            navigate("/auth");
+        }
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -160,7 +170,7 @@ export default function ITServicesPage() {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Button
-                                    onClick={() => navigate('/request-project')}
+                                    onClick={goToServiceRequest}
                                     className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold"
                                     size="lg"
                                 >
@@ -313,7 +323,7 @@ export default function ITServicesPage() {
                                         </p>
 
                                         <Button
-                                            onClick={() => navigate('/request-project')}
+                                            onClick={goToServiceRequest}
                                             className="w-full mt-auto bg-slate-700 hover:bg-slate-800 text-white"
                                             size="sm"
                                         >
@@ -339,7 +349,7 @@ export default function ITServicesPage() {
                             Nhận tư vấn miễn phí và báo giá cho dự án phát triển phần mềm tùy chỉnh của bạn
                         </p>
                         <Button
-                            onClick={() => navigate('/request-project')}
+                            onClick={goToServiceRequest}
                             className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold shadow-xl"
                             size="lg"
                         >

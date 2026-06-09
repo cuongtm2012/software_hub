@@ -1,18 +1,17 @@
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, ShoppingCart, Loader2 } from "lucide-react";
+import { Plus, Minus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
+import { useCart } from "@/hooks/use-cart";
 
 interface AddToCartProps {
   productId: number;
   productName: string;
   price: number;
   stockQuantity: number;
+  imageUrl?: string;
   maxQuantity?: number;
   className?: string;
   variant?: "default" | "compact" | "icon-only";
@@ -23,158 +22,109 @@ export function AddToCart({
   productName,
   price,
   stockQuantity,
+  imageUrl,
   maxQuantity,
   className = "",
-  variant = "default"
+  variant = "default",
 }: AddToCartProps) {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { addToCart, updateQuantity, openCart } = useCart();
   const [quantity, setQuantity] = useState(1);
 
-  // Max quantity is either the stock or provided max, whichever is lower
-  const effectiveMaxQuantity = maxQuantity 
-    ? Math.min(maxQuantity, stockQuantity) 
+  const effectiveMaxQuantity = maxQuantity
+    ? Math.min(maxQuantity, stockQuantity)
     : stockQuantity;
 
-  // Add to cart mutation
-  const addToCartMutation = useMutation({
-    mutationFn: async ({ product_id, quantity }: { product_id: number; quantity: number }) => {
-      const response = await apiRequest("POST", "/api/cart/add", {
-        product_id,
-        quantity
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // Invalidate cart queries to refresh cart count and contents
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      
-      toast({
-        title: "Added to cart",
-        description: `${quantity} x ${productName} ${data.action === "updated" ? "updated in" : "added to"} your cart.`,
-      });
-
-      // Reset quantity to 1 after successful add
-      setQuantity(1);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to add to cart",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity < 1) {
-      setQuantity(1);
-    } else if (newQuantity > effectiveMaxQuantity) {
-      setQuantity(effectiveMaxQuantity);
-    } else {
-      setQuantity(newQuantity);
-    }
-  };
-
   const handleAddToCart = () => {
-    if (!user) {
-      toast({
-        title: "Login required",
-        description: "Please log in to add items to your cart.",
-        variant: "destructive",
-      });
-      // Redirect to login
-      window.location.href = "/auth";
-      return;
-    }
-
     if (stockQuantity < 1) {
       toast({
-        title: "Out of stock",
-        description: "This product is currently out of stock.",
+        title: "Hết hàng",
+        description: "Sản phẩm hiện không còn trong kho.",
         variant: "destructive",
       });
       return;
     }
 
-    addToCartMutation.mutate({ product_id: productId, quantity });
+    const product = {
+      id: String(productId),
+      name: productName,
+      price,
+      images: imageUrl ? [imageUrl] : [],
+    };
+
+    addToCart(product, "standard");
+    if (quantity > 1) {
+      updateQuantity(String(productId), "standard", quantity);
+    }
+
+    toast({
+      title: "Đã thêm vào giỏ",
+      description: `${quantity} × ${productName}`,
+    });
+    setQuantity(1);
+    openCart();
   };
 
-  // Format price in VND
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity < 1) setQuantity(1);
+    else if (newQuantity > effectiveMaxQuantity) setQuantity(effectiveMaxQuantity);
+    else setQuantity(newQuantity);
   };
 
-  // Compact variant for marketplace cards
+  const formatPrice = (p: number) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(p);
+
   if (variant === "compact") {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <Button
           onClick={handleAddToCart}
-          disabled={addToCartMutation.isPending || stockQuantity < 1}
+          disabled={stockQuantity < 1}
           size="sm"
-          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+          className="flex items-center gap-1 bg-[#004080] hover:bg-[#003366] text-white"
         >
-          {addToCartMutation.isPending ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <ShoppingCart className="w-3 h-3" />
-          )}
-          Add
+          <ShoppingCart className="w-3 h-3" />
+          Thêm
         </Button>
         {stockQuantity < 1 && (
           <Badge variant="destructive" className="text-xs">
-            Out of Stock
+            Hết hàng
           </Badge>
         )}
       </div>
     );
   }
 
-  // Icon-only variant for very compact spaces
   if (variant === "icon-only") {
     return (
       <Button
         onClick={handleAddToCart}
-        disabled={addToCartMutation.isPending || stockQuantity < 1}
+        disabled={stockQuantity < 1}
         size="sm"
         variant="outline"
         className={`p-2 ${className}`}
-        title={stockQuantity < 1 ? "Out of stock" : "Add to cart"}
+        title={stockQuantity < 1 ? "Hết hàng" : "Thêm vào giỏ"}
       >
-        {addToCartMutation.isPending ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <ShoppingCart className="w-4 h-4" />
-        )}
+        <ShoppingCart className="w-4 h-4" />
       </Button>
     );
   }
 
-  // Default variant for product detail pages
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Stock Status */}
       <div className="flex items-center gap-2">
         {stockQuantity > 0 ? (
           <Badge variant="secondary" className="bg-green-100 text-green-800">
-            {stockQuantity} in stock
+            Còn {stockQuantity} sản phẩm
           </Badge>
         ) : (
-          <Badge variant="destructive">
-            Out of stock
-          </Badge>
+          <Badge variant="destructive">Hết hàng</Badge>
         )}
       </div>
 
-      {/* Quantity Selector */}
       {stockQuantity > 0 && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Quantity</label>
+          <label className="text-sm font-medium">Số lượng</label>
           <div className="flex items-center gap-3">
             <div className="flex items-center border rounded-md">
               <Button
@@ -204,57 +154,34 @@ export function AddToCart({
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <span className="text-sm text-gray-500">
-              (Max: {effectiveMaxQuantity})
-            </span>
+            <span className="text-sm text-gray-500">(Tối đa: {effectiveMaxQuantity})</span>
           </div>
         </div>
       )}
 
-      {/* Price Display */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Unit price:</span>
+          <span className="text-sm text-gray-600">Đơn giá:</span>
           <span className="font-medium">{formatPrice(price)}</span>
         </div>
         {quantity > 1 && (
           <div className="flex items-center justify-between border-t pt-1">
-            <span className="text-sm font-medium">Total:</span>
-            <span className="text-lg font-bold text-red-600">
+            <span className="text-sm font-medium">Tổng:</span>
+            <span className="text-lg font-bold text-[#004080]">
               {formatPrice(price * quantity)}
             </span>
           </div>
         )}
       </div>
 
-      {/* Add to Cart Button */}
       <Button
         onClick={handleAddToCart}
-        disabled={addToCartMutation.isPending || stockQuantity < 1}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5"
-        size="default"
+        disabled={stockQuantity < 1}
+        className="w-full bg-[#004080] hover:bg-[#003366] text-white py-2.5"
       >
-        {addToCartMutation.isPending ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Adding to Cart...
-          </>
-        ) : (
-          <>
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Add to Cart
-          </>
-        )}
+        <ShoppingCart className="w-4 h-4 mr-2" />
+        Thêm vào giỏ hàng
       </Button>
-
-      {/* Additional Information */}
-      {stockQuantity > 0 && (
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>• Free shipping on orders over 500,000 VND</p>
-          <p>• 30-day return policy</p>
-          <p>• Secure payment with buyer protection</p>
-        </div>
-      )}
     </div>
   );
 }

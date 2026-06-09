@@ -107,6 +107,16 @@ export function PageHero({
           )}
         </div>
       </div>
+
+      {/* Wave divider into page content */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 overflow-hidden" aria-hidden>
+        <svg viewBox="0 0 1440 48" className="h-full w-full" preserveAspectRatio="none">
+          <path
+            d="M0,24 C360,48 720,0 1440,24 L1440,48 L0,48 Z"
+            fill="hsl(var(--background))"
+          />
+        </svg>
+      </div>
     </section>
   );
 }

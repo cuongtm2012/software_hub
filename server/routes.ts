@@ -23,6 +23,8 @@ import leadsRouter from "./routes/leads.routes.js";
 import blogRouter from "./routes/blog.routes.js";
 import sitemapRouter from "./routes/sitemap.routes.js";
 import uploadRouter from "./routes/upload.routes.js";
+import portfolioRouter, { portfolioReviewRouter } from "./routes/portfolio.routes.js";
+import supportRouter from "./routes/support.routes.js";
 import { authRateLimiter } from "./middleware/rate-limit.js";
 
 // Import named exports (register functions)
@@ -258,6 +260,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/leads", leadsRouter);
   app.use("/api/blog", blogRouter);
   app.use("/api/storage", uploadRouter);
+  app.use("/api/portfolios", portfolioRouter);
+  app.use("/api/portfolio-reviews", portfolioReviewRouter);
+  app.use("/api/support/tickets", supportRouter);
 
   // Register function-based routes (named exports)
   registerMarketplaceRoutes(app);
