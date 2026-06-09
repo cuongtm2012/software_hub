@@ -93,6 +93,7 @@ import EbookPage from "@/pages/ebook-page";
 import BookingPage from "@/pages/booking-page";
 import { Analytics } from "@/components/analytics";
 import { GtmBehaviorTracker } from "@/components/gtm-behavior-tracker";
+import { OrganizationSchema } from "@/components/seo/organization-schema";
 import MarketplaceSellerNewPage from "@/pages/marketplace-seller-new-page";
 import MarketplaceSellerEditPage from "@/pages/marketplace-seller-edit-page";
 import MarketplaceOrdersPage from "@/pages/marketplace-orders-page";
@@ -411,6 +412,7 @@ function App() {
             <Toaster />
             <GlobalCartSidebar />
             <Analytics />
+            <OrganizationSchema />
             <GtmBehaviorTracker />
             <FloatingChatButton />
             <Router />

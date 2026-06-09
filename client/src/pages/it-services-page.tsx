@@ -1,5 +1,7 @@
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { PageMeta } from "@/components/seo/page-meta";
+import { absoluteUrl } from "@/lib/seo-config";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -154,6 +156,11 @@ export default function ITServicesPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
+            <PageMeta
+                title="Dịch vụ IT & Phát triển phần mềm tùy chỉnh"
+                description="Thuê team phát triển web, app, CRM cho doanh nghiệp. Gửi yêu cầu, nhận báo giá và thanh toán an toàn qua Software Hub IT Studio."
+                canonicalUrl={absoluteUrl("/it-services")}
+            />
             <Header />
 
             <main className="flex-grow">

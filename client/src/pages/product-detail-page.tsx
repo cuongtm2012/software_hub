@@ -17,6 +17,11 @@ import {
   ThumbsUp, MessageCircle, ChevronDown, User, AlertCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageMeta } from "@/components/seo/page-meta";
+import { FaqSchema } from "@/components/seo/faq-schema";
+import { ProductSchema } from "@/components/seo/product-schema";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { absoluteUrl } from "@/lib/seo-config";
 
 export default function ProductDetailPage() {
   const [, params] = useRoute("/marketplace/product/:id");
@@ -216,21 +221,52 @@ export default function ProductDetailPage() {
 
   const faqs = [
     {
-      question: "How quickly will I receive my license after purchase?",
-      answer: "License keys are delivered instantly to your email after payment confirmation."
+      question: "Tôi nhận license sau khi thanh toán bao lâu?",
+      answer: "License được gửi qua email ngay sau khi thanh toán được xác nhận trên Software Hub.",
     },
     {
-      question: "Can I upgrade my license later?",
-      answer: "Yes! You can upgrade from Basic to Standard or Premium at any time."
+      question: "Có thể nâng cấp gói license sau này không?",
+      answer: "Có. Bạn có thể nâng cấp từ gói Basic lên Standard hoặc Premium bất cứ lúc nào.",
     },
     {
-      question: "What payment methods do you accept?",
-      answer: "We accept all major credit cards, PayPal, and bank transfers for orders over $500."
-    }
+      question: "Phương thức thanh toán nào được hỗ trợ?",
+      answer: "Thanh toán qua VietQR / chuyển khoản ngân hàng (payOS) và ví Software Hub.",
+    },
   ];
+
+  const productUrl = absoluteUrl(`/marketplace/product/${product.id}`);
+  const productDescription =
+    product.description?.slice(0, 160) ||
+    `Mua ${product.name} trên Software Hub Marketplace — sản phẩm số uy tín, giao license nhanh.`;
+  const displayPrice =
+    typeof product.price === "string" ? parseFloat(product.price) : product.price;
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <PageMeta
+        title={`${product.name} — Mua license trên Marketplace`}
+        description={productDescription}
+        canonicalUrl={productUrl}
+        ogImage={product.image_url || product.images?.[0]}
+        ogType="product"
+      />
+      <ProductSchema
+        name={product.name}
+        description={productDescription}
+        url={productUrl}
+        image={product.image_url || product.images?.[0]}
+        price={displayPrice}
+        rating={reviewsData?.stats?.averageRating}
+        reviewCount={reviewsData?.stats?.totalReviews}
+      />
+      <FaqSchema items={faqs} />
+      <BreadcrumbSchema
+        items={[
+          { name: "Trang chủ", url: absoluteUrl("/") },
+          { name: "Marketplace", url: absoluteUrl("/marketplace") },
+          { name: product.name, url: productUrl },
+        ]}
+      />
       <Header />
       
       <main className="container mx-auto px-4 py-6 max-w-7xl">
@@ -616,7 +652,7 @@ export default function ProductDetailPage() {
         {/* FAQ Section */}
         <Card className="mb-8 border border-gray-200 shadow-md">
           <CardHeader className="border-b border-gray-200">
-            <CardTitle className="text-2xl font-bold text-gray-900">Frequently Asked Questions</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-900">Câu hỏi thường gặp</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-gray-200">

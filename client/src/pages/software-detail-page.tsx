@@ -16,6 +16,7 @@ import { Loader2, Download, Monitor, Calendar, ArrowLeft, FileText, Shield, Laye
 import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
 import { buildSoftwareSeoDescription, buildSoftwareSeoContent } from "@/lib/software-utils";
+import { renderSeoMarkdown } from "@/lib/render-seo-markdown";
 import { useState } from "react";
 import { PageMeta } from "@/components/seo/page-meta";
 import { SoftwareSchema } from "@/components/seo/software-schema";
@@ -455,19 +456,7 @@ export default function SoftwareDetailPage() {
                         <div className="mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Hướng dẫn chi tiết</h2>
                             <div className="prose prose-sm max-w-none">
-                                {seoContent.split("\n").map((line, i) => {
-                                    if (line.startsWith("## ")) {
-                                        return (
-                                            <h3 key={i} className="text-base font-semibold text-gray-900 mt-4 mb-2">
-                                                {line.replace("## ", "")}
-                                            </h3>
-                                        );
-                                    }
-                                    if (line.trim() === "") return null;
-                                    return (
-                                        <p key={i} className="text-gray-700 leading-relaxed mb-2">{line}</p>
-                                    );
-                                })}
+                                {renderSeoMarkdown(seoContent)}
                             </div>
                         </div>
 

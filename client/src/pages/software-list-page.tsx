@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { Pagination } from "@/components/pagination";
 import { cn } from "@/lib/utils";
+import { PageMeta } from "@/components/seo/page-meta";
+import { absoluteUrl } from "@/lib/seo-config";
 
 const PLATFORMS = [
   { value: "all", label: "Tất cả nền tảng" },
@@ -297,6 +299,11 @@ export default function SoftwareListPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+      <PageMeta
+        title="Kho phần mềm miễn phí — Windows, Mac, Linux"
+        description="Tải và khám phá phần mềm, công cụ developer được tuyển chọn. Hướng dẫn cài đặt tiếng Việt cho Windows, macOS và Linux."
+        canonicalUrl={absoluteUrl("/software")}
+      />
       <Header />
 
       <main className="flex-grow">

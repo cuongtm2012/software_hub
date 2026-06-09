@@ -2,6 +2,16 @@ export function getCourseUrl(course: { slug?: string | null; id: number }): stri
   return course.slug ? `/courses/${course.slug}` : `/courses/${course.id}`;
 }
 
+import { LEVEL_SEO_LABEL } from "./seo-config";
+
+export function buildSeoTitle(course: {
+  title: string;
+  level?: string | null;
+}): string {
+  const level = LEVEL_SEO_LABEL[course.level || "beginner"] || "mọi cấp độ";
+  return `Học ${course.title} miễn phí — Lộ trình chi tiết cho ${level}`;
+}
+
 export function buildSeoDescription(course: {
   title: string;
   topic: string;

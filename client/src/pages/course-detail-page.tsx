@@ -10,7 +10,8 @@ import { PageMeta } from "@/components/seo/page-meta";
 import { CourseSchema } from "@/components/seo/course-schema";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { LeadCaptureForm } from "@/components/lead-capture-form";
-import { getCourseUrl, buildSeoDescription, buildSeoContent } from "@/lib/course-utils";
+import { getCourseUrl, buildSeoTitle, buildSeoDescription, buildSeoContent } from "@/lib/course-utils";
+import { renderSeoMarkdown } from "@/lib/render-seo-markdown";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
 import {
   BookOpen,
@@ -36,31 +37,6 @@ const LEVEL_BADGE: Record<string, string> = {
   intermediate: "bg-amber-100 text-amber-800",
   advanced: "bg-red-100 text-red-800",
 };
-
-function renderMarkdownContent(content: string) {
-  return content.split("\n").map((line, i) => {
-    if (line.startsWith("## ")) {
-      return (
-        <h3 key={i} className="text-base font-semibold text-foreground mt-5 mb-2">
-          {line.replace("## ", "")}
-        </h3>
-      );
-    }
-    if (line.startsWith("- ")) {
-      return (
-        <li key={i} className="text-muted-foreground ml-4 list-disc text-sm leading-relaxed">
-          {line.replace("- ", "")}
-        </li>
-      );
-    }
-    if (line.trim() === "") return <br key={i} />;
-    return (
-      <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-2">
-        {line}
-      </p>
-    );
-  });
-}
 
 export default function CourseDetailPage() {
   const [, params] = useRoute("/courses/:idOrSlug");
@@ -147,7 +123,7 @@ export default function CourseDetailPage() {
   const canonicalUrl = `${window.location.origin}${getCourseUrl(course)}`;
   const seoDescription = buildSeoDescription(course);
   const seoContent = buildSeoContent(course);
-  const seoTitle = `Học ${course.title} miễn phí — Lộ trình chi tiết cho người mới`;
+  const seoTitle = buildSeoTitle(course);
 
   const playlistId =
     course.playlist_id || course.youtube_url?.match(/list=([^&]+)/)?.[1] || "";
@@ -246,7 +222,7 @@ export default function CourseDetailPage() {
                     </span>
                   )}
                 </div>
-                <div>{renderMarkdownContent(seoContent)}</div>
+                <div>{renderSeoMarkdown(seoContent)}</div>
               </SectionPanel>
 
               <SectionPanel title={`Bình luận (${comments.length})`} subtitle="Chia sẻ câu hỏi hoặc ghi chú học tập">

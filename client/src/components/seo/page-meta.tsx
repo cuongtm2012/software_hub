@@ -1,9 +1,18 @@
 import { useEffect } from "react";
+import {
+  SITE_NAME,
+  DEFAULT_LOCALE,
+  absoluteUrl,
+  defaultOgImage,
+} from "@/lib/seo-config";
 
 interface PageMetaProps {
   title: string;
   description: string;
+  /** Full canonical URL */
   canonicalUrl?: string;
+  /** Relative or absolute path — alias for canonicalUrl */
+  url?: string;
   ogImage?: string;
   ogType?: string;
   noindex?: boolean;
@@ -30,31 +39,45 @@ function setLinkTag(rel: string, href: string) {
   el.href = href;
 }
 
+function resolveCanonical(canonicalUrl?: string, url?: string): string | undefined {
+  if (canonicalUrl) return canonicalUrl;
+  if (!url) return undefined;
+  return url.startsWith("http") ? url : absoluteUrl(url);
+}
+
 export function PageMeta({
   title,
   description,
   canonicalUrl,
+  url,
   ogImage,
   ogType = "website",
   noindex = false,
 }: PageMetaProps) {
+  const resolvedCanonical = resolveCanonical(canonicalUrl, url);
+  const resolvedOgImage = ogImage || defaultOgImage();
+  const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
+
   useEffect(() => {
-    document.title = title;
+    document.documentElement.lang = "vi";
+    document.title = fullTitle;
     setMetaTag("description", description);
     setMetaTag("robots", noindex ? "noindex,nofollow" : "index,follow");
-    setMetaTag("og:title", title, true);
+    setMetaTag("og:title", fullTitle, true);
     setMetaTag("og:description", description, true);
     setMetaTag("og:type", ogType, true);
-    if (canonicalUrl) {
-      setMetaTag("og:url", canonicalUrl, true);
-      setLinkTag("canonical", canonicalUrl);
+    setMetaTag("og:site_name", SITE_NAME, true);
+    setMetaTag("og:locale", DEFAULT_LOCALE, true);
+    setMetaTag("og:image", resolvedOgImage, true);
+    if (resolvedCanonical) {
+      setMetaTag("og:url", resolvedCanonical, true);
+      setLinkTag("canonical", resolvedCanonical);
     }
-    if (ogImage) setMetaTag("og:image", ogImage, true);
     setMetaTag("twitter:card", "summary_large_image");
-    setMetaTag("twitter:title", title);
+    setMetaTag("twitter:title", fullTitle);
     setMetaTag("twitter:description", description);
-    if (ogImage) setMetaTag("twitter:image", ogImage);
-  }, [title, description, canonicalUrl, ogImage, ogType, noindex]);
+    setMetaTag("twitter:image", resolvedOgImage);
+  }, [fullTitle, description, resolvedCanonical, resolvedOgImage, ogType, noindex]);
 
   return null;
 }

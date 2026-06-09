@@ -10,7 +10,7 @@
 
 **Architecture:** Monolith-first — single Express app serves API + built React SPA. Optional microservices (email, chat, notification) run under PM2. Primary database, auth, and file storage run on **Supabase** (managed PostgreSQL). Redis + MongoDB run locally on VPS via Docker for queue/chat.
 
-**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped. Admin consolidation (§15.7) và orders/IT-service polish **done** tháng 6/2026. Backlog còn chủ yếu **H5** (SePay ops) và low-priority (§15.3, U9).
+**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped. **Cổng thanh toán mục tiêu: [payOS](https://payos.vn/docs/api/)** — thay SePay (§4.2, §15.1 H5). Code hiện tại vẫn tích hợp SePay (`sepay-pg-node`); migration PayOS là backlog P0.
 
 ---
 
@@ -53,7 +53,8 @@ Internet → Nginx (80/443) → PM2 app :5000
 - Socket.IO (real-time chat in monolith)
 - SendGrid / Resend (email via `email-service`)
 - Firebase Admin SDK (push notifications via `notification-service`)
-- **SePay** (`sepay-pg-node`) — primary payment gateway
+- **payOS** ([API docs](https://payos.vn/docs/api/)) — **target** payment gateway (link thanh toán + webhook)
+- **SePay** (`sepay-pg-node`) — **legacy in code** until H5 migration completes
 - Google Generative AI (`@google/generative-ai`) — chat AI
 
 **Testing**
@@ -108,7 +109,7 @@ Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push
 | `orders` | Purchase orders | buyer_id, seller_id, status, total_amount, commission_amount, payment_method, buyer_info |
 | `order_items` | Order line items | order_id, product_id, quantity, price |
 | `payments` | Payment records | order_id, project_id, amount, payment_method, status, escrow_release, transaction_id |
-| `pending_checkouts` | SePay pending wallet/marketplace checkouts | invoice_number, type, payload (JSONB), expires_at |
+| `pending_checkouts` | Pending wallet/marketplace checkouts (payOS `orderCode` / payment link) | invoice_number, type, payload (JSONB), expires_at |
 | `support_tickets` | Post-purchase support | order_id, buyer_id, seller_id, subject, status, priority |
 | `product_reviews` | Product ratings | order_id, product_id, buyer_id, rating |
 | `sales_analytics` | Seller analytics | seller_id, product_id, date, revenue, units_sold |
@@ -133,7 +134,7 @@ Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push
 
 **Enums:** `role` (user, admin, developer, client, seller, buyer), `order_status` (pending → completed), `product_status`, `payment_status`, etc.
 
-**Wallet:** Stored in `users.profile_data.wallet_balance` (JSONB) — credited via SePay IPN on wallet top-up.
+**Wallet:** Stored in `users.profile_data.wallet_balance` (JSONB) — credited via payment webhook on wallet top-up (target: payOS; hiện tại: SePay IPN).
 
 **Client-side cart:** `useCart` hook persists to `localStorage` key `shopping-cart`. Legacy `cart_items` table removed from schema (migration `005_drop_cart_items.sql`).
 
@@ -168,7 +169,7 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/api/storage/*` | `upload.routes.ts` | Supabase Storage upload URLs, download |
 | `/api/marketplace/*` | `marketplace.routes.ts` | Marketplace product aliases |
 | `/api/users/*` | `user.routes.ts` | Profile, external requests, projects |
-| `/api/payment/*` | `payment.routes.ts` | **SePay** wallet + checkout + IPN |
+| `/api/payment/*` | `payment.routes.ts` | Wallet + checkout + webhook (**target payOS**; hiện SePay) |
 | `/api/payments/*` | `payment.routes.ts` | Payment records management |
 | `/api/portfolios/*` | `portfolio.routes.ts` | Portfolio CRUD (developer), gallery, reviews |
 | `/api/portfolio-reviews/*` | `portfolio.routes.ts` | Portfolio review sub-router |
@@ -180,31 +181,75 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/robots.txt` | `sitemap.routes.ts` | Robots file |
 | `/health` | Inline | Service health check |
 
-### 4.2. Payment API (SePay)
+### 4.2. Payment API (payOS — target)
 
-| Method | Path | Auth | Description |
+> **Tài liệu gốc:** [payOS API](https://payos.vn/docs/api/) · Production base: `https://api-merchant.payos.vn`  
+> **Trạng thái code:** Routes bên dưới **đã có**; implementation bên trong vẫn gọi SePay — xem migration **§15.1 H5**.
+
+#### 4.2.1. payOS primitives (merchant API)
+
+| payOS API | Method | Mô tả |
+|---|---|---|
+| `/v2/payment-requests` | `POST` | Tạo link thanh toán → trả `checkoutUrl`, `qrCode`, `paymentLinkId` |
+| `/v2/payment-requests/{id}` | `GET` | Lấy trạng thái link (`PENDING` / `PAID` / `CANCELLED`) |
+| `/v2/payment-requests/{id}/cancel` | `POST` | Hủy link thanh toán |
+| Webhook (payOS → app) | `POST` | Gửi `orderCode`, `amount`, `paymentLinkId` + `signature` |
+| `/confirm-webhook` | `POST` | Đăng ký / xác thực `webhookUrl` trên kênh thanh toán |
+
+**Auth headers:** `x-client-id`, `x-api-key` (từ [my.payos.vn](https://my.payos.vn) → Kênh thanh toán).
+
+**Tạo link — body chính:** `orderCode` (integer, unique), `amount` (VND integer), `description`, `returnUrl`, `cancelUrl`, `signature` (HMAC_SHA256 với **checksum key**, data sort alphabet: `amount`, `cancelUrl`, `description`, `orderCode`, `returnUrl`).
+
+**Webhook:** Verify `signature` trên payload; phản hồi HTTP 2xx để xác nhận nhận thành công. Chi tiết: [Kiểm tra dữ liệu webhook](https://payos.vn/docs/tich-hop-webhook/kiem-tra-du-lieu-voi-signature/).
+
+#### 4.2.2. Software Hub routes (giữ path, đổi backend)
+
+| Method | Path | Auth | Target behavior (payOS) |
 |---|---|---|---|
-| `POST` | `/api/payment/initiate` | ✅ | Wallet top-up (min 1.000₫) → SePay checkout form |
-| `POST` | `/api/payment/checkout` | ✅ buyer/admin | Marketplace checkout → creates pending order + SePay form |
-| `POST` | `/api/payment/ipn` | Public (SePay) | Webhook: `ORDER_PAID` → credit wallet or fulfill order |
+| `POST` | `/api/payment/initiate` | ✅ | Wallet top-up (min 1.000₫) → `POST /v2/payment-requests` → redirect `checkoutUrl` |
+| `POST` | `/api/payment/checkout` | ✅ buyer/admin | Tạo `pending` order → payment link → `checkoutUrl` |
+| `POST` | `/api/payment/webhook` | Public (payOS) | Nhận webhook; verify signature; fulfill order / credit wallet |
+| `POST` | `/api/payment/ipn` | Public | **Alias legacy** → redirect handler tới webhook (trong lúc migration) |
 | `GET` | `/api/payments` | ✅ | Role-filtered payment list |
 | `POST` | `/api/payments` | ✅ | Manual project/order payment record |
 | `PUT` | `/api/payments/:id/status` | admin | Update payment status |
+| `POST` | `/api/service-payments/deposit` | ✅ | IT service deposit → payment link |
+| `POST` | `/api/service-payments/final` | ✅ | IT service final payment → payment link |
 
-**SePay payment methods** (frontend id → SePay):
-- `bank-qr` → `BANK_TRANSFER` (VietQR)
-- `napas-qr` → `NAPAS_BANK_TRANSFER`
+**`orderCode` mapping (đề xuất):**
 
-**Invoice formats:** `DEP-{userId}-{timestamp}` (wallet), `ORD-{orderId}-{timestamp}` (marketplace).
+| Flow | `orderCode` | Ghi chú |
+|---|---|---|
+| Wallet top-up | `900000000 + userId` hoặc timestamp-based unique int | Lưu trong `pending_checkouts` |
+| Marketplace order | `order.id` hoặc `1000000000 + order.id` | Tránh trùng với service codes |
+| IT service payment | `2000000000 + payment.id` | `service_payments` row |
 
-**Pending state:** PostgreSQL table `pending_checkouts` (migration `004_pending_checkouts.sql`) — survives server restarts. IPN is source of truth for fulfillment.
+**Return / cancel URLs:**
 
-**Marketplace checkout flow:**
-1. Client posts cart items + buyer info + payment method
-2. Server validates products (approved, in stock, same seller), creates `pending` order
-3. Returns SePay checkout URL + signed form fields
-4. User pays on SePay → IPN marks order `completed`, creates payment record, decrements stock
-5. Success redirect → `/marketplace/order-success/:orderId`
+| Flow | `returnUrl` | `cancelUrl` |
+|---|---|---|
+| Wallet | `{APP_URL}/add-funds?status=success` | `{APP_URL}/add-funds?status=cancelled` |
+| Marketplace | `{APP_URL}/marketplace/order-success/{orderId}` | `{APP_URL}/marketplace/checkout?cancelled=1` |
+| IT service | `{APP_URL}/services/{requestId}?payment=success` | `{APP_URL}/services/{requestId}?payment=cancelled` |
+
+**Pending state:** Bảng `pending_checkouts` — lưu `orderCode`, `paymentLinkId`, payload; webhook là source of truth.
+
+**Marketplace checkout flow (target):**
+1. Client posts cart + buyer info
+2. Server validates products, tạo `pending` order
+3. Server gọi payOS `POST /v2/payment-requests` → trả `checkoutUrl` (+ optional `qrCode`)
+4. Client redirect user tới `checkoutUrl` (hoặc hiển thị QR)
+5. payOS webhook `success` → mark order `completed`, payment record, decrement stock
+6. User quay về `returnUrl` → `/marketplace/order-success/:orderId`
+
+#### 4.2.3. SePay (legacy — remove sau H5)
+
+| Item | Ghi chú |
+|---|---|
+| Package | `sepay-pg-node` — gỡ sau migration |
+| Env | `SEPAY_*` — deprecated |
+| Module | `server/lib/sepay.ts` → thay bằng `server/lib/payos.ts` |
+| UI copy | Checkout / add-funds / cart vẫn ghi "SePay" — cập nhật → "payOS" |
 
 ### 4.3. Auth Design
 
@@ -295,7 +340,7 @@ Refactored dashboard architecture:
 
 - `Header` + `Footer` — site-wide layout
 - `GlobalCartSidebar` + `CartTrigger` (`cart-sidebar.tsx`) — unified slide-over cart via `useCart` (localStorage)
-- `PaymentForm` — auto-submit SePay checkout form
+- `PaymentForm` — redirect / hiển thị QR payOS (`checkoutUrl`); hiện tại vẫn auto-submit form SePay
 - `LeadCaptureForm` — GTM lead capture (navy/yellow brand)
 - `GtmBehaviorTracker` + `ConsultationPopup` — behavior-based consultation popup
 - `FloatingChatButton` — real-time chat widget
@@ -386,7 +431,7 @@ Refactored dashboard architecture:
 | **chat-service** | 3002 | Real-time chat | MongoDB, Redis |
 | **notification-service** | 3003 | FCM push notifications | PostgreSQL, Firebase |
 
-**Legacy/archived:** PHP NganLuong checkout → `scripts/archive/payment-service-php-legacy/` (prod uses SePay). **Optional local Docker only:** `gateweaver`, `worker-service` in full `docker-compose.yml` — not on VPS prod. See `docker/COMPOSE.md`.
+**Legacy/archived:** PHP NganLuong checkout → `scripts/archive/payment-service-php-legacy/`; SePay → gỡ sau H5 (target: payOS). **Optional local Docker only:** `gateweaver`, `worker-service` in full `docker-compose.yml` — not on VPS prod. See `docker/COMPOSE.md`.
 
 ### 6.2. Message Queue
 
@@ -417,7 +462,8 @@ Refactored dashboard architecture:
 | Service | Purpose | Status |
 |---|---|---|
 | **Supabase** | PostgreSQL + Auth + Storage | ✅ Primary |
-| **SePay** | Wallet top-up + marketplace checkout | ✅ Primary |
+| **payOS** | Wallet top-up + marketplace + IT service payments | 🎯 Target (§4.2) |
+| **SePay** | Payment gateway (code hiện tại) | ⚠️ Legacy — remove H5 |
 | SendGrid / Resend | Transactional email | ✅ Active |
 | Firebase FCM | Push notifications | ✅ Active |
 | Google Analytics 4 | Traffic tracking (`VITE_GA_MEASUREMENT_ID`) | ✅ Active |
@@ -451,9 +497,10 @@ Source of truth: `.env.example` (local), `.env.vps.example` (VPS-specific).
 | `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_ANON_KEY` | Client-side auth |
 | `SUPABASE_SERVICE_KEY` | Server-side JWT verification |
 | `SUPABASE_DB_PASSWORD` or `DATABASE_URL` | Drizzle ORM connection |
-| `SEPAY_MERCHANT_ID` | SePay merchant ID |
-| `SEPAY_SECRET_KEY` | SePay signing key |
-| `SEPAY_ENV` | `sandbox` or `production` |
+| `PAYOS_CLIENT_ID` | payOS Client ID (header `x-client-id`) |
+| `PAYOS_API_KEY` | payOS API Key (header `x-api-key`) |
+| `PAYOS_CHECKSUM_KEY` | HMAC_SHA256 signing cho create-link + webhook verify |
+| `PAYOS_WEBHOOK_URL` | URL đăng ký webhook (thường = `{APP_URL}/api/payment/webhook`) |
 
 ### 8.2. App Config
 
@@ -461,7 +508,7 @@ Source of truth: `.env.example` (local), `.env.vps.example` (VPS-specific).
 |---|---|
 | `NODE_ENV` | `development` / `production` |
 | `PORT` | Server port (default 5000) |
-| `SITE_URL` / `APP_URL` / `PUBLIC_URL` | Base URL for SePay callbacks |
+| `SITE_URL` / `APP_URL` / `PUBLIC_URL` | Base URL for payOS `returnUrl` / `cancelUrl` |
 | `SUPABASE_STORAGE_BUCKET` | Upload bucket name |
 | `VITE_SUPABASE_URL` | Build-time Supabase URL (client) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Build-time auth key (client) |
@@ -483,12 +530,19 @@ Source of truth: `.env.example` (local), `.env.vps.example` (VPS-specific).
 | `DISABLE_AUTH` | Dev auth bypass |
 | `MOCK_USER_ROLE` | Dev mock user role |
 
-### 8.4. SePay IPN Setup
+### 8.4. payOS Webhook Setup
 
-Configure on [my.sepay.vn](https://my.sepay.vn):
-```
-IPN URL: https://your-domain.com/api/payment/ipn
-```
+1. Lấy credentials tại [my.payos.vn](https://my.payos.vn) → **Kênh thanh toán** → Client ID, API Key, Checksum key
+2. Set env: `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `APP_URL`
+3. Đăng ký webhook:
+   ```
+   POST https://api-merchant.payos.vn/confirm-webhook
+   { "webhookUrl": "https://your-domain.com/api/payment/webhook" }
+   ```
+   Hoặc cấu hình trên dashboard payOS
+4. Verify `signature` trên mọi webhook trước khi fulfill — [docs](https://payos.vn/docs/tich-hop-webhook/kiem-tra-du-lieu-voi-signature/)
+5. Test sandbox payOS trước production
+6. **Migration:** Giữ `/api/payment/ipn` tạm alias handler payOS nếu URL cũ đã đăng ký SePay
 
 ---
 
@@ -500,7 +554,7 @@ IPN URL: https://your-domain.com/api/payment/ipn
 2. **`DISABLE_AUTH=true`** in dev — bypasses all auth
 3. **Multi-seller cart** — checkout rejects mixed-seller carts; no split-order UX yet
 4. **Limited rate limiting** — only auth, payment, and leads endpoints; most API routes unprotected
-5. **`.env` files must not be committed** — contain secrets (SePay, Supabase service key)
+5. **`.env` files must not be committed** — contain secrets (payOS keys, Supabase service key)
 6. **Firebase private keys** in env — must be secured in production
 
 ### Mitigations In Place
@@ -510,7 +564,7 @@ IPN URL: https://your-domain.com/api/payment/ipn
 - React XSS protection
 - CORS configurable per environment
 - Role-based access control (`hasRole` middleware)
-- SePay signed checkout fields (server-side secret)
+- payOS HMAC_SHA256 signature (create-link + webhook verify via checksum key)
 
 ---
 
@@ -548,7 +602,7 @@ IPN URL: https://your-domain.com/api/payment/ipn
 
 ```bash
 npm install
-cp .env.example .env   # configure Supabase + SePay
+cp .env.example .env   # configure Supabase + payOS
 npm run dev            # Vite :5173 + Express :5000 (or PORT from .env)
 ```
 
@@ -597,8 +651,9 @@ npm start              # node dist/server/index.js
 |---|---|---|
 | Phase 1 | ✅ Done | Software catalog, categories, reviews, Supabase auth |
 | Phase 2 | ✅ Done | Project management, quotes, portfolios (+ edit), messaging |
-| Phase 3 | ✅ Done | Marketplace (products, orders, unified cart, SePay, support tickets) |
-| Phase 4 | ✅ Done | IT Services UI + API + service payments (SePay) + email notifications |
+| Phase 3 | ✅ Done | Marketplace (products, orders, unified cart, payments, support tickets) |
+| Phase 4 | ✅ Done | IT Services UI + API + service payments + email notifications |
+| Phase 3b | 🔄 In progress | **payOS migration** (thay SePay) — §15.1 H5 |
 | Phase 5 | ✅ Done | GTM core + admin course SEO CMS (`/admin/courses`) |
 | Phase 6 | 🔄 Evolving | Design system rollout (`SPEC_UI_IMPROVEMENT_v1.md`), dashboard refactor |
 
@@ -619,7 +674,7 @@ Lớp 2: Engagement & Trust
         ↓
 Lớp 3: Monetization
   IT Studio (anh + team code sản phẩm cho khách hàng)
-  Marketplace (bán sản phẩm số qua SePay)
+  Marketplace (bán sản phẩm số qua payOS)
   → Khách SME, startup cần làm web/app/CRM
 ```
 
@@ -689,7 +744,12 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | Admin analytics (`/admin/analytics`) | 🟡 Partial | Platform metrics + orders/leads timeline charts + GTM counts; GA4 traffic vẫn link-out |
 | Lead capture (`/api/leads`, `/admin/leads`) | ✅ Done | |
 | LeadCaptureForm component | ✅ Done | Navy/yellow brand |
-| Sitemap + robots.txt | ✅ Done | |
+| Sitemap + robots.txt + `llms.txt` | ✅ Done | AI crawler map; robots Disallow admin/api |
+| Bot prerender (GPTBot, ClaudeBot, Googlebot) | ✅ Done | `server/middleware/seo-prerender.ts` |
+| Organization + WebSite schema | ✅ Done | `organization-schema.tsx` sitewide |
+| FAQ + Product schema (marketplace) | ✅ Done | `faq-schema.tsx`, `product-schema.tsx` |
+| PageMeta landing pages | ✅ Done | `/`, `/software`, `/marketplace`, `/it-services`, product detail |
+| SEO markdown internal links | ✅ Done | `render-seo-markdown.tsx` |
 | Ebook download gate | ✅ Done | `/ebook/fullstack-roadmap` |
 | Booking page | ✅ Done | `/booking` |
 | GA4 tracking | ✅ Done | `VITE_GA_MEASUREMENT_ID` |
@@ -698,6 +758,8 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | Schema.org markup | ✅ Done | `CourseSchema`, `SoftwareSchema`, `BreadcrumbSchema`, `ArticleSchema` |
 | Chat trigger theo behavior | ✅ Done | `GtmBehaviorTracker` → `ConsultationPopup` |
 | Dashboard lead tracking | ✅ Done | `/admin/leads` |
+| Software SEO admin CMS | ⏳ Open | DB có `seo_*`; chưa có UI admin (courses có) |
+| Default OG image (1200×630 PNG) | ⏳ Open | Hiện dùng `icon-192x192.svg` |
 
 ### 14.7. KPI dự kiến (month 1-3)
 
@@ -718,7 +780,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 | # | Feature | Mô tả | Files / gợi ý |
 |---|---|---|---|
-| H5 | **SePay production verify** | Ops: `SEPAY_ENV=production`, IPN URL trên `swhubco.com`, `APP_URL` đúng | `.env` VPS, my.sepay.vn |
+| H5 | **payOS migration** — thay SePay toàn stack | Xem chi tiết §15.9 | `server/lib/payos.ts`, routes, UI, env VPS |
 
 ### 15.2. Medium Priority — SEO / GTM / Phase 4 polish
 
@@ -731,7 +793,8 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | L1 | **E2E test coverage** | Chỉ `tests/e2e/smoke.spec.ts`; mở rộng checkout, auth, service flow |
 | L2 | **OpenAPI / Swagger** | Không có API docs tự động |
 | L3 | **Zalo OA API** | Kênh SME Việt Nam — chưa có integration |
-| L4 | **Remove Stripe / PHP payment legacy** | ✅ Done — gỡ `stripe` deps; archive PHP payment; env → SePay |
+| L4 | **Remove Stripe / PHP payment legacy** | ✅ Done — gỡ `stripe` deps; archive PHP payment |
+| L8 | **Remove SePay after H5** | Gỡ `sepay-pg-node`, `server/lib/sepay.ts`, `SEPAY_*` env |
 | L5 | **Deduplicate docker-compose** | ✅ Done — `docker/COMPOSE.md`; deprecate `prod`/`production` compose |
 | L6 | **Drop `cart_items` table** | ✅ Done — removed schema + storage; SQL `database/migrations/005_drop_cart_items.sql` |
 | L7 | **`/api/cart` REST API** | ✅ N/A — dead storage removed; cart = `localStorage` only (no server route planned) |
@@ -787,7 +850,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 Các mục sau **đã implement** — không còn trong backlog:
 
 **High priority (H1–H4)**
-- Service payments deposit/final (`POST /api/service-payments/*`, SePay IPN, UI trên `service-request-detail-page.tsx`)
+- Service payments deposit/final (`POST /api/service-payments/*`, payment webhook, UI trên `service-request-detail-page.tsx`) — *sẽ chuyển payOS ở H5*
 - Multi-seller cart checkout (tabs theo seller, `removeItemsByProductIds` sau thanh toán)
 - Support ticket auto-assign `seller_id` từ `order_id`
 - Nav links Support trong header + buyer/seller dashboard
@@ -820,10 +883,33 @@ Các mục sau **đã implement** — không còn trong backlog:
 - Seed scripts: `npm run seed:service-requests`, `npm run seed:external-requests`
 
 **Legacy cleanup (6/2026)**
-- Removed Stripe npm packages + env template vars (SePay only)
+- Removed Stripe npm packages + env template vars (payment gateway → payOS target)
 - Archived PHP `payment-service` → `scripts/archive/payment-service-php-legacy/`
 - Dropped `cart_items` from Drizzle schema + storage; migration `005_drop_cart_items.sql`
 - `docker/COMPOSE.md` — canonical compose file guide
+
+---
+
+### 15.9. payOS Migration Plan (H5)
+
+> **Tài liệu:** [payOS API](https://payos.vn/docs/api/) · Base: `https://api-merchant.payos.vn`
+
+| Step | Task | Files / notes |
+|---|---|---|
+| H5.1 | Tạo `server/lib/payos.ts` — create link, cancel, get info, verify webhook signature | Thay `server/lib/sepay.ts` |
+| H5.2 | `payment.routes.ts` — `initiate` / `checkout` gọi `POST /v2/payment-requests`; trả `checkoutUrl` | Map `orderCode` → `pending_checkouts` |
+| H5.3 | Webhook handler `POST /api/payment/webhook` — verify signature, idempotent fulfill | Wallet credit + order complete + stock |
+| H5.4 | `service.routes.ts` — deposit/final dùng cùng payOS client | IT service `orderCode` prefix `2xxx` |
+| H5.5 | Frontend — redirect `window.location = checkoutUrl` thay SePay form submit | `checkout-page-new.tsx`, `add-funds-page.tsx`, `PaymentForm` |
+| H5.6 | UI copy SePay → payOS | `cart-sidebar.tsx`, checkout, add-funds |
+| H5.7 | Env VPS + `.env.example` — `PAYOS_*`; `confirm-webhook` trên production | [my.payos.vn](https://my.payos.vn) |
+| H5.8 | Gỡ `sepay-pg-node`, `SEPAY_*`, alias `/api/payment/ipn` nếu không cần | → backlog L8 |
+
+**Acceptance criteria:**
+- Wallet top-up + marketplace checkout + IT deposit/final đều redirect payOS và fulfill qua webhook
+- Webhook reject payload signature sai
+- Không duplicate fulfill khi payOS retry webhook
+- Sandbox test pass trước khi đổi production credentials
 
 ---
 
@@ -847,11 +933,12 @@ Các mục sau **đã implement** — không còn trong backlog:
 | API route modules | 22 |
 | Database tables | 28 (+ `pending_checkouts`; `cart_items` dropped) |
 | Active microservices | 3 (email, chat, notification) |
-| Payment gateway | SePay (primary) |
+| Payment gateway (target) | payOS |
+| Payment gateway (code) | SePay — until H5 |
 | Cart source | `localStorage` (`shopping-cart`) — `cart_items` table removed |
 | Production domain | swhubco.com |
 | Documentation files | ~40 |
 
 ---
 
-*Last updated from source code review — June 2026*
+*Last updated — payOS target gateway, June 2026*

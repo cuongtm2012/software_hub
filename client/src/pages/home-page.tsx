@@ -21,6 +21,8 @@ import { getShortDescription } from "@/lib/translations";
 import { PageHero } from "@/components/design-system/page-hero";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
 import { HorizontalScrollRow } from "@/components/horizontal-scroll-row";
+import { PageMeta } from "@/components/seo/page-meta";
+import { absoluteUrl } from "@/lib/seo-config";
 
 // Utility function to chunk array into groups
 const chunkArray = <T,>(array: T[], size: number): T[][] => {
@@ -192,6 +194,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#f9f9f9]">
+      <PageMeta
+        title="Khóa học IT, phần mềm miễn phí & Marketplace số"
+        description="Học lập trình miễn phí, tải phần mềm và mua sản phẩm số. Nền tảng IT cho sinh viên, developer và SME Việt Nam."
+        canonicalUrl={absoluteUrl("/")}
+      />
       <Header />
 
       <main className="min-w-0 flex-grow overflow-x-hidden">

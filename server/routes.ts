@@ -22,6 +22,7 @@ import coursesRouter from "./routes/courses.routes.js";
 import leadsRouter from "./routes/leads.routes.js";
 import blogRouter from "./routes/blog.routes.js";
 import sitemapRouter from "./routes/sitemap.routes.js";
+import { seoPrerenderMiddleware } from "./middleware/seo-prerender.js";
 import uploadRouter from "./routes/upload.routes.js";
 import portfolioRouter, { portfolioReviewRouter } from "./routes/portfolio.routes.js";
 import supportRouter from "./routes/support.routes.js";
@@ -34,8 +35,9 @@ import { registerPaymentRoutes } from "./routes/payment.routes.js";
 import { registerServiceRoutes } from "./routes/service.routes.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // SEO: sitemap + robots.txt
+  // SEO: sitemap, robots.txt, llms.txt + bot prerender
   app.use(sitemapRouter);
+  app.use(seoPrerenderMiddleware);
 
   // Logout stub — client uses Supabase signOut; kept for backward compatibility
   app.post("/api/logout", (_req, res) => {

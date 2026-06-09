@@ -23,6 +23,8 @@ import { getPlaceholderGradient } from "@/components/design-system/tokens";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
+import { PageMeta } from "@/components/seo/page-meta";
+import { absoluteUrl } from "@/lib/seo-config";
 
 function getDisplayPrice(productId: number): number {
   return ((productId * 2654435761) % 4500000) + 500000;
@@ -201,6 +203,11 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+      <PageMeta
+        title="Marketplace sản phẩm số & công cụ phần mềm"
+        description="Mua license phần mềm, công cụ marketing, crypto tools và giải pháp số từ seller uy tín trên Software Hub."
+        canonicalUrl={absoluteUrl("/marketplace")}
+      />
       <Header />
 
       <main className="flex-grow">

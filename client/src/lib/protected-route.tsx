@@ -1,6 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import { PageMeta } from "@/components/seo/page-meta";
+
+function NoIndexMeta() {
+  return <PageMeta title="Khu vực thành viên" description="" noindex />;
+}
 
 export function ProtectedRoute({
   path,
@@ -45,7 +50,12 @@ export function ProtectedRoute({
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return (
+    <Route path={path}>
+      <NoIndexMeta />
+      <Component />
+    </Route>
+  );
 }
 
 export function AdminRoute({
@@ -88,5 +98,10 @@ export function AdminRoute({
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return (
+    <Route path={path}>
+      <NoIndexMeta />
+      <Component />
+    </Route>
+  );
 }

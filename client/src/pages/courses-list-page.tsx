@@ -23,6 +23,7 @@ import { Pagination } from "@/components/pagination";
 import { CourseThumbnail } from "@/components/course-thumbnail";
 import { getCourseUrl } from "@/lib/course-utils";
 import { PageMeta } from "@/components/seo/page-meta";
+import { absoluteUrl } from "@/lib/seo-config";
 import { cn } from "@/lib/utils";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
 
@@ -187,13 +188,23 @@ export default function CoursesListPage() {
 
   const totalPages = Math.ceil((coursesData?.total || 0) / 30);
   const heroTitle = topic === "all" ? "Khóa học lập trình" : topic;
+  const metaTitle =
+    topic === "all"
+      ? "Khóa học lập trình miễn phí tiếng Việt"
+      : `Khóa học ${topic} miễn phí tiếng Việt`;
+  const metaDescription =
+    topic === "all"
+      ? "Học lập trình miễn phí với 50+ khóa học IT tiếng Việt: React, Python, JavaScript, DevOps và nhiều hơn nữa."
+      : `Học ${topic} miễn phí bằng tiếng Việt — lộ trình chi tiết, video YouTube chất lượng cho sinh viên và người mới.`;
+  const canonicalPath =
+    topic === "all" ? "/courses" : `/courses?topic=${encodeURIComponent(topic)}`;
 
   return (
     <div className="min-h-screen bg-[#f9f9f9] flex flex-col">
       <PageMeta
-        title="Khóa học lập trình miễn phí tiếng Việt — Software Hub"
-        description="Học lập trình miễn phí với 50+ khóa học IT tiếng Việt: React, Python, JavaScript, DevOps và nhiều hơn nữa."
-        canonicalUrl={`${window.location.origin}/courses`}
+        title={metaTitle}
+        description={metaDescription}
+        canonicalUrl={absoluteUrl(canonicalPath)}
       />
       <Header />
 

@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { queryClient } from "@/lib/queryClient";
 import { DEMO_ACCOUNTS, type DemoRole } from "@shared/demo-accounts";
+import { PageMeta } from "@/components/seo/page-meta";
 
 export default function AuthPageNew() {
     const { loginMutation, registerMutation, googleLoginMutation } = useAuth();
@@ -101,6 +102,7 @@ export default function AuthPageNew() {
 
     return (
         <div className="min-h-screen flex">
+            <PageMeta title="Đăng nhập / Đăng ký" description="" noindex />
             {/* Left Panel - Welcome Section */}
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 text-white p-12 flex-col justify-center relative overflow-hidden">
                 {/* Decorative Circles */}
