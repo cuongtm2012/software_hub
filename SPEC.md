@@ -10,7 +10,7 @@
 
 **Architecture:** Monolith-first — single Express app serves API + built React SPA. Optional microservices (email, chat, notification) run under PM2. Primary database, auth, and file storage run on **Supabase** (managed PostgreSQL). Redis + MongoDB run locally on VPS via Docker for queue/chat.
 
-**Status:** Production-deployed (`swhubco.com`). Active development on marketplace payments, design system, and GTM features.
+**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM shipped; backlog focuses on service payments, multi-seller cart, and SEO admin.
 
 ---
 
@@ -73,7 +73,7 @@ Internet → Nginx (80/443) → PM2 app :5000
 
 Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push`).
 
-### 3.1. Core Tables (28 tables)
+### 3.1. Core Tables (29 tables)
 
 **Users & Auth**
 | Table | Purpose | Key Fields |
@@ -108,8 +108,9 @@ Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push
 | `orders` | Purchase orders | buyer_id, seller_id, status, total_amount, commission_amount, payment_method, buyer_info |
 | `order_items` | Order line items | order_id, product_id, quantity, price |
 | `payments` | Payment records | order_id, project_id, amount, payment_method, status, escrow_release, transaction_id |
-| `cart_items` | DB cart (legacy) | user_id, product_id, quantity |
-| `support_tickets` | Post-purchase support | order_id, buyer_id, seller_id, subject, status |
+| `cart_items` | DB cart (**legacy, unused**) | user_id, product_id, quantity — client uses `localStorage` via `useCart` |
+| `pending_checkouts` | SePay pending wallet/marketplace checkouts | invoice_number, type, payload (JSONB), expires_at |
+| `support_tickets` | Post-purchase support | order_id, buyer_id, seller_id, subject, status, priority |
 | `product_reviews` | Product ratings | order_id, product_id, buyer_id, rating |
 | `sales_analytics` | Seller analytics | seller_id, product_id, date, revenue, units_sold |
 
@@ -141,7 +142,7 @@ Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push
 
 ## 4. API Structure
 
-Route registration in `server/routes.ts`. 20 route modules under `server/routes/`.
+Route registration in `server/routes.ts`. 22 route modules under `server/routes/`.
 
 ### 4.1. Route Map
 
@@ -170,7 +171,12 @@ Route registration in `server/routes.ts`. 20 route modules under `server/routes/
 | `/api/users/*` | `user.routes.ts` | Profile, external requests, projects |
 | `/api/payment/*` | `payment.routes.ts` | **SePay** wallet + checkout + IPN |
 | `/api/payments/*` | `payment.routes.ts` | Payment records management |
-| `/api/services/*` | `service.routes.ts` | IT service request/quotation/project lifecycle |
+| `/api/portfolios/*` | `portfolio.routes.ts` | Portfolio CRUD (developer), gallery, reviews |
+| `/api/portfolio-reviews/*` | `portfolio.routes.ts` | Portfolio review sub-router |
+| `/api/support/tickets/*` | `support.routes.ts` | Support tickets (buyer create, seller/admin update) |
+| `/api/service-requests/*` | `service.routes.ts` | IT service request lifecycle |
+| `/api/service-quotations/*` | `service.routes.ts` | Admin quotations, client accept/reject |
+| `/api/service-projects/*` | `service.routes.ts` | Service project progress (admin) |
 | `/sitemap.xml` | `sitemap.routes.ts` | Auto-generated sitemap |
 | `/robots.txt` | `sitemap.routes.ts` | Robots file |
 | `/health` | Inline | Service health check |
@@ -192,7 +198,7 @@ Route registration in `server/routes.ts`. 20 route modules under `server/routes/
 
 **Invoice formats:** `DEP-{userId}-{timestamp}` (wallet), `ORD-{orderId}-{timestamp}` (marketplace).
 
-**Pending state:** In-memory Maps (`pendingDeposits`, `pendingOrders`) — 30 min TTL. IPN is source of truth for fulfillment.
+**Pending state:** PostgreSQL table `pending_checkouts` (migration `004_pending_checkouts.sql`) — survives server restarts. IPN is source of truth for fulfillment.
 
 **Marketplace checkout flow:**
 1. Client posts cart items + buyer info + payment method
@@ -216,7 +222,7 @@ Route registration in `server/routes.ts`. 20 route modules under `server/routes/
 
 **Dev bypass:** `DISABLE_AUTH=true` + `MOCK_USER_ROLE` skips auth middleware.
 
-**Rate limiting:** `authRateLimiter` on `/api/register`.
+**Rate limiting:** `authRateLimiter` on `/api/register` + `/api/auth/register`; `paymentRateLimiter` on `/api/payment/initiate` and `/api/payment/checkout`; `leadRateLimiter` on `/api/leads`.
 
 ---
 
@@ -241,14 +247,23 @@ Route registration in `server/routes.ts`. 20 route modules under `server/routes/
 | `/booking` | BookingPage | Public |
 | `/marketplace` | MarketplacePage | Public |
 | `/marketplace/category/:category` | MarketplaceCategoryPage | Public |
-| `/marketplace/product/:id` | ProductDetailPage | Public |
+| `/marketplace/product/:id` | ProductDetailPage | Public (canonical product URL) |
+| `/marketplace/:id` | MarketplaceDetailPage | Public (**legacy duplicate** — consolidate) |
 | `/marketplace/checkout` | CheckoutPageNew | Protected (login required) |
 | `/marketplace/order-success/:orderId` | OrderSuccessPage | Public |
 | `/marketplace/orders` | MarketplaceOrdersPage | buyer, admin |
 | `/add-funds` | AddFundsPage | Protected |
 | `/portfolios/gallery` | PortfolioGallery | Public |
+| `/portfolios/new` | PortfolioNewPage | developer, admin |
+| `/portfolios/edit/:id` | PortfolioEditPage | developer, admin |
 | `/portfolios/:id` | PortfolioDetailPage | Public |
 | `/it-services` | ITServicesPage | Public |
+| `/services` | ServiceRequestsPage | buyer, user, client, admin |
+| `/services/new` | ServiceRequestNewPage | buyer, user, client, admin |
+| `/services/:id` | ServiceRequestDetailPage | buyer, user, client, admin |
+| `/admin/service-requests` | AdminServiceRequestsPage | admin |
+| `/support` | SupportTicketsPage | buyer, user, client, admin |
+| `/seller/support` | SellerSupportPage | seller, admin |
 | `/profile` | UserProfilePage | Protected |
 | `/dashboard` | DashboardPage | Protected |
 | `/buyer` | BuyerDashboardPage | buyer, user |
@@ -278,9 +293,10 @@ Refactored dashboard architecture:
 ### 5.4. Shared Components
 
 - `Header` + `Footer` — site-wide layout
-- `ShoppingCartSidebar` — slide-over cart (`useCart`)
+- `GlobalCartSidebar` + `CartTrigger` (`cart-sidebar.tsx`) — unified slide-over cart via `useCart` (localStorage)
 - `PaymentForm` — auto-submit SePay checkout form
 - `LeadCaptureForm` — GTM lead capture (navy/yellow brand)
+- `GtmBehaviorTracker` + `ConsultationPopup` — behavior-based consultation popup
 - `FloatingChatButton` — real-time chat widget
 - `Pagination`, `StarRating`, `Breadcrumb`, `Stepper`
 - `SearchWithAutocomplete` — global search
@@ -423,8 +439,8 @@ IPN URL: https://your-domain.com/api/payment/ipn
 
 1. **Passwords stored as plaintext** in `users.password` — Supabase Auth handles real passwords; local field is legacy/random hex
 2. **`DISABLE_AUTH=true`** in dev — bypasses all auth
-3. **Pending payments in memory** — lost on server restart (IPN still processes via SePay)
-4. **No rate limiting** on most endpoints (only `/api/register`)
+3. **Multi-seller cart** — checkout rejects mixed-seller carts; no split-order UX yet
+4. **Limited rate limiting** — only auth, payment, and leads endpoints; most API routes unprotected
 5. **`.env` files must not be committed** — contain secrets (SePay, Supabase service key)
 6. **Firebase private keys** in env — must be secured in production
 
@@ -521,11 +537,11 @@ npm start              # node dist/server/index.js
 | Phase | Status | Description |
 |---|---|---|
 | Phase 1 | ✅ Done | Software catalog, categories, reviews, Supabase auth |
-| Phase 2 | ✅ Done | Project management, quotes, portfolios, messaging |
-| Phase 3 | ✅ Done | Marketplace (products, orders, cart, SePay payments) |
-| Phase 4 | 🟡 In Progress | IT Services (requests, quotations, service projects) |
-| Phase 5 | 🟡 In Progress | GTM (blog, leads, SEO sitemap, lead capture forms) |
-| Phase 6 | 🔄 Evolving | Design system rollout, dashboard refactor, microservices |
+| Phase 2 | ✅ Done | Project management, quotes, portfolios (+ edit), messaging |
+| Phase 3 | ✅ Done | Marketplace (products, orders, unified cart, SePay, support tickets) |
+| Phase 4 | 🟡 Mostly Done | IT Services UI + API; **missing:** `service_payments`, email notifications |
+| Phase 5 | 🟡 Mostly Done | GTM core done; **missing:** admin course SEO CMS, richer per-course DB content |
+| Phase 6 | 🔄 Evolving | Design system rollout (`SPEC_UI_IMPROVEMENT_v1.md`), dashboard refactor |
 
 ---
 
@@ -617,9 +633,10 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | Ebook download gate | ✅ Done | `/ebook/fullstack-roadmap` |
 | Booking page | ✅ Done | `/booking` |
 | GA4 tracking | ✅ Done | `VITE_GA_MEASUREMENT_ID` |
-| Course landing SEO meta | 🟡 Partial | Slug routes exist, meta needs polish |
-| Schema.org markup | 🟡 Partial | |
-| Chat trigger theo behavior | 🟢 Planned | |
+| Course landing SEO meta | 🟡 Partial | `PageMeta` + auto `buildSeoContent()`; no admin editor for `seo_content` |
+| Software SEO content | ✅ Done | `software-utils.ts` + `SoftwareSchema` on detail page |
+| Schema.org markup | ✅ Done | `CourseSchema`, `SoftwareSchema`, `BreadcrumbSchema`, `ArticleSchema` |
+| Chat trigger theo behavior | ✅ Done | `GtmBehaviorTracker` → `ConsultationPopup` |
 | Dashboard lead tracking | ✅ Done | `/admin/leads` |
 
 ### 14.7. KPI dự kiến (month 1-3)
@@ -632,29 +649,72 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 ---
 
-## 15. Recommendations
+## 15. Implementation Backlog
 
-### Immediate (High Priority)
+> Tổng hợp tính năng **chưa implement** hoặc **còn thiếu**, đối chiếu codebase tháng 6/2026.
+> Các mục đã xong (pending DB, portfolio API, cart unify, support tickets, schema.org, …) đã gỡ khỏi backlog.
 
-1. **Configure SePay production** — switch `SEPAY_ENV=production`, register IPN URL on live domain
-2. **Persist pending payments** — move `pendingDeposits`/`pendingOrders` to Redis or DB (survive restarts)
-3. **Add rate limiting** on payment and auth endpoints
-4. **Schema.org markup** on course/software detail pages
-5. **Portfolio API routes** — client references `/api/portfolios` but no route registered
+### 15.1. High Priority — Ảnh hưởng doanh thu / UX
 
-### Medium Priority
+| # | Feature | Mô tả | Files / gợi ý |
+|---|---|---|---|
+| H1 | **Service payments (deposit/final)** | Bảng `service_payments` + storage có; chưa có API route, SePay flow, UI sau khi client accept quotation | `service.routes.ts`, `service-request-detail-page.tsx` |
+| H2 | **Multi-seller cart UX** | Server từ chối giỏ nhiều seller (`payment.routes.ts`); cần tách đơn theo seller hoặc wizard checkout từng seller | `checkout-page-new.tsx`, `use-cart.tsx`, `payment.routes.ts` |
+| H3 | **Support ticket → seller assign** | Tạo ticket với `order_id` không tự gán `seller_id` từ order → seller không thấy ticket | `support.routes.ts`, `createSupportTicket` |
+| H4 | **Nav links Support** | Routes `/support`, `/seller/support` có nhưng chưa link từ buyer/seller dashboard hoặc header | `buyer-dashboard-page.tsx`, `seller-dashboard-page.tsx`, `header.tsx` |
+| H5 | **SePay production verify** | Ops: `SEPAY_ENV=production`, IPN URL trên `swhubco.com`, `APP_URL` đúng | `.env` VPS, my.sepay.vn |
 
-6. **Order items in GET /api/orders/:id** — `getOrderById` doesn't join `order_items` (order success page limited)
-7. **Multi-seller cart** — checkout currently requires single seller per order
-8. **Consolidate duplicate pages** — `marketplace-page.tsx` vs legacy variants
-9. **E2E test coverage** — expand Playwright beyond smoke test
-10. **OpenAPI/Swagger** documentation
+### 15.2. Medium Priority — SEO / GTM / Phase 4 polish
 
-### Low Priority
+| # | Feature | Mô tả | Files / gợi ý |
+|---|---|---|---|
+| M1 | **Admin course SEO CMS** | `courses.seo_content` / `seo_description` trong DB; chỉ seed script, không có admin UI chỉnh từng khóa | New `admin/courses-page.tsx`, extend `courses.routes.ts` CRUD |
+| M2 | **Service email notifications** | Không gửi email khi: request mới, quotation tạo, client accept/reject | `service.routes.ts` + email queue |
+| M3 | **Consolidate marketplace product pages** | Hai route: `/marketplace/product/:id` (canonical) vs `/marketplace/:id` (`marketplace-detail-page.tsx`) | Redirect hoặc xóa legacy |
+| M4 | **Remove `order-details-page.tsx`** | Legacy product page trùng marketplace flow; kiểm tra route references trước khi xóa | `App.tsx`, grep references |
+| M5 | **Admin support tickets page** | Admin chỉ có API `getAllSupportTickets`; chưa có UI quản lý tập trung | `admin/support-tickets-page.tsx` |
+| M6 | **Expand rate limiting** | Chỉ auth + payment + leads; cần thêm cho upload, chat, product CRUD | `server/middleware/rate-limit.ts` |
 
-11. **Remove legacy Stripe/PHP payment code** from deps if unused
-12. **Deduplicate docker-compose files** into profiles
-13. **Zalo OA API** integration for Vietnamese SME channel
+### 15.3. Low Priority — DevOps / chất lượng / tương lai
+
+| # | Feature | Mô tả |
+|---|---|---|
+| L1 | **E2E test coverage** | Chỉ `tests/e2e/smoke.spec.ts`; mở rộng checkout, auth, service flow |
+| L2 | **OpenAPI / Swagger** | Không có API docs tự động |
+| L3 | **Zalo OA API** | Kênh SME Việt Nam — chưa có integration |
+| L4 | **Remove Stripe / PHP payment legacy** | Env vars + deps còn sót, không wired |
+| L5 | **Deduplicate docker-compose** | 5+ compose files; gom profiles |
+| L6 | **Drop `cart_items` table** | Legacy DB cart; client dùng localStorage — có thể deprecate schema |
+| L7 | **`/api/cart` REST API** | Storage methods tồn tại trong `server/storage.ts` nhưng **không register route** — chỉ implement nếu cần sync cart đa thiết bị |
+
+### 15.4. UI Package (`SPEC_UI_IMPROVEMENT_v1.md`)
+
+| # | Feature | Status | Ghi chú |
+|---|---|---|---|
+| U1 | Inter font system | ✅ Done | `index.css`, `tailwind.config.ts` |
+| U2 | Button gradient/soft variants | ✅ Done | `button.tsx` |
+| U3 | Skeleton shimmer, card-glass CSS | ✅ Done | `index.css`, `software-grid.tsx` |
+| U4 | PageHero wave divider | ✅ Done | `page-hero.tsx` |
+| U5 | Footer gradient + amber hover | ✅ Done | `footer.tsx` |
+| U6 | Page transition `animate-fade-in` | ✅ Done | `App.tsx` Router wrapper |
+| U7 | **Header glassmorphism** | ❌ Not done | Vẫn `gradient-slate`; product decision giữ dark header |
+| U8 | **HeroSection home sync** | 🟡 Partial | `HeroSection.tsx` chưa đồng bộ hết wave/CTA spec |
+| U9 | **CSS cleanup** | 🟡 Partial | Animation/utilities cũ trong `index.css` chưa dọn |
+
+### 15.5. Completed Recently (reference)
+
+Các mục sau **đã implement** — không còn trong backlog:
+
+- Unified cart (`useCart` + `GlobalCartSidebar`; xóa `shopping-cart-sidebar`, `checkout-page`, `product-detail-ecommerce`)
+- Portfolio API + edit page (`/api/portfolios`, `/portfolios/edit/:id`)
+- Support tickets API + buyer/seller UI (`/api/support/tickets`, `/support`, `/seller/support`)
+- Pending checkouts persisted to DB (`pending_checkouts`)
+- Payment + auth rate limiting
+- Order items joined in `getOrderById`
+- Phase 4 IT Services core UI (request → quotation → project)
+- Phase 5 GTM core (blog, leads, sitemap, ebook, booking, GA4, behavior popup)
+- Schema.org on course/software detail pages
+- Software SEO utils (`software-utils.ts`)
 
 ---
 
@@ -662,11 +722,12 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 | Metric | Value |
 |---|---|
-| Frontend pages | ~50 |
-| API route modules | 20 |
-| Database tables | 28 |
+| Frontend pages | ~55 |
+| API route modules | 22 |
+| Database tables | 29 (+ `pending_checkouts`) |
 | Active microservices | 3 (email, chat, notification) |
 | Payment gateway | SePay (primary) |
+| Cart source | `localStorage` (`shopping-cart`) — not `cart_items` |
 | Production domain | swhubco.com |
 | Documentation files | ~40 |
 
