@@ -8,7 +8,8 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "list",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:5001",
+    // Dedicated port avoids macOS AirPlay on 5000 and stale manual dev servers on 5001
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:5010",
     trace: "on-first-retry",
   },
   projects: [
@@ -17,8 +18,8 @@ export default defineConfig({
   webServer: process.env.CI
     ? undefined
     : {
-        command: "npm run dev",
-        url: "http://localhost:5001",
+        command: "PORT=5010 npm run dev",
+        url: "http://localhost:5010/health",
         reuseExistingServer: true,
         timeout: 120_000,
       },

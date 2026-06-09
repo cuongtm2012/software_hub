@@ -751,8 +751,10 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | Schema.org markup | ✅ Done | `CourseSchema`, `SoftwareSchema`, `BreadcrumbSchema`, `ArticleSchema` |
 | Chat trigger theo behavior | ✅ Done | `GtmBehaviorTracker` → `ConsultationPopup` |
 | Dashboard lead tracking | ✅ Done | `/admin/leads` |
-| Software SEO admin CMS | ⏳ Open | DB có `seo_*`; chưa có UI admin (courses có) |
-| Default OG image (1200×630 PNG) | ⏳ Open | Hiện dùng `icon-192x192.svg` |
+| Software SEO admin CMS | ✅ Done | `/admin/software-seo` + `PUT /api/admin/software/:id/seo` |
+| Default OG image (1200×630 PNG) | ✅ Done | `client/public/og-default.png` · `npm run generate:og-image` |
+| GA4 embed (C8) | 🟡 Partial | `GET /api/admin/analytics/ga4-traffic` — cần `GA4_PROPERTY_ID` + service account |
+| E2E checkout (L1) | ✅ Done | `tests/e2e/checkout.spec.ts` — auth + webhook signature |
 
 ### 14.7. KPI dự kiến (month 1-3)
 
@@ -781,11 +783,11 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 ### 15.3. Low Priority — DevOps / chất lượng / tương lai
 
+> **Out of scope:** OpenAPI/Swagger và Zalo OA API — không triển khai (quyết định sản phẩm 6/2026).
+
 | # | Feature | Mô tả |
 |---|---|---|
-| L1 | **E2E test coverage** | Chỉ `tests/e2e/smoke.spec.ts`; mở rộng checkout, auth, service flow |
-| L2 | **OpenAPI / Swagger** | Không có API docs tự động |
-| L3 | **Zalo OA API** | Kênh SME Việt Nam — chưa có integration |
+| L1 | **E2E test coverage** | ✅ Done — `smoke.spec.ts` + `checkout.spec.ts` (payOS webhook + checkout UI); mở rộng auth/service payments là nice-to-have |
 | L4 | **Remove Stripe / PHP payment legacy** | ✅ Done — gỡ `stripe` deps; archive PHP payment |
 | L8 | **Remove SePay after H5** | ✅ Done — gỡ `sepay-pg-node`, `sepay.ts`, env templates → `PAYOS_*` |
 | L5 | **Deduplicate docker-compose** | ✅ Done — `docker/COMPOSE.md`; deprecate `prod`/`production` compose |
@@ -803,7 +805,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | A3 | **Route `project-edit-page`** | ✅ Done — `/admin/projects/:id/edit` (+ redirect legacy external-requests) | Medium |
 | A4 | **Consolidate project systems** | ✅ Done — gộp `/admin/projects`; banner phân biệt Dịch vụ IT | Medium |
 | A5 | **Seller `/seller/analytics` route** | ✅ Done — `SellerAnalyticsPage` + route trong `App.tsx` | Medium |
-| A6 | **Admin Analytics depth** | 🟡 Partial — orders + leads timeline (nội bộ); GA4 sessions vẫn link-out | Low |
+| A6 | **Admin Analytics depth** | 🟡 Partial — orders + leads + GA4 embed (khi có service account) | Low |
 | A7 | **Software admin create** | ✅ Done — "Thêm mới" wired (`POST /api/admin/software`); Import CSV không trong scope | Low |
 | A8 | **Support ticket detail view** | ✅ Done — detail Dialog với status/priority | Low |
 | A9 | **Dedupe `/admin` route** | ✅ Done — xóa duplicate trong `App.tsx` | Low |
@@ -822,7 +824,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | C5 | **Orders trong sidebar** | P2 | ✅ Done — `/admin/orders` + API enriched orders |
 | C6 | **User Chat tab trong Users** | P3 | ✅ Done — bỏ mục sidebar riêng |
 | C7 | **Dev Tools gọn** | P2 | ✅ Done — nhóm Dev Tools; Dashboard link → Queues |
-| C8 | **GA4 embedded charts** | P3 | 🟡 Partial — orders + leads timeline charts; GA4 traffic vẫn link-out (cần GA Data API + service account để embed) |
+| C8 | **GA4 embedded charts** | P3 | 🟡 Partial — `ga4-traffic` API + chart 30d; cần `GA4_PROPERTY_ID` + service account |
 
 ### 15.4. UI Package (`SPEC_UI_IMPROVEMENT_v1.md`)
 

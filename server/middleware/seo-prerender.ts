@@ -27,7 +27,7 @@ function buildHtml(opts: {
   jsonLd?: Record<string, unknown>;
   bodyText?: string;
 }): string {
-  const image = opts.ogImage || `${SITE_URL}/icon-192x192.svg`;
+  const image = opts.ogImage || `${SITE_URL}/og-default.png`;
   const jsonLdBlock = opts.jsonLd
     ? `<script type="application/ld+json">${JSON.stringify(opts.jsonLd)}</script>`
     : "";

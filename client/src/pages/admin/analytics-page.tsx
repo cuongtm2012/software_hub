@@ -39,6 +39,9 @@ const chartConfig = {
   count: { label: "Số lượng", color: "#004080" },
   revenue: { label: "Doanh thu", color: "#0066cc" },
   leads: { label: "Leads", color: "#059669" },
+  sessions: { label: "Sessions", color: "#7c3aed" },
+  users: { label: "Users", color: "#2563eb" },
+  pageViews: { label: "Page views", color: "#059669" },
 };
 
 export default function AdminAnalyticsPage() {
@@ -99,6 +102,20 @@ export default function AdminAnalyticsPage() {
     },
   });
 
+  const { data: ga4Data, isLoading: ga4Loading } = useQuery<{
+    configured: boolean;
+    totals?: { sessions: number; users: number; pageViews: number };
+    timeline?: { date: string; sessions: number; users: number; pageViews: number }[];
+    error?: string;
+  }>({
+    queryKey: ["/api/admin/analytics/ga4-traffic"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/analytics/ga4-traffic?days=30");
+      return res.json();
+    },
+    retry: false,
+  });
+
   const { data: ticketsData, isLoading: ticketsLoading } = useQuery<{ tickets: unknown[] }>({
     queryKey: ["/api/support/tickets", "analytics"],
     queryFn: async () => {
@@ -139,6 +156,15 @@ export default function AdminAnalyticsPage() {
   const leadsTimelineChart = useMemo(() => {
     return leadsTimelineData?.timeline ?? [];
   }, [leadsTimelineData]);
+
+  const ga4TimelineChart = useMemo(() => {
+    return (ga4Data?.timeline ?? []).map((row) => ({
+      date: row.date.slice(5),
+      sessions: row.sessions,
+      users: row.users,
+      pageViews: row.pageViews,
+    }));
+  }, [ga4Data]);
 
   const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
 
@@ -294,31 +320,36 @@ export default function AdminAnalyticsPage() {
             </SectionPanel>
           </div>
 
-          {/* GA4 note */}
+          {/* GA4 traffic */}
           <SectionPanel
             title="Google Analytics 4"
-            subtitle="Traffic và hành vi người dùng trên production"
+            subtitle="Traffic 30 ngày — embed qua GA4 Data API (khi đã cấu hình service account)"
             className="mt-6"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div>
                 {gaId ? (
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="font-mono text-xs">
                       {gaId}
                     </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      Tracking đang bật qua gtag trên SPA
-                    </span>
+                    <span className="text-sm text-muted-foreground">gtag SPA tracking</span>
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Chưa cấu hình <code className="text-xs">VITE_GA_MEASUREMENT_ID</code> — thêm vào env để bật GA4.
+                    Chưa có <code className="text-xs">VITE_GA_MEASUREMENT_ID</code>
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-2">
-                  Báo cáo chi tiết (sessions, bounce rate, top pages) xem trên Google Analytics dashboard.
-                </p>
+                {!ga4Data?.configured && !ga4Loading && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Để embed chart: set <code className="text-xs">GA4_PROPERTY_ID</code>,{" "}
+                    <code className="text-xs">GA4_CLIENT_EMAIL</code>,{" "}
+                    <code className="text-xs">GA4_PRIVATE_KEY</code> (service account Analytics Viewer).
+                  </p>
+                )}
+                {ga4Data?.error && (
+                  <p className="text-xs text-amber-700 mt-2">{ga4Data.error}</p>
+                )}
               </div>
               {gaId && (
                 <Button variant="outline" size="sm" asChild>
@@ -333,6 +364,40 @@ export default function AdminAnalyticsPage() {
                 </Button>
               )}
             </div>
+
+            {ga4Loading ? (
+              <Skeleton className="h-64 w-full rounded-lg" />
+            ) : ga4Data?.configured && ga4TimelineChart.length > 0 ? (
+              <>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="rounded-lg border p-3 bg-violet-50/50">
+                    <p className="text-xs text-muted-foreground">Sessions (30d)</p>
+                    <p className="text-xl font-bold tabular-nums">{ga4Data.totals?.sessions ?? 0}</p>
+                  </div>
+                  <div className="rounded-lg border p-3 bg-blue-50/50">
+                    <p className="text-xs text-muted-foreground">Users (30d)</p>
+                    <p className="text-xl font-bold tabular-nums">{ga4Data.totals?.users ?? 0}</p>
+                  </div>
+                  <div className="rounded-lg border p-3 bg-emerald-50/50">
+                    <p className="text-xs text-muted-foreground">Page views (30d)</p>
+                    <p className="text-xl font-bold tabular-nums">{ga4Data.totals?.pageViews ?? 0}</p>
+                  </div>
+                </div>
+                <ChartContainer config={chartConfig} className="h-64 w-full">
+                  <BarChart data={ga4TimelineChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="sessions" fill="var(--color-sessions)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                Chưa có dữ liệu GA4 embed — cấu hình service account hoặc dùng nút Mở GA4.
+              </p>
+            )}
           </SectionPanel>
         </DashboardShell>
       </div>

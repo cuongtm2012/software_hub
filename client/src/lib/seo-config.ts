@@ -19,7 +19,7 @@ export function absoluteUrl(path: string): string {
 }
 
 export function defaultOgImage(): string {
-  return absoluteUrl("/icon-192x192.svg");
+  return absoluteUrl("/og-default.png");
 }
 
 export const LEVEL_SEO_LABEL: Record<string, string> = {

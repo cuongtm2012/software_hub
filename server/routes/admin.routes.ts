@@ -288,6 +288,36 @@ router.post("/software", adminMiddleware, async (req: Request, res: Response, ne
   }
 });
 
+// Update software SEO fields (admin)
+router.put("/software/:id/seo", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const softwareId = parseInt(req.params.id, 10);
+    const { seo_description, seo_content, slug } = req.body as {
+      seo_description?: string;
+      seo_content?: string;
+      slug?: string;
+    };
+
+    const updates: Record<string, string | null> = {};
+    if (seo_description !== undefined) updates.seo_description = seo_description || null;
+    if (seo_content !== undefined) updates.seo_content = seo_content || null;
+    if (slug !== undefined) updates.slug = slug.trim() || null;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No SEO fields to update" });
+    }
+
+    const software = await storage.updateSoftwareAdmin(softwareId, updates);
+    if (!software) {
+      return res.status(404).json({ message: "Software not found" });
+    }
+
+    res.json(software);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Update software (admin)
 router.put("/software/:id", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -650,6 +680,17 @@ router.get("/analytics/leads-timeline", adminMiddleware, async (_req: Request, r
   try {
     const timeline = await storage.getLeadsTimeline(6);
     res.json({ timeline });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/analytics/ga4-traffic", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { fetchGa4TrafficSummary } = await import("../lib/ga4-reporting.js");
+    const days = Math.min(90, Math.max(7, parseInt(String(req.query.days || "30"), 10) || 30));
+    const summary = await fetchGa4TrafficSummary(days);
+    res.json(summary);
   } catch (error) {
     next(error);
   }

@@ -83,6 +83,7 @@ import { SellerApprovalPage } from "@/pages/admin/seller-approval-page";
 import BlogManagementPage from "@/pages/admin/blog-management-page";
 import LeadsManagementPage from "@/pages/admin/leads-management-page";
 import CoursesManagementPage from "@/pages/admin/courses-management-page";
+import SoftwareSeoManagementPage from "@/pages/admin/software-seo-management-page";
 import AdminSupportTicketsPage from "@/pages/admin/support-tickets-page";
 import AdminAnalyticsPage from "@/pages/admin/analytics-page";
 import AdminProductsPage from "@/pages/admin/products-page";
@@ -156,6 +157,7 @@ function Router() {
       <ProtectedRoute path="/admin/blog" component={BlogManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/leads" component={LeadsManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/courses" component={CoursesManagementPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/software-seo" component={SoftwareSeoManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/support-tickets" component={AdminSupportTicketsPage} roles={['admin']} />
       <ProtectedRoute path="/admin/analytics" component={AdminAnalyticsPage} roles={['admin']} />
       <ProtectedRoute path="/admin/service-requests" component={AdminServiceRequestsPage} roles={['admin']} />

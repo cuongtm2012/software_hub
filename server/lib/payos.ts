@@ -94,6 +94,7 @@ export function verifyWebhookDataSignature(
   data: Record<string, unknown>,
   signature: string,
 ): boolean {
+  if (!isPayosConfigured()) return false;
   const { checksumKey } = getCredentials();
   const sorted = sortObjDataByKey(data);
   const query = convertObjToQueryStr(sorted);

@@ -23,6 +23,7 @@ import {
     Wrench,
     Headphones,
     Store,
+    Monitor,
 } from "lucide-react";
 import {
     Sidebar,
@@ -75,6 +76,7 @@ const adminMenuGroups: MenuGroup[] = [
         items: [
             { title: "Blog", url: "/admin/blog", icon: FileText },
             { title: "Khóa học (SEO)", url: "/admin/courses", icon: BookOpen },
+            { title: "Phần mềm (SEO)", url: "/admin/software-seo", icon: Monitor },
             { title: "Leads", url: "/admin/leads", icon: Mail },
         ],
     },
