@@ -36,7 +36,10 @@ set_secret() {
 }
 
 echo "=== SSH secrets ==="
-SSH_KEY_FILE="${SSH_KEY_FILE:-$HOME/.ssh/id_ed25519}"
+SSH_KEY_FILE="${SSH_KEY_FILE:-$HOME/.ssh/id_rsa}"
+if [[ ! -f "$SSH_KEY_FILE" && -f "$HOME/.ssh/id_ed25519" ]]; then
+  SSH_KEY_FILE="$HOME/.ssh/id_ed25519"
+fi
 if [[ -f "$SSH_KEY_FILE" ]]; then
   gh secret set SSH_KEY < "$SSH_KEY_FILE"
   echo "✓ SSH_KEY (from $SSH_KEY_FILE)"
