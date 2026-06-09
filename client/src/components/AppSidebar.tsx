@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import {
     Home,
     Users,
@@ -16,6 +17,12 @@ import {
     DollarSign,
     Briefcase,
     BookOpen,
+    UserCheck,
+    Mail,
+    FlaskConical,
+    Wrench,
+    Headphones,
+    Store,
 } from "lucide-react";
 import {
     Sidebar,
@@ -32,182 +39,137 @@ import { useLocation } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 
-// Menu items for different roles
-const adminMenuItems = [
+type MenuItem = {
+    title: string;
+    url: string;
+    icon: ComponentType<{ className?: string }>;
+};
+
+type MenuGroup = { label: string; items: MenuItem[] };
+
+const adminMenuGroups: MenuGroup[] = [
     {
-        title: "Dashboard",
-        url: "/admin",
-        icon: Home,
+        label: "Tổng quan",
+        items: [
+            { title: "Bảng điều khiển", url: "/admin", icon: Home },
+            { title: "Phân tích", url: "/admin/analytics", icon: BarChart3 },
+        ],
     },
     {
-        title: "Users",
-        url: "/admin/users",
-        icon: Users,
+        label: "Người dùng",
+        items: [
+            { title: "Người dùng", url: "/admin/users", icon: Users },
+            { title: "Duyệt Seller", url: "/admin/seller-approvals", icon: UserCheck },
+        ],
     },
     {
-        title: "Projects",
-        url: "/admin/projects",
-        icon: Briefcase,
+        label: "Marketplace",
+        items: [
+            { title: "Phần mềm (catalog)", url: "/admin/software", icon: Package },
+            { title: "Sản phẩm MP", url: "/admin/products", icon: Store },
+            { title: "Đơn hàng", url: "/admin/orders", icon: ShoppingCart },
+        ],
     },
     {
-        title: "Software",
-        url: "/admin/software",
-        icon: Package,
+        label: "Nội dung & GTM",
+        items: [
+            { title: "Blog", url: "/admin/blog", icon: FileText },
+            { title: "Khóa học (SEO)", url: "/admin/courses", icon: BookOpen },
+            { title: "Leads", url: "/admin/leads", icon: Mail },
+        ],
     },
     {
-        title: "Blog",
-        url: "/admin/blog",
-        icon: FileText,
-    },
-    {
-        title: "Leads",
-        url: "/admin/leads",
-        icon: Users,
-    },
-    {
-        title: "Courses SEO",
-        url: "/admin/courses",
-        icon: BookOpen,
-    },
-    {
-        title: "Support",
-        url: "/admin/support-tickets",
-        icon: MessageSquare,
-    },
-    {
-        title: "IT Services",
-        url: "/admin/service-requests",
-        icon: Briefcase,
-    },
-    {
-        title: "Analytics",
-        url: "/admin/analytics",
-        icon: BarChart3,
-    },
-    {
-        title: "Notifications",
-        url: "/admin/push-notifications",
-        icon: Bell,
-    },
-    {
-        title: "Queues",
-        url: "/admin/queues",
-        icon: ListChecks,
+        label: "Vận hành",
+        items: [
+            { title: "Yêu cầu dự án", url: "/admin/projects", icon: Briefcase },
+            { title: "Dịch vụ IT", url: "/admin/service-requests", icon: Wrench },
+            { title: "Support", url: "/admin/support-tickets", icon: Headphones },
+        ],
     },
 ];
 
-const sellerMenuItems = [
-    {
-        title: "Dashboard",
-        url: "/seller",
-        icon: Home,
-    },
-    {
-        title: "My Products",
-        url: "/marketplace/seller",
-        icon: Package,
-    },
-    {
-        title: "Orders",
-        url: "/seller/orders",
-        icon: ShoppingCart,
-    },
-    {
-        title: "Analytics",
-        url: "/seller/analytics",
-        icon: BarChart3,
-    },
-    {
-        title: "Messages",
-        url: "/chat",
-        icon: MessageSquare,
-    },
+const adminDevGroup: MenuGroup = {
+    label: "Dev Tools",
+    items: [
+        { title: "Email Tests", url: "/admin/email-tests", icon: Mail },
+        { title: "E2E Tests", url: "/admin/end-to-end-tests", icon: FlaskConical },
+        { title: "Push Tests", url: "/admin/push-notifications", icon: Bell },
+        { title: "Hàng đợi", url: "/admin/queues", icon: ListChecks },
+    ],
+};
+
+const sellerMenuItems: MenuItem[] = [
+    { title: "Dashboard", url: "/seller", icon: Home },
+    { title: "Sản phẩm", url: "/marketplace/seller", icon: Package },
+    { title: "Đơn hàng", url: "/seller/orders", icon: ShoppingCart },
+    { title: "Phân tích", url: "/seller/analytics", icon: BarChart3 },
 ];
 
-const buyerMenuItems = [
-    {
-        title: "Dashboard",
-        url: "/buyer",
-        icon: Home,
-    },
-    {
-        title: "Marketplace",
-        url: "/marketplace",
-        icon: Package,
-    },
-    {
-        title: "My Orders",
-        url: "/buyer/orders",
-        icon: ShoppingCart,
-    },
-    {
-        title: "Favorites",
-        url: "/buyer/favorites",
-        icon: Heart,
-    },
-    {
-        title: "Downloads",
-        url: "/buyer/downloads",
-        icon: Download,
-    },
-    {
-        title: "Reviews",
-        url: "/buyer/reviews",
-        icon: Star,
-    },
+const buyerMenuItems: MenuItem[] = [
+    { title: "Dashboard", url: "/buyer", icon: Home },
+    { title: "Marketplace", url: "/marketplace", icon: Package },
+    { title: "Đơn hàng", url: "/buyer/orders", icon: ShoppingCart },
+    { title: "Yêu thích", url: "/buyer/favorites", icon: Heart },
+    { title: "Tải xuống", url: "/buyer/downloads", icon: Download },
+    { title: "Đánh giá", url: "/buyer/reviews", icon: Star },
 ];
 
-const commonMenuItems = [
-    {
-        title: "Profile",
-        url: "/profile",
-        icon: Settings,
-    },
+const commonMenuItems: MenuItem[] = [
+    { title: "Hồ sơ", url: "/profile", icon: Settings },
 ];
+
+function isMenuActive(location: string, url: string): boolean {
+    if (url === "/admin" || url === "/seller" || url === "/buyer") {
+        return location === url;
+    }
+    return location === url || location.startsWith(url + "/");
+}
+
+function MenuGroupSection({ group, location }: { group: MenuGroup; location: string }) {
+    return (
+        <SidebarGroup>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+                <SidebarMenu>
+                    {group.items.map((item) => (
+                        <SidebarMenuItem key={item.url}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isMenuActive(location, item.url)}
+                            >
+                                <a href={item.url}>
+                                    <item.icon className="w-4 h-4" />
+                                    <span>{item.title}</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+            </SidebarGroupContent>
+        </SidebarGroup>
+    );
+}
 
 export function AppSidebar() {
     const [location] = useLocation();
     const { user } = useAuth();
 
-    // Determine menu items based on user role
-    const getMenuItems = () => {
-        if (!user) return [];
-
-        switch (user.role) {
-            case "admin":
-                return [...adminMenuItems, ...commonMenuItems];
-            case "seller":
-                return [...sellerMenuItems, ...commonMenuItems];
-            case "buyer":
-            case "user":
-                return [...buyerMenuItems, ...commonMenuItems];
-            default:
-                return commonMenuItems;
-        }
-    };
-
-    const menuItems = getMenuItems();
-
-    // Get role display name
     const getRoleDisplay = () => {
         if (!user) return "User";
         switch (user.role) {
-            case "admin":
-                return "Administrator";
-            case "seller":
-                return "Seller";
+            case "admin": return "Quản trị viên";
+            case "seller": return "Seller";
             case "buyer":
-            case "user":
-                return "Buyer";
-            default:
-                return "User";
+            case "user": return "Buyer";
+            default: return "User";
         }
     };
+
+    if (!user) return null;
 
     return (
         <Sidebar>
             <SidebarContent>
-                {/* Logo */}
                 <div className="px-6 py-6 border-b">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
@@ -220,91 +182,63 @@ export function AppSidebar() {
                     </div>
                 </div>
 
-                {/* Navigation */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {menuItems.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={location === item.url}
-                                        data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-                                    >
-                                        <a href={item.url}>
-                                            <item.icon className="w-4 h-4" />
-                                            <span>{item.title}</span>
-                                        </a>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                {/* Quick Stats (for sellers and buyers) */}
-                {user && (user.role === "seller" || user.role === "buyer" || user.role === "user") && (
+                {user.role === "admin" ? (
+                    <>
+                        {adminMenuGroups.map((g) => (
+                            <MenuGroupSection key={g.label} group={g} location={location} />
+                        ))}
+                        <MenuGroupSection group={adminDevGroup} location={location} />
+                        <MenuGroupSection
+                            group={{ label: "Tài khoản", items: commonMenuItems }}
+                            location={location}
+                        />
+                    </>
+                ) : (
                     <SidebarGroup>
-                        <SidebarGroupLabel>Quick Stats</SidebarGroupLabel>
+                        <SidebarGroupLabel>Điều hướng</SidebarGroupLabel>
                         <SidebarGroupContent>
-                            <div className="px-4 py-2 space-y-2">
-                                {user.role === "seller" && (
-                                    <>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-muted-foreground">Products</span>
-                                            <span className="font-medium">-</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-muted-foreground">Revenue</span>
-                                            <span className="font-medium">$-</span>
-                                        </div>
-                                    </>
-                                )}
-                                {(user.role === "buyer" || user.role === "user") && (
-                                    <>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-muted-foreground">Purchases</span>
-                                            <span className="font-medium">-</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-muted-foreground">Favorites</span>
-                                            <span className="font-medium">-</span>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                            <SidebarMenu>
+                                {(user.role === "seller"
+                                    ? [...sellerMenuItems, ...commonMenuItems]
+                                    : user.role === "buyer" || user.role === "user"
+                                      ? [...buyerMenuItems, ...commonMenuItems]
+                                      : commonMenuItems
+                                ).map((item) => (
+                                    <SidebarMenuItem key={item.url}>
+                                        <SidebarMenuButton asChild isActive={isMenuActive(location, item.url)}>
+                                            <a href={item.url}>
+                                                <item.icon className="w-4 h-4" />
+                                                <span>{item.title}</span>
+                                            </a>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                            </SidebarMenu>
                         </SidebarGroupContent>
                     </SidebarGroup>
                 )}
             </SidebarContent>
 
-            {/* User Footer */}
             <SidebarFooter>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <div className="flex items-center gap-3 px-4 py-3 border-t">
                             <Avatar className="w-9 h-9">
-                                <AvatarImage src={undefined} alt={user?.name || "User"} />
                                 <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                                    {user?.name?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "U"}
+                                    {user?.name?.substring(0, 2).toUpperCase() || "U"}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                    {user?.name || user?.email || "User"}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                    {user?.email || ""}
-                                </p>
+                                <p className="text-sm font-medium truncate">{user?.name || user?.email}</p>
+                                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                             </div>
                         </div>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild data-testid="button-logout">
+                        <SidebarMenuButton asChild>
                             <a href="/api/logout">
                                 <LogOut className="w-4 h-4" />
-                                <span>Logout</span>
+                                <span>Đăng xuất</span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

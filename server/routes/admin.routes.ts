@@ -443,20 +443,29 @@ router.get("/external-requests/stats", adminMiddleware, async (req: Request, res
   }
 });
 
-// Update external request (admin fields: status, priority, notes)
+// Get single external request
+router.get("/external-requests/:id", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const request = await storage.getExternalRequestById(parseInt(id));
+    if (!request) {
+      return res.status(404).json({ message: "External request not found" });
+    }
+    res.json(request);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update external request
 router.put("/external-requests/:id", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { status, priority, admin_notes } = req.body;
-
-    const updateData: any = {};
-    if (status) updateData.status = status;
-    if (priority) updateData.priority = priority;
-    if (admin_notes) updateData.admin_notes = admin_notes;
-
-    // Use the external request storage module
     const { externalRequestStorage } = await import('../storage/external-request.storage');
-    const updatedRequest = await externalRequestStorage.updateExternalRequest(parseInt(id), updateData);
+    const updatedRequest = await externalRequestStorage.updateExternalRequest(parseInt(id), req.body);
+    if (!updatedRequest) {
+      return res.status(404).json({ message: "External request not found" });
+    }
     res.json(updatedRequest);
   } catch (error) {
     next(error);
@@ -521,15 +530,19 @@ router.put("/external-requests/:id/assign", adminMiddleware, async (req: Request
 
 // ============ Project Management ============
 
-// GET /api/admin/projects - Get all projects with filters
+// GET /api/admin/projects - Unified project requests (external_requests)
 router.get("/projects", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, search } = req.query;
-    const projects = await storage.getAdminProjects({
+    const { status, search, source, priority, page, limit } = req.query;
+    const result = await storage.getAdminProjects({
       status: status as string,
       search: search as string,
+      source: source as string,
+      priority: priority as string,
+      page: page ? parseInt(page as string) : 1,
+      limit: limit ? parseInt(limit as string) : 50,
     });
-    res.json({ projects });
+    res.json(result);
   } catch (error) {
     next(error);
   }
@@ -569,6 +582,65 @@ router.patch("/projects/:id", adminMiddleware, async (req: Request, res: Respons
 
     const updated = await storage.updateProject(projectId, updates);
     res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============ Marketplace Products (admin moderation) ============
+
+router.get("/products", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { status, search, page, limit } = req.query;
+    const result = await storage.getAdminProducts({
+      status: status as string,
+      search: search as string,
+      page: page ? parseInt(page as string) : 1,
+      limit: limit ? parseInt(limit as string) : 20,
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/products/:id/status", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { status } = req.body;
+    if (!["draft", "pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    const product = await storage.updateProductStatusAdmin(parseInt(req.params.id), status);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    res.json({ product });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============ Marketplace Orders (admin) ============
+
+router.get("/orders", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { status, search, page, limit } = req.query;
+    const limitNum = limit ? parseInt(limit as string, 10) : 50;
+    const pageNum = page ? parseInt(page as string, 10) : 1;
+    const result = await storage.getEnrichedOrders({
+      status: status as string,
+      search: search as string,
+      limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/analytics/orders-timeline", adminMiddleware, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const timeline = await storage.getOrdersTimeline(6);
+    res.json({ timeline });
   } catch (error) {
     next(error);
   }
@@ -624,6 +696,10 @@ router.get("/softwares", adminMiddleware, async (req: Request, res: Response, ne
       filtered = filtered.filter((s: any) => s.license === license);
     }
 
+    if (type && type !== 'all') {
+      filtered = filtered.filter((s: any) => s.type === type);
+    }
+
     if (dateFrom) {
       const fromDate = new Date(dateFrom as string);
       filtered = filtered.filter((s: any) => new Date(s.created_at) >= fromDate);
@@ -644,7 +720,13 @@ router.get("/softwares", adminMiddleware, async (req: Request, res: Response, ne
       total,
       page: pageNum,
       limit: limitNum,
-      totalPages: Math.ceil(total / limitNum)
+      totalPages: Math.ceil(total / limitNum),
+      stats: {
+        total: allSoftware.length,
+        approved: allSoftware.filter((s: any) => s.status === "approved").length,
+        pending: allSoftware.filter((s: any) => s.status === "pending").length,
+        rejected: allSoftware.filter((s: any) => s.status === "rejected").length,
+      },
     });
   } catch (error) {
     console.error('Error fetching admin software:', error);

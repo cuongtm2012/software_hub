@@ -6,9 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,27 +52,18 @@ export default function ProjectEditPage() {
 
   // Fetch project data
   const { data: project, isLoading, error } = useQuery({
-    queryKey: [`/api/external-requests/${id}`],
+    queryKey: [`/api/admin/external-requests/${id}`],
     queryFn: async () => {
-      const response = await fetch(`/api/external-requests/${id}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch project details');
-      }
+      const response = await apiRequest("GET", `/api/admin/external-requests/${id}`);
       return response.json();
     },
     enabled: !!id,
   });
 
-  // Fetch developers for assignment dropdown
   const { data: developers } = useQuery({
     queryKey: ['/api/admin/users', 'developer'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/users?role=developer', {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch developers');
+      const response = await apiRequest("GET", "/api/admin/users?role=developer");
       return response.json();
     },
   });
@@ -136,11 +125,7 @@ export default function ProjectEditPage() {
         technology_stack: techStackInput ? techStackInput.split(',').map(s => s.trim()).filter(s => s) : [],
       };
 
-      const response = await apiRequest("PUT", `/api/external-requests/${id}`, updateData);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update project");
-      }
+      const response = await apiRequest("PUT", `/api/admin/external-requests/${id}`, updateData);
       return response.json();
     },
     onSuccess: () => {
@@ -148,9 +133,9 @@ export default function ProjectEditPage() {
         title: "Success",
         description: "Project updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/external-requests/${id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/external-requests/${id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/external-requests"] });
-      navigate('/admin');
+      navigate('/admin/projects');
     },
     onError: (error: any) => {
       toast({
@@ -167,57 +152,40 @@ export default function ProjectEditPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
-        <Header />
-        <main className="flex-grow container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <AdminLayout>
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
+        </div>
+      </AdminLayout>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
-        <Header />
-        <main className="flex-grow container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="text-center py-20">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Not Found</h1>
-            <p className="text-gray-600 mb-6">The project you're looking for doesn't exist.</p>
-            <Button onClick={() => navigate('/admin')} className="bg-[#004080] hover:bg-[#003366]">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Admin Dashboard
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <AdminLayout>
+        <div className="text-center py-20 max-w-4xl mx-auto px-4">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Not Found</h1>
+          <p className="text-gray-600 mb-6">The project you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/admin/projects')} className="bg-[#004080] hover:bg-[#003366]">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Về danh sách dự án
+          </Button>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
-      <Header />
-      <PageBreadcrumb
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Admin Dashboard", href: "/admin" },
-          { label: "Edit Project", isCurrentPage: true },
-        ]}
-      />
-      
-      <main className="flex-grow container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <AdminLayout>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('/admin/external-requests')}
             className="text-[#004080] hover:bg-[#f0f7ff]"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin Dashboard
+            Về danh sách dự án
           </Button>
         </div>
 
@@ -542,7 +510,7 @@ export default function ProjectEditPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate('/admin')}
+                    onClick={() => navigate('/admin/external-requests')}
                   >
                     Cancel
                   </Button>
@@ -551,9 +519,7 @@ export default function ProjectEditPage() {
             </Form>
           </CardContent>
         </Card>
-      </main>
-      
-      <Footer />
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

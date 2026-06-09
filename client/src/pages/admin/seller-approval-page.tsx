@@ -3,8 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { AdminLayout } from "@/components/AdminLayout";
 import {
   Card,
   CardContent,
@@ -127,21 +126,18 @@ export function SellerApprovalPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">Loading seller applications...</div>
+      <AdminLayout>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          Loading seller applications...
         </div>
-        <Footer />
-      </div>
+      </AdminLayout>
     );
   }
 
   const sellers = sellersData?.sellers || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <AdminLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Seller Registration Approval</h1>
@@ -354,7 +350,6 @@ export function SellerApprovalPage() {
           </CardContent>
         </Card>
       </div>
-      <Footer />
-    </div>
+    </AdminLayout>
   );
 }

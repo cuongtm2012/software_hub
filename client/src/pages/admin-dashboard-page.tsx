@@ -4,7 +4,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { AdminLayout } from "@/components/AdminLayout";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { MetricCard } from "@/components/dashboard/metric-card";
 import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { SectionPanel } from "@/components/design-system/section-panel";
 import { formatVnd } from "@/components/dashboard/format";
@@ -14,9 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Users,
   Package,
-  ShoppingCart,
-  DollarSign,
-  Bell,
   Briefcase,
   LayoutDashboard,
   RefreshCw,
@@ -128,45 +124,24 @@ export default function AdminDashboardPage() {
           icon={LayoutDashboard}
           onRefresh={handleRefresh}
         >
-          {/* Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <SectionPanel
+            title="Tổng quan nhanh"
+            subtitle="Metrics chi tiết và biểu đồ GTM tại trang Phân tích"
+            action={
+              <Button variant="outline" size="sm" asChild>
+                <a href="/admin/analytics">Xem Phân tích →</a>
+              </Button>
+            }
+          >
             {statsLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 w-full rounded-xl" />
-              ))
+              <Skeleton className="h-16 w-full rounded-lg" />
             ) : (
-              <>
-                <MetricCard
-                  label="Người dùng"
-                  value={stats?.totalUsers ?? 0}
-                  icon={Users}
-                  trend={stats?.usersTrend}
-                  hint="Tài khoản đã đăng ký"
-                />
-                <MetricCard
-                  label="Phần mềm"
-                  value={stats?.totalSoftware ?? 0}
-                  icon={Package}
-                  trend={stats?.softwareTrend}
-                  hint="Sản phẩm trên marketplace"
-                />
-                <MetricCard
-                  label="Đơn hàng"
-                  value={stats?.totalOrders ?? 0}
-                  icon={ShoppingCart}
-                  trend={stats?.ordersTrend}
-                  hint="Đơn hoàn tất"
-                />
-                <MetricCard
-                  label="Doanh thu"
-                  value={formatVnd(stats?.totalRevenue ?? 0)}
-                  icon={DollarSign}
-                  trend={stats?.revenueTrend}
-                  hint="Tổng tích lũy"
-                />
-              </>
+              <p className="text-sm text-muted-foreground">
+                {stats?.totalUsers ?? 0} người dùng · {stats?.totalSoftware ?? 0} phần mềm ·{" "}
+                {stats?.totalOrders ?? 0} đơn hàng · {formatVnd(stats?.totalRevenue ?? 0)} doanh thu
+              </p>
             )}
-          </div>
+          </SectionPanel>
 
           <SectionPanel title="Thao tác nhanh" subtitle="Truy cập nhanh các khu vực quản trị">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -193,10 +168,31 @@ export default function AdminDashboardPage() {
               />
               <QuickLinkCard
                 href="/admin/projects"
-                title="Dự án"
-                description="Theo dõi dự án khách hàng"
+                title="Yêu cầu dự án"
+                description="Inquiry từ form công khai & user"
                 icon={Briefcase}
                 accent="orange"
+              />
+              <QuickLinkCard
+                href="/admin/service-requests"
+                title="Dịch vụ IT"
+                description="Báo giá và triển khai dịch vụ"
+                icon={Briefcase}
+                accent="orange"
+              />
+              <QuickLinkCard
+                href="/admin/support-tickets"
+                title="Support"
+                description="Ticket hỗ trợ marketplace"
+                icon={Mail}
+                accent="green"
+              />
+              <QuickLinkCard
+                href="/admin/analytics"
+                title="Phân tích"
+                description="GTM funnel và biểu đồ"
+                icon={Users}
+                accent="blue"
               />
               <QuickLinkCard
                 href="/admin/blog"
@@ -212,30 +208,21 @@ export default function AdminDashboardPage() {
                 icon={UserCheck}
                 accent="blue"
               />
-              <QuickLinkCard
-                href="/admin/push-notifications"
-                title="Thông báo đẩy"
-                description="Gửi push tới người dùng"
-                icon={Bell}
-                accent="slate"
-              />
-              <QuickLinkCard
-                href="/admin/queues"
-                title="Hàng đợi"
-                description="Retry và xóa job thất bại"
-                icon={RefreshCw}
-                accent="slate"
-              />
             </div>
           </SectionPanel>
 
           <SectionPanel
             title="Hàng đợi xử lý"
-            subtitle="Email xác thực, reset mật khẩu, push notification"
+            subtitle="Tóm tắt — chi tiết tại Dev Tools → Hàng đợi"
             action={
-              <Button variant="outline" size="sm" onClick={() => refetchQueue()}>
-                Làm mới
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/admin/queues">Mở Queues →</a>
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => refetchQueue()}>
+                  Làm mới
+                </Button>
+              </div>
             }
           >
               {queueLoading ? (

@@ -8,22 +8,30 @@ import { isAuthenticated, adminMiddleware } from "../middleware/auth.middleware"
 
 const router = Router();
 
-// Get orders based on user role
+// Get orders based on user role (enriched with product/seller details)
 router.get("/", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let orders;
-    
-    if (req.user?.role === 'admin') {
-      orders = await storage.getAllOrders();
-    } else if (req.user?.role === 'seller') {
-      orders = await storage.getSellerOrders(req.user.id);
-    } else if (req.user?.role === 'buyer') {
-      orders = await storage.getBuyerOrders(req.user.id);
+    const { status, search, limit, offset } = req.query;
+    const params = {
+      status: status as string | undefined,
+      search: search as string | undefined,
+      limit: limit ? parseInt(limit as string, 10) : 50,
+      offset: offset ? parseInt(offset as string, 10) : 0,
+    };
+
+    let result;
+
+    if (req.user?.role === "admin") {
+      result = await storage.getEnrichedOrders(params);
+    } else if (req.user?.role === "seller") {
+      result = await storage.getEnrichedOrders({ ...params, sellerId: req.user.id });
+    } else if (req.user?.role === "buyer" || req.user?.role === "user") {
+      result = await storage.getEnrichedOrders({ ...params, buyerId: req.user.id });
     } else {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
-    
-    res.json(orders);
+
+    res.json(result);
   } catch (error) {
     next(error);
   }

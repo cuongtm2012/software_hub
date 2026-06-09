@@ -209,7 +209,12 @@ export function registerServiceRoutes(app: Express) {
       let requests;
 
       if (req.user?.role === "admin") {
-        requests = await storage.getAllServiceRequests();
+        const { status, priority, search } = req.query;
+        requests = await storage.getEnrichedServiceRequests({
+          status: status as string | undefined,
+          priority: priority as string | undefined,
+          search: search as string | undefined,
+        });
       } else if (CLIENT_ROLES.includes(req.user!.role)) {
         requests = await storage.getClientServiceRequests(req.user!.id);
       } else {
@@ -244,7 +249,18 @@ export function registerServiceRoutes(app: Express) {
         await Promise.all(quotations.map((q) => storage.getServicePaymentsByQuotation(q.id)))
       ).flat();
 
-      res.json({ request: serviceRequest, quotations, projects, payments });
+      const client = await storage.getUser(serviceRequest.client_id);
+
+      res.json({
+        request: {
+          ...serviceRequest,
+          client_name: client?.name ?? "",
+          client_email: client?.email ?? "",
+        },
+        quotations,
+        projects,
+        payments,
+      });
     } catch (error) {
       next(error);
     }

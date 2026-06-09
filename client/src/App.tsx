@@ -80,11 +80,15 @@ import AdminQueuesPage from "@/pages/admin/queues-page";
 import AdminProjectsPage from "@/pages/admin/projects-page";
 import EndToEndTestPage from "@/pages/admin/end-to-end-test-page";
 import { SellerApprovalPage } from "@/pages/admin/seller-approval-page";
-import AdminExternalRequestsPage from "@/pages/admin/external-requests-page";
 import BlogManagementPage from "@/pages/admin/blog-management-page";
 import LeadsManagementPage from "@/pages/admin/leads-management-page";
 import CoursesManagementPage from "@/pages/admin/courses-management-page";
 import AdminSupportTicketsPage from "@/pages/admin/support-tickets-page";
+import AdminAnalyticsPage from "@/pages/admin/analytics-page";
+import AdminProductsPage from "@/pages/admin/products-page";
+import AdminOrdersPage from "@/pages/admin/orders-page";
+import ProjectEditPage from "@/pages/admin/project-edit-page";
+import SellerAnalyticsPage from "@/pages/seller-analytics-page";
 import EbookPage from "@/pages/ebook-page";
 import BookingPage from "@/pages/booking-page";
 import { Analytics } from "@/components/analytics";
@@ -123,6 +127,7 @@ function Router() {
 
       {/* Role-Based Dashboards */}
       <ProtectedRoute path="/seller" component={SellerDashboardPage} roles={['seller']} />
+      <ProtectedRoute path="/seller/analytics" component={SellerAnalyticsPage} roles={['seller', 'admin']} />
       <ProtectedRoute path="/buyer" component={BuyerDashboardPage} roles={['buyer', 'user']} />
       {/* Chat page disabled - use floating chat widget instead */}
       {/* <ProtectedRoute path="/chat" component={ChatPage} /> */}
@@ -132,8 +137,16 @@ function Router() {
       <ProtectedRoute path="/admin/users" component={AdminUsersPage} roles={['admin']} />
       <ProtectedRoute path="/admin/users/chat" component={AdminUsersChatPage} roles={['admin']} />
       <ProtectedRoute path="/admin/software" component={AdminSoftwareManagementPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/projects/:id/edit" component={ProjectEditPage} roles={['admin']} />
       <ProtectedRoute path="/admin/projects" component={AdminProjectsPage} roles={['admin']} />
-      <ProtectedRoute path="/admin/external-requests" component={AdminExternalRequestsPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/products" component={AdminProductsPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/orders" component={AdminOrdersPage} roles={['admin']} />
+      <Route path="/admin/external-requests/:id/edit">
+        {({ id }) => <Redirect to={`/admin/projects/${id}/edit`} />}
+      </Route>
+      <Route path="/admin/external-requests">
+        <Redirect to="/admin/projects?source=public" />
+      </Route>
       <ProtectedRoute path="/admin/seller-approvals" component={SellerApprovalPage} roles={['admin']} />
       <ProtectedRoute path="/admin/email-tests" component={EmailTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/push-notifications" component={PushNotificationTestPage} roles={['admin']} />
@@ -143,6 +156,7 @@ function Router() {
       <ProtectedRoute path="/admin/leads" component={LeadsManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/courses" component={CoursesManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/support-tickets" component={AdminSupportTicketsPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/analytics" component={AdminAnalyticsPage} roles={['admin']} />
       <ProtectedRoute path="/admin/service-requests" component={AdminServiceRequestsPage} roles={['admin']} />
 
 
@@ -370,10 +384,7 @@ function Router() {
       <ProtectedRoute path="/seller/products" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/marketplace/seller/new" roles={['seller', 'admin']} component={MarketplaceSellerNewPage} />
       <ProtectedRoute path="/marketplace/seller/edit/:id" roles={['seller', 'admin']} component={MarketplaceSellerEditPage} />
-      <ProtectedRoute path="/marketplace/orders" roles={['buyer', 'admin']} component={MarketplaceOrdersPage} />
-
-      {/* Admin routes */}
-      <ProtectedRoute path="/admin" component={AdminDashboardPage} roles={['admin']} />
+      <ProtectedRoute path="/marketplace/orders" roles={['buyer', 'user']} component={MarketplaceOrdersPage} />
 
       {/* Test Login */}
       <Route path="/test-login" component={() => {

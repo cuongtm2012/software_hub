@@ -23,6 +23,8 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "seed:demo-users": "tsx scripts/seed-demo-users.ts",
+    "seed:service-requests": "tsx scripts/seed-service-requests.ts",
+    "seed:external-requests": "tsx scripts/seed-external-requests.ts",
     "generate:course-slugs": "tsx scripts/generate-course-slugs.ts",
     "generate:software-slugs": "tsx scripts/generate-software-slugs.ts",
     "seed:software": "tsx scripts/seed-all-software.ts",

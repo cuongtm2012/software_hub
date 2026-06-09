@@ -41,9 +41,7 @@ export default function AdminSoftwareManagementPage() {
 
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8">
-        <SoftwareManagement />
-      </div>
+      <SoftwareManagement />
     </AdminLayout>
   );
 }

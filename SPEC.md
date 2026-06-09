@@ -10,7 +10,7 @@
 
 **Architecture:** Monolith-first — single Express app serves API + built React SPA. Optional microservices (email, chat, notification) run under PM2. Primary database, auth, and file storage run on **Supabase** (managed PostgreSQL). Redis + MongoDB run locally on VPS via Docker for queue/chat.
 
-**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM shipped; H1–H4 and M1–M6 implemented locally — backlog còn H5 (ops) và low-priority items.
+**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped; backlog còn H5 (ops), admin polish (§15.6), và low-priority items.
 
 ---
 
@@ -268,7 +268,7 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/dashboard` | DashboardPage | Protected |
 | `/buyer` | BuyerDashboardPage | buyer, user |
 | `/seller/*` | Seller pages | seller, admin |
-| `/admin/*` | Admin pages | admin |
+| `/admin/*` | Admin dashboard (17 routes) | admin — chi tiết §5.5 |
 | `/test-login` | TestLoginPage | Public |
 
 ### 5.2. Design System (`client/src/components/design-system/`)
@@ -300,7 +300,62 @@ Refactored dashboard architecture:
 - `FloatingChatButton` — real-time chat widget
 - `Pagination`, `StarRating`, `Breadcrumb`, `Stepper`
 - `SearchWithAutocomplete` — global search
-- 50+ shadcn/ui components
+
+### 5.5. Admin Dashboard (`/admin/*`)
+
+**Shell:** `ProtectedRoute` (`roles: admin`) + `AdminLayout` (`AppSidebar` shadcn) cho **tất cả** trang admin.
+
+**Sidebar (`AppSidebar.tsx`):** Nhóm tiếng Việt — Tổng quan · Người dùng · Marketplace · Nội dung & GTM · Vận hành · Dev Tools · Tài khoản.
+
+#### Page inventory (cập nhật 6/2026 — sau consolidation)
+
+| Route | Page | Sidebar | Mô tả |
+|---|---|---|---|
+| `/admin` | AdminDashboardPage | Tổng quan | Quick links + queue tóm tắt (metrics → `/admin/analytics`) |
+| `/admin/analytics` | AdminAnalyticsPage | Tổng quan | Platform metrics, GTM bar chart, GA4 link-out |
+| `/admin/users` | AdminUsersPage | Người dùng | Tab Danh sách + Chat (`UsersChatPanel`) |
+| `/admin/users/chat` | redirect | — | → `/admin/users?tab=chat` |
+| `/admin/seller-approvals` | SellerApprovalPage | Người dùng | Duyệt seller |
+| `/admin/software` | AdminSoftwareManagementPage | Marketplace | Catalog `softwares` (miễn phí) |
+| `/admin/products` | AdminProductsPage | Marketplace | Duyệt `products` marketplace (`PATCH status`) |
+| `/marketplace/orders` | MarketplaceOrdersPage | Marketplace | Đơn hàng (admin role) |
+| `/admin/blog` | BlogManagementPage | Nội dung & GTM | Blog CRUD |
+| `/admin/courses` | CoursesManagementPage | Nội dung & GTM | SEO editor khóa học |
+| `/admin/leads` | LeadsManagementPage | Nội dung & GTM | GTM lead capture |
+| `/admin/projects` | AdminProjectsPage | Vận hành | **Unified** `external_requests` — filter nguồn (công khai / đăng ký) |
+| `/admin/projects/:id/edit` | ProjectEditPage | — | Form edit đầy đủ |
+| `/admin/external-requests` | redirect | — | → `/admin/projects?source=public` |
+| `/admin/service-requests` | AdminServiceRequestsPage | Vận hành | IT Services (`service_requests` — khác external_requests) |
+| `/admin/support-tickets` | AdminSupportTicketsPage | Vận hành | Ticket marketplace |
+| Dev Tools | email / e2e / push / queues | Dev Tools | Giữ nhóm riêng |
+
+#### Ba luồng “dự án/dịch vụ” — KHÔNG gộp với nhau
+
+| Luồng | Bảng | Admin | Khác biệt |
+|---|---|---|---|
+| **Yêu cầu dự án** | `external_requests` | `/admin/projects` | Form `/request-project` hoặc `/projects/new`; developer quotes |
+| **Dịch vụ IT** | `service_requests` | `/admin/service-requests` | Login bắt buộc; báo giá admin; `service_payments` |
+| **Leads GTM** | `leads` | `/admin/leads` | Capture nhẹ từ landing/ebook |
+
+#### API endpoints chính (admin)
+
+| Module | Endpoints | Auth |
+|---|---|---|
+| Dashboard stats | `GET /api/admin/stats` | admin |
+| Users | `GET/PATCH/POST/DELETE /api/admin/users/*` | admin |
+| Software catalog | `GET /api/admin/softwares`, `POST/PUT/DELETE /api/admin/software/*` | admin |
+| Marketplace products | `GET /api/admin/products`, `PATCH /api/admin/products/:id/status` | admin |
+| Projects (unified) | `GET/PATCH /api/admin/projects/*` (+ `source`, `priority` filters) | admin |
+| External requests (legacy API) | `GET/PUT /api/admin/external-requests/:id` | admin — dùng bởi edit form |
+| Seller approvals | `GET/PUT /api/admin/sellers/*` | admin |
+| Queues | `GET /api/admin/queue/stats`, retry/clear | admin |
+| Blog / Leads / Courses / Support / IT Services | (unchanged) | admin |
+| Analytics | Aggregates từ stats + leads + courses + blog + tickets | admin |
+
+#### Cross-cutting notes
+
+- **Auth pattern:** Admin pages dùng `apiRequest` — plain `fetch` gây 401.
+- **UI ngôn ngữ:** Sidebar tiếng Việt; Dev Tools giữ tên kỹ thuật.
 
 ### 5.5. Custom Hooks
 
@@ -626,7 +681,8 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 | Feature | Status | Notes |
 |---|---|---|
-| Blog module (`/blog`, `/admin/blog`) | ✅ Done | |
+| Blog module (`/blog`, `/admin/blog`) | ✅ Done | Admin CMS: full-size modal editor, stats, CRUD |
+| Admin analytics (`/admin/analytics`) | 🟡 Partial | Platform metrics + GTM counts; GA4 link-out |
 | Lead capture (`/api/leads`, `/admin/leads`) | ✅ Done | |
 | LeadCaptureForm component | ✅ Done | Navy/yellow brand |
 | Sitemap + robots.txt | ✅ Done | |
@@ -676,6 +732,38 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | L6 | **Drop `cart_items` table** | Legacy DB cart; client dùng localStorage — có thể deprecate schema |
 | L7 | **`/api/cart` REST API** | Storage methods tồn tại trong `server/storage.ts` nhưng **không register route** — chỉ implement nếu cần sync cart đa thiết bị |
 
+### 15.6. Admin Dashboard — Polish & Gaps
+
+> Review admin pages tháng 6/2026 — xem inventory đầy đủ §5.5.
+
+| # | Feature | Mô tả | Priority |
+|---|---|---|---|
+| A1 | **Unify AdminLayout** | ✅ Done — tất cả trang admin dùng AdminLayout | Medium |
+| A2 | **Sidebar completeness** | ✅ Done — User Chat, External Requests, Seller Approvals + nhóm Dev Tools | Low |
+| A3 | **Route `project-edit-page`** | ✅ Done — `/admin/external-requests/:id/edit` + `GET /api/admin/external-requests/:id` | Medium |
+| A4 | **Consolidate project systems** | ✅ Done — cross-link banners Projects ↔ External Requests | Medium |
+| A5 | **Seller `/seller/analytics` route** | ✅ Done — `SellerAnalyticsPage` + route trong `App.tsx` | Medium |
+| A6 | **Admin Analytics depth** | Embedded GA4 charts / time-series thay vì chỉ aggregate counts + link-out | Low |
+| A7 | **Software admin create** | ✅ Done — "Thêm mới" wired (`POST /api/admin/software`); Import CSV không trong scope | Low |
+| A8 | **Support ticket detail view** | ✅ Done — detail Dialog với status/priority | Low |
+| A9 | **Dedupe `/admin` route** | ✅ Done — xóa duplicate trong `App.tsx` | Low |
+| A10 | **User chat polish** | ✅ Done — tab Chat trong `/admin/users` | Low |
+
+### 15.7. Admin Consolidation (6/2026)
+
+> Rà soát sidebar — gộp trùng, bổ sung gap marketplace.
+
+| # | Feature | Priority | Status |
+|---|---|---|---|
+| C1 | **Gộp Projects + External Requests** | P0 | ✅ Done — một trang `/admin/projects`, filter `source=public\|registered` |
+| C2 | **Dashboard vs Analytics** | P1 | ✅ Done — Dashboard tóm tắt; metrics đầy đủ tại Analytics |
+| C3 | **Sidebar nhóm + tiếng Việt** | P1 | ✅ Done — 6 nhóm trong `AppSidebar.tsx` |
+| C4 | **Admin Marketplace Products** | P2 | ✅ Done — `/admin/products` duyệt pending |
+| C5 | **Orders trong sidebar** | P2 | ✅ Done — `/admin/orders` + API enriched orders |
+| C6 | **User Chat tab trong Users** | P3 | ✅ Done — bỏ mục sidebar riêng |
+| C7 | **Dev Tools gọn** | P2 | ✅ Done — nhóm Dev Tools; Dashboard link → Queues |
+| C8 | **GA4 embedded charts** | P3 | 🟡 Partial — biểu đồ đơn hàng theo tháng (nội bộ); GA4 traffic vẫn link-out |
+
 ### 15.4. UI Package (`SPEC_UI_IMPROVEMENT_v1.md`)
 
 | # | Feature | Status | Ghi chú |
@@ -719,13 +807,20 @@ Các mục sau **đã implement** — không còn trong backlog:
 - Schema.org on course/software detail pages
 - Software SEO utils (`software-utils.ts`)
 
+**Admin dashboard (session gần nhất)**
+- Software Management UI/UX redesign + fix auth (`apiRequest`)
+- Blog Management redesign (`AdminLayout`, full-size modal editor, edit flow)
+- Courses SEO fix list API (`GET /api/courses`) + error/empty states
+- Admin Analytics page mới (`/admin/analytics`) — platform + GTM metrics
+
 ---
 
 ## 16. Project Stats
 
 | Metric | Value |
 |---|---|
-| Frontend pages | ~55 |
+| Frontend pages | ~58 |
+| Admin dashboard routes | 17 (+ 1 orphan page file) |
 | API route modules | 22 |
 | Database tables | 29 (+ `pending_checkouts`) |
 | Active microservices | 3 (email, chat, notification) |

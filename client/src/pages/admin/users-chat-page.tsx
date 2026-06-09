@@ -13,7 +13,6 @@ import {
   MessageCircle, 
   Send, 
   Users, 
-  ArrowLeft, 
   Phone,
   Video,
   MoreVertical,
@@ -22,9 +21,11 @@ import {
   Shield,
   Search,
   UserCheck,
-  UserX
+  UserX,
+  Loader2,
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { AdminLayout } from '@/components/AdminLayout';
 import io, { Socket } from 'socket.io-client';
 
 interface User {
@@ -54,8 +55,7 @@ interface ChatMessage {
   sender: User;
 }
 
-export default function AdminUsersChatPage() {
-  const [, navigate] = useLocation();
+export function UsersChatPanel() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -341,31 +341,25 @@ export default function AdminUsersChatPage() {
     user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!currentUser || currentUser.role !== 'admin') {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="p-6 text-center">
-            <p>Access denied. Admin privileges required.</p>
-            <Button onClick={() => navigate('/dashboard')} className="mt-4">
-              Back to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userIdParam = params.get('userId');
+    if (!userIdParam || uniqueUsers.length === 0) return;
+    const user = uniqueUsers.find((u) => u.id === parseInt(userIdParam, 10));
+    if (user && selectedUser?.id !== user.id) {
+      startChatWithUser(user);
+    }
+  }, [uniqueUsers]);
+
+  const handleUnavailableAction = (feature: string) => {
+    toast({
+      title: 'Chưa hỗ trợ',
+      description: `${feature} chưa được tích hợp. Dùng tin nhắn text trong chat.`,
+    });
+  };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <div className="flex items-center gap-2 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-2xl font-bold">User Chat Management</h1>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[calc(100vh-220px)]">
         {/* User List Sidebar */}
         <div className="lg:col-span-1">
           <Card className="h-full">
@@ -494,10 +488,10 @@ export default function AdminUsersChatPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => handleUnavailableAction('Gọi thoại')}>
                       <Phone className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => handleUnavailableAction('Gọi video')}>
                       <Video className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="sm">
@@ -617,7 +611,20 @@ export default function AdminUsersChatPage() {
             </Card>
           )}
         </div>
-      </div>
     </div>
+  );
+}
+
+export default function AdminUsersChatPage() {
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    navigate("/admin/users?tab=chat");
+  }, [navigate]);
+  return (
+    <AdminLayout>
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
+      </div>
+    </AdminLayout>
   );
 }

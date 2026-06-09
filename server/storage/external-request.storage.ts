@@ -63,24 +63,57 @@ export class ExternalRequestStorage {
         return { requests: requestsList, total };
     }
 
+    async getExternalRequestById(id: number): Promise<ExternalRequest | undefined> {
+        const [request] = await db
+            .select()
+            .from(externalRequests)
+            .where(eq(externalRequests.id, id));
+        return request;
+    }
+
     /**
      * Update external request (Admin only)
-     * Can update status, priority, and admin_notes
      */
     async updateExternalRequest(
         id: number,
-        data: {
-            status?: string;
-            priority?: string;
-            admin_notes?: string;
-        }
+        data: Partial<{
+            status: string;
+            priority: string;
+            admin_notes: string;
+            title: string;
+            name: string;
+            email: string;
+            phone: string;
+            project_description: string;
+            requirements: string;
+            technology_stack: string[];
+            timeline: string;
+            budget_range: string;
+            budget: string | number | null;
+            deadline: string | Date | null;
+            assigned_developer_id: number | null;
+        }>
     ): Promise<ExternalRequest | undefined> {
+        const updateFields: Record<string, unknown> = { updated_at: new Date() };
+        const allowed = [
+            "status", "priority", "admin_notes", "title", "name", "email", "phone",
+            "project_description", "requirements", "technology_stack", "timeline",
+            "budget_range", "budget", "deadline", "assigned_developer_id",
+        ] as const;
+
+        for (const key of allowed) {
+            if (data[key] !== undefined) {
+                if (key === "deadline" && data.deadline) {
+                    updateFields.deadline = new Date(data.deadline as string);
+                } else {
+                    updateFields[key] = data[key];
+                }
+            }
+        }
+
         const [updatedRequest] = await db
             .update(externalRequests)
-            .set({
-                ...data,
-                updated_at: new Date()
-            })
+            .set(updateFields)
             .where(eq(externalRequests.id, id))
             .returning();
 

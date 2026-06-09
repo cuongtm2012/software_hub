@@ -25,7 +25,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Textarea } from "@/components/ui/textarea";
 import { EscrowPayment } from "@/components/escrow-payment";
 import { Stepper, Step } from "@/components/stepper";
-import { Order } from "@shared/schema";
+import { formatVnd } from "@/components/dashboard/format";
+
+interface EnrichedOrder {
+  id: number;
+  status: string;
+  total_amount: string;
+  created_at: string;
+  product_id: number | null;
+  product_name: string;
+  product_image: string | null;
+  quantity: number;
+  seller_name: string;
+  has_review: boolean;
+  payments?: unknown[];
+}
 
 // Helper to format order status
 const getOrderStatusDetails = (status: string) => {
@@ -134,17 +148,26 @@ export default function MarketplaceOrdersPage() {
   const { toast } = useToast();
   const [reviewContent, setReviewContent] = useState("");
   const [rating, setRating] = useState(5);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<EnrichedOrder | null>(null);
 
-  // Fetch orders
-  const { data: orders = [], isLoading, refetch } = useQuery({
-    queryKey: ["/api/orders/buyer"],
+  const { data: ordersData, isLoading, refetch } = useQuery<{ orders: EnrichedOrder[]; total: number }>({
+    queryKey: ["/api/orders"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/orders");
+      return res.json();
+    },
   });
 
-  // Fetch payments for orders
-  const { data: paymentsData } = useQuery({
+  const orders = ordersData?.orders ?? [];
+
+  const { data: paymentsData } = useQuery<unknown[]>({
     queryKey: ["/api/payments"],
     enabled: orders.length > 0,
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/payments");
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data.payments ?? []);
+    },
   });
 
   // Complete order mutation
@@ -160,7 +183,7 @@ export default function MarketplaceOrdersPage() {
         description: "The order has been marked as completed.",
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/orders/buyer"],
+        queryKey: ["/api/orders"],
       });
     },
     onError: (error: Error) => {
@@ -194,7 +217,7 @@ export default function MarketplaceOrdersPage() {
       
       // Refresh orders
       queryClient.invalidateQueries({
-        queryKey: ["/api/orders/buyer"],
+        queryKey: ["/api/orders"],
       });
     },
     onError: (error: Error) => {
@@ -210,7 +233,7 @@ export default function MarketplaceOrdersPage() {
     completeOrderMutation.mutate(orderId);
   };
 
-  const handleOpenReview = (order: Order) => {
+  const handleOpenReview = (order: EnrichedOrder) => {
     setSelectedOrder(order);
     setReviewContent("");
     setRating(5);
@@ -230,7 +253,7 @@ export default function MarketplaceOrdersPage() {
   };
 
   // Add payments to orders
-  const ordersWithPayments = orders.map((order: Order) => {
+  const ordersWithPayments = orders.map((order: EnrichedOrder) => {
     const orderPayments = paymentsData?.filter((payment: any) => payment.order_id === order.id) || [];
     return {
       ...order,
@@ -291,7 +314,7 @@ export default function MarketplaceOrdersPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {ordersWithPayments.map((order: Order) => {
+            {ordersWithPayments.map((order: EnrichedOrder) => {
               const statusDetails = getOrderStatusDetails(order.status);
               
               return (
@@ -325,11 +348,15 @@ export default function MarketplaceOrdersPage() {
                           )}
                         </div>
                         <div className="flex-1">
-                          <Link href={`/marketplace/product/${order.product_id}`}>
-                            <h3 className="font-medium text-lg hover:text-primary">
-                              {order.product_name}
-                            </h3>
-                          </Link>
+                          {order.product_id ? (
+                            <Link href={`/marketplace/product/${order.product_id}`}>
+                              <h3 className="font-medium text-lg hover:text-primary">
+                                {order.product_name}
+                              </h3>
+                            </Link>
+                          ) : (
+                            <h3 className="font-medium text-lg">{order.product_name}</h3>
+                          )}
                           <p className="text-sm text-gray-600 mt-1">
                             Quantity: {order.quantity}
                           </p>
@@ -338,7 +365,7 @@ export default function MarketplaceOrdersPage() {
                           </p>
                         </div>
                         <div className="flex flex-col items-end justify-between">
-                          <div className="text-lg font-bold">${order.total_amount.toFixed(2)}</div>
+                          <div className="text-lg font-bold">{formatVnd(Number(order.total_amount))}</div>
                           <div className="flex gap-2 mt-2">
                             {(order.status === "delivered") && (
                               <Button

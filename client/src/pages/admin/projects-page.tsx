@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,14 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
     Search,
     Mail,
     Building2,
@@ -34,11 +44,15 @@ import {
     Clock,
     Code,
     Save,
-    History,
     X,
+    Edit,
+    Globe,
+    UserCheck,
 } from "lucide-react";
 
 type ProjectStatus = "pending" | "in_progress" | "completed" | "cancelled" | "contacted" | "converted" | "rejected";
+
+type SourceFilter = "all" | "public" | "registered";
 
 interface Project {
     id: number;
@@ -49,11 +63,18 @@ interface Project {
     requirements?: string;
     technology_stack?: string[];
     budget_range?: string;
+    budget?: string | number | null;
     timeline?: string;
     status: ProjectStatus;
+    priority?: string;
+    client_id?: number | null;
     created_at: string;
     company?: string;
     admin_notes?: string;
+}
+
+interface ProjectStats extends Record<string, number> {
+    _source?: { public: number; registered: number; total: number };
 }
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -76,38 +97,55 @@ const STATUS_COLORS: Record<ProjectStatus, string> = {
     rejected: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300",
 };
 
+function readSourceFromUrl(): SourceFilter {
+    const s = new URLSearchParams(window.location.search).get("source");
+    if (s === "public" || s === "registered") return s;
+    return "all";
+}
+
 export default function ProjectsPage() {
     const { user } = useAuth();
+    const [, navigate] = useLocation();
     const queryClient = useQueryClient();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState<string>("all");
+    const [sourceFilter, setSourceFilter] = useState<SourceFilter>(readSourceFromUrl);
+    const [priorityFilter, setPriorityFilter] = useState("all");
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [editedStatus, setEditedStatus] = useState<ProjectStatus>("pending");
     const [editedNotes, setEditedNotes] = useState("");
 
-    // Fetch projects
-    const { data: projectsData, isLoading } = useQuery<{ projects: Project[] }>({
-        queryKey: ["/api/admin/projects", { status: selectedStatus, search: searchQuery }],
+    useEffect(() => {
+        setSourceFilter(readSourceFromUrl());
+    }, [typeof window !== "undefined" ? window.location.search : ""]);
+
+    const { data: projectsData, isLoading } = useQuery<{ projects: Project[]; total: number }>({
+        queryKey: ["/api/admin/projects", selectedStatus, searchQuery, sourceFilter, priorityFilter],
+        queryFn: async () => {
+            const params = new URLSearchParams({ limit: "50" });
+            if (selectedStatus !== "all") params.set("status", selectedStatus);
+            if (searchQuery.trim()) params.set("search", searchQuery.trim());
+            if (sourceFilter !== "all") params.set("source", sourceFilter);
+            if (priorityFilter !== "all") params.set("priority", priorityFilter);
+            const res = await apiRequest("GET", `/api/admin/projects?${params}`);
+            return res.json();
+        },
         enabled: user?.role === "admin",
     });
 
-    // Fetch stats
-    const { data: stats } = useQuery<Record<string, number>>({
+    const { data: stats } = useQuery<ProjectStats>({
         queryKey: ["/api/admin/projects/stats"],
+        queryFn: async () => {
+            const res = await apiRequest("GET", "/api/admin/projects/stats");
+            return res.json();
+        },
         enabled: user?.role === "admin",
     });
 
-    // Update project mutation
     const updateProjectMutation = useMutation({
         mutationFn: async ({ id, data }: { id: number; data: Partial<Project> }) => {
-            const response = await fetch(`/api/admin/projects/${id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-                credentials: "include",
-            });
-            if (!response.ok) throw new Error("Failed to update project");
+            const response = await apiRequest("PATCH", `/api/admin/projects/${id}`, data);
             return response.json();
         },
         onSuccess: () => {
@@ -139,9 +177,15 @@ export default function ProjectsPage() {
 
     const getStatusCount = (status: string) => {
         if (status === "all") {
-            return projects.length;
+            return stats?._source?.total ?? projectsData?.total ?? projects.length;
         }
         return stats?.[status] || 0;
+    };
+
+    const handleSourceChange = (source: SourceFilter) => {
+        setSourceFilter(source);
+        const qs = source === "all" ? "" : `?source=${source}`;
+        navigate(`/admin/projects${qs}`);
     };
 
     const formatDate = (dateString: string) => {
@@ -161,11 +205,80 @@ export default function ProjectsPage() {
                 {/* Header */}
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        Quản lý Project
+                        Yêu cầu dự án
                     </h1>
                     <p className="text-muted-foreground">
-                        Quản lý và theo dõi các yêu cầu dự án từ khách hàng
+                        Tất cả inquiry từ form công khai và user đã đăng ký (bảng <code className="text-xs">external_requests</code>)
                     </p>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardDescription>Tổng</CardDescription>
+                            <CardTitle className="text-2xl">{stats?._source?.total ?? "—"}</CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardDescription className="flex items-center gap-1">
+                                <Globe className="h-3 w-3" /> Form công khai
+                            </CardDescription>
+                            <CardTitle className="text-2xl">{stats?._source?.public ?? "—"}</CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardDescription className="flex items-center gap-1">
+                                <UserCheck className="h-3 w-3" /> User đăng ký
+                            </CardDescription>
+                            <CardTitle className="text-2xl">{stats?._source?.registered ?? "—"}</CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardDescription>Chờ xử lý</CardDescription>
+                            <CardTitle className="text-2xl text-amber-600">{stats?.pending ?? "—"}</CardTitle>
+                        </CardHeader>
+                    </Card>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                    <Button
+                        variant={sourceFilter === "all" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSourceChange("all")}
+                    >
+                        Tất cả nguồn
+                    </Button>
+                    <Button
+                        variant={sourceFilter === "public" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSourceChange("public")}
+                    >
+                        <Globe className="h-4 w-4 mr-1" />
+                        Form công khai
+                    </Button>
+                    <Button
+                        variant={sourceFilter === "registered" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSourceChange("registered")}
+                    >
+                        <UserCheck className="h-4 w-4 mr-1" />
+                        User đăng ký
+                    </Button>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                        <SelectTrigger className="w-40 h-9">
+                            <SelectValue placeholder="Ưu tiên" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Mọi ưu tiên</SelectItem>
+                            <SelectItem value="low">Thấp</SelectItem>
+                            <SelectItem value="normal">Bình thường</SelectItem>
+                            <SelectItem value="high">Cao</SelectItem>
+                            <SelectItem value="urgent">Khẩn cấp</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Search Bar */}
@@ -277,6 +390,8 @@ export default function ProjectsPage() {
                                         <TableHead>Người yêu cầu</TableHead>
                                         <TableHead>Email</TableHead>
                                         <TableHead>Công ty</TableHead>
+                                        <TableHead>Nguồn</TableHead>
+                                        <TableHead>Ưu tiên</TableHead>
                                         <TableHead>Trạng thái</TableHead>
                                         <TableHead>Ngày tạo</TableHead>
                                         <TableHead className="text-right">Hành động</TableHead>
@@ -311,6 +426,14 @@ export default function ProjectsPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
+                                                <Badge variant="outline" className="text-xs">
+                                                    {project.client_id ? "Đăng ký" : "Công khai"}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-sm capitalize">
+                                                {project.priority || "normal"}
+                                            </TableCell>
+                                            <TableCell>
                                                 <Badge className={STATUS_COLORS[project.status]}>
                                                     {STATUS_LABELS[project.status]}
                                                 </Badge>
@@ -322,15 +445,24 @@ export default function ProjectsPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button
-                                                    variant="default"
-                                                    size="sm"
-                                                    onClick={() => handleViewDetails(project)}
-                                                    className="gap-2"
-                                                >
-                                                    <List className="w-4 h-4" />
-                                                    Chi tiết
-                                                </Button>
+                                                <div className="flex justify-end gap-1">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => navigate(`/admin/projects/${project.id}/edit`)}
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        onClick={() => handleViewDetails(project)}
+                                                        className="gap-1"
+                                                    >
+                                                        <List className="w-4 h-4" />
+                                                        Chi tiết
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}

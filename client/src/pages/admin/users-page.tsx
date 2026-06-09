@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -48,8 +48,11 @@ import {
   Loader2,
   Search,
   UsersRound,
-  AlertTriangle
+  AlertTriangle,
+  MessageSquare,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UsersChatPanel } from "@/pages/admin/users-chat-page";
 
 // Role definitions for display
 const roleDefinitions = {
@@ -91,8 +94,14 @@ export default function UsersPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState<"list" | "chat">("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "chat") setActiveTab("chat");
+  }, []);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>("");
 
@@ -203,9 +212,32 @@ export default function UsersPage() {
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to Admin
           </Button>
-          <h1 className="text-2xl font-bold">User Management</h1>
+          <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
         </div>
 
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            setActiveTab(v as "list" | "chat");
+            navigate(v === "chat" ? "/admin/users?tab=chat" : "/admin/users");
+          }}
+        >
+          <TabsList className="mb-6">
+            <TabsTrigger value="list" className="gap-2">
+              <UsersRound className="h-4 w-4" />
+              Danh sách
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Chat
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="chat">
+            <UsersChatPanel />
+          </TabsContent>
+
+          <TabsContent value="list">
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -275,13 +307,26 @@ export default function UsersPage() {
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditClick(user)}
-                        >
-                          Edit Role
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setActiveTab("chat");
+                              navigate(`/admin/users?tab=chat&userId=${user.id}`);
+                            }}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Chat
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditClick(user)}
+                          >
+                            Edit Role
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -379,6 +424,8 @@ export default function UsersPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );

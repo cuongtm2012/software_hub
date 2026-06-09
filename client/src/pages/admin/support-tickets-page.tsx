@@ -20,7 +20,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, MessageSquare, RefreshCw } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, MessageSquare, RefreshCw, Eye } from "lucide-react";
 import { format } from "date-fns";
 
 interface SupportTicket {
@@ -52,6 +60,7 @@ const STATUS_COLOR: Record<string, string> = {
 export default function AdminSupportTicketsPage() {
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [detailTicket, setDetailTicket] = useState<SupportTicket | null>(null);
 
   const { data, isLoading, refetch } = useQuery<{ tickets: SupportTicket[] }>({
     queryKey: ["/api/support/tickets", "admin"],
@@ -153,20 +162,29 @@ export default function AdminSupportTicketsPage() {
                         {format(new Date(ticket.created_at), "dd/MM/yyyy HH:mm")}
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={ticket.status}
-                          onValueChange={(status) => updateMutation.mutate({ id: ticket.id, status })}
-                        >
-                          <SelectTrigger className="w-36 h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="open">Mở</SelectItem>
-                            <SelectItem value="in_progress">Đang xử lý</SelectItem>
-                            <SelectItem value="resolved">Đã giải quyết</SelectItem>
-                            <SelectItem value="closed">Đóng</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDetailTicket(ticket)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Select
+                            value={ticket.status}
+                            onValueChange={(status) => updateMutation.mutate({ id: ticket.id, status })}
+                          >
+                            <SelectTrigger className="w-36 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="open">Mở</SelectItem>
+                              <SelectItem value="in_progress">Đang xử lý</SelectItem>
+                              <SelectItem value="resolved">Đã giải quyết</SelectItem>
+                              <SelectItem value="closed">Đóng</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -175,6 +193,86 @@ export default function AdminSupportTicketsPage() {
             </Table>
           </div>
         )}
+
+        <Dialog open={!!detailTicket} onOpenChange={(open) => !open && setDetailTicket(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Ticket #{detailTicket?.id}</DialogTitle>
+            </DialogHeader>
+            {detailTicket && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-muted-foreground text-xs">Tiêu đề</Label>
+                  <p className="font-medium">{detailTicket.subject}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">Mô tả</Label>
+                  <Textarea readOnly value={detailTicket.description} rows={5} className="mt-1" />
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Buyer ID</Label>
+                    <p>#{detailTicket.buyer_id}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Seller ID</Label>
+                    <p>{detailTicket.seller_id ? `#${detailTicket.seller_id}` : "—"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Đơn hàng</Label>
+                    <p>{detailTicket.order_id ? `#${detailTicket.order_id}` : "—"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Ngày tạo</Label>
+                    <p>{format(new Date(detailTicket.created_at), "dd/MM/yyyy HH:mm")}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Trạng thái</Label>
+                    <Select
+                      value={detailTicket.status}
+                      onValueChange={(status) => {
+                        updateMutation.mutate({ id: detailTicket.id, status });
+                        setDetailTicket({ ...detailTicket, status });
+                      }}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">Mở</SelectItem>
+                        <SelectItem value="in_progress">Đang xử lý</SelectItem>
+                        <SelectItem value="resolved">Đã giải quyết</SelectItem>
+                        <SelectItem value="closed">Đóng</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Ưu tiên</Label>
+                    <Select
+                      value={detailTicket.priority}
+                      onValueChange={(priority) => {
+                        updateMutation.mutate({ id: detailTicket.id, priority });
+                        setDetailTicket({ ...detailTicket, priority });
+                      }}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Thấp</SelectItem>
+                        <SelectItem value="normal">Bình thường</SelectItem>
+                        <SelectItem value="high">Cao</SelectItem>
+                        <SelectItem value="urgent">Khẩn cấp</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

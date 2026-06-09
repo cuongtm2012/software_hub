@@ -36,7 +36,24 @@ import {
   type ChatMessage, type InsertChatMessage
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, like, ilike, inArray, or } from "drizzle-orm";
+import { eq, and, desc, sql, like, ilike, inArray, or, isNull, isNotNull } from "drizzle-orm";
+
+export type EnrichedServiceRequest = ServiceRequest & {
+  client_name: string;
+  client_email: string;
+};
+
+export type EnrichedOrder = Order & {
+  product_id: number | null;
+  product_name: string;
+  product_image: string | null;
+  quantity: number;
+  seller_name: string;
+  buyer_name: string;
+  buyer_email: string;
+  has_review: boolean;
+};
+
 export interface IStorage {
   // System
   initialize(): Promise<void>;
@@ -164,6 +181,15 @@ export interface IStorage {
   createOrder(order: InsertOrder, items: InsertOrderItem[], buyerId: number): Promise<Order>;
   getOrderById(id: number): Promise<Order | undefined>;
   getAllOrders(params?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<{ orders: Order[], total: number }>;
+  getEnrichedOrders(params?: {
+    buyerId?: number;
+    sellerId?: number;
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ orders: EnrichedOrder[]; total: number }>;
+  getOrdersTimeline(months?: number): Promise<{ month: string; count: number; revenue: number }[]>;
   getOrdersByBuyerId(buyerId: number): Promise<Order[]>;
   getBuyerOrders(buyerId: number): Promise<Order[]>;
   getOrdersBySellerId(sellerId: number): Promise<Order[]>;
@@ -223,6 +249,11 @@ export interface IStorage {
   getServiceRequestById(id: number): Promise<ServiceRequest | undefined>;
   getServiceRequestsByClient(clientId: number): Promise<ServiceRequest[]>;
   getAllServiceRequests(): Promise<ServiceRequest[]>;
+  getEnrichedServiceRequests(params?: {
+    status?: string;
+    priority?: string;
+    search?: string;
+  }): Promise<EnrichedServiceRequest[]>;
   updateServiceRequest(id: number, request: Partial<InsertServiceRequest>): Promise<ServiceRequest | undefined>;
   updateServiceRequestStatus(id: number, status: string, adminNotes?: string): Promise<ServiceRequest | undefined>;
 
@@ -293,8 +324,17 @@ export interface IStorage {
   cleanupInvalidTokens(invalidTokens: string[]): Promise<void>;
 
   // Project Management
-  getAdminProjects(filters: { status?: string; search?: string }): Promise<any[]>;
-  getProjectStats(): Promise<Record<string, number>>;
+  getAdminProjects(filters: {
+    status?: string;
+    search?: string;
+    source?: string;
+    priority?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ projects: any[]; total: number }>;
+  getProjectStats(): Promise<Record<string, number> & { _source?: { public: number; registered: number; total: number } }>;
+  getAdminProducts(filters?: { status?: string; search?: string; page?: number; limit?: number }): Promise<{ products: Product[]; total: number }>;
+  updateProductStatusAdmin(id: number, status: string): Promise<Product | undefined>;
   getProjectById(id: number): Promise<any>;
   updateProject(id: number, updates: any): Promise<any>;
 
@@ -1449,6 +1489,136 @@ class DatabaseStorage implements IStorage {
     return { orders: ordersList, total };
   }
 
+  async getEnrichedOrders(params?: {
+    buyerId?: number;
+    sellerId?: number;
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ orders: EnrichedOrder[]; total: number }> {
+    const whereConditions = [];
+
+    if (params?.buyerId) {
+      whereConditions.push(eq(orders.buyer_id, params.buyerId));
+    }
+    if (params?.sellerId) {
+      whereConditions.push(eq(orders.seller_id, params.sellerId));
+    }
+    if (params?.status && params.status !== "all") {
+      whereConditions.push(eq(orders.status, params.status as Order["status"]));
+    }
+    if (params?.search?.trim()) {
+      const term = `%${params.search.trim()}%`;
+      whereConditions.push(
+        or(
+          sql`CAST(${orders.id} AS TEXT) ILIKE ${term}`,
+          sql`CAST(${orders.buyer_id} AS TEXT) ILIKE ${term}`,
+        ),
+      );
+    }
+
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+    const limit = params?.limit ?? 50;
+    const offset = params?.offset ?? 0;
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(orders)
+      .where(whereClause);
+    const total = Number(countResult?.count) || 0;
+
+    const ordersList = await db
+      .select()
+      .from(orders)
+      .where(whereClause)
+      .orderBy(desc(orders.created_at))
+      .limit(limit)
+      .offset(offset);
+
+    if (ordersList.length === 0) {
+      return { orders: [], total };
+    }
+
+    const orderIds = ordersList.map((o) => o.id);
+    const items = await db
+      .select()
+      .from(orderItems)
+      .where(inArray(orderItems.order_id, orderIds));
+
+    const productIds = [...new Set(items.map((i) => i.product_id))];
+    const productsList =
+      productIds.length > 0
+        ? await db.select().from(products).where(inArray(products.id, productIds))
+        : [];
+    const productMap = new Map(productsList.map((p) => [p.id, p]));
+
+    const userIds = [
+      ...new Set(ordersList.flatMap((o) => [o.buyer_id, o.seller_id])),
+    ];
+    const usersList =
+      userIds.length > 0
+        ? await db
+            .select({ id: users.id, name: users.name, email: users.email })
+            .from(users)
+            .where(inArray(users.id, userIds))
+        : [];
+    const userMap = new Map(usersList.map((u) => [u.id, u]));
+
+    const reviewsList = await db
+      .select({ order_id: productReviews.order_id })
+      .from(productReviews)
+      .where(inArray(productReviews.order_id, orderIds));
+    const reviewOrderIds = new Set(reviewsList.map((r) => r.order_id));
+
+    const itemByOrderId = new Map<number, (typeof items)[0]>();
+    for (const item of items) {
+      if (!itemByOrderId.has(item.order_id)) {
+        itemByOrderId.set(item.order_id, item);
+      }
+    }
+
+    const enriched: EnrichedOrder[] = ordersList.map((order) => {
+      const item = itemByOrderId.get(order.id);
+      const product = item ? productMap.get(item.product_id) : undefined;
+      const seller = userMap.get(order.seller_id);
+      const buyer = userMap.get(order.buyer_id);
+      return {
+        ...order,
+        product_id: item?.product_id ?? null,
+        product_name: product?.title ?? `Đơn #${order.id}`,
+        product_image: product?.images?.[0] ?? null,
+        quantity: item?.quantity ?? 1,
+        seller_name: seller?.name ?? `Seller #${order.seller_id}`,
+        buyer_name: buyer?.name ?? `Buyer #${order.buyer_id}`,
+        buyer_email: buyer?.email ?? "",
+        has_review: reviewOrderIds.has(order.id),
+        total_amount: String(order.total_amount),
+      };
+    });
+
+    return { orders: enriched, total };
+  }
+
+  async getOrdersTimeline(months = 6): Promise<{ month: string; count: number; revenue: number }[]> {
+    const rows = await db
+      .select({
+        month: sql<string>`to_char(${orders.created_at}, 'YYYY-MM')`,
+        count: sql<number>`count(*)::int`,
+        revenue: sql<number>`coalesce(sum(${orders.total_amount}::numeric), 0)::float`,
+      })
+      .from(orders)
+      .where(sql`${orders.created_at} >= now() - interval '6 months'`)
+      .groupBy(sql`to_char(${orders.created_at}, 'YYYY-MM')`)
+      .orderBy(sql`to_char(${orders.created_at}, 'YYYY-MM')`);
+
+    return rows.map((r) => ({
+      month: r.month,
+      count: Number(r.count),
+      revenue: Number(r.revenue),
+    }));
+  }
+
   async getOrdersByBuyerId(buyerId: number): Promise<Order[]> {
     const ordersList = await db
       .select()
@@ -1921,6 +2091,49 @@ class DatabaseStorage implements IStorage {
       .select()
       .from(serviceRequests);
     return requestsList;
+  }
+
+  async getEnrichedServiceRequests(params?: {
+    status?: string;
+    priority?: string;
+    search?: string;
+  }): Promise<EnrichedServiceRequest[]> {
+    const whereConditions = [];
+
+    if (params?.status && params.status !== "all") {
+      whereConditions.push(eq(serviceRequests.status, params.status as ServiceRequest["status"]));
+    }
+    if (params?.priority && params.priority !== "all") {
+      whereConditions.push(eq(serviceRequests.priority, params.priority));
+    }
+    if (params?.search?.trim()) {
+      const term = `%${params.search.trim()}%`;
+      whereConditions.push(
+        or(
+          ilike(serviceRequests.title, term),
+          ilike(users.name, term),
+          ilike(users.email, term),
+          sql`CAST(${serviceRequests.id} AS TEXT) ILIKE ${term}`,
+        ),
+      );
+    }
+
+    const rows = await db
+      .select({
+        request: serviceRequests,
+        client_name: users.name,
+        client_email: users.email,
+      })
+      .from(serviceRequests)
+      .innerJoin(users, eq(serviceRequests.client_id, users.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .orderBy(desc(serviceRequests.created_at));
+
+    return rows.map((row) => ({
+      ...row.request,
+      client_name: row.client_name ?? "",
+      client_email: row.client_email ?? "",
+    }));
   }
 
   async updateServiceRequest(id: number, request: Partial<InsertServiceRequest>): Promise<ServiceRequest | undefined> {
@@ -2698,14 +2911,29 @@ class DatabaseStorage implements IStorage {
   }
 
   // Project Management Methods
-  async getAdminProjects(filters: { status?: string; search?: string }): Promise<any[]> {
+  async getAdminProjects(filters: {
+    status?: string;
+    search?: string;
+    source?: string;
+    priority?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ projects: any[]; total: number }> {
     try {
-      let query = db.select().from(externalRequests);
-
       const conditions = [];
 
       if (filters.status && filters.status !== 'all') {
         conditions.push(eq(externalRequests.status, filters.status as any));
+      }
+
+      if (filters.source === 'public') {
+        conditions.push(isNull(externalRequests.client_id));
+      } else if (filters.source === 'registered') {
+        conditions.push(isNotNull(externalRequests.client_id));
+      }
+
+      if (filters.priority && filters.priority !== 'all') {
+        conditions.push(eq(externalRequests.priority, filters.priority));
       }
 
       if (filters.search) {
@@ -2719,19 +2947,34 @@ class DatabaseStorage implements IStorage {
         );
       }
 
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions)) as any;
-      }
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-      const projects = await query.orderBy(desc(externalRequests.created_at));
-      return projects;
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(externalRequests)
+        .where(whereClause);
+
+      const total = Number(countResult?.count) || 0;
+      const page = filters.page || 1;
+      const limit = filters.limit || 50;
+      const offset = (page - 1) * limit;
+
+      const projects = await db
+        .select()
+        .from(externalRequests)
+        .where(whereClause)
+        .orderBy(desc(externalRequests.created_at))
+        .limit(limit)
+        .offset(offset);
+
+      return { projects, total };
     } catch (error) {
       console.error('Failed to get admin projects:', error);
-      return [];
+      return { projects: [], total: 0 };
     }
   }
 
-  async getProjectStats(): Promise<Record<string, number>> {
+  async getProjectStats(): Promise<Record<string, number> & { _source?: { public: number; registered: number; total: number } }> {
     try {
       const stats = await db
         .select({
@@ -2746,11 +2989,69 @@ class DatabaseStorage implements IStorage {
         return acc;
       }, {} as Record<string, number>);
 
+      const [publicRow] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(externalRequests)
+        .where(isNull(externalRequests.client_id));
+      const [registeredRow] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(externalRequests)
+        .where(isNotNull(externalRequests.client_id));
+
+      const publicCount = Number(publicRow?.count) || 0;
+      const registeredCount = Number(registeredRow?.count) || 0;
+      statsMap._source = {
+        public: publicCount,
+        registered: registeredCount,
+        total: publicCount + registeredCount,
+      };
+
       return statsMap;
     } catch (error) {
       console.error('Failed to get project stats:', error);
       return {};
     }
+  }
+
+  async getAdminProducts(filters?: { status?: string; search?: string; page?: number; limit?: number }): Promise<{ products: Product[]; total: number }> {
+    const conditions = [];
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(products.status, filters.status as any));
+    }
+    if (filters?.search) {
+      const term = `%${filters.search}%`;
+      conditions.push(or(like(products.title, term), like(products.description, term)));
+    }
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(products)
+      .where(whereClause);
+
+    const total = Number(countResult?.count) || 0;
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 20;
+    const offset = (page - 1) * limit;
+
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(whereClause)
+      .orderBy(desc(products.created_at))
+      .limit(limit)
+      .offset(offset);
+
+    return { products: productsList, total };
+  }
+
+  async updateProductStatusAdmin(id: number, status: string): Promise<Product | undefined> {
+    const [updated] = await db
+      .update(products)
+      .set({ status: status as any, updated_at: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    return updated;
   }
 
   // Courses methods
