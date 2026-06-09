@@ -4,11 +4,15 @@
  * 1. Rewrite "@shared/schema" to a relative path (package.json "imports" only supports # prefixes).
  * 2. Append ".js" to relative specifiers that tsc left extensionless.
  */
-import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { join, relative, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = join(fileURLToPath(new URL("..", import.meta.url)), "dist");
+const scriptDir = fileURLToPath(new URL(".", import.meta.url));
+const appRoot = existsSync(join(scriptDir, "dist", "server"))
+  ? scriptDir
+  : join(scriptDir, "..");
+const root = join(appRoot, "dist");
 const schemaTarget = join(root, "shared", "schema.js");
 
 function hasExtension(specifier) {

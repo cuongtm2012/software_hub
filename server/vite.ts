@@ -71,15 +71,17 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // Try Docker path first (/app/dist), then local path (client/dist)
-  const dockerDistPath = path.resolve(import.meta.dirname, "..", "dist");
+  // Monolith deploy: client + server both under dist/ (dist/index.html, dist/server/)
+  const monolithDistPath = path.resolve(import.meta.dirname, "..");
   const localDistPath = path.resolve(import.meta.dirname, "..", "client", "dist");
 
-  const distPath = fs.existsSync(dockerDistPath) ? dockerDistPath : localDistPath;
+  const distPath = fs.existsSync(path.join(monolithDistPath, "index.html"))
+    ? monolithDistPath
+    : localDistPath;
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory. Tried:\n- ${dockerDistPath}\n- ${localDistPath}\nMake sure to build the client first`,
+      `Could not find the build directory. Tried:\n- ${monolithDistPath}\n- ${localDistPath}\nMake sure to build the client first`,
     );
   }
 
