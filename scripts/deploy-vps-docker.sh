@@ -66,6 +66,7 @@ if ! command -v pm2 &>/dev/null; then
 fi
 
 echo "🔄 Reloading PM2 (ecosystem.config.cjs)..."
+pm2 delete email-service chat-service notification-service 2>/dev/null || true
 pm2 reload ecosystem.config.cjs --env production 2>/dev/null || pm2 start ecosystem.config.cjs --env production
 pm2 save
 
