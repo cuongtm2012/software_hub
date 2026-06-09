@@ -50,6 +50,27 @@ function mapMessage(message: any, senderName = "User") {
   };
 }
 
+async function mapMessageForAdminUi(message: any) {
+  const sender = await storage.getUser(message.sender_id);
+  const fallback = {
+    id: message.sender_id,
+    name: "User",
+    email: "",
+    role: "user",
+  };
+  return {
+    id: message.id,
+    room_id: message.room_id,
+    content: message.content,
+    message_type: message.message_type || message.type || "text",
+    status: message.status || "sent",
+    created_at: message.created_at,
+    sender: sender
+      ? { id: sender.id, name: sender.name, email: sender.email, role: sender.role }
+      : fallback,
+  };
+}
+
 function broadcastOnlineUsers(io: SocketIOServer) {
   const users = Array.from(new Set(connectedUsers.values()));
   io.emit("online-users-list", { users });
@@ -68,6 +89,7 @@ export function initializeChatSocket(server: HttpServer) {
     socket.on("authenticate", async (payload: AuthPayload) => {
       const userId = toNumber(payload?.userId);
       if (!userId) {
+        socket.emit("auth_error", { message: "Invalid userId" });
         socket.emit("authentication-failed", { message: "Invalid userId" });
         return;
       }
@@ -76,10 +98,79 @@ export function initializeChatSocket(server: HttpServer) {
       socket.data.userId = userId;
 
       await storage.updateUserPresence(userId, "online");
-      socket.emit("authenticated", { userId: String(userId) });
+      socket.emit("authenticated", { userId: String(userId), success: true });
       io.emit("user-online", { userId: String(userId) });
       broadcastOnlineUsers(io);
     });
+
+    const handleJoinRoom = async (
+      socket: Socket,
+      roomId: number | string,
+      emitJoinedRoom = false,
+    ) => {
+      const userId = toNumber(socket.data.userId);
+      const parsedRoomId = toNumber(roomId);
+      if (!userId || !parsedRoomId) return;
+
+      const isMember = await storage.isChatRoomMember(parsedRoomId, userId);
+      if (!isMember) {
+        socket.emit("error", { message: "Not a room member" });
+        return;
+      }
+
+      socket.join(`room:${parsedRoomId}`);
+      const room = await storage.getChatRoomById(parsedRoomId);
+      const messages = await storage.getChatMessages(parsedRoomId, 50);
+
+      socket.emit("room-joined", {
+        room: room ? mapRoom(room) : null,
+        messages: messages.map((m) => mapMessage(m, String(m.sender_id))),
+      });
+      socket.emit("chat-history", {
+        roomId: String(parsedRoomId),
+        messages: messages.map((m) => mapMessage(m, String(m.sender_id))),
+      });
+
+      if (emitJoinedRoom) {
+        socket.emit("joined_room", { roomId: parsedRoomId });
+      }
+    };
+
+    const handleSendMessage = async (
+      socket: Socket,
+      io: SocketIOServer,
+      payload: { roomId: number | string; message?: string; content?: string; messageType?: string; type?: string },
+      emitAdminShape = false,
+    ) => {
+      const userId = toNumber(socket.data.userId);
+      const roomId = toNumber(payload.roomId);
+      const text = (payload.message || payload.content || "").trim();
+      if (!userId || !roomId || !text) return;
+
+      const isMember = await storage.isChatRoomMember(roomId, userId);
+      if (!isMember) {
+        socket.emit("error", { message: "Not a room member" });
+        return;
+      }
+
+      const saved = await storage.createChatMessage({
+        room_id: roomId,
+        sender_id: userId,
+        content: text,
+        message_type: payload.messageType || payload.type || "text",
+        status: "sent",
+      } as any);
+
+      const outbound = mapMessage(saved, String(userId));
+      io.to(`room:${roomId}`).emit("new-message", outbound);
+
+      if (emitAdminShape) {
+        const adminMessage = await mapMessageForAdminUi(saved);
+        io.to(`room:${roomId}`).emit("new_message", adminMessage);
+      }
+
+      socket.emit("message-sent", { id: outbound._id });
+    };
 
     socket.on("create-room", async (payload: CreateRoomPayload) => {
       try {
@@ -111,28 +202,11 @@ export function initializeChatSocket(server: HttpServer) {
     });
 
     socket.on("join-room", async ({ roomId }: { roomId: number | string }) => {
-      const userId = toNumber(socket.data.userId);
-      const parsedRoomId = toNumber(roomId);
-      if (!userId || !parsedRoomId) return;
+      await handleJoinRoom(socket, roomId, false);
+    });
 
-      const isMember = await storage.isChatRoomMember(parsedRoomId, userId);
-      if (!isMember) {
-        socket.emit("error", { message: "Not a room member" });
-        return;
-      }
-
-      socket.join(`room:${parsedRoomId}`);
-      const room = await storage.getChatRoomById(parsedRoomId);
-      const messages = await storage.getChatMessages(parsedRoomId, 50);
-
-      socket.emit("room-joined", {
-        room: room ? mapRoom(room) : null,
-        messages: messages.map((m) => mapMessage(m, String(m.sender_id))),
-      });
-      socket.emit("chat-history", {
-        roomId: String(parsedRoomId),
-        messages: messages.map((m) => mapMessage(m, String(m.sender_id))),
-      });
+    socket.on("join_room", async ({ roomId }: { roomId: number | string }) => {
+      await handleJoinRoom(socket, roomId, true);
     });
 
     socket.on("leave-room", ({ roomId }: { roomId: number | string }) => {
@@ -143,29 +217,42 @@ export function initializeChatSocket(server: HttpServer) {
 
     socket.on("send-message", async (payload: SendMessagePayload) => {
       try {
-        const userId = toNumber(socket.data.userId);
-        const roomId = toNumber(payload.roomId);
-        if (!userId || !roomId || !payload.message?.trim()) return;
-
-        const isMember = await storage.isChatRoomMember(roomId, userId);
-        if (!isMember) {
-          socket.emit("error", { message: "Not a room member" });
-          return;
-        }
-
-        const saved = await storage.createChatMessage({
-          room_id: roomId,
-          sender_id: userId,
-          content: payload.message.trim(),
-          type: payload.type || "text",
-          status: "sent",
-        } as any);
-
-        const outbound = mapMessage(saved, String(userId));
-        io.to(`room:${roomId}`).emit("new-message", outbound);
-        socket.emit("message-sent", { id: outbound._id });
+        await handleSendMessage(socket, io, payload, false);
       } catch (error: any) {
         socket.emit("error", { message: error?.message || "Failed to send message" });
+      }
+    });
+
+    socket.on("send_message", async (payload: {
+      roomId: number | string;
+      content?: string;
+      message?: string;
+      messageType?: string;
+    }) => {
+      try {
+        await handleSendMessage(socket, io, payload, true);
+      } catch (error: any) {
+        socket.emit("error", { message: error?.message || "Failed to send message" });
+      }
+    });
+
+    socket.on("typing", ({ roomId, isTyping }: { roomId: number | string; isTyping: boolean }) => {
+      const userId = toNumber(socket.data.userId);
+      const parsedRoomId = toNumber(roomId);
+      if (!userId || !parsedRoomId) return;
+
+      socket.to(`room:${parsedRoomId}`).emit("user_typing", { userId, isTyping });
+
+      if (isTyping) {
+        socket.to(`room:${parsedRoomId}`).emit("typing-start", {
+          userId: String(userId),
+          roomId: String(parsedRoomId),
+        });
+      } else {
+        socket.to(`room:${parsedRoomId}`).emit("typing-stop", {
+          userId: String(userId),
+          roomId: String(parsedRoomId),
+        });
       }
     });
 

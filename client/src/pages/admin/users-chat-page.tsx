@@ -90,10 +90,10 @@ export function UsersChatPanel() {
 
   // Get messages for selected room
   const { data: messagesData, isLoading: messagesLoading, refetch: refetchMessages } = useQuery<{ messages: ChatMessage[] }>({
-    queryKey: ['/api/chat/rooms', selectedRoom, 'messages'],
+    queryKey: selectedRoom ? [`/api/chat/rooms/${selectedRoom}/messages`] : ["/api/chat/rooms/disabled/messages"],
     enabled: !!selectedRoom && !!currentUser,
     refetchOnWindowFocus: true,
-    staleTime: 0, // Always fetch fresh messages
+    staleTime: 0,
   });
 
   // Send message mutation
@@ -164,7 +164,7 @@ export function UsersChatPanel() {
       console.log('Admin room created successfully:', data.room.id);
       setSelectedRoom(data.room.id);
       queryClient.invalidateQueries({ queryKey: ['/api/chat/rooms'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/rooms', data.room.id, 'messages'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/rooms/${data.room.id}/messages`] });
       toast({
         title: 'Chat Started',
         description: 'Direct chat room created successfully',
@@ -194,7 +194,7 @@ export function UsersChatPanel() {
     });
 
     newSocket.on('authenticated', ({ success }) => {
-      if (success) {
+      if (success !== false) {
         console.log('Authenticated successfully');
       }
     });
@@ -211,7 +211,7 @@ export function UsersChatPanel() {
       console.log('New message received:', message);
       // Update messages for the specific room
       queryClient.setQueryData(
-        ['/api/chat/rooms', message.room_id, 'messages'],
+        [`/api/chat/rooms/${message.room_id}/messages`],
         (old: { messages: ChatMessage[] } | undefined) => {
           if (!old) return { messages: [message] };
           // Check if message already exists to avoid duplicates
@@ -223,7 +223,7 @@ export function UsersChatPanel() {
       
       // Also invalidate queries to force refresh if needed
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/chat/rooms', message.room_id, 'messages'] 
+        queryKey: [`/api/chat/rooms/${message.room_id}/messages`] 
       });
       
       scrollToBottom();
