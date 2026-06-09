@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# Build production .env for VPS from local .env + client/.env (never commit output).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+if [[ ! -f .env ]]; then
+  echo "❌ Missing .env in project root" >&2
+  exit 1
+fi
+
+# shellcheck disable=SC1091
+set -a
+source .env
+if [[ -f client/.env ]]; then
+  # shellcheck disable=SC1091
+  source client/.env
+fi
+set +a
+
+SESSION="${SESSION_SECRET:-}"
+if [[ -z "$SESSION" || "$SESSION" == *"change-this"* || "$SESSION" == *"YOUR"* ]]; then
+  SESSION="$(openssl rand -base64 32)"
+fi
+
+JWT="${JWT_SECRET:-}"
+if [[ -z "$JWT" || "$JWT" == *"change-this"* ]]; then
+  JWT="$(openssl rand -base64 32)"
+fi
+
+REDIS_PASS="${REDIS_PASSWORD:-password}"
+MONGO_USER="${MONGO_INITDB_ROOT_USERNAME:-admin}"
+MONGO_PASS="${MONGO_INITDB_ROOT_PASSWORD:-password}"
+
+cat <<EOF
+NODE_ENV=production
+PORT=5000
+SITE_URL=${SITE_URL:-https://swhubco.com}
+APP_URL=${APP_URL:-https://swhubco.com}
+
+SUPABASE_URL=${SUPABASE_URL:-}
+SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY:-}
+SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY:-}
+SUPABASE_DB_PASSWORD=${SUPABASE_DB_PASSWORD:-}
+SUPABASE_DB_HOST=${SUPABASE_DB_HOST:-aws-1-ap-southeast-1.pooler.supabase.com}
+SUPABASE_DB_PORT=${SUPABASE_DB_PORT:-6543}
+
+SESSION_SECRET=${SESSION}
+JWT_SECRET=${JWT}
+
+SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
+SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL:-}
+SMTP_HOST=${SMTP_HOST:-smtp.sendgrid.net}
+SMTP_PORT=${SMTP_PORT:-587}
+SMTP_USER=${SMTP_USER:-apikey}
+SMTP_PASS=${SMTP_PASS:-${SENDGRID_API_KEY:-}}
+
+EMAIL_SERVICE_URL=http://127.0.0.1:3001
+CHAT_SERVICE_URL=http://127.0.0.1:3002
+NOTIFICATION_SERVICE_URL=http://127.0.0.1:3003
+SKIP_EXTERNAL_SERVICE_WAIT=true
+
+REDIS_PASSWORD=${REDIS_PASS}
+REDIS_URL=redis://:${REDIS_PASS}@127.0.0.1:6379
+MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASS}@127.0.0.1:27017/softwarehub-chat?authSource=admin
+
+FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-}
+FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL:-}
+FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY:-}
+FCM_VAPID_KEY=${FCM_VAPID_KEY:-}
+
+PAYOS_CLIENT_ID=${PAYOS_CLIENT_ID:-}
+PAYOS_API_KEY=${PAYOS_API_KEY:-}
+PAYOS_CHECKSUM_KEY=${PAYOS_CHECKSUM_KEY:-}
+PAYOS_WEBHOOK_URL=${PAYOS_WEBHOOK_URL:-https://swhubco.com/api/payment/webhook}
+
+GA4_PROPERTY_ID=${GA4_PROPERTY_ID:-}
+GA4_CLIENT_EMAIL=${GA4_CLIENT_EMAIL:-}
+GA4_PRIVATE_KEY=${GA4_PRIVATE_KEY:-}
+
+CLOUDFLARE_R2_ACCESS_KEY_ID=${CLOUDFLARE_R2_ACCESS_KEY_ID:-}
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=${CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}
+CLOUDFLARE_R2_BUCKET_NAME=${CLOUDFLARE_R2_BUCKET_NAME:-}
+CLOUDFLARE_R2_ENDPOINT=${CLOUDFLARE_R2_ENDPOINT:-}
+
+DISABLE_AUTH=false
+EOF

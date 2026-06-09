@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps-production
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,8 +21,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -31,27 +35,20 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           SITE_URL: ${{ secrets.SITE_URL }}
 
       - name: Create deployment package
         run: |
           mkdir -p deploy
-          # Copy built files (dist contains both client and server)
           cp -r dist deploy/
-          # Copy shared code if needed at runtime
           cp -r shared deploy/
-          # Copy services (microservices)
           cp -r services deploy/
-          # Copy package files
           cp package*.json deploy/
-          # Copy ecosystem config for PM2 (.cjs so PM2 works with package.json "type": "module")
           cp ecosystem.config.cjs deploy/
-          # Copy Docker Compose for VPS
           cp docker-compose.vps.yml deploy/
-          # Copy deployment script
           cp scripts/deploy-vps-docker.sh deploy/
           chmod +x deploy/deploy-vps-docker.sh
-          # Create tarball
           tar -czf software-hub.tar.gz -C deploy .
 
       - name: Deploy to VPS
@@ -61,57 +58,52 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          source: "software-hub.tar.gz"
-          target: "/tmp/"
-          debug: true
+          source: software-hub.tar.gz
+          target: /tmp/
           strip_components: 0
 
-      - name: Execute deployment script on VPS
+      - name: Execute deployment on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          debug: true
           script: |
-            set -e
-            
-            # Define paths
+            set -euo pipefail
+
             PROJECT_PATH="/var/www/software-hub"
             BACKUP_PATH="/var/www/software-hub-backup-$(date +%Y%m%d-%H%M%S)"
-            
-            # Create project directory if it doesn't exist
-            echo "Creating project directory..."
-            mkdir -p $PROJECT_PATH
-            
-            # Backup current deployment
+
+            mkdir -p "$PROJECT_PATH"
+
             if [ -d "$PROJECT_PATH/dist" ]; then
               echo "Creating backup..."
-              cp -r $PROJECT_PATH $BACKUP_PATH
+              cp -r "$PROJECT_PATH" "$BACKUP_PATH"
             fi
-            
-            # Extract new deployment
-            echo "Extracting new deployment..."
-            cd $PROJECT_PATH
+
+            cd "$PROJECT_PATH"
             tar -xzf /tmp/software-hub.tar.gz
-            rm /tmp/software-hub.tar.gz
-            
-            # Run deployment script
-            echo "Running deployment script..."
+            rm -f /tmp/software-hub.tar.gz
+
+            if [ -n "${{ secrets.VPS_ENV_B64 }}" ]; then
+              echo "Writing production .env from GitHub secret..."
+              echo "${{ secrets.VPS_ENV_B64 }}" | base64 -d > .env
+              chmod 600 .env
+            elif [ ! -f .env ]; then
+              echo "⚠️  No VPS_ENV_B64 secret and no .env — copy .env.vps.example manually"
+            fi
+
             chmod +x deploy-vps-docker.sh
             ./deploy-vps-docker.sh
-            
-            # Keep only last 5 backups
-            echo "Cleaning old backups..."
+
             ls -dt /var/www/software-hub-backup-* 2>/dev/null | tail -n +6 | xargs rm -rf || true
-            
             echo "Deployment completed successfully!"
 
       - name: Health check
         run: |
-          sleep 20
-          echo "Performing health check..."
+          sleep 25
+          echo "Checking https://swhubco.com/health ..."
+          curl -sf "https://swhubco.com/health" || \
           curl -sf "http://${{ secrets.SSH_HOST }}:5000/health" || \
-          curl -sf "http://${{ secrets.SSH_HOST }}/health" || \
-          echo "Health check failed - verify PM2 and Nginx on VPS"
+          (echo "❌ Health check failed" && exit 1)

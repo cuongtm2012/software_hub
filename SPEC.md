@@ -577,7 +577,7 @@ Source of truth: `.env.example` (local), `.env.vps.example` (VPS-specific).
    - `pm2 reload ecosystem.config.cjs --env production`
 5. Health check: `curl :5000/health`
 
-**GitHub Secrets required:** `SSH_HOST`, `SSH_USERNAME`, `SSH_KEY`, `SSH_PORT`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_ANON_KEY`, `VITE_GA_MEASUREMENT_ID`, `SITE_URL`
+**GitHub Secrets required:** `SSH_HOST`, `SSH_USERNAME`, `SSH_KEY`, `SSH_PORT`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_ANON_KEY`, `VITE_GA_MEASUREMENT_ID`, `VITE_GEMINI_API_KEY`, `SITE_URL`, `VPS_ENV_B64` (full runtime `.env` — sync via `bash scripts/sync-github-secrets.sh`)
 
 ### 10.2. Docker Compose Files
 
