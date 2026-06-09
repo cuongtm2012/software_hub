@@ -10,11 +10,12 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
-  FRONTEND_TO_SEPAY_METHOD,
-  generateServiceInvoice,
-  getSepayClient,
-  isSepayConfigured,
-} from "../lib/sepay.js";
+  FRONTEND_PAYMENT_METHODS,
+  createPaymentLink,
+  isPayosConfigured,
+  payosDescription,
+  serviceOrderCode,
+} from "../lib/payos.js";
 import {
   pruneExpiredPendingCheckouts,
   savePendingCheckout,
@@ -51,10 +52,10 @@ async function initiateServicePayment(
   paymentType: "deposit" | "final",
 ) {
   try {
-    if (!isSepayConfigured()) {
+    if (!isPayosConfigured()) {
       return res.status(503).json({
         success: false,
-        message: "Cổng thanh toán SePay chưa được cấu hình",
+        message: "Cổng thanh toán payOS chưa được cấu hình",
       });
     }
 
@@ -67,8 +68,7 @@ async function initiateServicePayment(
       return res.status(400).json({ message: "quotation_id là bắt buộc" });
     }
 
-    const sepayMethod = payment_method ? FRONTEND_TO_SEPAY_METHOD[payment_method] : undefined;
-    if (!sepayMethod) {
+    if (payment_method && !FRONTEND_PAYMENT_METHODS.has(payment_method)) {
       return res.status(400).json({ message: "Phương thức thanh toán không hợp lệ" });
     }
 
@@ -126,43 +126,34 @@ async function initiateServicePayment(
         service_project_id: project?.id ?? null,
         amount: amount.toString(),
         payment_type: paymentType,
-        payment_method: sepayMethod,
+        payment_method: "payos",
       },
       serviceRequest.client_id,
     );
 
-    const invoiceNumber = generateServiceInvoice(servicePayment.id);
+    const orderCode = serviceOrderCode(servicePayment.id);
     const baseUrl = getAppBaseUrl(req);
-    const client = getSepayClient();
     const user = req.user!;
 
-    const formFields = client.checkout.initOneTimePaymentFields({
-      operation: "PURCHASE",
-      payment_method: sepayMethod,
-      order_invoice_number: invoiceNumber,
-      order_amount: amount,
-      currency: "VND",
-      order_description: `Dịch vụ IT — ${paymentType === "deposit" ? "Tiền cọc" : "Thanh toán cuối"} — Báo giá #${quotation_id}`,
-      customer_id: String(user.id),
-      success_url: `${baseUrl}/services/${quotation.service_request_id}?payment=success`,
-      error_url: `${baseUrl}/services/${quotation.service_request_id}?payment=failure`,
-      cancel_url: `${baseUrl}/services/${quotation.service_request_id}?payment=cancel`,
-      custom_data: JSON.stringify({
-        userId: user.id,
-        type: "service_payment",
-        servicePaymentId: servicePayment.id,
-        quotationId: quotation_id,
-        paymentType,
-      }),
+    const link = await createPaymentLink({
+      orderCode,
+      amount,
+      description: payosDescription(paymentType === "deposit" ? "COC" : "TT", quotation_id),
+      returnUrl: `${baseUrl}/services/${quotation.service_request_id}?payment=success`,
+      cancelUrl: `${baseUrl}/services/${quotation.service_request_id}?payment=cancel`,
+      buyerName: user.name,
+      buyerEmail: user.email,
     });
 
-    await savePendingCheckout(invoiceNumber, "service_payment", {
+    await savePendingCheckout(String(orderCode), "service_payment", {
       servicePaymentId: servicePayment.id,
       userId: user.id,
       quotationId: quotation_id,
       paymentType,
       amount,
-      paymentMethod: sepayMethod,
+      paymentMethod: "payos",
+      orderCode,
+      paymentLinkId: link.paymentLinkId,
     });
     await pruneExpiredPendingCheckouts();
 
@@ -170,11 +161,13 @@ async function initiateServicePayment(
       success: true,
       service_payment_id: servicePayment.id,
       payment_info: {
-        checkout_url: client.checkout.initCheckoutUrl(),
-        form_fields: formFields,
-        order_invoice_number: invoiceNumber,
+        checkout_url: link.checkoutUrl,
+        qr_code: link.qrCode,
+        order_code: orderCode,
+        order_invoice_number: String(orderCode),
+        payment_link_id: link.paymentLinkId,
         amount,
-        payment_method: sepayMethod,
+        payment_method: "payos",
       },
     });
   } catch (error) {

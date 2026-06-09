@@ -64,11 +64,11 @@ export default function AddFundsPage() {
     {
       id: "bank-qr",
       title: "Chuyển khoản QR (VietQR)",
-      description: "Quét mã QR chuyển khoản ngân hàng qua SePay",
+      description: "Quét mã QR chuyển khoản ngân hàng qua payOS",
       icon: QrCode,
       iconBg: "bg-[#004080]/10",
       iconColor: "text-[#004080]",
-      fee: "Theo gói SePay",
+      fee: "Theo gói payOS",
       popular: true,
     },
     {
@@ -78,7 +78,7 @@ export default function AddFundsPage() {
       icon: Building2,
       iconBg: "bg-slate-100",
       iconColor: "text-slate-700",
-      fee: "Theo gói SePay",
+      fee: "Theo gói payOS",
     },
   ];
 
@@ -158,7 +158,7 @@ export default function AddFundsPage() {
               Nạp tiền vào ví
             </h1>
             <p className="text-sm text-gray-600">
-              Thanh toán an toàn qua cổng SePay
+              Thanh toán an toàn qua cổng payOS
             </p>
           </div>
         </div>
@@ -202,7 +202,7 @@ export default function AddFundsPage() {
                           : "text-red-700"
                     }`}>
                       {paymentStatus === "success"
-                        ? "Số dư ví sẽ được cập nhật sau khi SePay xác nhận giao dịch."
+                        ? "Số dư ví sẽ được cập nhật sau khi payOS xác nhận giao dịch."
                         : paymentStatus === "cancel"
                           ? "Bạn có thể thử lại bất cứ lúc nào."
                           : "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại."}
@@ -235,7 +235,7 @@ export default function AddFundsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wallet className="h-5 w-5" />
-                  Phương thức thanh toán (SePay)
+                  Phương thức thanh toán (payOS)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -391,7 +391,7 @@ export default function AddFundsPage() {
                       Thông tin thanh toán
                     </h4>
                     <ul className="text-xs text-blue-800 space-y-1">
-                      <li>• Thanh toán qua cổng SePay (sandbox/production)</li>
+                      <li>• Thanh toán qua cổng payOS (sandbox/production)</li>
                       <li>• Số dư cập nhật sau khi IPN xác nhận</li>
                       <li>• Số tiền nạp tối thiểu: 1.000₫</li>
                       <li>• Liên hệ hỗ trợ nếu gặp sự cố</li>
@@ -409,7 +409,7 @@ export default function AddFundsPage() {
             Đối tác thanh toán
           </h3>
           <div className="flex items-center justify-center gap-6">
-            <div className="text-sm font-semibold text-[#004080]">SePay</div>
+            <div className="text-sm font-semibold text-[#004080]">payOS</div>
             <div className="text-sm text-gray-500">VietQR · NAPAS · Ngân hàng liên kết</div>
           </div>
         </div>

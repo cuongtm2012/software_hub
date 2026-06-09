@@ -248,7 +248,7 @@ export function GlobalCartSidebar() {
 
               <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                 <Shield className="h-4 w-4 shrink-0" />
-                <span>Thanh toán bảo mật qua SePay</span>
+                <span>Thanh toán bảo mật qua payOS</span>
               </div>
             </div>
           </>

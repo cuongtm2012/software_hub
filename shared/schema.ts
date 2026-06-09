@@ -332,7 +332,7 @@ export const payments = pgTable("payments", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
-/** SePay in-flight checkouts — survives server restarts */
+/** payOS in-flight checkouts — survives server restarts */
 export const pendingCheckouts = pgTable("pending_checkouts", {
   invoice_number: text("invoice_number").primaryKey(),
   type: text("type").notNull(), // wallet_deposit | marketplace_order

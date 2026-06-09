@@ -225,7 +225,7 @@ export default function ProjectsPage() {
                             <Wrench className="h-3.5 w-3.5" />
                             Dịch vụ IT
                         </Link>{" "}
-                        (báo giá admin, thanh toán SePay).
+                        (báo giá admin, thanh toán payOS).
                     </p>
                 </div>
 

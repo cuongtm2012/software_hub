@@ -10,7 +10,7 @@
 
 **Architecture:** Monolith-first — single Express app serves API + built React SPA. Optional microservices (email, chat, notification) run under PM2. Primary database, auth, and file storage run on **Supabase** (managed PostgreSQL). Redis + MongoDB run locally on VPS via Docker for queue/chat.
 
-**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped. **Cổng thanh toán mục tiêu: [payOS](https://payos.vn/docs/api/)** — thay SePay (§4.2, §15.1 H5). Code hiện tại vẫn tích hợp SePay (`sepay-pg-node`); migration PayOS là backlog P0.
+**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped. **Cổng thanh toán: [payOS](https://payos.vn/docs/)** — wallet, marketplace checkout, IT service payments (§4.2).
 
 ---
 
@@ -53,8 +53,7 @@ Internet → Nginx (80/443) → PM2 app :5000
 - Socket.IO (real-time chat in monolith)
 - SendGrid / Resend (email via `email-service`)
 - Firebase Admin SDK (push notifications via `notification-service`)
-- **payOS** ([API docs](https://payos.vn/docs/api/)) — **target** payment gateway (link thanh toán + webhook)
-- **SePay** (`sepay-pg-node`) — **legacy in code** until H5 migration completes
+- **payOS** ([API docs](https://payos.vn/docs/)) — payment gateway (`server/lib/payos.ts`, webhook `/api/payment/webhook`)
 - Google Generative AI (`@google/generative-ai`) — chat AI
 
 **Testing**
@@ -134,7 +133,7 @@ Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push
 
 **Enums:** `role` (user, admin, developer, client, seller, buyer), `order_status` (pending → completed), `product_status`, `payment_status`, etc.
 
-**Wallet:** Stored in `users.profile_data.wallet_balance` (JSONB) — credited via payment webhook on wallet top-up (target: payOS; hiện tại: SePay IPN).
+**Wallet:** Stored in `users.profile_data.wallet_balance` (JSONB) — credited via payOS webhook on wallet top-up.
 
 **Client-side cart:** `useCart` hook persists to `localStorage` key `shopping-cart`. Legacy `cart_items` table removed from schema (migration `005_drop_cart_items.sql`).
 
@@ -169,7 +168,7 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/api/storage/*` | `upload.routes.ts` | Supabase Storage upload URLs, download |
 | `/api/marketplace/*` | `marketplace.routes.ts` | Marketplace product aliases |
 | `/api/users/*` | `user.routes.ts` | Profile, external requests, projects |
-| `/api/payment/*` | `payment.routes.ts` | Wallet + checkout + webhook (**target payOS**; hiện SePay) |
+| `/api/payment/*` | `payment.routes.ts` | Wallet + checkout + payOS webhook |
 | `/api/payments/*` | `payment.routes.ts` | Payment records management |
 | `/api/portfolios/*` | `portfolio.routes.ts` | Portfolio CRUD (developer), gallery, reviews |
 | `/api/portfolio-reviews/*` | `portfolio.routes.ts` | Portfolio review sub-router |
@@ -242,14 +241,9 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 5. payOS webhook `success` → mark order `completed`, payment record, decrement stock
 6. User quay về `returnUrl` → `/marketplace/order-success/:orderId`
 
-#### 4.2.3. SePay (legacy — remove sau H5)
+#### 4.2.3. SePay (removed)
 
-| Item | Ghi chú |
-|---|---|
-| Package | `sepay-pg-node` — gỡ sau migration |
-| Env | `SEPAY_*` — deprecated |
-| Module | `server/lib/sepay.ts` → thay bằng `server/lib/payos.ts` |
-| UI copy | Checkout / add-funds / cart vẫn ghi "SePay" — cập nhật → "payOS" |
+Đã gỡ `sepay-pg-node`, `server/lib/sepay.ts`, `SEPAY_*` env. `/api/payment/ipn` giữ làm alias webhook payOS.
 
 ### 4.3. Auth Design
 
@@ -340,7 +334,7 @@ Refactored dashboard architecture:
 
 - `Header` + `Footer` — site-wide layout
 - `GlobalCartSidebar` + `CartTrigger` (`cart-sidebar.tsx`) — unified slide-over cart via `useCart` (localStorage)
-- `PaymentForm` — redirect / hiển thị QR payOS (`checkoutUrl`); hiện tại vẫn auto-submit form SePay
+- `PaymentForm` — redirect tới payOS `checkoutUrl`
 - `LeadCaptureForm` — GTM lead capture (navy/yellow brand)
 - `GtmBehaviorTracker` + `ConsultationPopup` — behavior-based consultation popup
 - `FloatingChatButton` — real-time chat widget
@@ -431,7 +425,7 @@ Refactored dashboard architecture:
 | **chat-service** | 3002 | Real-time chat | MongoDB, Redis |
 | **notification-service** | 3003 | FCM push notifications | PostgreSQL, Firebase |
 
-**Legacy/archived:** PHP NganLuong checkout → `scripts/archive/payment-service-php-legacy/`; SePay → gỡ sau H5 (target: payOS). **Optional local Docker only:** `gateweaver`, `worker-service` in full `docker-compose.yml` — not on VPS prod. See `docker/COMPOSE.md`.
+**Legacy/archived:** PHP NganLuong checkout → `scripts/archive/payment-service-php-legacy/`; SePay removed. **Optional local Docker only:** `gateweaver`, `worker-service` in full `docker-compose.yml` — not on VPS prod. See `docker/COMPOSE.md`.
 
 ### 6.2. Message Queue
 
@@ -462,8 +456,7 @@ Refactored dashboard architecture:
 | Service | Purpose | Status |
 |---|---|---|
 | **Supabase** | PostgreSQL + Auth + Storage | ✅ Primary |
-| **payOS** | Wallet top-up + marketplace + IT service payments | 🎯 Target (§4.2) |
-| **SePay** | Payment gateway (code hiện tại) | ⚠️ Legacy — remove H5 |
+| **payOS** | Wallet top-up + marketplace + IT service payments | ✅ Active (§4.2) |
 | SendGrid / Resend | Transactional email | ✅ Active |
 | Firebase FCM | Push notifications | ✅ Active |
 | Google Analytics 4 | Traffic tracking (`VITE_GA_MEASUREMENT_ID`) | ✅ Active |
@@ -653,7 +646,7 @@ npm start              # node dist/server/index.js
 | Phase 2 | ✅ Done | Project management, quotes, portfolios (+ edit), messaging |
 | Phase 3 | ✅ Done | Marketplace (products, orders, unified cart, payments, support tickets) |
 | Phase 4 | ✅ Done | IT Services UI + API + service payments + email notifications |
-| Phase 3b | 🔄 In progress | **payOS migration** (thay SePay) — §15.1 H5 |
+| Phase 3b | ✅ Done | **payOS migration** — §15.9 |
 | Phase 5 | ✅ Done | GTM core + admin course SEO CMS (`/admin/courses`) |
 | Phase 6 | 🔄 Evolving | Design system rollout (`SPEC_UI_IMPROVEMENT_v1.md`), dashboard refactor |
 
@@ -780,7 +773,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 | # | Feature | Mô tả | Files / gợi ý |
 |---|---|---|---|
-| H5 | **payOS migration** — thay SePay toàn stack | Xem chi tiết §15.9 | `server/lib/payos.ts`, routes, UI, env VPS |
+| H5 | **payOS migration** — thay SePay toàn stack | ✅ Done — §15.9 | `server/lib/payos.ts`, webhook `/api/payment/webhook` |
 
 ### 15.2. Medium Priority — SEO / GTM / Phase 4 polish
 
@@ -794,7 +787,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | L2 | **OpenAPI / Swagger** | Không có API docs tự động |
 | L3 | **Zalo OA API** | Kênh SME Việt Nam — chưa có integration |
 | L4 | **Remove Stripe / PHP payment legacy** | ✅ Done — gỡ `stripe` deps; archive PHP payment |
-| L8 | **Remove SePay after H5** | Gỡ `sepay-pg-node`, `server/lib/sepay.ts`, `SEPAY_*` env |
+| L8 | **Remove SePay after H5** | ✅ Done — gỡ `sepay-pg-node`, `sepay.ts`, env templates → `PAYOS_*` |
 | L5 | **Deduplicate docker-compose** | ✅ Done — `docker/COMPOSE.md`; deprecate `prod`/`production` compose |
 | L6 | **Drop `cart_items` table** | ✅ Done — removed schema + storage; SQL `database/migrations/005_drop_cart_items.sql` |
 | L7 | **`/api/cart` REST API** | ✅ N/A — dead storage removed; cart = `localStorage` only (no server route planned) |
@@ -934,7 +927,7 @@ Các mục sau **đã implement** — không còn trong backlog:
 | Database tables | 28 (+ `pending_checkouts`; `cart_items` dropped) |
 | Active microservices | 3 (email, chat, notification) |
 | Payment gateway (target) | payOS |
-| Payment gateway (code) | SePay — until H5 |
+| Payment gateway (code) | payOS |
 | Cart source | `localStorage` (`shopping-cart`) — `cart_items` table removed |
 | Production domain | swhubco.com |
 | Documentation files | ~40 |

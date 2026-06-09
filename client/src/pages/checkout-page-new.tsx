@@ -32,7 +32,7 @@ const PAYMENT_METHODS = [
   {
     id: "bank-qr",
     title: "Chuyển khoản QR (VietQR)",
-    description: "Quét mã QR chuyển khoản ngân hàng qua SePay",
+    description: "Quét mã VietQR chuyển khoản qua payOS",
     icon: QrCode,
   },
   {
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
       if (!selectedMethod) {
         toast({
           title: "Chọn phương thức",
-          description: "Vui lòng chọn phương thức thanh toán SePay",
+          description: "Vui lòng chọn phương thức thanh toán payOS",
           variant: "destructive",
         });
         return false;
@@ -416,9 +416,9 @@ export default function CheckoutPage() {
                       <div className="flex items-start gap-3">
                         <Shield className="w-5 h-5 text-[#004080] mt-0.5" />
                         <div>
-                          <p className="text-sm font-semibold text-[#004080]">Thanh toán an toàn qua SePay</p>
+                          <p className="text-sm font-semibold text-[#004080]">Thanh toán an toàn qua payOS</p>
                           <p className="text-xs text-slate-600 mt-1">
-                            Giao dịch được xử lý bởi cổng thanh toán SePay — không lưu thông tin thẻ
+                            Giao dịch được xử lý bởi payOS (Napas 24/7) — không lưu thông tin thẻ
                           </p>
                         </div>
                       </div>
@@ -482,7 +482,7 @@ export default function CheckoutPage() {
                 {currentStep === 3 && (
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Phương thức thanh toán</h2>
-                    <p className="text-sm text-slate-500 mb-6">Thanh toán qua SePay — chuyển khoản QR</p>
+                    <p className="text-sm text-slate-500 mb-6">Thanh toán qua payOS — VietQR / chuyển khoản</p>
                     <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod}>
                       <div className="space-y-3">
                         {PAYMENT_METHODS.map((method) => {
@@ -592,7 +592,7 @@ export default function CheckoutPage() {
                       className="w-full bg-[#004080] hover:bg-[#003366] text-white font-semibold"
                       size="lg"
                     >
-                      {isProcessing ? "Đang xử lý..." : "Thanh toán qua SePay"}
+                      {isProcessing ? "Đang xử lý..." : "Thanh toán qua payOS"}
                     </Button>
                   ) : (
                     <Button
@@ -613,7 +613,7 @@ export default function CheckoutPage() {
                 <div className="mt-6 space-y-2">
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Shield className="w-4 h-4" />
-                    <span>Thanh toán an toàn qua SePay</span>
+                    <span>Thanh toán an toàn qua payOS</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Package className="w-4 h-4" />
