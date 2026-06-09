@@ -39,7 +39,13 @@ fi
 
 echo "📦 Starting / updating infrastructure containers (Redis + Mongo)..."
 echo "   Database: Supabase cloud (not local Postgres)"
-compose up -d
+if docker ps -a --format '{{.Names}}' | grep -qx 'softwarehub-redis' \
+  && docker ps -a --format '{{.Names}}' | grep -qx 'softwarehub-mongo'; then
+  echo "   Reusing existing Redis/Mongo containers..."
+  docker start softwarehub-redis softwarehub-mongo >/dev/null 2>&1 || true
+else
+  compose up -d
+fi
 
 if [ -f .env ]; then
   echo "✓ Using existing .env on VPS"
