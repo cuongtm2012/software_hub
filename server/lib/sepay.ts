@@ -36,3 +36,7 @@ export function generateDepositInvoice(userId: number) {
 export function generateOrderInvoice(orderId: number) {
   return `ORD-${orderId}-${Date.now()}`;
 }
+
+export function generateServiceInvoice(paymentId: number) {
+  return `SVC-${paymentId}-${Date.now()}`;
+}

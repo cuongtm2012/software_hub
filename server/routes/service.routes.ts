@@ -1,6 +1,7 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { storage } from "../storage";
 import { isAuthenticated, hasRole } from "../middleware/auth.middleware";
+import { paymentRateLimiter, writeRateLimiter } from "../middleware/rate-limit.js";
 import {
   insertServiceRequestSchema,
   insertServiceQuotationSchema,
@@ -8,6 +9,21 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import {
+  FRONTEND_TO_SEPAY_METHOD,
+  generateServiceInvoice,
+  getSepayClient,
+  isSepayConfigured,
+} from "../lib/sepay.js";
+import {
+  pruneExpiredPendingCheckouts,
+  savePendingCheckout,
+} from "../storage/payment/pendingCheckoutStorage.js";
+import {
+  notifyServiceQuotationCreated,
+  notifyServiceQuotationResponded,
+  notifyServiceRequestCreated,
+} from "../lib/service-notifications.js";
 
 const adminMiddleware = hasRole(["admin"]);
 
@@ -20,9 +36,155 @@ function canManageServiceRequest(
   return user.role === "admin" || request.client_id === user.id;
 }
 
+function getAppBaseUrl(req: Request) {
+  const configured = process.env.APP_URL || process.env.PUBLIC_URL;
+  if (configured) return configured.replace(/\/$/, "");
+  const host = req.get("host") || "localhost:5001";
+  const protocol = req.protocol || "http";
+  return `${protocol}://${host}`;
+}
+
+async function initiateServicePayment(
+  req: Request,
+  res: Response,
+  next: (err?: unknown) => void,
+  paymentType: "deposit" | "final",
+) {
+  try {
+    if (!isSepayConfigured()) {
+      return res.status(503).json({
+        success: false,
+        message: "Cổng thanh toán SePay chưa được cấu hình",
+      });
+    }
+
+    const { quotation_id, payment_method } = req.body as {
+      quotation_id?: number;
+      payment_method?: string;
+    };
+
+    if (!quotation_id) {
+      return res.status(400).json({ message: "quotation_id là bắt buộc" });
+    }
+
+    const sepayMethod = payment_method ? FRONTEND_TO_SEPAY_METHOD[payment_method] : undefined;
+    if (!sepayMethod) {
+      return res.status(400).json({ message: "Phương thức thanh toán không hợp lệ" });
+    }
+
+    const quotation = await storage.getServiceQuotationById(quotation_id);
+    if (!quotation) {
+      return res.status(404).json({ message: "Không tìm thấy báo giá" });
+    }
+
+    if (quotation.status !== "accepted") {
+      return res.status(400).json({ message: "Báo giá chưa được chấp nhận" });
+    }
+
+    const serviceRequest = await storage.getServiceRequestById(quotation.service_request_id);
+    if (!serviceRequest || !canManageServiceRequest(req.user!, serviceRequest)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const existingPayments = await storage.getServicePaymentsByQuotation(quotation_id);
+    const completedDeposit = existingPayments.find(
+      (p) => p.payment_type === "deposit" && p.status === "completed",
+    );
+    const completedFinal = existingPayments.find(
+      (p) => p.payment_type === "final" && p.status === "completed",
+    );
+
+    if (paymentType === "deposit" && completedDeposit) {
+      return res.status(400).json({ message: "Tiền cọc đã được thanh toán" });
+    }
+    if (paymentType === "final") {
+      if (!completedDeposit) {
+        return res.status(400).json({ message: "Vui lòng thanh toán tiền cọc trước" });
+      }
+      if (completedFinal) {
+        return res.status(400).json({ message: "Thanh toán cuối đã hoàn tất" });
+      }
+    }
+
+    const amount =
+      paymentType === "deposit"
+        ? Math.round(Number(quotation.deposit_amount))
+        : Math.round(Number(quotation.total_price) - Number(quotation.deposit_amount));
+
+    if (amount < 1000) {
+      return res.status(400).json({ message: "Số tiền tối thiểu là 1.000₫" });
+    }
+
+    const projects = (await storage.getAllServiceProjects()).filter(
+      (p) => p.quotation_id === quotation_id,
+    );
+    const project = projects[0];
+
+    const servicePayment = await storage.createServicePayment(
+      {
+        quotation_id,
+        service_project_id: project?.id ?? null,
+        amount: amount.toString(),
+        payment_type: paymentType,
+        payment_method: sepayMethod,
+      },
+      serviceRequest.client_id,
+    );
+
+    const invoiceNumber = generateServiceInvoice(servicePayment.id);
+    const baseUrl = getAppBaseUrl(req);
+    const client = getSepayClient();
+    const user = req.user!;
+
+    const formFields = client.checkout.initOneTimePaymentFields({
+      operation: "PURCHASE",
+      payment_method: sepayMethod,
+      order_invoice_number: invoiceNumber,
+      order_amount: amount,
+      currency: "VND",
+      order_description: `Dịch vụ IT — ${paymentType === "deposit" ? "Tiền cọc" : "Thanh toán cuối"} — Báo giá #${quotation_id}`,
+      customer_id: String(user.id),
+      success_url: `${baseUrl}/services/${quotation.service_request_id}?payment=success`,
+      error_url: `${baseUrl}/services/${quotation.service_request_id}?payment=failure`,
+      cancel_url: `${baseUrl}/services/${quotation.service_request_id}?payment=cancel`,
+      custom_data: JSON.stringify({
+        userId: user.id,
+        type: "service_payment",
+        servicePaymentId: servicePayment.id,
+        quotationId: quotation_id,
+        paymentType,
+      }),
+    });
+
+    await savePendingCheckout(invoiceNumber, "service_payment", {
+      servicePaymentId: servicePayment.id,
+      userId: user.id,
+      quotationId: quotation_id,
+      paymentType,
+      amount,
+      paymentMethod: sepayMethod,
+    });
+    await pruneExpiredPendingCheckouts();
+
+    res.json({
+      success: true,
+      service_payment_id: servicePayment.id,
+      payment_info: {
+        checkout_url: client.checkout.initCheckoutUrl(),
+        form_fields: formFields,
+        order_invoice_number: invoiceNumber,
+        amount,
+        payment_method: sepayMethod,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export function registerServiceRoutes(app: Express) {
   // Create service request (logged-in clients)
-  app.post("/api/service-requests", isAuthenticated, async (req, res, next) => {
+  app.post("/api/service-requests", writeRateLimiter, isAuthenticated, async (req, res, next) => {
     try {
       if (!CLIENT_ROLES.includes(req.user!.role)) {
         return res.status(403).json({ message: "Bạn không có quyền gửi yêu cầu dịch vụ" });
@@ -30,6 +192,7 @@ export function registerServiceRoutes(app: Express) {
 
       const requestData = insertServiceRequestSchema.parse(req.body);
       const serviceRequest = await storage.createServiceRequest(requestData, req.user!.id);
+      notifyServiceRequestCreated(serviceRequest);
       res.status(201).json(serviceRequest);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -77,7 +240,11 @@ export function registerServiceRoutes(app: Express) {
         (p) => p.service_request_id === id,
       );
 
-      res.json({ request: serviceRequest, quotations, projects });
+      const payments = (
+        await Promise.all(quotations.map((q) => storage.getServicePaymentsByQuotation(q.id)))
+      ).flat();
+
+      res.json({ request: serviceRequest, quotations, projects, payments });
     } catch (error) {
       next(error);
     }
@@ -120,6 +287,7 @@ export function registerServiceRoutes(app: Express) {
         await storage.updateServiceRequestStatus(requestId, "quoted");
       }
 
+      notifyServiceQuotationCreated(quotation, serviceRequest.client_id);
       res.status(201).json(quotation);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -184,6 +352,8 @@ export function registerServiceRoutes(app: Express) {
         newStatus,
         client_response,
       );
+
+      notifyServiceQuotationResponded(quotation, action, serviceRequest.client_id);
 
       if (action === "accept") {
         await storage.updateServiceRequestStatus(quotation.service_request_id, "accepted");
@@ -250,6 +420,34 @@ export function registerServiceRoutes(app: Express) {
     } catch (error) {
       next(error);
     }
+  });
+
+  app.get("/api/service-payments/quotation/:quotationId", isAuthenticated, async (req, res, next) => {
+    try {
+      const quotationId = parseInt(req.params.quotationId, 10);
+      const quotation = await storage.getServiceQuotationById(quotationId);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+
+      const serviceRequest = await storage.getServiceRequestById(quotation.service_request_id);
+      if (!serviceRequest || !canManageServiceRequest(req.user!, serviceRequest)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const payments = await storage.getServicePaymentsByQuotation(quotationId);
+      res.json({ payments });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/service-payments/deposit", paymentRateLimiter, isAuthenticated, async (req, res, next) => {
+    await initiateServicePayment(req, res, next, "deposit");
+  });
+
+  app.post("/api/service-payments/final", paymentRateLimiter, isAuthenticated, async (req, res, next) => {
+    await initiateServicePayment(req, res, next, "final");
   });
 
   app.put("/api/service-projects/:id/progress", adminMiddleware, async (req, res, next) => {

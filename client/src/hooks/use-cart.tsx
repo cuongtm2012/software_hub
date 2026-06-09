@@ -26,6 +26,7 @@ interface CartContextType {
   removeFromCart: (productId: string, packageId: string) => void;
   updateQuantity: (productId: string, packageId: string, quantity: number) => void;
   clearCart: () => void;
+  removeItemsByProductIds: (productIds: string[]) => void;
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
@@ -137,6 +138,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsOpen(false);
   };
 
+  const removeItemsByProductIds = (productIds: string[]) => {
+    const idSet = new Set(productIds);
+    setItems((current) => current.filter((item) => !idSet.has(String(item.productId))));
+  };
+
   const openCart = () => setIsOpen(true);
   const closeCart = () => setIsOpen(false);
   const toggleCart = () => setIsOpen(!isOpen);
@@ -175,6 +181,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        removeItemsByProductIds,
         openCart,
         closeCart,
         toggleCart,

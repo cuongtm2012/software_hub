@@ -24,7 +24,8 @@ import {
   CheckCircle,
   AlertCircle,
   Users,
-  BarChart3
+  BarChart3,
+  MessageSquare,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -189,10 +190,20 @@ export default function SellerDashboardPage() {
                 {sellerProfile && getStatusBadge(sellerProfile.verification_status)}
               </div>
             </div>
-            <Button onClick={() => navigate("/seller/products/new")} className="bg-[#004080] hover:bg-[#003366]">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => navigate("/seller/support")}
+                variant="outline"
+                className="border-[#004080]/30 text-[#004080]"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Hỗ trợ KH
+              </Button>
+              <Button onClick={() => navigate("/seller/products/new")} className="bg-[#004080] hover:bg-[#003366]">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
+            </div>
           </div>
 
           {!sellerProfile && (

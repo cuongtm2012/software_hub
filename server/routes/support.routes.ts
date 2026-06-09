@@ -2,6 +2,7 @@ import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 import { isAuthenticated } from "../middleware/auth.middleware";
+import { supportRateLimiter } from "../middleware/rate-limit.js";
 import { insertSupportTicketSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -29,7 +30,7 @@ router.get("/", isAuthenticated, async (req: Request, res: Response, next: NextF
 });
 
 // Create ticket (buyer)
-router.post("/", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", supportRateLimiter, isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;
     if (user.role === "seller") {
@@ -37,7 +38,23 @@ router.post("/", isAuthenticated, async (req: Request, res: Response, next: Next
     }
 
     const data = insertSupportTicketSchema.parse(req.body);
-    const ticket = await storage.createSupportTicket(data, user.id);
+    let sellerId: number | undefined;
+
+    if (data.order_id) {
+      const order = await storage.getOrderById(data.order_id);
+      if (!order) {
+        return res.status(400).json({ message: "Không tìm thấy đơn hàng" });
+      }
+      if (order.buyer_id !== user.id && user.role !== "admin") {
+        return res.status(403).json({ message: "Bạn không có quyền tạo ticket cho đơn hàng này" });
+      }
+      sellerId = order.seller_id;
+    }
+
+    const ticket = await storage.createSupportTicket(
+      { ...data, ...(sellerId ? { seller_id: sellerId } : {}) },
+      user.id,
+    );
     res.status(201).json(ticket);
   } catch (error) {
     if (error instanceof ZodError) {

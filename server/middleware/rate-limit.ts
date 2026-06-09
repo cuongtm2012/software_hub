@@ -23,3 +23,27 @@ export const paymentRateLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: "Quá nhiều yêu cầu thanh toán. Vui lòng thử lại sau." },
 });
+
+export const uploadRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Quá nhiều yêu cầu upload. Vui lòng thử lại sau." },
+});
+
+export const writeRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 80,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Quá nhiều thao tác ghi. Vui lòng thử lại sau." },
+});
+
+export const supportRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Quá nhiều ticket hỗ trợ. Vui lòng thử lại sau." },
+});

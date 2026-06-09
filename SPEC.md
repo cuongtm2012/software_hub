@@ -10,7 +10,7 @@
 
 **Architecture:** Monolith-first — single Express app serves API + built React SPA. Optional microservices (email, chat, notification) run under PM2. Primary database, auth, and file storage run on **Supabase** (managed PostgreSQL). Redis + MongoDB run locally on VPS via Docker for queue/chat.
 
-**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM shipped; backlog focuses on service payments, multi-seller cart, and SEO admin.
+**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM shipped; H1–H4 and M1–M6 implemented locally — backlog còn H5 (ops) và low-priority items.
 
 ---
 
@@ -248,7 +248,7 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/marketplace` | MarketplacePage | Public |
 | `/marketplace/category/:category` | MarketplaceCategoryPage | Public |
 | `/marketplace/product/:id` | ProductDetailPage | Public (canonical product URL) |
-| `/marketplace/:id` | MarketplaceDetailPage | Public (**legacy duplicate** — consolidate) |
+| `/marketplace/:id` | Redirect → `/marketplace/product/:id` | Public (legacy URL preserved) |
 | `/marketplace/checkout` | CheckoutPageNew | Protected (login required) |
 | `/marketplace/order-success/:orderId` | OrderSuccessPage | Public |
 | `/marketplace/orders` | MarketplaceOrdersPage | buyer, admin |
@@ -539,8 +539,8 @@ npm start              # node dist/server/index.js
 | Phase 1 | ✅ Done | Software catalog, categories, reviews, Supabase auth |
 | Phase 2 | ✅ Done | Project management, quotes, portfolios (+ edit), messaging |
 | Phase 3 | ✅ Done | Marketplace (products, orders, unified cart, SePay, support tickets) |
-| Phase 4 | 🟡 Mostly Done | IT Services UI + API; **missing:** `service_payments`, email notifications |
-| Phase 5 | 🟡 Mostly Done | GTM core done; **missing:** admin course SEO CMS, richer per-course DB content |
+| Phase 4 | ✅ Done | IT Services UI + API + service payments (SePay) + email notifications |
+| Phase 5 | ✅ Done | GTM core + admin course SEO CMS (`/admin/courses`) |
 | Phase 6 | 🔄 Evolving | Design system rollout (`SPEC_UI_IMPROVEMENT_v1.md`), dashboard refactor |
 
 ---
@@ -633,7 +633,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | Ebook download gate | ✅ Done | `/ebook/fullstack-roadmap` |
 | Booking page | ✅ Done | `/booking` |
 | GA4 tracking | ✅ Done | `VITE_GA_MEASUREMENT_ID` |
-| Course landing SEO meta | 🟡 Partial | `PageMeta` + auto `buildSeoContent()`; no admin editor for `seo_content` |
+| Course landing SEO meta | ✅ Done | `PageMeta` + auto `buildSeoContent()` + admin editor `/admin/courses` |
 | Software SEO content | ✅ Done | `software-utils.ts` + `SoftwareSchema` on detail page |
 | Schema.org markup | ✅ Done | `CourseSchema`, `SoftwareSchema`, `BreadcrumbSchema`, `ArticleSchema` |
 | Chat trigger theo behavior | ✅ Done | `GtmBehaviorTracker` → `ConsultationPopup` |
@@ -658,22 +658,11 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 | # | Feature | Mô tả | Files / gợi ý |
 |---|---|---|---|
-| H1 | **Service payments (deposit/final)** | Bảng `service_payments` + storage có; chưa có API route, SePay flow, UI sau khi client accept quotation | `service.routes.ts`, `service-request-detail-page.tsx` |
-| H2 | **Multi-seller cart UX** | Server từ chối giỏ nhiều seller (`payment.routes.ts`); cần tách đơn theo seller hoặc wizard checkout từng seller | `checkout-page-new.tsx`, `use-cart.tsx`, `payment.routes.ts` |
-| H3 | **Support ticket → seller assign** | Tạo ticket với `order_id` không tự gán `seller_id` từ order → seller không thấy ticket | `support.routes.ts`, `createSupportTicket` |
-| H4 | **Nav links Support** | Routes `/support`, `/seller/support` có nhưng chưa link từ buyer/seller dashboard hoặc header | `buyer-dashboard-page.tsx`, `seller-dashboard-page.tsx`, `header.tsx` |
 | H5 | **SePay production verify** | Ops: `SEPAY_ENV=production`, IPN URL trên `swhubco.com`, `APP_URL` đúng | `.env` VPS, my.sepay.vn |
 
 ### 15.2. Medium Priority — SEO / GTM / Phase 4 polish
 
-| # | Feature | Mô tả | Files / gợi ý |
-|---|---|---|---|
-| M1 | **Admin course SEO CMS** | `courses.seo_content` / `seo_description` trong DB; chỉ seed script, không có admin UI chỉnh từng khóa | New `admin/courses-page.tsx`, extend `courses.routes.ts` CRUD |
-| M2 | **Service email notifications** | Không gửi email khi: request mới, quotation tạo, client accept/reject | `service.routes.ts` + email queue |
-| M3 | **Consolidate marketplace product pages** | Hai route: `/marketplace/product/:id` (canonical) vs `/marketplace/:id` (`marketplace-detail-page.tsx`) | Redirect hoặc xóa legacy |
-| M4 | **Remove `order-details-page.tsx`** | Legacy product page trùng marketplace flow; kiểm tra route references trước khi xóa | `App.tsx`, grep references |
-| M5 | **Admin support tickets page** | Admin chỉ có API `getAllSupportTickets`; chưa có UI quản lý tập trung | `admin/support-tickets-page.tsx` |
-| M6 | **Expand rate limiting** | Chỉ auth + payment + leads; cần thêm cho upload, chat, product CRUD | `server/middleware/rate-limit.ts` |
+> Không còn mục medium priority mở — xem §15.5.
 
 ### 15.3. Low Priority — DevOps / chất lượng / tương lai
 
@@ -704,6 +693,20 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 ### 15.5. Completed Recently (reference)
 
 Các mục sau **đã implement** — không còn trong backlog:
+
+**High priority (H1–H4)**
+- Service payments deposit/final (`POST /api/service-payments/*`, SePay IPN, UI trên `service-request-detail-page.tsx`)
+- Multi-seller cart checkout (tabs theo seller, `removeItemsByProductIds` sau thanh toán)
+- Support ticket auto-assign `seller_id` từ `order_id`
+- Nav links Support trong header + buyer/seller dashboard
+
+**Medium priority (M1–M6)**
+- Admin course SEO CMS (`/admin/courses`, `PUT/GET /api/courses/admin/*`)
+- Service email notifications (request, quotation, accept/reject via Resend)
+- Marketplace legacy redirect `/marketplace/:id` → `/marketplace/product/:id` (đã xóa `marketplace-detail-page.tsx`)
+- Xóa `order-details-page.tsx`; `/order-details/:id` redirect về product
+- Admin support tickets (`/admin/support-tickets`)
+- Rate limiting mở rộng (upload, product CRUD, support POST, service POST)
 
 - Unified cart (`useCart` + `GlobalCartSidebar`; xóa `shopping-cart-sidebar`, `checkout-page`, `product-detail-ecommerce`)
 - Portfolio API + edit page (`/api/portfolios`, `/portfolios/edit/:id`)

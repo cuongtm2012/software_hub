@@ -15,7 +15,7 @@ import {
 export default function OrderSuccessPage() {
   const [, navigate] = useLocation();
   const [, params] = useRoute("/marketplace/order-success/:orderId");
-  const { clearCart } = useCart();
+  const { removeItemsByProductIds } = useCart();
 
   // Fetch order details
   const { data: order, isLoading } = useQuery({
@@ -31,11 +31,13 @@ export default function OrderSuccessPage() {
   });
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("status") === "success") {
-      clearCart();
-    }
-  }, [clearCart]);
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("status") !== "success" || !order?.items?.length) return;
+    const productIds = order.items.map((item: { product_id: number }) =>
+      String(item.product_id),
+    );
+    removeItemsByProductIds(productIds);
+  }, [order, removeItemsByProductIds]);
 
   if (isLoading) {
     return (

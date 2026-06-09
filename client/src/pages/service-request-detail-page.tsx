@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
 import { Header } from "@/components/header";
@@ -5,10 +6,13 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { SectionPanel } from "@/components/design-system/section-panel";
+import { PaymentForm } from "@/components/payment-form";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, X } from "lucide-react";
+import { ArrowLeft, Check, CreditCard, Loader2, X } from "lucide-react";
 import { format } from "date-fns";
 
 interface ServiceQuotation {
@@ -29,6 +33,14 @@ interface ServiceProject {
   progress_percentage: number;
 }
 
+interface ServicePayment {
+  id: number;
+  quotation_id: number;
+  payment_type: string;
+  status: string;
+  amount: string;
+}
+
 interface ServiceRequestDetail {
   request: {
     id: number;
@@ -43,6 +55,7 @@ interface ServiceRequestDetail {
   };
   quotations: ServiceQuotation[];
   projects: ServiceProject[];
+  payments?: ServicePayment[];
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -54,7 +67,13 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "Hoàn thành",
   pending: "Chờ phản hồi",
   rejected: "Từ chối",
+  completed_payment: "Đã thanh toán",
 };
+
+const PAYMENT_METHODS = [
+  { id: "bank-qr", title: "Chuyển khoản QR (VietQR)" },
+  { id: "napas-qr", title: "QR NAPAS" },
+];
 
 function formatVnd(amount: string | number) {
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
@@ -67,6 +86,9 @@ export default function ServiceRequestDetailPage() {
   const [, params] = useRoute("/services/:id");
   const id = params?.id ? parseInt(params.id, 10) : 0;
   const { toast } = useToast();
+  const [selectedMethod, setSelectedMethod] = useState("bank-qr");
+  const [paymentInfo, setPaymentInfo] = useState<Record<string, unknown> | null>(null);
+  const [payingType, setPayingType] = useState<"deposit" | "final" | null>(null);
 
   const { data, isLoading, error } = useQuery<ServiceRequestDetail>({
     queryKey: ["/api/service-requests", id],
@@ -77,6 +99,19 @@ export default function ServiceRequestDetailPage() {
     enabled: !!id,
   });
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get("payment");
+    if (paymentStatus === "success") {
+      toast({ title: "Thanh toán thành công", description: "Chúng tôi đã nhận được thanh toán của bạn." });
+      queryClient.invalidateQueries({ queryKey: ["/api/service-requests", id] });
+      window.history.replaceState({}, "", `/services/${id}`);
+    } else if (paymentStatus === "failure") {
+      toast({ title: "Thanh toán thất bại", variant: "destructive" });
+      window.history.replaceState({}, "", `/services/${id}`);
+    }
+  }, [id, toast]);
+
   const respondMutation = useMutation({
     mutationFn: async ({ quotationId, action }: { quotationId: number; action: "accept" | "reject" }) => {
       const res = await apiRequest("PUT", `/api/service-quotations/${quotationId}/respond`, { action });
@@ -85,6 +120,7 @@ export default function ServiceRequestDetailPage() {
     onSuccess: (_, { action }) => {
       toast({
         title: action === "accept" ? "Đã chấp nhận báo giá" : "Đã từ chối báo giá",
+        description: action === "accept" ? "Vui lòng thanh toán tiền cọc để bắt đầu dự án." : undefined,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/service-requests", id] });
     },
@@ -92,6 +128,55 @@ export default function ServiceRequestDetailPage() {
       toast({ title: "Lỗi", description: err.message, variant: "destructive" });
     },
   });
+
+  const payMutation = useMutation({
+    mutationFn: async ({
+      quotationId,
+      paymentType,
+    }: {
+      quotationId: number;
+      paymentType: "deposit" | "final";
+    }) => {
+      const endpoint =
+        paymentType === "deposit"
+          ? "/api/service-payments/deposit"
+          : "/api/service-payments/final";
+      const res = await apiRequest("POST", endpoint, {
+        quotation_id: quotationId,
+        payment_method: selectedMethod,
+      });
+      const body = await res.json();
+      if (!body.success) throw new Error(body.message || "Không thể khởi tạo thanh toán");
+      return body;
+    },
+    onSuccess: (data, { paymentType }) => {
+      setPaymentInfo(data.payment_info);
+      setPayingType(paymentType);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Lỗi thanh toán", description: err.message, variant: "destructive" });
+    },
+  });
+
+  if (paymentInfo && payingType) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+        <Header />
+        <main className="flex-grow py-8">
+          <div className="max-w-2xl mx-auto px-4">
+            <PaymentForm
+              paymentInfo={paymentInfo}
+              onCancel={() => {
+                setPaymentInfo(null);
+                setPayingType(null);
+              }}
+            />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -113,8 +198,21 @@ export default function ServiceRequestDetailPage() {
     );
   }
 
-  const { request, quotations, projects } = data;
+  const { request, quotations, projects, payments = [] } = data;
   const activeProject = projects[0];
+
+  const getQuotationPayments = (quotationId: number) =>
+    payments.filter((p) => p.quotation_id === quotationId);
+
+  const depositPaid = (quotationId: number) =>
+    getQuotationPayments(quotationId).some(
+      (p) => p.payment_type === "deposit" && p.status === "completed",
+    );
+
+  const finalPaid = (quotationId: number) =>
+    getQuotationPayments(quotationId).some(
+      (p) => p.payment_type === "final" && p.status === "completed",
+    );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
@@ -229,6 +327,57 @@ export default function ServiceRequestDetailPage() {
                           <X className="mr-1 h-4 w-4" />
                           Từ chối
                         </Button>
+                      </div>
+                    )}
+                    {q.status === "accepted" && (
+                      <div className="pt-3 border-t space-y-3">
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <Badge className={depositPaid(q.id) ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}>
+                            Cọc: {depositPaid(q.id) ? "Đã thanh toán" : "Chưa thanh toán"}
+                          </Badge>
+                          <Badge className={finalPaid(q.id) ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-700"}>
+                            Thanh toán cuối: {finalPaid(q.id) ? "Đã thanh toán" : "Chưa thanh toán"}
+                          </Badge>
+                        </div>
+                        {(!depositPaid(q.id) || (depositPaid(q.id) && !finalPaid(q.id))) && (
+                          <>
+                            <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod} className="space-y-2">
+                              {PAYMENT_METHODS.map((m) => (
+                                <div key={m.id} className="flex items-center space-x-2">
+                                  <RadioGroupItem value={m.id} id={`pay-${q.id}-${m.id}`} />
+                                  <Label htmlFor={`pay-${q.id}-${m.id}`} className="text-sm cursor-pointer">
+                                    {m.title}
+                                  </Label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                            <div className="flex flex-wrap gap-2">
+                              {!depositPaid(q.id) && (
+                                <Button
+                                  size="sm"
+                                  className="bg-[#004080] hover:bg-[#003366]"
+                                  disabled={payMutation.isPending}
+                                  onClick={() => payMutation.mutate({ quotationId: q.id, paymentType: "deposit" })}
+                                >
+                                  <CreditCard className="mr-1 h-4 w-4" />
+                                  Thanh toán cọc {formatVnd(q.deposit_amount)}
+                                </Button>
+                              )}
+                              {depositPaid(q.id) && !finalPaid(q.id) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={payMutation.isPending}
+                                  onClick={() => payMutation.mutate({ quotationId: q.id, paymentType: "final" })}
+                                >
+                                  <CreditCard className="mr-1 h-4 w-4" />
+                                  Thanh toán cuối{" "}
+                                  {formatVnd(Number(q.total_price) - Number(q.deposit_amount))}
+                                </Button>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

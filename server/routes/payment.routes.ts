@@ -409,6 +409,17 @@ export function registerPaymentRoutes(app: Express) {
               invoice,
               paidAmount || marketplaceOrder.amount,
             );
+          } else if (pending.type === "service_payment") {
+            const servicePaymentId = Number(pending.payload.servicePaymentId);
+            if (servicePaymentId) {
+              await storage.updateServicePaymentStatus(servicePaymentId, "completed");
+              const payment = await storage.getServicePaymentById(servicePaymentId);
+              if (payment?.service_project_id && payment.payment_type === "deposit") {
+                await storage.updateServiceProject(payment.service_project_id, {
+                  status: "in_progress",
+                });
+              }
+            }
           }
           await markPendingCheckoutPaid(invoice);
         }

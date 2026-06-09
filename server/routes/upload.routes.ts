@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { isAuthenticated } from "../middleware/auth.middleware.js";
+import { uploadRateLimiter } from "../middleware/rate-limit.js";
 import {
   createSignedUploadUrl,
   createSignedDownloadUrl,
@@ -8,7 +9,7 @@ import {
 
 const router = Router();
 
-router.post("/upload-url", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+router.post("/upload-url", uploadRateLimiter, isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { fileName, contentType, uploadType = "general" } = req.body;
 

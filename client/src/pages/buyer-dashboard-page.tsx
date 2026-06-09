@@ -30,6 +30,7 @@ import {
   Eye,
   Package,
   LayoutDashboard,
+  MessageSquare,
 } from "lucide-react";
 
 interface BuyerStats {
@@ -109,13 +110,23 @@ export default function BuyerDashboardPage() {
             icon={LayoutDashboard}
             onRefresh={handleRefresh}
             actions={
-              <Button
-                onClick={() => navigate("/marketplace")}
-                className="bg-[#004080] hover:bg-[#003366]"
-              >
-                <Package className="w-4 h-4 mr-2" />
-                Khám phá marketplace
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => navigate("/support")}
+                  variant="outline"
+                  className="border-[#004080]/30 text-[#004080]"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Hỗ trợ
+                </Button>
+                <Button
+                  onClick={() => navigate("/marketplace")}
+                  className="bg-[#004080] hover:bg-[#003366]"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Khám phá marketplace
+                </Button>
+              </div>
             }
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

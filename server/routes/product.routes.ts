@@ -10,6 +10,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { insertProductSchema } from "@shared/schema";
 import { isAuthenticated, adminMiddleware, sellerMiddleware } from "../middleware/auth.middleware";
+import { writeRateLimiter } from "../middleware/rate-limit.js";
 
 const router = Router();
 
@@ -61,7 +62,7 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // Authenticated - Create product (Sellers only)
-router.post("/", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", writeRateLimiter, isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Only sellers can create products
     if (req.user?.role !== 'seller' && req.user?.role !== 'admin') {
@@ -86,7 +87,7 @@ router.post("/", isAuthenticated, async (req: Request, res: Response, next: Next
 });
 
 // Authenticated - Update product
-router.put("/:id", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+router.put("/:id", writeRateLimiter, isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const product = await productStorage.getProductById(parseInt(id));
@@ -108,7 +109,7 @@ router.put("/:id", isAuthenticated, async (req: Request, res: Response, next: Ne
 });
 
 // Authenticated - Delete product
-router.delete("/:id", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+router.delete("/:id", writeRateLimiter, isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const product = await productStorage.getProductById(parseInt(id));

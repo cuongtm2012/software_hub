@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { useState, lazy, Suspense, startTransition } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -65,7 +65,6 @@ import BlogDetailPage from "@/pages/blog-detail-page";
 import SoftwareCatalogPage from "@/pages/software-catalog-page";
 import MarketplaceCategoryPage from "@/pages/marketplace-category-page";
 import ProductDetailPage from "@/pages/product-detail-page";
-import OrderDetailsPage from "@/pages/order-details-page";
 import MarketplaceSellerPage from "@/pages/marketplace-seller-page";
 
 // Admin
@@ -84,6 +83,8 @@ import { SellerApprovalPage } from "@/pages/admin/seller-approval-page";
 import AdminExternalRequestsPage from "@/pages/admin/external-requests-page";
 import BlogManagementPage from "@/pages/admin/blog-management-page";
 import LeadsManagementPage from "@/pages/admin/leads-management-page";
+import CoursesManagementPage from "@/pages/admin/courses-management-page";
+import AdminSupportTicketsPage from "@/pages/admin/support-tickets-page";
 import EbookPage from "@/pages/ebook-page";
 import BookingPage from "@/pages/booking-page";
 import { Analytics } from "@/components/analytics";
@@ -140,6 +141,8 @@ function Router() {
       <ProtectedRoute path="/admin/end-to-end-tests" component={EndToEndTestPage} roles={['admin']} />
       <ProtectedRoute path="/admin/blog" component={BlogManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/leads" component={LeadsManagementPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/courses" component={CoursesManagementPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/support-tickets" component={AdminSupportTicketsPage} roles={['admin']} />
       <ProtectedRoute path="/admin/service-requests" component={AdminServiceRequestsPage} roles={['admin']} />
 
 
@@ -349,14 +352,9 @@ function Router() {
           </Suspense>
         );
       }} />
-      <Route path="/marketplace/:id" component={() => {
-        const MarketplaceDetailPage = lazy(() => import("@/pages/marketplace-detail-page"));
-        return (
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div></div>}>
-            <MarketplaceDetailPage />
-          </Suspense>
-        );
-      }} />
+      <Route path="/marketplace/:id">
+        {({ id }) => <Redirect to={`/marketplace/product/${id}`} />}
+      </Route>
       <Route path="/marketplace/order-success/:orderId" component={() => {
         const OrderSuccessPage = lazy(() => import("@/pages/order-success-page"));
         return (
@@ -365,7 +363,9 @@ function Router() {
           </Suspense>
         );
       }} />
-      <Route path="/order-details/:id" component={OrderDetailsPage} />
+      <Route path="/order-details/:id">
+        {({ id }) => <Redirect to={`/marketplace/product/${id}`} />}
+      </Route>
       <ProtectedRoute path="/marketplace/seller" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/seller/products" roles={['seller', 'admin']} component={MarketplaceSellerPage} />
       <ProtectedRoute path="/marketplace/seller/new" roles={['seller', 'admin']} component={MarketplaceSellerNewPage} />

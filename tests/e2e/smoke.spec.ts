@@ -26,6 +26,6 @@ test.describe("Public pages", () => {
 
   test("marketplace page loads", async ({ page }) => {
     await page.goto("/marketplace");
-    await expect(page.getByText("Digital Marketplace")).toBeVisible();
+    await expect(page.getByText("Marketplace phần mềm")).toBeVisible();
   });
 });

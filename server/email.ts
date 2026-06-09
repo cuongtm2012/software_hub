@@ -298,5 +298,35 @@ export async function sendOrderConfirmationEmail(
   });
 }
 
+export async function sendServiceNotificationEmail(
+  to: string,
+  subject: string,
+  bodyHtml: string,
+): Promise<EmailResult> {
+  const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
+  const frontendUrl = process.env.FRONTEND_URL || process.env.APP_URL || "http://localhost:5001";
+
+  return sendEmail({
+    to,
+    from: fromEmail,
+    replyTo: fromEmail,
+    subject,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #004080; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #ffcc00; margin: 0; font-size: 20px;">Software Hub IT Studio</h1>
+        </div>
+        <div style="padding: 24px; background: #f9f9f9; border-radius: 0 0 8px 8px;">
+          ${bodyHtml}
+          <p style="margin-top: 24px; font-size: 13px; color: #888;">
+            <a href="${frontendUrl}/services" style="color: #004080;">Xem yêu cầu dịch vụ</a>
+          </p>
+        </div>
+      </div>
+    `,
+    tags: [{ name: "category", value: "service" }],
+  });
+}
+
 // Export the core function as well for custom emails
 export { sendEmail };

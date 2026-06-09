@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -45,8 +46,65 @@ const PAYMENT_METHODS = [
 export default function CheckoutPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const { items, updateQuantity, removeFromCart, getTotal } = useCart();
+  const { items, updateQuantity, removeFromCart } = useCart();
   const { toast } = useToast();
+
+  const productIds = useMemo(
+    () => [...new Set(items.map((item) => String(item.productId)))],
+    [items],
+  );
+
+  const productQueries = useQueries({
+    queries: productIds.map((productId) => ({
+      queryKey: ["/api/products", productId],
+      queryFn: async () => {
+        const res = await fetch(`/api/products/${productId}`, { credentials: "include" });
+        if (!res.ok) throw new Error("Product not found");
+        return res.json() as Promise<{ id: number; seller_id: number; title?: string }>;
+      },
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const sellerByProductId = useMemo(() => {
+    const map = new Map<string, number>();
+    productQueries.forEach((q, i) => {
+      if (q.data?.seller_id) map.set(productIds[i], q.data.seller_id);
+    });
+    return map;
+  }, [productQueries, productIds]);
+
+  const sellerGroups = useMemo(() => {
+    const groups = new Map<number, typeof items>();
+    for (const item of items) {
+      const sellerId = sellerByProductId.get(String(item.productId)) ?? 0;
+      const list = groups.get(sellerId) ?? [];
+      list.push(item);
+      groups.set(sellerId, list);
+    }
+    return [...groups.entries()].filter(([id]) => id > 0);
+  }, [items, sellerByProductId]);
+
+  const [activeSellerId, setActiveSellerId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (sellerGroups.length === 0) {
+      setActiveSellerId(null);
+      return;
+    }
+    if (activeSellerId === null || !sellerGroups.some(([id]) => id === activeSellerId)) {
+      setActiveSellerId(sellerGroups[0][0]);
+    }
+  }, [sellerGroups, activeSellerId]);
+
+  const checkoutItems = useMemo(() => {
+    if (activeSellerId === null) return items;
+    return items.filter(
+      (item) => sellerByProductId.get(String(item.productId)) === activeSellerId,
+    );
+  }, [items, activeSellerId, sellerByProductId]);
+
+  const hasMultipleSellers = sellerGroups.length > 1;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [name, setName] = useState(user?.name || "");
@@ -58,7 +116,10 @@ export default function CheckoutPage() {
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
-  const total = getTotal();
+  const total = checkoutItems.reduce(
+    (sum, item) => sum + item.selectedPackage.price * item.quantity,
+    0,
+  );
 
   useEffect(() => {
     if (user) {
@@ -144,8 +205,12 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
     try {
+      if (checkoutItems.length === 0) {
+        throw new Error("Không có sản phẩm để thanh toán");
+      }
+
       const response = await apiRequest("POST", "/api/payment/checkout", {
-        items: items.map((item) => ({
+        items: checkoutItems.map((item) => ({
           product_id: item.productId,
           package_id: item.packageId,
           quantity: item.quantity,
@@ -269,8 +334,30 @@ export default function CheckoutPage() {
                 {currentStep === 1 && (
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-6">Giỏ hàng của bạn</h2>
+                    {hasMultipleSellers && (
+                      <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
+                        Giỏ hàng có sản phẩm từ <strong>{sellerGroups.length} người bán</strong>.
+                        Thanh toán từng đơn riêng — sau khi xong, quay lại để thanh toán đơn tiếp theo.
+                      </div>
+                    )}
+                    {hasMultipleSellers && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {sellerGroups.map(([sellerId], index) => (
+                          <Button
+                            key={sellerId}
+                            type="button"
+                            size="sm"
+                            variant={activeSellerId === sellerId ? "default" : "outline"}
+                            className={activeSellerId === sellerId ? "bg-[#004080] hover:bg-[#003366]" : ""}
+                            onClick={() => setActiveSellerId(sellerId)}
+                          >
+                            Người bán {index + 1} ({sellerGroups.find(([id]) => id === sellerId)?.[1].length} SP)
+                          </Button>
+                        ))}
+                      </div>
+                    )}
                     <div className="space-y-4">
-                      {items.map((item) => (
+                      {checkoutItems.map((item) => (
                         <div
                           key={`${item.productId}-${item.packageId}`}
                           className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg"
@@ -430,8 +517,11 @@ export default function CheckoutPage() {
                     <h2 className="text-2xl font-bold text-slate-800 mb-6">Xác nhận đơn hàng</h2>
                     <div className="space-y-4">
                       <div className="p-4 bg-slate-50 rounded-lg">
-                        <h3 className="font-semibold text-slate-900 mb-3">Sản phẩm ({items.length})</h3>
-                        {items.map((item) => (
+                        <h3 className="font-semibold text-slate-900 mb-3">Sản phẩm ({checkoutItems.length})</h3>
+                        {hasMultipleSellers && (
+                          <p className="text-xs text-slate-500 mb-2">Đơn từ người bán đang chọn</p>
+                        )}
+                        {checkoutItems.map((item) => (
                           <div
                             key={`${item.productId}-${item.packageId}`}
                             className="flex justify-between text-sm py-1"

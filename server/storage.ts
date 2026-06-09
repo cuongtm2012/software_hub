@@ -244,7 +244,7 @@ export interface IStorage {
   updateServiceProjectProgress(id: number, progress: number, adminNotes?: string): Promise<ServiceProject | undefined>;
 
   // Service Payments
-  createServicePayment(payment: InsertServicePayment): Promise<ServicePayment>;
+  createServicePayment(payment: InsertServicePayment, clientId: number): Promise<ServicePayment>;
   getServicePaymentById(id: number): Promise<ServicePayment | undefined>;
   getServicePaymentsByQuotation(quotationId: number): Promise<ServicePayment[]>;
   getServicePaymentsByClient(clientId: number): Promise<ServicePayment[]>;
@@ -309,6 +309,7 @@ export interface IStorage {
   getCourseTopics(): Promise<Array<{ topic: string; count: number }>>;
   getCourseById(id: number): Promise<any | undefined>;
   getCourseBySlug(slug: string): Promise<any | undefined>;
+  updateCourse(id: number, data: Record<string, unknown>): Promise<any | undefined>;
   createLead(data: { name?: string; email: string; phone: string; source: string; source_id?: string }): Promise<any>;
 
   // Blog
@@ -2095,11 +2096,12 @@ class DatabaseStorage implements IStorage {
   }
 
   // Service Payments
-  async createServicePayment(payment: InsertServicePayment): Promise<ServicePayment> {
+  async createServicePayment(payment: InsertServicePayment, clientId: number): Promise<ServicePayment> {
     const [createdPayment] = await db
       .insert(servicePayments)
       .values({
         ...payment,
+        client_id: clientId,
         created_at: new Date(),
         updated_at: new Date()
       })
@@ -2853,6 +2855,22 @@ class DatabaseStorage implements IStorage {
       console.error('Failed to get course by slug:', error);
       throw error;
     }
+  }
+
+  async updateCourse(id: number, data: Record<string, unknown>): Promise<any | undefined> {
+    const allowed = ["title", "description", "seo_description", "seo_content", "slug", "topic", "level", "instructor", "status"];
+    const updates: Record<string, unknown> = { updated_at: new Date() };
+    for (const key of allowed) {
+      if (key in data) updates[key] = data[key];
+    }
+
+    const [course] = await db
+      .update(courses)
+      .set(updates)
+      .where(eq(courses.id, id))
+      .returning();
+
+    return course;
   }
 
   async createLead(data: {

@@ -15,6 +15,7 @@ import {
     Star,
     DollarSign,
     Briefcase,
+    BookOpen,
 } from "lucide-react";
 import {
     Sidebar,
@@ -62,6 +63,16 @@ const adminMenuItems = [
         title: "Leads",
         url: "/admin/leads",
         icon: Users,
+    },
+    {
+        title: "Courses SEO",
+        url: "/admin/courses",
+        icon: BookOpen,
+    },
+    {
+        title: "Support",
+        url: "/admin/support-tickets",
+        icon: MessageSquare,
     },
     {
         title: "IT Services",

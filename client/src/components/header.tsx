@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, X, Search, Store, ShoppingCart, Wallet } from "lucide-react";
+import { Menu, X, Search, Store, ShoppingCart, Wallet, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NotificationBell } from "@/components/notification-bell";
 import { CartTrigger } from "@/components/cart-sidebar";
@@ -242,6 +242,26 @@ export function Header() {
                           className="flex items-center gap-2 py-2 cursor-pointer"
                         >
                           <span className="flex-1">Admin Dashboard</span>
+                        </DropdownMenuItem>
+                      )}
+
+                      {(user.role === "buyer" || user.role === "user" || user.role === "client") && (
+                        <DropdownMenuItem
+                          onClick={() => navigate("/support")}
+                          className="flex items-center gap-2 py-2 cursor-pointer"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          <span className="flex-1">Hỗ trợ / Ticket</span>
+                        </DropdownMenuItem>
+                      )}
+
+                      {user.role === "seller" && (
+                        <DropdownMenuItem
+                          onClick={() => navigate("/seller/support")}
+                          className="flex items-center gap-2 py-2 cursor-pointer"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          <span className="flex-1">Hỗ trợ khách hàng</span>
                         </DropdownMenuItem>
                       )}
 

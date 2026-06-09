@@ -2,7 +2,7 @@ import { db } from "../../db";
 import { pendingCheckouts } from "@shared/schema";
 import { eq, and, lt } from "drizzle-orm";
 
-export type PendingCheckoutType = "wallet_deposit" | "marketplace_order";
+export type PendingCheckoutType = "wallet_deposit" | "marketplace_order" | "service_payment";
 export type PendingCheckoutStatus = "pending" | "paid" | "failed";
 
 export interface PendingCheckoutRecord {
