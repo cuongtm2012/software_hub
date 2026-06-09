@@ -646,6 +646,15 @@ router.get("/analytics/orders-timeline", adminMiddleware, async (_req: Request, 
   }
 });
 
+router.get("/analytics/leads-timeline", adminMiddleware, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const timeline = await storage.getLeadsTimeline(6);
+    res.json({ timeline });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // ============ Software Management ============
 
 // GET /api/admin/softwares - Get all software with filters

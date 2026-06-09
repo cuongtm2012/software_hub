@@ -38,6 +38,7 @@ interface AdminStats {
 const chartConfig = {
   count: { label: "Số lượng", color: "#004080" },
   revenue: { label: "Doanh thu", color: "#0066cc" },
+  leads: { label: "Leads", color: "#059669" },
 };
 
 export default function AdminAnalyticsPage() {
@@ -78,12 +79,22 @@ export default function AdminAnalyticsPage() {
     },
   });
 
-  const { data: ordersTimelineData, isLoading: timelineLoading } = useQuery<{
+  const { data: ordersTimelineData, isLoading: ordersTimelineLoading } = useQuery<{
     timeline: { month: string; count: number; revenue: number }[];
   }>({
     queryKey: ["/api/admin/analytics/orders-timeline"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/admin/analytics/orders-timeline");
+      return res.json();
+    },
+  });
+
+  const { data: leadsTimelineData, isLoading: leadsTimelineLoading } = useQuery<{
+    timeline: { month: string; count: number }[];
+  }>({
+    queryKey: ["/api/admin/analytics/leads-timeline"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/analytics/leads-timeline");
       return res.json();
     },
   });
@@ -124,6 +135,10 @@ export default function AdminAnalyticsPage() {
       revenue: row.revenue,
     }));
   }, [ordersTimelineData]);
+
+  const leadsTimelineChart = useMemo(() => {
+    return leadsTimelineData?.timeline ?? [];
+  }, [leadsTimelineData]);
 
   const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
 
@@ -172,28 +187,49 @@ export default function AdminAnalyticsPage() {
             )}
           </div>
 
-          <SectionPanel
-            title="Đơn hàng theo tháng"
-            subtitle="6 tháng gần nhất — số đơn và doanh thu từ dữ liệu nội bộ"
-            className="mt-6"
-          >
-            {timelineLoading ? (
-              <Skeleton className="h-64 w-full rounded-lg" />
-            ) : ordersTimelineChart.length > 0 ? (
-              <ChartContainer config={chartConfig} className="h-64 w-full">
-                <BarChart data={ordersTimelineChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                  <YAxis yAxisId="left" tickLine={false} axisLine={false} allowDecimals={false} />
-                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} hide />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar yAxisId="left" dataKey="count" fill="var(--color-count)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
-            ) : (
-              <p className="text-sm text-muted-foreground py-8 text-center">Chưa có đơn hàng trong 6 tháng qua</p>
-            )}
-          </SectionPanel>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <SectionPanel
+              title="Đơn hàng theo tháng"
+              subtitle="6 tháng — marketplace orders (nội bộ)"
+            >
+              {ordersTimelineLoading ? (
+                <Skeleton className="h-64 w-full rounded-lg" />
+              ) : ordersTimelineChart.length > 0 ? (
+                <ChartContainer config={chartConfig} className="h-64 w-full">
+                  <BarChart data={ordersTimelineChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="count" fill="var(--color-count)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground py-8 text-center">Chưa có đơn hàng</p>
+              )}
+            </SectionPanel>
+
+            <SectionPanel
+              title="Leads theo tháng"
+              subtitle="6 tháng — GTM lead capture (nội bộ)"
+            >
+              {leadsTimelineLoading ? (
+                <Skeleton className="h-64 w-full rounded-lg" />
+              ) : leadsTimelineChart.length > 0 ? (
+                <ChartContainer config={chartConfig} className="h-64 w-full">
+                  <BarChart data={leadsTimelineChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="count" fill="var(--color-leads)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground py-8 text-center">Chưa có leads</p>
+              )}
+            </SectionPanel>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             {/* Platform chart */}

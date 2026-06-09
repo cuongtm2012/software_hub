@@ -10,7 +10,7 @@
 
 **Architecture:** Monolith-first — single Express app serves API + built React SPA. Optional microservices (email, chat, notification) run under PM2. Primary database, auth, and file storage run on **Supabase** (managed PostgreSQL). Redis + MongoDB run locally on VPS via Docker for queue/chat.
 
-**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped; backlog còn H5 (ops), admin polish (§15.6), và low-priority items.
+**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped. Admin consolidation (§15.7) và orders/IT-service polish **done** tháng 6/2026. Backlog còn chủ yếu **H5** (SePay ops) và low-priority (§15.3, U9).
 
 ---
 
@@ -73,7 +73,7 @@ Internet → Nginx (80/443) → PM2 app :5000
 
 Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push`).
 
-### 3.1. Core Tables (29 tables)
+### 3.1. Core Tables (28 tables)
 
 **Users & Auth**
 | Table | Purpose | Key Fields |
@@ -108,7 +108,6 @@ Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push
 | `orders` | Purchase orders | buyer_id, seller_id, status, total_amount, commission_amount, payment_method, buyer_info |
 | `order_items` | Order line items | order_id, product_id, quantity, price |
 | `payments` | Payment records | order_id, project_id, amount, payment_method, status, escrow_release, transaction_id |
-| `cart_items` | DB cart (**legacy, unused**) | user_id, product_id, quantity — client uses `localStorage` via `useCart` |
 | `pending_checkouts` | SePay pending wallet/marketplace checkouts | invoice_number, type, payload (JSONB), expires_at |
 | `support_tickets` | Post-purchase support | order_id, buyer_id, seller_id, subject, status, priority |
 | `product_reviews` | Product ratings | order_id, product_id, buyer_id, rating |
@@ -136,7 +135,7 @@ Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push
 
 **Wallet:** Stored in `users.profile_data.wallet_balance` (JSONB) — credited via SePay IPN on wallet top-up.
 
-**Client-side cart:** `useCart` hook persists to `localStorage` key `shopping-cart` (not `cart_items` table).
+**Client-side cart:** `useCart` hook persists to `localStorage` key `shopping-cart`. Legacy `cart_items` table removed from schema (migration `005_drop_cart_items.sql`).
 
 ---
 
@@ -251,7 +250,9 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/marketplace/:id` | Redirect → `/marketplace/product/:id` | Public (legacy URL preserved) |
 | `/marketplace/checkout` | CheckoutPageNew | Protected (login required) |
 | `/marketplace/order-success/:orderId` | OrderSuccessPage | Public |
-| `/marketplace/orders` | MarketplaceOrdersPage | buyer, admin |
+| `/marketplace/orders` | MarketplaceOrdersPage | buyer, user |
+| `/admin/orders` | AdminOrdersPage | admin |
+| `/seller/analytics` | SellerAnalyticsPage | seller, admin |
 | `/add-funds` | AddFundsPage | Protected |
 | `/portfolios/gallery` | PortfolioGallery | Public |
 | `/portfolios/new` | PortfolioNewPage | developer, admin |
@@ -268,7 +269,7 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/dashboard` | DashboardPage | Protected |
 | `/buyer` | BuyerDashboardPage | buyer, user |
 | `/seller/*` | Seller pages | seller, admin |
-| `/admin/*` | Admin dashboard (17 routes) | admin — chi tiết §5.5 |
+| `/admin/*` | Admin dashboard (19 routes + redirects) | admin — chi tiết §5.5 |
 | `/test-login` | TestLoginPage | Public |
 
 ### 5.2. Design System (`client/src/components/design-system/`)
@@ -312,20 +313,20 @@ Refactored dashboard architecture:
 | Route | Page | Sidebar | Mô tả |
 |---|---|---|---|
 | `/admin` | AdminDashboardPage | Tổng quan | Quick links + queue tóm tắt (metrics → `/admin/analytics`) |
-| `/admin/analytics` | AdminAnalyticsPage | Tổng quan | Platform metrics, GTM bar chart, GA4 link-out |
+| `/admin/analytics` | AdminAnalyticsPage | Tổng quan | Platform metrics, orders/leads timeline charts, GTM counts, GA4 link-out |
 | `/admin/users` | AdminUsersPage | Người dùng | Tab Danh sách + Chat (`UsersChatPanel`) |
 | `/admin/users/chat` | redirect | — | → `/admin/users?tab=chat` |
 | `/admin/seller-approvals` | SellerApprovalPage | Người dùng | Duyệt seller |
 | `/admin/software` | AdminSoftwareManagementPage | Marketplace | Catalog `softwares` (miễn phí) |
 | `/admin/products` | AdminProductsPage | Marketplace | Duyệt `products` marketplace (`PATCH status`) |
-| `/marketplace/orders` | MarketplaceOrdersPage | Marketplace | Đơn hàng (admin role) |
+| `/admin/orders` | AdminOrdersPage | Marketplace | Đơn hàng marketplace — enriched API, filter status |
 | `/admin/blog` | BlogManagementPage | Nội dung & GTM | Blog CRUD |
 | `/admin/courses` | CoursesManagementPage | Nội dung & GTM | SEO editor khóa học |
 | `/admin/leads` | LeadsManagementPage | Nội dung & GTM | GTM lead capture |
-| `/admin/projects` | AdminProjectsPage | Vận hành | **Unified** `external_requests` — filter nguồn (công khai / đăng ký) |
+| `/admin/projects` | AdminProjectsPage | Vận hành | **Unified** `external_requests` — filter nguồn, priority, search; banner phân biệt IT Services |
 | `/admin/projects/:id/edit` | ProjectEditPage | — | Form edit đầy đủ |
 | `/admin/external-requests` | redirect | — | → `/admin/projects?source=public` |
-| `/admin/service-requests` | AdminServiceRequestsPage | Vận hành | IT Services (`service_requests` — khác external_requests) |
+| `/admin/service-requests` | AdminServiceRequestsPage | Vận hành | IT Services — filter, status VN, báo giá, tiến độ project (`service_requests`) |
 | `/admin/support-tickets` | AdminSupportTicketsPage | Vận hành | Ticket marketplace |
 | Dev Tools | email / e2e / push / queues | Dev Tools | Giữ nhóm riêng |
 
@@ -345,12 +346,15 @@ Refactored dashboard architecture:
 | Users | `GET/PATCH/POST/DELETE /api/admin/users/*` | admin |
 | Software catalog | `GET /api/admin/softwares`, `POST/PUT/DELETE /api/admin/software/*` | admin |
 | Marketplace products | `GET /api/admin/products`, `PATCH /api/admin/products/:id/status` | admin |
-| Projects (unified) | `GET/PATCH /api/admin/projects/*` (+ `source`, `priority` filters) | admin |
-| External requests (legacy API) | `GET/PUT /api/admin/external-requests/:id` | admin — dùng bởi edit form |
+| Marketplace orders | `GET /api/admin/orders` (enriched), `PUT /api/orders/:id/status` | admin |
+| Projects (unified) | `GET/PATCH /api/admin/projects/*` (+ `source`, `priority`, `search`) | admin |
+| External requests (legacy API) | `GET/PUT /api/admin/external-requests/:id` | admin — edit form `/admin/projects/:id/edit` |
 | Seller approvals | `GET/PUT /api/admin/sellers/*` | admin |
 | Queues | `GET /api/admin/queue/stats`, retry/clear | admin |
-| Blog / Leads / Courses / Support / IT Services | (unchanged) | admin |
-| Analytics | Aggregates từ stats + leads + courses + blog + tickets | admin |
+| Analytics timelines | `GET /api/admin/analytics/orders-timeline`, `leads-timeline` | admin |
+| Orders (buyer/seller) | `GET /api/orders` → `{ orders, total }` enriched | role-based |
+| IT service requests | `GET /api/service-requests` (+ `status`, `priority`, `search` for admin) | admin / client |
+| Blog / Leads / Courses / Support | (unchanged) | admin |
 
 #### Cross-cutting notes
 
@@ -382,7 +386,7 @@ Refactored dashboard architecture:
 | **chat-service** | 3002 | Real-time chat | MongoDB, Redis |
 | **notification-service** | 3003 | FCM push notifications | PostgreSQL, Firebase |
 
-**Legacy/unused in prod:** `payment-service` (PHP/NL_Checkout), `gateweaver` (Go API gateway), `worker-service`.
+**Legacy/archived:** PHP NganLuong checkout → `scripts/archive/payment-service-php-legacy/` (prod uses SePay). **Optional local Docker only:** `gateweaver`, `worker-service` in full `docker-compose.yml` — not on VPS prod. See `docker/COMPOSE.md`.
 
 ### 6.2. Message Queue
 
@@ -682,7 +686,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | Feature | Status | Notes |
 |---|---|---|
 | Blog module (`/blog`, `/admin/blog`) | ✅ Done | Admin CMS: full-size modal editor, stats, CRUD |
-| Admin analytics (`/admin/analytics`) | 🟡 Partial | Platform metrics + GTM counts; GA4 link-out |
+| Admin analytics (`/admin/analytics`) | 🟡 Partial | Platform metrics + orders/leads timeline charts + GTM counts; GA4 traffic vẫn link-out |
 | Lead capture (`/api/leads`, `/admin/leads`) | ✅ Done | |
 | LeadCaptureForm component | ✅ Done | Navy/yellow brand |
 | Sitemap + robots.txt | ✅ Done | |
@@ -727,10 +731,10 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | L1 | **E2E test coverage** | Chỉ `tests/e2e/smoke.spec.ts`; mở rộng checkout, auth, service flow |
 | L2 | **OpenAPI / Swagger** | Không có API docs tự động |
 | L3 | **Zalo OA API** | Kênh SME Việt Nam — chưa có integration |
-| L4 | **Remove Stripe / PHP payment legacy** | Env vars + deps còn sót, không wired |
-| L5 | **Deduplicate docker-compose** | 5+ compose files; gom profiles |
-| L6 | **Drop `cart_items` table** | Legacy DB cart; client dùng localStorage — có thể deprecate schema |
-| L7 | **`/api/cart` REST API** | Storage methods tồn tại trong `server/storage.ts` nhưng **không register route** — chỉ implement nếu cần sync cart đa thiết bị |
+| L4 | **Remove Stripe / PHP payment legacy** | ✅ Done — gỡ `stripe` deps; archive PHP payment; env → SePay |
+| L5 | **Deduplicate docker-compose** | ✅ Done — `docker/COMPOSE.md`; deprecate `prod`/`production` compose |
+| L6 | **Drop `cart_items` table** | ✅ Done — removed schema + storage; SQL `database/migrations/005_drop_cart_items.sql` |
+| L7 | **`/api/cart` REST API** | ✅ N/A — dead storage removed; cart = `localStorage` only (no server route planned) |
 
 ### 15.6. Admin Dashboard — Polish & Gaps
 
@@ -739,11 +743,11 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | # | Feature | Mô tả | Priority |
 |---|---|---|---|
 | A1 | **Unify AdminLayout** | ✅ Done — tất cả trang admin dùng AdminLayout | Medium |
-| A2 | **Sidebar completeness** | ✅ Done — User Chat, External Requests, Seller Approvals + nhóm Dev Tools | Low |
-| A3 | **Route `project-edit-page`** | ✅ Done — `/admin/external-requests/:id/edit` + `GET /api/admin/external-requests/:id` | Medium |
-| A4 | **Consolidate project systems** | ✅ Done — cross-link banners Projects ↔ External Requests | Medium |
+| A2 | **Sidebar completeness** | ✅ Done — 6 nhóm VN + Dev Tools; chat trong Users | Low |
+| A3 | **Route `project-edit-page`** | ✅ Done — `/admin/projects/:id/edit` (+ redirect legacy external-requests) | Medium |
+| A4 | **Consolidate project systems** | ✅ Done — gộp `/admin/projects`; banner phân biệt Dịch vụ IT | Medium |
 | A5 | **Seller `/seller/analytics` route** | ✅ Done — `SellerAnalyticsPage` + route trong `App.tsx` | Medium |
-| A6 | **Admin Analytics depth** | Embedded GA4 charts / time-series thay vì chỉ aggregate counts + link-out | Low |
+| A6 | **Admin Analytics depth** | 🟡 Partial — orders + leads timeline (nội bộ); GA4 sessions vẫn link-out | Low |
 | A7 | **Software admin create** | ✅ Done — "Thêm mới" wired (`POST /api/admin/software`); Import CSV không trong scope | Low |
 | A8 | **Support ticket detail view** | ✅ Done — detail Dialog với status/priority | Low |
 | A9 | **Dedupe `/admin` route** | ✅ Done — xóa duplicate trong `App.tsx` | Low |
@@ -762,7 +766,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | C5 | **Orders trong sidebar** | P2 | ✅ Done — `/admin/orders` + API enriched orders |
 | C6 | **User Chat tab trong Users** | P3 | ✅ Done — bỏ mục sidebar riêng |
 | C7 | **Dev Tools gọn** | P2 | ✅ Done — nhóm Dev Tools; Dashboard link → Queues |
-| C8 | **GA4 embedded charts** | P3 | 🟡 Partial — biểu đồ đơn hàng theo tháng (nội bộ); GA4 traffic vẫn link-out |
+| C8 | **GA4 embedded charts** | P3 | 🟡 Partial — orders + leads timeline charts; GA4 traffic vẫn link-out (cần GA Data API + service account để embed) |
 
 ### 15.4. UI Package (`SPEC_UI_IMPROVEMENT_v1.md`)
 
@@ -774,9 +778,9 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | U4 | PageHero wave divider | ✅ Done | `page-hero.tsx` |
 | U5 | Footer gradient + amber hover | ✅ Done | `footer.tsx` |
 | U6 | Page transition `animate-fade-in` | ✅ Done | `App.tsx` Router wrapper |
-| U7 | **Header glassmorphism** | ❌ Not done | Vẫn `gradient-slate`; product decision giữ dark header |
-| U8 | **HeroSection home sync** | 🟡 Partial | `HeroSection.tsx` chưa đồng bộ hết wave/CTA spec |
-| U9 | **CSS cleanup** | 🟡 Partial | Animation/utilities cũ trong `index.css` chưa dọn |
+| U7 | **Header glassmorphism** | ⏸ Skipped | Product decision — giữ dark `gradient-slate` header |
+| U8 | **Home hero sync** | ✅ Done | `HomePage` dùng `PageHero` centered + wave + brand CTA |
+| U9 | **CSS cleanup** | 🟡 Partial | Utilities cũ trong `index.css` — low priority |
 
 ### 15.5. Completed Recently (reference)
 
@@ -807,11 +811,29 @@ Các mục sau **đã implement** — không còn trong backlog:
 - Schema.org on course/software detail pages
 - Software SEO utils (`software-utils.ts`)
 
-**Admin dashboard (session gần nhất)**
-- Software Management UI/UX redesign + fix auth (`apiRequest`)
-- Blog Management redesign (`AdminLayout`, full-size modal editor, edit flow)
-- Courses SEO fix list API (`GET /api/courses`) + error/empty states
-- Admin Analytics page mới (`/admin/analytics`) — platform + GTM metrics
+**Admin dashboard (6/2026 consolidation)**
+- Gộp Projects + External Requests → `/admin/projects` (filter `source`, priority, stats)
+- Sidebar 6 nhóm tiếng Việt; `/admin/orders`, `/admin/products`; chat tab trong Users
+- `GET /api/admin/orders` + `getEnrichedOrders()`; fix buyer `/marketplace/orders`
+- IT Services admin polish (filter, status VN, báo giá, tiến độ)
+- Analytics: orders + leads monthly charts; `GET /api/admin/analytics/*-timeline`
+- Seed scripts: `npm run seed:service-requests`, `npm run seed:external-requests`
+
+**Legacy cleanup (6/2026)**
+- Removed Stripe npm packages + env template vars (SePay only)
+- Archived PHP `payment-service` → `scripts/archive/payment-service-php-legacy/`
+- Dropped `cart_items` from Drizzle schema + storage; migration `005_drop_cart_items.sql`
+- `docker/COMPOSE.md` — canonical compose file guide
+
+---
+
+### 15.8. Dev seed scripts (local / staging)
+
+| Command | Mô tả |
+|---|---|
+| `npm run seed:demo-users` | buyer@test.com, seller@test.com, admin@test.com |
+| `npm run seed:service-requests` | 5 IT service requests `[DEMO]` (idempotent) |
+| `npm run seed:external-requests` | 6 project requests `[DEMO]` public + registered |
 
 ---
 
@@ -820,12 +842,13 @@ Các mục sau **đã implement** — không còn trong backlog:
 | Metric | Value |
 |---|---|
 | Frontend pages | ~58 |
-| Admin dashboard routes | 17 (+ 1 orphan page file) |
+| Admin dashboard routes | 19 protected + legacy redirects |
+| NPM seed scripts | 3 (`demo-users`, `service-requests`, `external-requests`) |
 | API route modules | 22 |
-| Database tables | 29 (+ `pending_checkouts`) |
+| Database tables | 28 (+ `pending_checkouts`; `cart_items` dropped) |
 | Active microservices | 3 (email, chat, notification) |
 | Payment gateway | SePay (primary) |
-| Cart source | `localStorage` (`shopping-cart`) — not `cart_items` |
+| Cart source | `localStorage` (`shopping-cart`) — `cart_items` table removed |
 | Production domain | swhubco.com |
 | Documentation files | ~40 |
 

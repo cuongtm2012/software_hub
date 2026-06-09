@@ -68,7 +68,7 @@
     "database": "PostgreSQL",
     "storage": "Cloudflare R2",
     "email_service": "SendGrid",
-    "payment_processing": "Stripe",
+    "payment_processing": "SePay",
     "notifications": "Firebase Cloud Messaging"
   }
 }

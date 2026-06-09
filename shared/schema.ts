@@ -363,15 +363,6 @@ export const productReviews = pgTable("product_reviews", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Cart table for shopping cart functionality
-export const cartItems = pgTable("cart_items", {
-  id: serial("id").primaryKey(),
-  user_id: integer("user_id").references(() => users.id).notNull(),
-  product_id: integer("product_id").references(() => products.id).notNull(),
-  quantity: integer("quantity").default(1).notNull(),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-});
-
 // Support tickets for post-purchase support
 export const supportTickets = pgTable("support_tickets", {
   id: serial("id").primaryKey(),
@@ -479,7 +470,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   buyerOrders: many(orders, { relationName: "buyerOrders" }),
   sellerOrders: many(orders, { relationName: "sellerOrders" }),
   productReviews: many(productReviews),
-  cartItems: many(cartItems),
   supportTickets: many(supportTickets, { relationName: "buyerTickets" }),
   sellerTickets: many(supportTickets, { relationName: "sellerTickets" }),
   sellerProfile: one(sellerProfiles),
@@ -647,17 +637,6 @@ export const productReviewsRelations = relations(productReviews, ({ one }) => ({
   seller: one(users, {
     fields: [productReviews.seller_id],
     references: [users.id],
-  }),
-}));
-
-export const cartItemsRelations = relations(cartItems, ({ one }) => ({
-  user: one(users, {
-    fields: [cartItems.user_id],
-    references: [users.id],
-  }),
-  product: one(products, {
-    fields: [cartItems.product_id],
-    references: [products.id],
   }),
 }));
 
@@ -880,12 +859,6 @@ export const insertSellerProfileSchema = createInsertSchema(sellerProfiles).omit
   total_reviews: true,
 } as any);
 
-export const insertCartItemSchema = createInsertSchema(cartItems).omit({
-  id: true,
-  created_at: true,
-  user_id: true,
-} as any);
-
 export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
   id: true,
   created_at: true,
@@ -986,9 +959,6 @@ export type InsertExternalRequest = z.infer<typeof insertExternalRequestSchema>;
 // New marketplace types
 export type SellerProfile = typeof sellerProfiles.$inferSelect;
 export type InsertSellerProfile = z.infer<typeof insertSellerProfileSchema>;
-
-export type CartItem = typeof cartItems.$inferSelect;
-export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;

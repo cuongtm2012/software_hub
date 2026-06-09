@@ -48,7 +48,10 @@ import {
     Edit,
     Globe,
     UserCheck,
+    Info,
+    Wrench,
 } from "lucide-react";
+import { Link } from "wouter";
 
 type ProjectStatus = "pending" | "in_progress" | "completed" | "cancelled" | "contacted" | "converted" | "rejected";
 
@@ -209,6 +212,20 @@ export default function ProjectsPage() {
                     </h1>
                     <p className="text-muted-foreground">
                         Tất cả inquiry từ form công khai và user đã đăng ký (bảng <code className="text-xs">external_requests</code>)
+                    </p>
+                </div>
+
+                <div className="flex gap-3 p-4 rounded-lg border bg-blue-50/50 border-blue-100 text-sm text-blue-900">
+                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                    <p>
+                        <strong>Yêu cầu dự án</strong> = khách/dev tìm làm dự án (form{" "}
+                        <code className="text-xs bg-blue-100 px-1 rounded">/request-project</code>, developer quotes).
+                        Khác với{" "}
+                        <Link href="/admin/service-requests" className="font-medium underline inline-flex items-center gap-1">
+                            <Wrench className="h-3.5 w-3.5" />
+                            Dịch vụ IT
+                        </Link>{" "}
+                        (báo giá admin, thanh toán SePay).
                     </p>
                 </div>
 

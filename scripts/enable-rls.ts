@@ -25,7 +25,6 @@ const TABLES = [
   "payments",
   "user_downloads",
   "product_reviews",
-  "cart_items",
   "support_tickets",
   "sales_analytics",
   "service_requests",
@@ -80,12 +79,6 @@ const POLICIES: { name: string; sql: string }[] = [
   {
     name: "users_update_own",
     sql: `CREATE POLICY "users_update_own" ON users FOR UPDATE TO authenticated USING (supabase_id = auth.uid()::text)`,
-  },
-  {
-    name: "cart_items_own",
-    sql: `CREATE POLICY "cart_items_own" ON cart_items FOR ALL TO authenticated USING (
-      user_id = (SELECT id FROM users WHERE supabase_id = auth.uid()::text LIMIT 1)
-    )`,
   },
   {
     name: "notifications_own",

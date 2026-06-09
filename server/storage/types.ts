@@ -21,7 +21,6 @@ export type {
   ProductReview, InsertProductReview,
   UserDownload, InsertUserDownload,
   SellerProfile, InsertSellerProfile,
-  CartItem, InsertCartItem,
   SupportTicket, InsertSupportTicket,
   SalesAnalytics, InsertSalesAnalytics,
   ServiceRequest, InsertServiceRequest,

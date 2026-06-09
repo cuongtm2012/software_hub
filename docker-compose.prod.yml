@@ -1,3 +1,4 @@
+# DEPRECATED — use docker-compose.vps.yml (prod) or docker/COMPOSE.md
 version: '3.8'
 
 services:

@@ -2,7 +2,7 @@ import {
   users, softwares, categories, reviews, userDownloads,
   externalRequests, quotes, messages, portfolios, portfolioReviews,
   products, orders, orderItems, payments, productReviews,
-  sellerProfiles, cartItems, supportTickets, salesAnalytics,
+  sellerProfiles, supportTickets, salesAnalytics,
   serviceRequests, serviceQuotations, serviceProjects, servicePayments,
   userPresence, notifications,
   chatRooms, chatRoomMembers, chatMessages, courses, leads, blogPosts,
@@ -22,7 +22,6 @@ import {
   type ProductReview, type InsertProductReview,
   type UserDownload, type InsertUserDownload,
   type SellerProfile, type InsertSellerProfile,
-  type CartItem, type InsertCartItem,
   type SupportTicket, type InsertSupportTicket,
   type SalesAnalytics, type InsertSalesAnalytics,
   type ServiceRequest, type InsertServiceRequest,
@@ -190,6 +189,7 @@ export interface IStorage {
     offset?: number;
   }): Promise<{ orders: EnrichedOrder[]; total: number }>;
   getOrdersTimeline(months?: number): Promise<{ month: string; count: number; revenue: number }[]>;
+  getLeadsTimeline(months?: number): Promise<{ month: string; count: number }[]>;
   getOrdersByBuyerId(buyerId: number): Promise<Order[]>;
   getBuyerOrders(buyerId: number): Promise<Order[]>;
   getOrdersBySellerId(sellerId: number): Promise<Order[]>;
@@ -222,14 +222,6 @@ export interface IStorage {
   updateSellerProfile(userId: number, profile: Partial<InsertSellerProfile>): Promise<SellerProfile | undefined>;
   updateSellerVerificationStatus(userId: number, status: 'pending' | 'verified' | 'rejected'): Promise<SellerProfile | undefined>;
   getAllSellersForVerification(): Promise<SellerProfile[]>;
-
-  // Cart Management
-  addToCart(item: InsertCartItem, userId: number): Promise<CartItem>;
-  getCartItems(userId: number): Promise<CartItem[]>;
-  getCartItemsWithProducts(userId: number): Promise<any[]>;
-  updateCartItemQuantity(itemId: number, quantity: number, userId: number): Promise<CartItem | undefined>;
-  removeFromCart(itemId: number, userId: number): Promise<boolean>;
-  clearCart(userId: number): Promise<boolean>;
 
   // Support Tickets
   createSupportTicket(ticket: InsertSupportTicket, buyerId: number): Promise<SupportTicket>;
@@ -1619,6 +1611,23 @@ class DatabaseStorage implements IStorage {
     }));
   }
 
+  async getLeadsTimeline(months = 6): Promise<{ month: string; count: number }[]> {
+    const rows = await db
+      .select({
+        month: sql<string>`to_char(${leads.created_at}, 'YYYY-MM')`,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(leads)
+      .where(sql`${leads.created_at} >= now() - interval '6 months'`)
+      .groupBy(sql`to_char(${leads.created_at}, 'YYYY-MM')`)
+      .orderBy(sql`to_char(${leads.created_at}, 'YYYY-MM')`);
+
+    return rows.map((r) => ({
+      month: r.month,
+      count: Number(r.count),
+    }));
+  }
+
   async getOrdersByBuyerId(buyerId: number): Promise<Order[]> {
     const ordersList = await db
       .select()
@@ -1883,88 +1892,6 @@ class DatabaseStorage implements IStorage {
       .from(sellerProfiles)
       .where(eq(sellerProfiles.verification_status, 'pending'));
     return profilesList;
-  }
-
-  // Cart Management
-  async addToCart(item: InsertCartItem, userId: number): Promise<CartItem> {
-    const [cartItem] = await db
-      .insert(cartItems)
-      .values({
-        ...item,
-        user_id: userId,
-        created_at: new Date(),
-        updated_at: new Date()
-      })
-      .returning();
-    return cartItem;
-  }
-
-  async getCartItems(userId: number): Promise<CartItem[]> {
-    const cartItemsList = await db
-      .select()
-      .from(cartItems)
-      .where(eq(cartItems.user_id, userId));
-    return cartItemsList;
-  }
-
-  async getCartItemsWithProducts(userId: number): Promise<any[]> {
-    return db
-      .select({
-        id: cartItems.id,
-        user_id: cartItems.user_id,
-        product_id: cartItems.product_id,
-        quantity: cartItems.quantity,
-        created_at: cartItems.created_at,
-        product: {
-          id: products.id,
-          title: products.title,
-          description: products.description,
-          price: products.price,
-          images: products.images,
-          category: products.category,
-          seller_id: products.seller_id,
-          status: products.status,
-          stock_quantity: products.stock_quantity,
-        }
-      })
-      .from(cartItems)
-      .innerJoin(products, eq(cartItems.product_id, products.id))
-      .where(
-        and(
-          eq(cartItems.user_id, userId),
-          eq(products.status, 'approved')
-        )
-      )
-      .orderBy(cartItems.created_at);
-  }
-
-  async updateCartItemQuantity(itemId: number, quantity: number, userId: number): Promise<CartItem | undefined> {
-    const [updatedItem] = await db
-      .update(cartItems)
-      .set({ quantity })
-      .where(
-        and(
-          eq(cartItems.id, itemId),
-          eq(cartItems.user_id, userId)
-        )
-      )
-      .returning();
-
-    return updatedItem;
-  }
-
-  async removeFromCart(itemId: number, userId: number): Promise<boolean> {
-    const result = await db
-      .delete(cartItems)
-      .where(and(eq(cartItems.id, itemId), eq(cartItems.user_id, userId)));
-    return result > 0;
-  }
-
-  async clearCart(userId: number): Promise<boolean> {
-    const result = await db
-      .delete(cartItems)
-      .where(eq(cartItems.user_id, userId));
-    return result > 0;
   }
 
   // Support Tickets
