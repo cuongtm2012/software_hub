@@ -37,6 +37,15 @@ if [ ! -f "$COMPOSE_FILE" ]; then
   exit 1
 fi
 
+echo "🛑 Stopping legacy app containers that bind port 5000..."
+for legacy in softwarehub-app software-hub-app; do
+  if docker ps -a --format '{{.Names}}' | grep -qx "$legacy"; then
+    docker stop "$legacy" 2>/dev/null || true
+    docker update --restart=no "$legacy" 2>/dev/null || true
+    echo "   Stopped $legacy (restart policy disabled)"
+  fi
+done
+
 echo "📦 Starting / updating infrastructure containers (Redis + Mongo)..."
 echo "   Database: Supabase cloud (not local Postgres)"
 if docker ps -a --format '{{.Names}}' | grep -qx 'softwarehub-redis' \
@@ -67,8 +76,21 @@ fi
 
 echo "🔄 Reloading PM2 (ecosystem.config.cjs)..."
 pm2 delete email-service chat-service notification-service 2>/dev/null || true
-pm2 reload ecosystem.config.cjs --env production 2>/dev/null || pm2 start ecosystem.config.cjs --env production
+pm2 delete software-hub-server 2>/dev/null || true
+pm2 start ecosystem.config.cjs --env production
 pm2 save
+
+sleep 3
+if ss -tlnp 2>/dev/null | grep -q ':5000.*docker'; then
+  echo "❌ Port 5000 is still owned by Docker — nginx will serve stale code"
+  ss -tlnp | grep ':5000' || true
+  exit 1
+fi
+if ! ss -tlnp 2>/dev/null | grep -q ':5000'; then
+  echo "❌ Nothing is listening on port 5000 after PM2 start"
+  pm2 logs software-hub-server --lines 20 --nostream || true
+  exit 1
+fi
 
 echo "📊 PM2 status:"
 pm2 status || true
