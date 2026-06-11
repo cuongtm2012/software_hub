@@ -111,7 +111,7 @@ export default function SupportTicketsPage() {
         }
       />
       <main className="flex-grow py-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
+        <div className="w-full min-w-0 max-w-full px-[4%] space-y-6">
           {showForm && (
             <SectionPanel title="Tạo ticket mới" subtitle="Mô tả vấn đề bạn gặp phải">
               <div className="space-y-4">

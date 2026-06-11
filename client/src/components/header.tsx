@@ -87,7 +87,7 @@ export function Header() {
         scrolled && "shadow-xl",
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full min-w-0 max-w-full px-[4%]">
         <div className="flex items-center h-16 gap-2 sm:gap-3 min-w-0">
           <div className="flex min-w-0 flex-1 items-center overflow-hidden">
             <div className="flex shrink-0 items-center space-x-2 lg:space-x-3">

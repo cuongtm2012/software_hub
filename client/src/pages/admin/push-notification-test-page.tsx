@@ -95,7 +95,7 @@ export default function PushNotificationTestPage() {
   if (!user || user.role !== 'admin') {
     return (
       <AdminLayout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <Card className="max-w-md mx-auto">
             <CardContent className="pt-6 text-center">
               <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -186,7 +186,7 @@ export default function PushNotificationTestPage() {
 
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           {/* Header Section */}
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-4">

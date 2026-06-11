@@ -25,7 +25,7 @@ export function PageBreadcrumb({ items, className = "" }: PageBreadcrumbProps) {
 
   return (
     <div className={`bg-white dark:bg-gray-800 ${className}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-2">
         <Breadcrumb>
           <BreadcrumbList className="text-sm text-gray-500 dark:text-gray-400">
             {items.map((item, index) => (

@@ -49,7 +49,7 @@ export default function SellerAnalyticsPage() {
   if (!user) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 text-center">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8 text-center">
           <p className="text-muted-foreground mb-4">Vui lòng đăng nhập để xem analytics.</p>
           <Button onClick={() => navigate("/auth")}>Đăng nhập</Button>
         </div>
@@ -60,7 +60,7 @@ export default function SellerAnalyticsPage() {
   if (user.role !== "seller" && user.role !== "admin") {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 text-center">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8 text-center">
           <p className="text-muted-foreground">Chỉ seller mới có thể truy cập trang này.</p>
           <Button variant="outline" className="mt-4" onClick={() => navigate("/seller")}>
             Về Seller Dashboard
@@ -72,7 +72,7 @@ export default function SellerAnalyticsPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="outline" size="sm" onClick={() => navigate("/seller")}>
             <ArrowLeft className="h-4 w-4 mr-2" />

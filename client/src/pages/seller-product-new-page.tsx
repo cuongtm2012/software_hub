@@ -375,7 +375,7 @@ export default function SellerProductNewPage() {
         subtitle="Điền thông tin sản phẩm — sau khi gửi, admin sẽ duyệt trước khi hiển thị công khai."
       />
       <main className="pt-0">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8 sm:py-10">
           <button
             type="button"
             onClick={() => navigate("/dashboard")}

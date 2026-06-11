@@ -45,7 +45,7 @@ const sampleProjects: SampleProject[] = [
 
 export function PortfolioShowcase() {
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className="w-full min-w-0 max-w-full px-[4%] py-16 grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="pb-2">
           <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">

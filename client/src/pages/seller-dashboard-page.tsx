@@ -93,7 +93,7 @@ export default function SellerDashboardPage() {
   if (!user) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <Card className="max-w-md mx-auto">
             <CardContent className="p-6 text-center">
               <Store className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -110,7 +110,7 @@ export default function SellerDashboardPage() {
   if (profileLoading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#004080]"></div>
           </div>
@@ -122,7 +122,7 @@ export default function SellerDashboardPage() {
   if (!isSeller) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -179,8 +179,8 @@ export default function SellerDashboardPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-8">
+        <div className="w-full">
           {/* Header */}
           <div className="flex justify-between items-start mb-8">
             <div>

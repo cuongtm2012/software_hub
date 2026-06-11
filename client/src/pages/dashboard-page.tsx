@@ -34,7 +34,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="pt-16">
-          <div className="container mx-auto px-4 py-8 max-w-md">
+          <div className="w-full min-w-0 max-w-full px-[4%] py-8 max-w-md">
             <Card>
               <CardContent className="p-6 text-center">
                 <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -132,7 +132,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="pt-16">
-        <div className="container mx-auto px-4 py-6 sm:py-8 max-w-6xl">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-6 sm:py-8">
           <DashboardShell
             title={`Xin chào, ${user.name}`}
             subtitle={

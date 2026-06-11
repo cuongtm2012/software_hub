@@ -371,7 +371,7 @@ export default function MarketplaceSellerEditPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
         <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
+          <div className="w-full min-w-0 max-w-full px-[4%] py-8">
             <Card className="max-w-md mx-auto">
               <CardContent className="p-6 text-center">
                 <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -394,7 +394,7 @@ export default function MarketplaceSellerEditPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
         <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
+          <div className="w-full min-w-0 max-w-full px-[4%] py-8">
             <div className="flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
             </div>
@@ -410,7 +410,7 @@ export default function MarketplaceSellerEditPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
         <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
+          <div className="w-full min-w-0 max-w-full px-[4%] py-8">
             <Card className="max-w-md mx-auto">
               <CardContent className="p-6 text-center">
                 <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
@@ -435,7 +435,7 @@ export default function MarketplaceSellerEditPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
         <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
+          <div className="w-full min-w-0 max-w-full px-[4%] py-8">
             <Card className="max-w-md mx-auto">
               <CardContent className="p-6 text-center">
                 <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
@@ -462,7 +462,7 @@ export default function MarketplaceSellerEditPage() {
       <Header />
       <PageBreadcrumb items={createBreadcrumbs.sellerProductEdit()} />
       <main className="pt-16">
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">

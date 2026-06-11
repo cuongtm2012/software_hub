@@ -365,7 +365,7 @@ export default function ProjectDetailPage() {
     return (
       <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
         <Header />
-        <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <main className="min-w-0 flex-grow w-full max-w-full px-[4%] py-10">
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
           </div>
@@ -401,7 +401,7 @@ export default function ProjectDetailPage() {
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
 
-      <main className="flex-grow container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <main className="min-w-0 flex-grow w-full max-w-full px-[4%] py-10">
         <div className="mb-6">
           <Button
             variant="ghost"

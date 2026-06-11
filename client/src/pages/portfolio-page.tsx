@@ -108,10 +108,10 @@ export default function PortfolioPage() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#f9f9f9]">
       <Header />
       
-      <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <main className="min-w-0 flex-grow overflow-x-hidden w-full max-w-full px-[4%] py-10">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">My Portfolio</h1>
@@ -185,7 +185,7 @@ export default function PortfolioPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {portfolios.map((portfolio: any) => (
                 <Card key={portfolio.id} className="bg-white hover:shadow-md transition-shadow">
                   <div className="relative pt-[60%] bg-gray-100">

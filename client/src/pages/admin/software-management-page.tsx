@@ -28,7 +28,7 @@ export default function AdminSoftwareManagementPage() {
   if (user && user.role !== 'admin') {
     return (
       <AdminLayout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <div className="text-center py-12">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <h1 className="text-2xl font-bold mb-2">Access Denied</h1>

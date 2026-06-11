@@ -45,7 +45,7 @@ export function PageHero({
 
       <div
         className={cn(
-          "relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+          "relative w-full px-[4%]",
           isCentered ? "py-14 sm:py-20 lg:py-24" : "py-8 sm:py-10",
         )}
       >

@@ -263,7 +263,7 @@ export default function MarketplaceOrdersPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-8">
         <div className="flex items-center gap-4 mb-8">
           <Link href="/marketplace">
             <Button variant="ghost" size="sm" className="flex items-center">

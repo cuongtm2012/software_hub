@@ -18,7 +18,7 @@ export default function BlogListPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col overflow-x-hidden">
       <PageMeta
         title="Blog IT — Lộ trình học lập trình miễn phí | Software Hub"
         description="Đọc các bài viết lộ trình học lập trình, hướng dẫn IT và tips cho sinh viên, người mới bắt đầu."
@@ -26,9 +26,9 @@ export default function BlogListPage() {
       />
       <Header />
 
-      <main className="flex-grow">
+      <main className="min-w-0 flex-grow overflow-x-hidden">
         <section className="bg-gradient-to-r from-slate-800 to-slate-700 text-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full min-w-0 max-w-full px-[4%]">
             <div className="flex items-center gap-3 mb-4">
               <Newspaper className="h-8 w-8 text-[#ffcc00]" />
               <h1 className="text-4xl font-bold">Blog IT</h1>
@@ -39,13 +39,13 @@ export default function BlogListPage() {
           </div>
         </section>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-12">
           {isLoading ? (
             <div className="flex justify-center py-20">
               <Loader2 className="h-12 w-12 animate-spin text-indigo-600" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {data?.posts?.map((post: any) => (
                 <article
                   key={post.id}

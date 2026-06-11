@@ -155,7 +155,7 @@ export default function ITServicesPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
+        <div className="min-h-screen flex flex-col overflow-x-hidden bg-gray-50">
             <PageMeta
                 title="Dịch vụ IT & Phát triển phần mềm tùy chỉnh"
                 description="Thuê team phát triển web, app, CRM cho doanh nghiệp. Gửi yêu cầu, nhận báo giá và thanh toán an toàn qua Software Hub IT Studio."
@@ -166,7 +166,7 @@ export default function ITServicesPage() {
             <main className="flex-grow">
                 {/* Hero Section */}
                 <section className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-white py-16">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="w-full min-w-0 max-w-full px-[4%]">
                         <div className="max-w-3xl">
                             <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight text-white">
                                 Dịch vụ IT & Phát triển tùy chỉnh
@@ -200,7 +200,7 @@ export default function ITServicesPage() {
 
                 {/* Services Grid */}
                 <section className="py-16 bg-gray-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="w-full min-w-0 max-w-full px-[4%]">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                                 Dịch vụ của chúng tôi
@@ -236,7 +236,7 @@ export default function ITServicesPage() {
 
                 {/* Process Section */}
                 <section className="py-16 bg-white">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="w-full min-w-0 max-w-full px-[4%]">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                                 Quy trình làm việc
@@ -272,7 +272,7 @@ export default function ITServicesPage() {
 
                 {/* Success Projects */}
                 <section className="py-16 bg-gray-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="w-full min-w-0 max-w-full px-[4%]">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                                 Dự án thành công

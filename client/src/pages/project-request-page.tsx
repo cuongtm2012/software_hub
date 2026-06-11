@@ -129,7 +129,7 @@ export default function ProjectRequestPage() {
       <Header />
 
       <main className="flex-grow py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full min-w-0 max-w-full px-[4%]">
           {/* Back Button */}
           <button
             onClick={() => navigate('/')}

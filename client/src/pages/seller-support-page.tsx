@@ -81,7 +81,7 @@ export default function SellerSupportPage() {
         subtitle="Xử lý ticket hỗ trợ từ người mua sản phẩm của bạn"
       />
       <main className="flex-grow py-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
+        <div className="w-full min-w-0 max-w-full px-[4%] space-y-6">
           {isLoading ? (
             <div className="flex justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />

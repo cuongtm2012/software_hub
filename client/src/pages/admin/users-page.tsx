@@ -201,7 +201,7 @@ export default function UsersPage() {
 
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-8">
         <div className="flex items-center mb-6">
           <Button
             variant="ghost"

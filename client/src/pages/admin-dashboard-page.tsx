@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout>
-      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-4 sm:py-6">
         <DashboardShell
           title="Bảng điều khiển Admin"
           subtitle="Tổng quan hệ thống — người dùng, phần mềm, đơn hàng và hàng đợi"

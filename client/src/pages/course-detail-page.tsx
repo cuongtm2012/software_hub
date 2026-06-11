@@ -157,7 +157,7 @@ export default function CourseDetailPage() {
 
       <Header />
 
-      <main className="flex-grow">
+      <main className="min-w-0 flex-grow overflow-x-hidden">
         <PageHero
           badge={course.topic || "Khóa học"}
           title={course.title}
@@ -175,7 +175,7 @@ export default function CourseDetailPage() {
           }
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-5">
               <SectionPanel title="Video khóa học" subtitle="Playlist YouTube — học trực tiếp trên trang">

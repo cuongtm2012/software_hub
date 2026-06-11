@@ -202,7 +202,7 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#f9f9f9]">
       <PageMeta
         title="Marketplace sản phẩm số & công cụ phần mềm"
         description="Mua license phần mềm, công cụ marketing, crypto tools và giải pháp số từ seller uy tín trên Software Hub."
@@ -210,15 +210,15 @@ export default function MarketplacePage() {
       />
       <Header />
 
-      <main className="flex-grow">
+      <main className="min-w-0 flex-grow overflow-x-hidden">
         <PageHero
           title="Marketplace phần mềm"
           subtitle="Khám phá sản phẩm số, công cụ và giải pháp từ seller uy tín"
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <div className="flex flex-col lg:flex-row gap-8">
-            <aside className="hidden lg:block lg:w-72 shrink-0">
+            <aside className="hidden lg:block w-full lg:w-64 xl:w-72 shrink-0">
               <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24 border border-[#004080]/10 uupm-card">
                 <h3 className="font-bold text-lg text-gray-900 mb-4">Bộ lọc</h3>
                 <MarketplaceFilters
@@ -287,7 +287,7 @@ export default function MarketplacePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+              <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 mb-8">
                 {(products?.softwares || []).map((product: any, index: number) => {
                   const discount = [20, 25, 33, 20, 25, 33][index % 6];
                   const mockPrice = getDisplayPrice(product.id);

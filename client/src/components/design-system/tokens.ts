@@ -30,3 +30,10 @@ export function getPlaceholderGradient(name: string) {
   const index = (name?.charCodeAt(0) || 0) % placeholderGradients.length;
   return placeholderGradients[index];
 }
+
+/** Full-width page shell — matches home page `px-[4%]` edge layout */
+export const pageShellClass = "min-h-screen flex flex-col overflow-x-hidden bg-[#f9f9f9]";
+export const pageMainClass = "min-w-0 flex-grow overflow-x-hidden";
+export const pageContainerClass = "w-full min-w-0 max-w-full px-[4%]";
+export const catalogGridClass =
+  "grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6";

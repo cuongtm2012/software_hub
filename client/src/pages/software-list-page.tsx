@@ -4,7 +4,13 @@ import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { PageHero } from "@/components/design-system/page-hero";
-import { getPlaceholderGradient } from "@/components/design-system/tokens";
+import {
+  catalogGridClass,
+  getPlaceholderGradient,
+  pageContainerClass,
+  pageMainClass,
+  pageShellClass,
+} from "@/components/design-system/tokens";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,8 +59,7 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
-const GRID_CLASS =
-  "grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6";
+const GRID_CLASS = catalogGridClass;
 
 function SoftwareCardSkeleton() {
   return (
@@ -298,7 +303,7 @@ export default function SoftwareListPage() {
     "w-full h-10 px-3 text-sm border border-[#004080]/15 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#004080]/30 uupm-focus";
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+    <div className={pageShellClass}>
       <PageMeta
         title="Kho phần mềm miễn phí — Windows, Mac, Linux"
         description="Tải và khám phá phần mềm, công cụ developer được tuyển chọn. Hướng dẫn cài đặt tiếng Việt cho Windows, macOS và Linux."
@@ -306,17 +311,17 @@ export default function SoftwareListPage() {
       />
       <Header />
 
-      <main className="flex-grow">
+      <main className={pageMainClass}>
         <PageHero
           title={getCurrentCategoryName()}
           subtitle={`Khám phá và tải về từ ${softwareData?.total?.toLocaleString("vi-VN") || "..."}+ phần mềm được tuyển chọn`}
           badge="Kho phần mềm"
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className={cn(pageContainerClass, "py-6 sm:py-8")}>
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Sidebar filters */}
-            <aside className="lg:w-72 shrink-0">
+            <aside className="w-full lg:w-64 xl:w-72 shrink-0">
               <div className="bg-white rounded-xl border border-[#004080]/10 p-5 sticky top-24 uupm-card space-y-5">
                 <div className="flex items-center gap-2 text-[#004080]">
                   <LayoutGrid className="h-5 w-5" />

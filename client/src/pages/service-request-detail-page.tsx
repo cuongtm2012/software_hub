@@ -218,7 +218,7 @@ export default function ServiceRequestDetailPage() {
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
       <main className="flex-grow py-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
+        <div className="w-full min-w-0 max-w-full px-[4%] space-y-6">
           <Button variant="ghost" onClick={() => navigate("/services")} className="mb-2">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Quay lại danh sách

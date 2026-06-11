@@ -58,9 +58,9 @@ export default function ProjectsPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+      <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#f9f9f9]">
         <Header />
-        <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <main className="min-w-0 flex-grow overflow-x-hidden w-full max-w-full px-[4%] py-10">
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
           </div>
@@ -72,9 +72,9 @@ export default function ProjectsPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+      <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#f9f9f9]">
         <Header />
-        <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <main className="min-w-0 flex-grow overflow-x-hidden w-full max-w-full px-[4%] py-10">
           <div className="text-center py-20">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Restricted</h1>
             <p className="text-gray-600 mb-6">Please log in to view projects.</p>
@@ -112,7 +112,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#f9f9f9]">
       <Header />
       <PageBreadcrumb
         items={[
@@ -121,7 +121,7 @@ export default function ProjectsPage() {
         ]}
       />
       
-      <main className="flex-grow container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <main className="min-w-0 flex-grow overflow-x-hidden w-full max-w-full px-[4%] py-10">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-[#004080] mb-2">Projects</h1>

@@ -131,7 +131,7 @@ export default function UserProfilePage() {
     return (
       <div className="flex min-h-screen flex-col bg-[#f9f9f9]">
         <Header />
-        <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-12">
+        <main className="flex-1 w-full min-w-0 max-w-full px-[4%] py-12">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
           </div>
@@ -157,7 +157,7 @@ export default function UserProfilePage() {
       />
 
       <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Sidebar */}
             <aside className="lg:col-span-4 space-y-4">

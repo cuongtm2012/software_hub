@@ -392,7 +392,7 @@ export default function SellerRegistrationPage() {
       />
 
       <div className="bg-[#f9f9f9]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8 sm:py-10">
           <button
             type="button"
             onClick={() => navigate("/dashboard")}

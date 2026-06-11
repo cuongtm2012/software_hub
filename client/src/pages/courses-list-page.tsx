@@ -200,7 +200,7 @@ export default function CoursesListPage() {
     topic === "all" ? "/courses" : `/courses?topic=${encodeURIComponent(topic)}`;
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9] flex flex-col">
+    <div className="min-h-screen bg-[#f9f9f9] flex flex-col overflow-x-hidden">
       <PageMeta
         title={metaTitle}
         description={metaDescription}
@@ -208,17 +208,17 @@ export default function CoursesListPage() {
       />
       <Header />
 
-      <main className="flex-grow">
+      <main className="min-w-0 flex-grow overflow-x-hidden">
         <PageHero
           badge="Miễn phí 100%"
           title={heroTitle}
           subtitle={`Khám phá ${coursesData?.total?.toLocaleString("vi-VN") || "50+"}+ khóa học IT tiếng Việt từ cộng đồng và chuyên gia`}
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Desktop sidebar */}
-            <aside className="hidden lg:block lg:w-72 shrink-0">
+            <aside className="hidden lg:block w-full lg:w-64 xl:w-72 shrink-0">
               <div className="bg-white rounded-xl border border-[#004080]/10 p-5 sticky top-24 uupm-card">
                 <div className="flex items-center gap-2 text-[#004080] mb-5">
                   <GraduationCap className="h-5 w-5" />
@@ -319,7 +319,7 @@ export default function CoursesListPage() {
                 </div>
               ) : coursesData?.courses?.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                     {coursesData.courses.map((course: {
                       id: number;
                       title: string;

@@ -165,7 +165,7 @@ export default function EmailTestPage() {
 
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Email Service Testing</h1>
           <p className="text-gray-600">Test all email scenarios and validate email service functionality</p>

@@ -186,7 +186,7 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="container mx-auto px-4 py-6 max-w-7xl">
+        <main className="w-full min-w-0 max-w-full px-[4%] py-6">
           <Skeleton className="h-8 w-64 mb-6" />
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
@@ -206,7 +206,7 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="container mx-auto px-4 py-12 max-w-7xl">
+        <main className="w-full min-w-0 max-w-full px-[4%] py-12">
           <Card className="p-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Product Not Found</h1>
@@ -269,7 +269,7 @@ export default function ProductDetailPage() {
       />
       <Header />
       
-      <main className="container mx-auto px-4 py-6 max-w-7xl">
+      <main className="w-full min-w-0 max-w-full px-[4%] py-6">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
           <button onClick={() => navigate("/")} className="hover:text-blue-600">Home</button>

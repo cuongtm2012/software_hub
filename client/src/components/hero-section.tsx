@@ -31,7 +31,7 @@ export function HeroSection() {
         <div className="absolute top-[22%] right-[32%] h-1.5 w-1.5 rounded-full bg-white/10" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto py-12 px-4 sm:py-16 sm:px-6 lg:py-20 lg:px-8">
+      <div className="relative w-full min-w-0 max-w-full px-[4%] py-12 sm:py-16 lg:py-20">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-primary-foreground sm:text-5xl lg:text-6xl heading-tight">
             <span className="block">Discover Free Software</span>

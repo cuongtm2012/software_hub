@@ -45,7 +45,7 @@ export default function MarketplaceCategoryPage() {
       <PageBreadcrumb
         items={createBreadcrumbs.category(decodedCategory)}
       />
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full min-w-0 max-w-full px-[4%] py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">{decodedCategory}</h1>
         </div>

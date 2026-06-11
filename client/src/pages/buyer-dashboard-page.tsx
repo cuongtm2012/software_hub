@@ -103,7 +103,7 @@ export default function BuyerDashboardPage() {
     <>
       <Header />
       <div className="min-h-screen bg-background pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-6 sm:py-8">
           <DashboardShell
             title="Bảng điều khiển người mua"
             subtitle="Theo dõi đơn hàng, yêu thích và tải xuống phần mềm"

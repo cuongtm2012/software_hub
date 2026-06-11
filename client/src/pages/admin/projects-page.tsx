@@ -204,7 +204,7 @@ export default function ProjectsPage() {
 
     return (
         <AdminLayout>
-            <div className="max-w-7xl mx-auto p-6 space-y-6">
+            <div className="w-full min-w-0 max-w-full px-[4%] py-6 space-y-6">
                 {/* Header */}
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
