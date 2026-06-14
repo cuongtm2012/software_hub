@@ -8,7 +8,7 @@ import { User } from "@shared/schema";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { getAuthHeaders } from "@/lib/auth-token";
+import { getAuthHeaders, waitForAuthHeaders } from "@/lib/auth-token";
 import { getAuthRedirectUrl } from "@/lib/auth-redirect";
 import { completeAuthCallback, isAuthCallbackUrl } from "@/lib/auth-callback";
 
@@ -38,15 +38,35 @@ type RegisterData = {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-async function fetchCurrentUser(): Promise<AuthUser | null> {
-  const authHeaders = await getAuthHeaders();
-  const res = await fetch("/api/user", {
-    credentials: "include",
-    headers: authHeaders,
-  });
-  if (res.status === 401) return null;
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-  return res.json();
+async function fetchCurrentUser(options?: {
+  authHeaders?: Record<string, string>;
+  retries?: number;
+}): Promise<AuthUser | null> {
+  const retries = options?.retries ?? 1;
+  let authHeaders = options?.authHeaders ?? (await getAuthHeaders());
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    if (!authHeaders.Authorization && attempt > 0) {
+      authHeaders = await waitForAuthHeaders();
+    }
+
+    const res = await fetch("/api/user", {
+      credentials: "include",
+      headers: authHeaders,
+    });
+    if (res.status === 401) {
+      if (attempt < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        authHeaders = await waitForAuthHeaders();
+        continue;
+      }
+      return null;
+    }
+    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+    return res.json();
+  }
+
+  return null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -90,7 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const bootstrap = async () => {
       try {
         await completeAuthCallback();
-        const currentUser = await fetchCurrentUser();
+        const authHeaders = await waitForAuthHeaders();
+        const currentUser = await fetchCurrentUser({ authHeaders, retries: 5 });
         if (cancelled) return;
 
         queryClient.setQueryData(["/api/user"], currentUser);

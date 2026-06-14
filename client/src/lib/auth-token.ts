@@ -9,6 +9,19 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
+/** Wait until Supabase client has a JWT (e.g. right after OAuth redirect). */
+export async function waitForAuthHeaders(
+  maxAttempts = 15,
+  intervalMs = 200,
+): Promise<Record<string, string>> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const headers = await getAuthHeaders();
+    if (headers.Authorization) return headers;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return {};
+}
+
 export async function authFetch(
   url: string,
   options: RequestInit = {},

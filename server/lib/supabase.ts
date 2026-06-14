@@ -35,9 +35,14 @@ export async function verifySupabaseToken(
   if (!isSupabaseConfigured()) return null;
   try {
     const { data, error } = await getSupabaseAdmin().auth.getUser(token);
-    if (error || !data.user) return null;
+    if (error) {
+      console.warn("Supabase JWT verify failed:", error.message);
+      return null;
+    }
+    if (!data.user) return null;
     return { id: data.user.id, email: data.user.email ?? undefined };
-  } catch {
+  } catch (err) {
+    console.warn("Supabase JWT verify error:", err);
     return null;
   }
 }

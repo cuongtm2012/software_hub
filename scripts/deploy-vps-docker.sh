@@ -84,15 +84,25 @@ pm2 delete software-hub-server 2>/dev/null || true
 pm2 start ecosystem.config.cjs --env production
 pm2 save
 
-sleep 3
-if ss -tlnp 2>/dev/null | grep -q ':5000.*docker'; then
-  echo "❌ Port 5000 is still owned by Docker — nginx will serve stale code"
-  ss -tlnp | grep ':5000' || true
-  exit 1
-fi
-if ! ss -tlnp 2>/dev/null | grep -q ':5000'; then
-  echo "❌ Nothing is listening on port 5000 after PM2 start"
-  pm2 logs software-hub-server --lines 20 --nostream || true
+echo "⏳ Waiting for app to bind port 5000 (DB init can take ~30s)..."
+PORT_READY=false
+for i in $(seq 1 30); do
+  sleep 2
+  if ss -tlnp 2>/dev/null | grep -q ':5000.*docker'; then
+    echo "❌ Port 5000 is still owned by Docker — nginx will serve stale code"
+    ss -tlnp | grep ':5000' || true
+    exit 1
+  fi
+  if ss -tlnp 2>/dev/null | grep -q ':5000'; then
+    echo "✓ App listening on port 5000 (after ${i}x2s)"
+    PORT_READY=true
+    break
+  fi
+done
+if [ "$PORT_READY" != "true" ]; then
+  echo "❌ Nothing is listening on port 5000 after 60s"
+  pm2 status || true
+  pm2 logs software-hub-server --lines 40 --nostream || true
   exit 1
 fi
 
