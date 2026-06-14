@@ -113,3 +113,5 @@ jobs:
             (echo "❌ Missing og-default.png — static assets may be stale" && exit 1)
           echo "$HEALTH" | grep -q '"supabaseAuth":true' || \
             (echo "❌ supabaseAuth:false — set SUPABASE_SERVICE_KEY in VPS .env (re-sync VPS_ENV_B64)" && exit 1)
+          echo "$HEALTH" | grep -q '"supabaseAuthVerify":true' || \
+            (echo "❌ supabaseAuthVerify:false — VPS SUPABASE_SERVICE_KEY is wrong (run scripts/sync-github-secrets.sh)" && exit 1)

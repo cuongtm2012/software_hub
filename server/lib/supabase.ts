@@ -46,3 +46,22 @@ export async function verifySupabaseToken(
     return null;
   }
 }
+
+/** True when the service/secret key can call Supabase Auth admin APIs. */
+export async function isSupabaseAdminHealthy(): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const { error } = await getSupabaseAdmin().auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+    });
+    if (error) {
+      console.warn("Supabase admin health check failed:", error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Supabase admin health check error:", err);
+    return false;
+  }
+}

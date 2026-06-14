@@ -140,13 +140,16 @@ app.use((req, res, next) => {
 
     // Health check endpoint (MUST be before serveStatic catch-all)
     app.get('/health', async (_req, res) => {
-      const { isSupabaseConfigured } = await import("./lib/supabase.js");
+      const { isSupabaseConfigured, isSupabaseAdminHealthy } = await import("./lib/supabase.js");
+      const supabaseAuth = isSupabaseConfigured();
+      const supabaseAuthVerify = supabaseAuth ? await isSupabaseAdminHealthy() : false;
       res.json({
         status: 'ok',
         service: 'softwarehub-app',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development',
-        supabaseAuth: isSupabaseConfigured(),
+        supabaseAuth,
+        supabaseAuthVerify,
       });
     });
 

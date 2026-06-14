@@ -62,6 +62,10 @@ if [ -f .env ]; then
     echo "❌ SUPABASE_SERVICE_KEY missing in .env — /api/user JWT verify will fail on production"
     exit 1
   fi
+  if grep -qE '^SUPABASE_SERVICE_KEY=sb_publishable_' .env || grep -qE '^SUPABASE_SECRET_KEY=sb_publishable_' .env; then
+    echo "❌ SUPABASE_SERVICE_KEY looks like sb_publishable_* — use sb_secret_* from Supabase Dashboard"
+    exit 1
+  fi
 else
   echo "⚠️  No .env found — copy .env.vps.example to .env and configure Supabase keys"
 fi
