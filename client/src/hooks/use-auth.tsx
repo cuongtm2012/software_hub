@@ -9,6 +9,7 @@ import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { getAuthHeaders } from "@/lib/auth-token";
+import { getAuthRedirectUrl } from "@/lib/auth-redirect";
 
 type AuthUser = Omit<User, "password">;
 
@@ -64,6 +65,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) return;
+
+    const handleOAuthReturn = async () => {
+      const hash = window.location.hash;
+      if (!hash.includes("access_token=")) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      window.history.replaceState(null, "", "/dashboard");
+      if (window.location.pathname !== "/dashboard") {
+        window.location.href = "/dashboard";
+      }
+    };
+
+    void handleOAuthReturn();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         queryClient.setQueryData(["/api/user"], null);
@@ -117,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: userData.email,
         password: userData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
+          emailRedirectTo: getAuthRedirectUrl("/auth"),
         },
       });
       if (signUpError) throw new Error(signUpError.message);
@@ -139,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) throw new Error("Supabase chưa được cấu hình");
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: `${window.location.origin}/dashboard` },
+        options: { redirectTo: getAuthRedirectUrl("/dashboard") },
       });
       if (error) throw new Error(error.message);
     },

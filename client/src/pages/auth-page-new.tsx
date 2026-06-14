@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { getAuthRedirectUrl } from "@/lib/auth-redirect";
 import { PageMeta } from "@/components/seo/page-meta";
 import { AuthSocialButtons } from "@/components/auth/auth-social-buttons";
 
@@ -174,7 +175,7 @@ export default function AuthPageNew() {
       return;
     }
     const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: getAuthRedirectUrl("/auth"),
     });
     toast({
       title: error ? "Lỗi" : "Đã gửi email",

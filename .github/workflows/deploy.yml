@@ -36,6 +36,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SITE_URL: ${{ secrets.SITE_URL }}
           SITE_URL: ${{ secrets.SITE_URL }}
 
       - name: Create deployment package
