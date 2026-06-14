@@ -1,6 +1,20 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import ws from "ws";
 
 let supabaseAdmin: SupabaseClient | null = null;
+
+/** Node 20 on Linux has no native WebSocket — required for @supabase/supabase-js. */
+function supabaseServerClientOptions() {
+  return {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: {
+      WebSocket: ws as unknown as typeof WebSocket,
+    },
+    realtime: {
+      transport: ws,
+    },
+  };
+}
 
 export function isSupabaseConfigured(): boolean {
   return !!(
@@ -21,9 +35,7 @@ export function getSupabaseAdmin(): SupabaseClient {
       );
     }
 
-    supabaseAdmin = createClient(url, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    supabaseAdmin = createClient(url, serviceKey, supabaseServerClientOptions());
   }
 
   return supabaseAdmin;
