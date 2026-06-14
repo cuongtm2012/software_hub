@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import {
   useQuery,
   useMutation,
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { getAuthHeaders } from "@/lib/auth-token";
 import { getAuthRedirectUrl } from "@/lib/auth-redirect";
+import { completeAuthCallback, isAuthCallbackUrl } from "@/lib/auth-callback";
 
 type AuthUser = Omit<User, "password">;
 
@@ -50,47 +51,80 @@ async function fetchCurrentUser(): Promise<AuthUser | null> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [authBootstrapping, setAuthBootstrapping] = useState(isAuthCallbackUrl);
 
   const {
     data: user,
     error,
-    isLoading,
+    isLoading: userLoading,
   } = useQuery<AuthUser | null, Error>({
     queryKey: ["/api/user"],
     queryFn: fetchCurrentUser,
+    enabled: !authBootstrapping,
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 
+  const isLoading = authBootstrapping || userLoading;
+
   useEffect(() => {
     if (!supabase) return;
-
-    const handleOAuthReturn = async () => {
-      const hash = window.location.hash;
-      if (!hash.includes("access_token=")) return;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      window.history.replaceState(null, "", "/dashboard");
-      if (window.location.pathname !== "/dashboard") {
-        window.location.href = "/dashboard";
-      }
-    };
-
-    void handleOAuthReturn();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         queryClient.setQueryData(["/api/user"], null);
-      } else {
+      } else if (!isAuthCallbackUrl()) {
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       }
     });
+
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!supabase || !authBootstrapping) return;
+
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      try {
+        await completeAuthCallback();
+        const currentUser = await fetchCurrentUser();
+        if (cancelled) return;
+
+        queryClient.setQueryData(["/api/user"], currentUser);
+
+        if (currentUser) {
+          window.location.href = currentUser.role === "admin" ? "/admin" : "/dashboard";
+          return;
+        }
+
+        toast({
+          title: "Đăng nhập thất bại",
+          description:
+            "Server chưa verify được Supabase token. Kiểm tra SUPABASE_SERVICE_KEY trên VPS.",
+          variant: "destructive",
+        });
+      } catch (err) {
+        if (!cancelled) {
+          toast({
+            title: "OAuth thất bại",
+            description: err instanceof Error ? err.message : "Không thể hoàn tất đăng nhập",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        if (!cancelled) setAuthBootstrapping(false);
+      }
+    };
+
+    void bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authBootstrapping, toast]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -99,14 +133,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return await res.json();
       }
 
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
       });
       if (signInError) throw new Error(signInError.message);
 
       const currentUser = await fetchCurrentUser();
-      if (!currentUser) throw new Error("Failed to sync user profile");
+      if (!currentUser) {
+        throw new Error(
+          "Server chưa sync được user. Kiểm tra SUPABASE_SERVICE_KEY trên production.",
+        );
+      }
       return currentUser;
     },
     onSuccess: async (userData: AuthUser) => {
@@ -157,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) throw new Error("Supabase chưa được cấu hình");
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: getAuthRedirectUrl("/dashboard") },
+        options: { redirectTo: getAuthRedirectUrl("/auth") },
       });
       if (error) throw new Error(error.message);
     },

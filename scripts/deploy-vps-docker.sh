@@ -58,6 +58,10 @@ fi
 
 if [ -f .env ]; then
   echo "✓ Using existing .env on VPS"
+  if ! grep -qE '^SUPABASE_SERVICE_KEY=.+' .env && ! grep -qE '^SUPABASE_SECRET_KEY=.+' .env; then
+    echo "❌ SUPABASE_SERVICE_KEY missing in .env — /api/user JWT verify will fail on production"
+    exit 1
+  fi
 else
   echo "⚠️  No .env found — copy .env.vps.example to .env and configure Supabase keys"
 fi

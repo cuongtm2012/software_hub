@@ -111,3 +111,5 @@ jobs:
             (echo "❌ Expected production app (got dev/stale Docker on :5000?)" && exit 1)
           curl -sf "https://swhubco.com/og-default.png" -o /dev/null || \
             (echo "❌ Missing og-default.png — static assets may be stale" && exit 1)
+          echo "$HEALTH" | grep -q '"supabaseAuth":true' || \
+            (echo "❌ supabaseAuth:false — set SUPABASE_SERVICE_KEY in VPS .env (re-sync VPS_ENV_B64)" && exit 1)
