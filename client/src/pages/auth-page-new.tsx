@@ -3,11 +3,24 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Check, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  Lock,
+  LogIn,
+  Mail,
+  ShieldCheck,
+  UserPlus,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { PageMeta } from "@/components/seo/page-meta";
+import { AuthSocialButtons } from "@/components/auth/auth-social-buttons";
 
 const AuthQuickLoginDev = import.meta.env.DEV
   ? lazy(() =>
@@ -25,6 +38,46 @@ function isSupabaseRecoveryRedirect(): boolean {
   return new URLSearchParams(hash).get("type") === "recovery";
 }
 
+function AuthDivider({ label = "hoặc" }: { label?: string }) {
+  return (
+    <div className="relative my-5">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-gray-200" />
+      </div>
+      <div className="relative flex justify-center">
+        <span className="bg-white px-3 text-xs font-medium uppercase tracking-wide text-gray-400">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function FieldLabel({ icon: Icon, children }: { icon: typeof Mail; children: React.ReactNode }) {
+  return (
+    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+      <Icon className="h-3.5 w-3.5 text-[#004080]" />
+      {children}
+    </label>
+  );
+}
+
+function IconInput({
+  icon: Icon,
+  className = "",
+  ...props
+}: React.ComponentProps<typeof Input> & { icon: typeof Mail }) {
+  return (
+    <div className="relative">
+      <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <Input
+        {...props}
+        className={`h-11 rounded-lg border-gray-200 bg-gray-50/50 pl-10 pr-3 focus-visible:bg-white focus-visible:ring-[#004080]/20 ${className}`}
+      />
+    </div>
+  );
+}
+
 export default function AuthPageNew() {
   const { loginMutation, registerMutation, oauthLoginMutation } = useAuth();
   const [, navigate] = useLocation();
@@ -38,11 +91,10 @@ export default function AuthPageNew() {
   const [recoveryData, setRecoveryData] = useState({ password: "", confirmPassword: "" });
 
   const supabaseRequired = !import.meta.env.DEV && !supabase;
+  const oauthPending = oauthLoginMutation.isPending;
 
   useEffect(() => {
-    if (isSupabaseRecoveryRedirect()) {
-      setView("recovery");
-    }
+    if (isSupabaseRecoveryRedirect()) setView("recovery");
   }, []);
 
   const recoveryMutation = useMutation({
@@ -61,11 +113,7 @@ export default function AuthPageNew() {
       setRecoveryData({ password: "", confirmPassword: "" });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Không thể đặt mật khẩu",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Không thể đặt mật khẩu", description: error.message, variant: "destructive" });
     },
   });
 
@@ -82,7 +130,7 @@ export default function AuthPageNew() {
     try {
       await loginMutation.mutateAsync(loginData);
     } catch {
-      // Handled by loginMutation.onError
+      /* loginMutation.onError */
     }
   };
 
@@ -99,26 +147,18 @@ export default function AuthPageNew() {
     try {
       await registerMutation.mutateAsync(registerData);
     } catch {
-      // Handled by registerMutation.onError
+      /* registerMutation.onError */
     }
   };
 
   const handleRecovery = (e: React.FormEvent) => {
     e.preventDefault();
     if (recoveryData.password.length < 6) {
-      toast({
-        title: "Mật khẩu quá ngắn",
-        description: "Mật khẩu cần ít nhất 6 ký tự.",
-        variant: "destructive",
-      });
+      toast({ title: "Mật khẩu quá ngắn", description: "Tối thiểu 6 ký tự.", variant: "destructive" });
       return;
     }
     if (recoveryData.password !== recoveryData.confirmPassword) {
-      toast({
-        title: "Mật khẩu không khớp",
-        description: "Vui lòng nhập lại mật khẩu xác nhận.",
-        variant: "destructive",
-      });
+      toast({ title: "Mật khẩu không khớp", variant: "destructive" });
       return;
     }
     recoveryMutation.mutate(recoveryData.password);
@@ -130,11 +170,7 @@ export default function AuthPageNew() {
       return;
     }
     if (!supabase) {
-      toast({
-        title: "Không khả dụng",
-        description: "Quên mật khẩu yêu cầu Supabase Auth.",
-        variant: "destructive",
-      });
+      toast({ title: "Không khả dụng", description: "Yêu cầu Supabase Auth.", variant: "destructive" });
       return;
     }
     const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
@@ -147,344 +183,320 @@ export default function AuthPageNew() {
     });
   };
 
-  const socialLoginButtons = (
-    <div className="space-y-3">
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        disabled={oauthLoginMutation.isPending || supabaseRequired}
-        onClick={() => oauthLoginMutation.mutate("google")}
-      >
-        Đăng nhập với Google
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        disabled={oauthLoginMutation.isPending || supabaseRequired}
-        onClick={() => oauthLoginMutation.mutate("github")}
-      >
-        Đăng nhập với GitHub
-      </Button>
-    </div>
-  );
+  const tabs: { id: AuthView; label: string; icon: typeof LogIn }[] = [
+    { id: "login", label: "Đăng nhập", icon: LogIn },
+    { id: "register", label: "Đăng ký", icon: UserPlus },
+  ];
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-[#f9f9f9]">
       <PageMeta title="Đăng nhập / Đăng ký" description="" noindex />
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 text-white p-12 flex-col justify-center relative overflow-hidden">
-        <div className="absolute top-20 left-20 w-40 h-40 bg-slate-600/30 rounded-full" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-slate-600/20 rounded-full" />
+
+      {/* Brand panel */}
+      <div className="relative hidden lg:flex lg:w-[44%] flex-col justify-center overflow-hidden bg-gradient-to-br from-[#004080] via-[#003366] to-[#002040] p-12 text-white">
+        <div className="absolute -left-16 top-24 h-64 w-64 rounded-full bg-white/5" />
+        <div className="absolute -right-24 bottom-16 h-96 w-96 rounded-full bg-[#ffcc00]/10" />
 
         <div className="relative z-10 max-w-md">
-          <div className="w-32 h-32 bg-slate-600/50 rounded-full mb-8 flex items-center justify-center">
-            <div className="text-4xl font-bold">
-              <span className="text-white">S</span>
-              <span className="text-amber-400">H</span>
-            </div>
+          <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm">
+            <span className="text-2xl font-bold tracking-tight">
+              S<span className="text-[#ffcc00]">H</span>
+            </span>
           </div>
 
-          <h1 className="text-4xl font-bold mb-4 text-white">Welcome to SoftwareHub</h1>
-          <p className="text-slate-300 text-lg mb-8">
-            Join our community to discover, download, and share free software with users from around the world.
+          <h1 className="mb-3 text-3xl font-bold leading-tight">SoftwareHub</h1>
+          <p className="mb-8 text-base text-blue-100/90">
+            Khám phá phần mềm, marketplace và cộng đồng developer Việt Nam.
           </p>
 
-          <div className="space-y-4 mb-8">
+          <ul className="space-y-3.5">
             {[
-              "Access thousands of free software applications",
-              "Rate software and read honest user reviews",
-              "Discover new tools for Windows, Mac, and Linux",
-              "Share your favorite software with the community",
+              "Hàng nghìn phần mềm miễn phí",
+              "Marketplace & thanh toán an toàn",
+              "Đánh giá và chia sẻ từ cộng đồng",
             ].map((text) => (
-              <div key={text} className="flex items-center gap-3">
-                <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Check className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-slate-200">{text}</span>
-              </div>
+              <li key={text} className="flex items-center gap-3 text-sm text-blue-50">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ffcc00]/20">
+                  <Check className="h-3.5 w-3.5 text-[#ffcc00]" />
+                </span>
+                {text}
+              </li>
             ))}
-          </div>
-
-          <button
-            onClick={() => setView("register")}
-            className="px-6 py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors"
-          >
-            Join 10,000+ developers and users
-          </button>
+          </ul>
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
-        <div className="w-full max-w-md">
+      {/* Auth card */}
+      <div className="flex w-full flex-1 items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-[420px]">
           <button
+            type="button"
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-gray-600 hover:text-slate-800 mb-6 font-medium transition-colors"
+            className="mb-5 flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-[#004080]"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            <ArrowLeft className="h-4 w-4" />
+            Về trang chủ
           </button>
 
-          {supabaseRequired && (
-            <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-              Supabase chưa được cấu hình. Cần{" "}
-              <code className="rounded bg-white px-1">VITE_SUPABASE_URL</code> và{" "}
-              <code className="rounded bg-white px-1">VITE_SUPABASE_ANON_KEY</code> khi build production.
-            </div>
-          )}
-
-          {view === "recovery" ? (
-            <div>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">Đặt mật khẩu mới</h2>
-                <p className="text-gray-600">Nhập mật khẩu mới cho tài khoản của bạn</p>
+          <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm sm:p-8">
+            {/* Mobile logo */}
+            <div className="mb-6 flex items-center gap-3 lg:hidden">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#004080] text-sm font-bold text-white">
+                SH
               </div>
-
-              <form onSubmit={handleRecovery} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Mật khẩu mới</label>
-                  <Input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={recoveryData.password}
-                    onChange={(e) => setRecoveryData({ ...recoveryData, password: e.target.value })}
-                    placeholder="Tối thiểu 6 ký tự"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Xác nhận mật khẩu</label>
-                  <Input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={recoveryData.confirmPassword}
-                    onChange={(e) => setRecoveryData({ ...recoveryData, confirmPassword: e.target.value })}
-                    placeholder="Nhập lại mật khẩu"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={recoveryMutation.isPending}
-                  className="w-full bg-slate-700 hover:bg-slate-800 text-white font-semibold"
-                  size="lg"
-                >
-                  {recoveryMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Đang lưu...
-                    </>
-                  ) : (
-                    "Lưu mật khẩu"
-                  )}
-                </Button>
-              </form>
-            </div>
-          ) : (
-            <>
-              <div className="flex gap-4 mb-8">
-                <button
-                  onClick={() => setView("login")}
-                  className={`flex-1 py-3 px-4 border-2 rounded-lg font-semibold transition-colors ${
-                    view === "login"
-                      ? "border-slate-700 text-slate-700 bg-white"
-                      : "border-gray-300 text-gray-500 hover:border-gray-400"
-                  }`}
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => setView("register")}
-                  className={`flex-1 py-3 px-4 border-2 rounded-lg font-semibold transition-colors ${
-                    view === "register"
-                      ? "border-slate-700 text-slate-700 bg-white"
-                      : "border-gray-300 text-gray-500 hover:border-gray-400"
-                  }`}
-                >
-                  Register
-                </button>
+              <div>
+                <p className="font-semibold text-gray-900">SoftwareHub</p>
+                <p className="flex items-center gap-1 text-xs text-gray-500">
+                  <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                  Bảo mật bởi Supabase
+                </p>
               </div>
+            </div>
 
-              {view === "login" && (
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Login to your account</h2>
-                    <p className="text-gray-600">Enter your email and password to access your account</p>
+            {supabaseRequired && (
+              <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+                Thiếu <code className="rounded bg-white px-1">VITE_SUPABASE_URL</code> hoặc anon key khi build.
+              </div>
+            )}
+
+            {view === "recovery" ? (
+              <>
+                <div className="mb-6 flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#004080]/10">
+                    <KeyRound className="h-5 w-5 text-[#004080]" />
+                  </span>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Mật khẩu mới</h2>
+                    <p className="mt-0.5 text-sm text-gray-500">Tạo mật khẩu mới cho tài khoản của bạn</p>
                   </div>
+                </div>
 
-                  <form onSubmit={handleLogin} className="space-y-5">
+                <form onSubmit={handleRecovery} className="space-y-4">
+                  <div>
+                    <FieldLabel icon={Lock}>Mật khẩu mới</FieldLabel>
+                    <IconInput
+                      icon={Lock}
+                      type="password"
+                      required
+                      minLength={6}
+                      value={recoveryData.password}
+                      onChange={(e) => setRecoveryData({ ...recoveryData, password: e.target.value })}
+                      placeholder="Tối thiểu 6 ký tự"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel icon={Lock}>Xác nhận mật khẩu</FieldLabel>
+                    <IconInput
+                      icon={Lock}
+                      type="password"
+                      required
+                      minLength={6}
+                      value={recoveryData.confirmPassword}
+                      onChange={(e) => setRecoveryData({ ...recoveryData, confirmPassword: e.target.value })}
+                      placeholder="Nhập lại mật khẩu"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={recoveryMutation.isPending}
+                    className="h-11 w-full rounded-lg bg-[#004080] font-semibold hover:bg-[#003366]"
+                  >
+                    {recoveryMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Đang lưu...
+                      </>
+                    ) : (
+                      "Lưu mật khẩu"
+                    )}
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <>
+                <div className="mb-6 hidden lg:block">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {view === "login" ? "Chào mừng trở lại" : "Tạo tài khoản"}
+                  </h2>
+                  <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                    Đăng nhập an toàn qua Supabase
+                  </p>
+                </div>
+
+                {/* Tabs */}
+                <div className="mb-6 flex rounded-xl bg-gray-100 p-1">
+                  {tabs.map(({ id, label, icon: Icon }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setView(id)}
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                        view === id
+                          ? "bg-white text-[#004080] shadow-sm"
+                          : "text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Social first — compact */}
+                <AuthSocialButtons
+                  disabled={supabaseRequired}
+                  pending={oauthPending}
+                  onSelect={(p) => oauthLoginMutation.mutate(p)}
+                />
+
+                <AuthDivider label="hoặc dùng email" />
+
+                {view === "login" ? (
+                  <form onSubmit={handleLogin} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                      <Input
+                      <FieldLabel icon={Mail}>Email</FieldLabel>
+                      <IconInput
+                        icon={Mail}
                         type="email"
                         required
                         value={loginData.email}
                         onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                         placeholder="you@example.com"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                      <FieldLabel icon={Lock}>Mật khẩu</FieldLabel>
                       <div className="relative">
+                        <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <Input
                           type={showPassword ? "text" : "password"}
                           required
                           value={loginData.password}
                           onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                          placeholder="••••••••••"
-                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                          placeholder="••••••••"
+                          className="h-11 rounded-lg border-gray-200 bg-gray-50/50 pl-10 pr-10 focus-visible:bg-white focus-visible:ring-[#004080]/20"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                         >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="flex items-center justify-between text-sm">
+                      <label className="flex cursor-pointer items-center gap-2 text-gray-600">
                         <input
                           type="checkbox"
                           checked={rememberMe}
                           onChange={(e) => setRememberMe(e.target.checked)}
-                          className="w-4 h-4 text-slate-700 border-gray-300 rounded focus:ring-2 focus:ring-slate-500"
+                          className="h-4 w-4 rounded border-gray-300 text-[#004080] focus:ring-[#004080]/30"
                         />
-                        <span className="text-sm text-gray-700">Remember me</span>
+                        Ghi nhớ
                       </label>
                       <button
                         type="button"
-                        className="text-sm text-slate-700 hover:text-slate-900 font-semibold"
                         onClick={handleForgotPassword}
+                        className="font-medium text-[#004080] hover:underline"
                       >
-                        Forgot password?
+                        Quên mật khẩu?
                       </button>
                     </div>
 
                     <Button
                       type="submit"
                       disabled={loginMutation.isPending || supabaseRequired}
-                      className="w-full bg-slate-700 hover:bg-slate-800 text-white font-semibold"
-                      size="lg"
+                      className="h-11 w-full rounded-lg bg-[#004080] font-semibold hover:bg-[#003366]"
                     >
                       {loginMutation.isPending ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Signing in...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Đang đăng nhập...
                         </>
                       ) : (
-                        "Sign in"
+                        <>
+                          <LogIn className="mr-2 h-4 w-4" />
+                          Đăng nhập
+                        </>
                       )}
                     </Button>
 
-                    <div className="relative my-4">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300" />
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="bg-gray-50 px-2 text-gray-500">hoặc</span>
-                      </div>
-                    </div>
-
-                    {socialLoginButtons}
+                    <p className="pt-1 text-center text-sm text-gray-500">
+                      Chưa có tài khoản?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setView("register")}
+                        className="font-semibold text-[#004080] hover:underline"
+                      >
+                        Đăng ký ngay
+                      </button>
+                    </p>
                   </form>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-600 mb-3">Don&apos;t have an account?</p>
-                    <Button
-                      onClick={() => setView("register")}
-                      variant="outline"
-                      className="w-full border-2 border-slate-700 text-slate-700 hover:bg-slate-50 font-semibold"
-                      size="lg"
-                    >
-                      Create Account
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {view === "register" && (
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Create an account</h2>
-                    <p className="text-gray-600">Fill out the form below to create your SoftwareHub account</p>
-                  </div>
-
-                  <form onSubmit={handleRegister} className="space-y-5">
+                ) : (
+                  <form onSubmit={handleRegister} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                      <Input
+                      <FieldLabel icon={Mail}>Email</FieldLabel>
+                      <IconInput
+                        icon={Mail}
                         type="email"
                         required
                         value={registerData.email}
                         onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                        placeholder="Enter your email address"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                        placeholder="you@example.com"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                      <Input
+                      <FieldLabel icon={Lock}>Mật khẩu</FieldLabel>
+                      <IconInput
+                        icon={Lock}
                         type="password"
                         required
                         minLength={6}
                         value={registerData.password}
                         onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                         placeholder="Tối thiểu 6 ký tự"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                       />
                     </div>
 
                     <Button
                       type="submit"
                       disabled={registerMutation.isPending || supabaseRequired}
-                      className="w-full bg-slate-700 hover:bg-slate-800 text-white font-semibold"
-                      size="lg"
+                      className="h-11 w-full rounded-lg bg-[#004080] font-semibold hover:bg-[#003366]"
                     >
                       {registerMutation.isPending ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating account...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Đang tạo tài khoản...
                         </>
                       ) : (
-                        "Continue with Email"
+                        <>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Tạo tài khoản
+                        </>
                       )}
                     </Button>
 
-                    <div className="relative my-4">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300" />
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="bg-gray-50 px-2 text-gray-500">hoặc</span>
-                      </div>
-                    </div>
-
-                    {socialLoginButtons}
+                    <p className="pt-1 text-center text-sm text-gray-500">
+                      Đã có tài khoản?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setView("login")}
+                        className="font-semibold text-[#004080] hover:underline"
+                      >
+                        Đăng nhập
+                      </button>
+                    </p>
                   </form>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-600 mb-3">Already have an account?</p>
-                    <Button
-                      onClick={() => setView("login")}
-                      variant="outline"
-                      className="w-full border-2 border-slate-700 text-slate-700 hover:bg-slate-50 font-semibold"
-                      size="lg"
-                    >
-                      Sign In
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )}
+          </div>
 
           {import.meta.env.DEV && AuthQuickLoginDev && (
             <Suspense fallback={null}>
