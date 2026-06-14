@@ -4,7 +4,6 @@ import {
     Users,
     Package,
     ShoppingCart,
-    Settings,
     LogOut,
     BarChart3,
     Bell,
@@ -37,7 +36,7 @@ import {
     SidebarFooter,
 } from "@/components/ui/sidebar";
 import { useLocation } from "wouter";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 
 type MenuItem = {
@@ -116,10 +115,6 @@ const buyerMenuItems: MenuItem[] = [
     { title: "Đánh giá", url: "/buyer/reviews", icon: Star },
 ];
 
-const commonMenuItems: MenuItem[] = [
-    { title: "Hồ sơ", url: "/profile", icon: Settings },
-];
-
 function isMenuActive(location: string, url: string): boolean {
     if (url === "/admin" || url === "/seller" || url === "/buyer") {
         return location === url;
@@ -190,10 +185,6 @@ export function AppSidebar() {
                             <MenuGroupSection key={g.label} group={g} location={location} />
                         ))}
                         <MenuGroupSection group={adminDevGroup} location={location} />
-                        <MenuGroupSection
-                            group={{ label: "Tài khoản", items: commonMenuItems }}
-                            location={location}
-                        />
                     </>
                 ) : (
                     <SidebarGroup>
@@ -201,10 +192,10 @@ export function AppSidebar() {
                         <SidebarGroupContent>
                             <SidebarMenu>
                                 {(user.role === "seller"
-                                    ? [...sellerMenuItems, ...commonMenuItems]
+                                    ? sellerMenuItems
                                     : user.role === "buyer" || user.role === "user"
-                                      ? [...buyerMenuItems, ...commonMenuItems]
-                                      : commonMenuItems
+                                      ? buyerMenuItems
+                                      : []
                                 ).map((item) => (
                                     <SidebarMenuItem key={item.url}>
                                         <SidebarMenuButton asChild isActive={isMenuActive(location, item.url)}>
@@ -224,17 +215,23 @@ export function AppSidebar() {
             <SidebarFooter>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <div className="flex items-center gap-3 px-4 py-3 border-t">
-                            <Avatar className="w-9 h-9">
-                                <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                                    {user?.name?.substring(0, 2).toUpperCase() || "U"}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{user?.name || user?.email}</p>
-                                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                            </div>
-                        </div>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={isMenuActive(location, "/profile")}
+                            className="h-auto py-3"
+                        >
+                            <a href="/profile" title="Hồ sơ">
+                                <Avatar className="w-9 h-9 shrink-0">
+                                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                                        {user.name?.substring(0, 2).toUpperCase() || "U"}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0 text-left">
+                                    <p className="text-sm font-medium truncate">{user.name || user.email}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                </div>
+                            </a>
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>

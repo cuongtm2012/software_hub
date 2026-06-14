@@ -389,15 +389,17 @@ function Router() {
       <ProtectedRoute path="/marketplace/seller/edit/:id" roles={['seller', 'admin']} component={MarketplaceSellerEditPage} />
       <ProtectedRoute path="/marketplace/orders" roles={['buyer', 'user']} component={MarketplaceOrdersPage} />
 
-      {/* Test Login */}
-      <Route path="/test-login" component={() => {
-        const TestLoginPage = lazy(() => import("@/pages/test-login-page"));
-        return (
-          <Suspense fallback={<div>Loading...</div>}>
-            <TestLoginPage />
-          </Suspense>
-        );
-      }} />
+      {/* Test Login — development only */}
+      {import.meta.env.DEV && (
+        <Route path="/test-login" component={() => {
+          const TestLoginPage = lazy(() => import("@/pages/test-login-page"));
+          return (
+            <Suspense fallback={<div>Loading...</div>}>
+              <TestLoginPage />
+            </Suspense>
+          );
+        }} />
+      )}
 
       <Route component={NotFound} />
     </Switch>

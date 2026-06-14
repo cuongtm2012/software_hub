@@ -16,8 +16,10 @@ import {
   ArrowRight,
   Sparkles
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { getShortDescription } from "@/lib/translations";
+import {
+  SoftwareProductCard,
+  softwareProductCardClass,
+} from "@/components/software-product-card";
 import { PageHero } from "@/components/design-system/page-hero";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
 import { HorizontalScrollRow } from "@/components/horizontal-scroll-row";
@@ -183,8 +185,9 @@ export default function HomePage() {
     setSelectedCategory(categoryId);
   };
 
-  const productCardClass =
-    "overflow-hidden border border-gray-200 rounded-xl uupm-card uupm-interactive group cursor-pointer hover:border-[#004080] flex flex-col h-full";
+  const openSoftware = (software: { id: number; slug?: string | null }) => {
+    navigate(`/software/${software.slug || software.id}`);
+  };
 
   const categories = [
     { id: "all", name: "Tất cả", icon: Sparkles },
@@ -254,7 +257,7 @@ export default function HomePage() {
                 <div
                   key={software?.id || index}
                   onClick={() => software && navigate(`/software/${software.id}`)}
-                  className={`w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] bg-white ${productCardClass}`}
+                  className={`w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] bg-white ${softwareProductCardClass}`}
                   title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                 >
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -325,7 +328,7 @@ export default function HomePage() {
                 <div
                   key={software?.id || index}
                   onClick={() => software && navigate(`/software/${software.id}`)}
-                  className={`w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] bg-white ${productCardClass}`}
+                  className={`w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] bg-white ${softwareProductCardClass}`}
                   title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
                 >
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -529,77 +532,11 @@ export default function HomePage() {
                   ).map((chunk, rowIndex) => (
                     <div key={rowIndex} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
                       {chunk.map((software: any, index: number) => (
-                        <Card
+                        <SoftwareProductCard
                           key={software?.id || `${rowIndex}-${index}`}
-                          onClick={() => software && navigate(`/software/${software.id}`)}
-                          className={productCardClass}
-                          title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
-                        >
-                          <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-                            {software?.image_url ? (
-                              <img
-                                src={software.image_url}
-                                alt={software.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  const placeholder = e.currentTarget.nextElementSibling;
-                                  if (placeholder) {
-                                    (placeholder as HTMLElement).style.display = 'flex';
-                                  }
-                                }}
-                              />
-                            ) : null}
-                            <div
-                              className={`absolute inset-0 bg-gradient-to-br ${software ? getPlaceholderGradient(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
-                              style={{ display: software?.image_url ? 'none' : 'flex' }}
-                            >
-                              <div className="text-center">
-                                <div className="text-5xl font-bold text-white opacity-90 mb-2">
-                                  {software?.name ? software.name.charAt(0).toUpperCase() : '?'}
-                                </div>
-                                <Monitor className="h-10 w-10 text-white opacity-75 mx-auto" />
-                              </div>
-                            </div>
-                            {software?.badge && (
-                              <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                                {software.badge}
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-4 flex flex-col flex-grow">
-                            <h3 className="font-semibold text-base text-gray-900 mb-2 line-clamp-1">
-                              {software?.name || "Đang tải..."}
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-grow">
-                              {software?.description ? getShortDescription(software.description, 100) : ""}
-                            </p>
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 text-amber-400 fill-current" />
-                                <span className="text-sm font-semibold">4.5</span>
-                                <span className="text-xs text-gray-500">(234)</span>
-                              </div>
-                              <span className="text-xs text-gray-500">
-                                {Math.floor(Math.random() * 1000)}K tải
-                              </span>
-                            </div>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (software) {
-                                  navigate(`/software/${software.id}`);
-                                }
-                              }}
-                              className="w-full bg-[#004080] hover:bg-[#003366] text-white rounded-lg shadow-md transition-all cursor-pointer"
-                              size="sm"
-                              title={`Xem chi tiết ${software?.name || 'phần mềm'}`}
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Tải ngay
-                            </Button>
-                          </div>
-                        </Card>
+                          software={software}
+                          onOpen={openSoftware}
+                        />
                       ))}
                     </div>
                   ))}

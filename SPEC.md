@@ -249,18 +249,49 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 
 **Primary: Supabase JWT**
 1. Client (`client/src/lib/supabase.ts`) authenticates via Supabase Auth
-2. API calls send `Authorization: Bearer <access_token>` (`getAuthHeaders()`)
-3. Server (`server/lib/auth-user.ts`) verifies token via Supabase service key
+2. API calls send `Authorization: Bearer <access_token>` (`getAuthHeaders()` in `client/src/lib/auth-token.ts`)
+3. Server (`server/lib/auth-user.ts`) verifies token via Supabase service key (`verifySupabaseToken`)
 4. Maps to local `users` row by `supabase_id` or `email`; auto-creates with `role: 'user'` if missing
 5. `isAuthenticated` / `hasRole` middleware attach `req.user`
 
 **Roles:** `user`, `admin`, `developer`, `client`, `seller`, `buyer`
 
-**Legacy email flow:** `/api/register` + `/auth/set-password` for non-Supabase registration (verification token in DB).
+**Auth UI (`/auth` → `AuthPageNew`)**
 
-**Dev bypass:** `DISABLE_AUTH=true` + `MOCK_USER_ROLE` skips auth middleware.
+| Flow | Implementation |
+|---|---|
+| Email sign-in | `use-auth` → `supabase.auth.signInWithPassword` → `GET /api/user` sync |
+| Email sign-up | `supabase.auth.signUp` + email confirmation |
+| Google OAuth | `supabase.auth.signInWithOAuth({ provider: 'google' })` → redirect `/dashboard` |
+| GitHub OAuth | `supabase.auth.signInWithOAuth({ provider: 'github' })` → redirect `/dashboard` |
+| Forgot password | `supabase.auth.resetPasswordForEmail` → redirect `/auth#type=recovery` → form calls `supabase.auth.updateUser({ password })` |
+| Quick Login (demo) | `AuthQuickLoginDev` — **dev only** (`import.meta.env.DEV`); production build excludes component |
+
+Production requires `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (or `VITE_SUPABASE_PUBLISHABLE_KEY`) at build time. UI shows config warning if missing.
+
+**Legacy email flow (non-Supabase fallback):** `POST /api/register` (email only) + `/auth/set-password?token=…` page calling `GET /api/auth/verify-email` and `POST /api/auth/set-password`. Used when Supabase client is not configured (local dev without env).
+
+**Dev-only routes**
+- `/test-login` → `TestLoginPage` — registered only when `import.meta.env.DEV`
+- Quick Login buttons on `/auth` — same dev gate
+
+**Dev bypass:** `DISABLE_AUTH=true` + `MOCK_USER_ROLE` skips auth middleware (**ignored when `NODE_ENV=production`**).
 
 **Rate limiting:** `authRateLimiter` on `/api/register` + `/api/auth/register`; `paymentRateLimiter` on `/api/payment/initiate` and `/api/payment/checkout`; `leadRateLimiter` on `/api/leads`.
+
+**Key files**
+
+| File | Role |
+|---|---|
+| `client/src/hooks/use-auth.tsx` | Auth context, login/register/logout/Google mutations |
+| `client/src/lib/supabase.ts` | Supabase browser client |
+| `client/src/lib/auth-token.ts` | `getAuthHeaders()`, `authFetch()` |
+| `client/src/pages/auth-page-new.tsx` | Login / register / recovery UI |
+| `client/src/pages/set-password-page.tsx` | Legacy email verification + set password |
+| `client/src/components/auth-quick-login-dev.tsx` | Dev quick login panel |
+| `server/lib/auth-user.ts` | JWT → local user resolution |
+| `server/middleware/auth.middleware.ts` | `isAuthenticated`, `hasRole`, `optionalAuth` |
+| `server/routes/auth.routes.ts` | Profile, legacy register/verify/set-password, token validation |
 
 ---
 
@@ -309,7 +340,7 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/buyer` | BuyerDashboardPage | buyer, user |
 | `/seller/*` | Seller pages | seller, admin |
 | `/admin/*` | Admin dashboard (19 routes + redirects) | admin — chi tiết §5.5 |
-| `/test-login` | TestLoginPage | Public |
+| `/test-login` | TestLoginPage | Dev only (`import.meta.env.DEV`) |
 
 ### 5.2. Design System (`client/src/components/design-system/`)
 

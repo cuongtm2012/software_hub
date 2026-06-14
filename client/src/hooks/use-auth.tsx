@@ -12,6 +12,8 @@ import { getAuthHeaders } from "@/lib/auth-token";
 
 type AuthUser = Omit<User, "password">;
 
+type OAuthProvider = "google" | "github";
+
 type AuthContextType = {
   user: AuthUser | null;
   isLoading: boolean;
@@ -19,7 +21,7 @@ type AuthContextType = {
   loginMutation: UseMutationResult<AuthUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<void, Error, RegisterData>;
-  googleLoginMutation: UseMutationResult<void, Error, void>;
+  oauthLoginMutation: UseMutationResult<void, Error, OAuthProvider>;
 };
 
 type LoginData = {
@@ -62,8 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) return;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        queryClient.setQueryData(["/api/user"], null);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -128,17 +134,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const googleLoginMutation = useMutation({
-    mutationFn: async () => {
+  const oauthLoginMutation = useMutation({
+    mutationFn: async (provider: OAuthProvider) => {
       if (!supabase) throw new Error("Supabase chưa được cấu hình");
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: { redirectTo: `${window.location.origin}/dashboard` },
       });
       if (error) throw new Error(error.message);
     },
     onError: (error: Error) => {
-      toast({ title: "Google login thất bại", description: error.message, variant: "destructive" });
+      toast({ title: "Đăng nhập thất bại", description: error.message, variant: "destructive" });
     },
   });
 
@@ -171,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
-        googleLoginMutation,
+        oauthLoginMutation,
       }}
     >
       {children}

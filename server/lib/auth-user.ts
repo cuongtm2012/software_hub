@@ -67,7 +67,10 @@ export async function resolveUserFromToken(
 export async function resolveUserFromRequest(
   req: Request,
 ): Promise<AuthUserPayload | null> {
-  if (process.env.DISABLE_AUTH === "true") {
+  if (
+    process.env.DISABLE_AUTH === "true" &&
+    process.env.NODE_ENV !== "production"
+  ) {
     const mockRole = process.env.MOCK_USER_ROLE || "seller";
     const mockUsers: Record<string, AuthUserPayload> = {
       seller: { id: 2, name: "Test Seller", email: "seller@test.com", role: "seller" },

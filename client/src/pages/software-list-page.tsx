@@ -11,12 +11,15 @@ import {
   pageMainClass,
   pageShellClass,
 } from "@/components/design-system/tokens";
+import {
+  SoftwareProductCard,
+  SoftwareProductCardSkeleton,
+  type SoftwareProductCardData,
+} from "@/components/software-product-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Monitor,
   Download,
   Star,
   Grid,
@@ -61,30 +64,16 @@ function stripMarkdown(text: string): string {
 
 const GRID_CLASS = catalogGridClass;
 
-function SoftwareCardSkeleton() {
-  return (
-    <div className="rounded-lg border border-[#004080]/10 bg-white overflow-hidden uupm-card">
-      <Skeleton className="h-24 w-full rounded-none" />
-      <div className="p-2.5 space-y-1.5">
-        <Skeleton className="h-3 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
-      </div>
-    </div>
-  );
+interface SoftwareListCardProps {
+  software: SoftwareProductCardData;
+  onOpen: (software: SoftwareProductCardData) => void;
 }
 
-interface SoftwareCardProps {
-  software: any;
-  view: "grid" | "list";
-  onOpen: (software: any) => void;
-}
-
-function SoftwareCard({ software, view, onOpen }: SoftwareCardProps) {
+function SoftwareListCard({ software, onOpen }: SoftwareListCardProps) {
   const description = stripMarkdown(software.description || "");
   const gradient = getPlaceholderGradient(software.name);
 
-  if (view === "list") {
-    return (
+  return (
       <article
         className="group flex gap-4 sm:gap-5 p-4 sm:p-5 rounded-xl border border-[#004080]/10 bg-white uupm-card uupm-interactive cursor-pointer"
         onClick={() => onOpen(software)}
@@ -130,7 +119,7 @@ function SoftwareCard({ software, view, onOpen }: SoftwareCardProps) {
               <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
               4.5
             </span>
-            {software.platform?.slice(0, 3).map((p: string) => (
+            {software.platform?.slice(0, 3).map((p) => (
               <Badge
                 key={p}
                 variant="outline"
@@ -145,76 +134,15 @@ function SoftwareCard({ software, view, onOpen }: SoftwareCardProps) {
         <Button
           size="sm"
           className="hidden sm:flex shrink-0 self-center bg-[#004080] hover:bg-[#003366]"
-          asChild
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(software);
+          }}
         >
-          <a href={software.download_link} target="_blank" rel="noopener noreferrer">
-            <Download className="h-4 w-4 mr-1.5" />
-            Tải về
-          </a>
+          <Download className="h-4 w-4 mr-1.5" />
+          Tải ngay
         </Button>
       </article>
-    );
-  }
-
-  return (
-    <article
-      className="group flex flex-col rounded-lg border border-[#004080]/10 bg-white overflow-hidden uupm-card uupm-interactive cursor-pointer h-full"
-      onClick={() => onOpen(software)}
-    >
-      <div className="relative h-24 overflow-hidden bg-slate-100">
-        {software.image_url ? (
-          <img
-            src={software.image_url}
-            alt={software.name}
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        ) : null}
-        <div
-          className={cn(
-            "absolute inset-0 bg-gradient-to-br flex items-center justify-center gap-1.5",
-            gradient,
-          )}
-          style={{ display: software.image_url ? "none" : "flex" }}
-        >
-          <span className="text-2xl font-bold text-white">
-            {software.name.charAt(0).toUpperCase()}
-          </span>
-          <Monitor className="h-4 w-4 text-white/70" />
-        </div>
-        <div className="absolute top-1.5 left-1.5">
-          <Badge className="bg-emerald-500 text-white text-[9px] font-semibold px-1.5 py-0 leading-4">
-            FREE
-          </Badge>
-        </div>
-      </div>
-
-      <div className="p-2.5 flex flex-col flex-1">
-        <h3 className="text-xs font-semibold text-slate-900 line-clamp-2 min-h-[2rem] leading-snug group-hover:text-[#004080] transition-colors">
-          {software.name}
-        </h3>
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#004080]/8">
-          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-slate-500">
-            <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-            4.5
-          </span>
-          <Button
-            size="sm"
-            className="h-7 px-2 text-[10px] bg-[#004080] hover:bg-[#003366]"
-            asChild
-            onClick={(e) => e.stopPropagation()}
-          >
-            <a href={software.download_link} target="_blank" rel="noopener noreferrer">
-              <Download className="h-3 w-3 mr-0.5" />
-              Tải
-            </a>
-          </Button>
-        </div>
-      </div>
-    </article>
   );
 }
 
@@ -277,7 +205,7 @@ export default function SoftwareListPage() {
     },
   });
 
-  const handleOpenSoftware = (software: any) => {
+  const handleOpenSoftware = (software: SoftwareProductCardData) => {
     navigate(`/software/${software.slug || software.id}`);
   };
 
@@ -451,7 +379,7 @@ export default function SoftwareListPage() {
                   </div>
                   <div className={GRID_CLASS}>
                     {Array.from({ length: 8 }).map((_, i) => (
-                      <SoftwareCardSkeleton key={i} />
+                      <SoftwareProductCardSkeleton key={i} />
                     ))}
                   </div>
                 </div>
@@ -492,22 +420,20 @@ export default function SoftwareListPage() {
 
                   {view === "grid" ? (
                     <div className={GRID_CLASS}>
-                      {softwareData?.softwares?.map((software: any) => (
-                        <SoftwareCard
+                      {softwareData?.softwares?.map((software: SoftwareProductCardData) => (
+                        <SoftwareProductCard
                           key={software.id}
                           software={software}
-                          view="grid"
                           onOpen={handleOpenSoftware}
                         />
                       ))}
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {softwareData?.softwares?.map((software: any) => (
-                        <SoftwareCard
+                      {softwareData?.softwares?.map((software: SoftwareProductCardData) => (
+                        <SoftwareListCard
                           key={software.id}
                           software={software}
-                          view="list"
                           onOpen={handleOpenSoftware}
                         />
                       ))}

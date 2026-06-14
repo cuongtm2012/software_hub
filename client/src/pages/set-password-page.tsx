@@ -73,7 +73,7 @@ export default function SetPasswordPage() {
         setToken(tokenParam);
 
         // Verify the token
-        fetch(`/api/verify-email?token=${tokenParam}`)
+        fetch(`/api/auth/verify-email?token=${tokenParam}`)
             .then((res) => res.json())
             .then((data) => {
                 if (data.valid) {
@@ -95,7 +95,7 @@ export default function SetPasswordPage() {
     // Set password mutation
     const setPasswordMutation = useMutation({
         mutationFn: async (data: SetPasswordFormValues) => {
-            const response = await fetch("/api/set-password", {
+            const response = await fetch("/api/auth/set-password", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
