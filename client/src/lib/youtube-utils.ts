@@ -4,4 +4,4 @@ export {
   getVideoThumbnailUrls,
   resolveCourseThumbnailUrls,
   isPlaylistUrl,
-} from "../../shared/youtube-utils";
+} from "@shared/youtube-utils";
