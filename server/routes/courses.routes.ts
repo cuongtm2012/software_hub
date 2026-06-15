@@ -40,12 +40,13 @@ router.put("/admin/:id", adminMiddleware, async (req: Request, res: Response, ne
 
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { topic, level, search, limit = "12", offset = "0" } = req.query;
+    const { topic, level, search, sort, limit = "12", offset = "0" } = req.query;
 
     const result = await storage.getCourses({
       topic: topic as string | undefined,
       level: level as string | undefined,
       search: search as string | undefined,
+      sort: sort as string | undefined,
       limit: parseInt(limit as string, 10),
       offset: parseInt(offset as string, 10),
     });

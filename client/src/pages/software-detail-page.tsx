@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
-import { buildSoftwareSeoDescription, buildSoftwareSeoContent } from "@/lib/software-utils";
+import { buildSoftwareSeoDescription, buildSoftwareSeoContent, normalizeExternalUrl, resolveDocumentationLink } from "@/lib/software-utils";
 import { renderSeoMarkdown } from "@/lib/render-seo-markdown";
 import { PageMeta } from "@/components/seo/page-meta";
 import { SoftwareSchema } from "@/components/seo/software-schema";
@@ -259,6 +259,14 @@ export default function SoftwareDetailPage() {
     platformLabels.length ? { label: "Nền tảng", value: platformLabels.join(" · ") } : null,
   ].filter(Boolean) as { label: string; value: string }[];
 
+  const downloadUrl = normalizeExternalUrl(software.download_link);
+  const documentationUrl = resolveDocumentationLink(software.documentation_link, software.download_link);
+
+  const handleExternalLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.stopPropagation();
+    if (e.detail > 1) e.preventDefault();
+  };
+
   return (
     <div className={pageShellClass}>
       <PageMeta
@@ -273,7 +281,7 @@ export default function SoftwareDetailPage() {
         url={softwareUrl}
         image={software.image_url ?? undefined}
         operatingSystem={Array.isArray(software.platform) ? software.platform : undefined}
-        downloadUrl={software.download_link}
+        downloadUrl={downloadUrl ?? undefined}
       />
       <BreadcrumbSchema
         items={[
@@ -371,23 +379,27 @@ export default function SoftwareDetailPage() {
                   </div>
 
                   <div className="p-5 space-y-3">
-                    <a
-                      href={software.download_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={`Tải xuống ${software.name}`}
-                      className="w-full inline-flex items-center justify-center px-5 py-3 text-base font-semibold rounded-lg text-white bg-[#004080] hover:bg-[#003366] transition-colors"
-                    >
-                      <Download className="h-5 w-5 mr-2" />
-                      Tải ngay
-                    </a>
-
-                    {software.documentation_link && (
+                    {downloadUrl && (
                       <a
-                        href={software.documentation_link}
+                        href={downloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Tải xuống ${software.name}`}
+                        onClick={handleExternalLinkClick}
+                        className="w-full inline-flex items-center justify-center px-5 py-3 text-base font-semibold rounded-lg text-white bg-[#004080] hover:bg-[#003366] transition-colors"
+                      >
+                        <Download className="h-5 w-5 mr-2" />
+                        Tải ngay
+                      </a>
+                    )}
+
+                    {documentationUrl && (
+                      <a
+                        href={documentationUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Xem tài liệu hướng dẫn"
+                        onClick={handleExternalLinkClick}
                         className="w-full inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium rounded-lg border border-[#004080]/15 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
                       >
                         <FileText className="h-4 w-4 mr-2" />

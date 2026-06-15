@@ -346,6 +346,7 @@ export interface IStorage {
     topic?: string;
     level?: string;
     search?: string;
+    sort?: string;
     limit?: number;
     offset?: number;
   }): Promise<{ courses: any[], total: number }>;
@@ -3035,11 +3036,12 @@ class DatabaseStorage implements IStorage {
     topic?: string;
     level?: string;
     search?: string;
+    sort?: string;
     limit?: number;
     offset?: number;
   }): Promise<{ courses: any[], total: number }> {
     try {
-      const { topic, level, search, limit = 12, offset = 0 } = filters;
+      const { topic, level, search, sort, limit = 12, offset = 0 } = filters;
 
       const whereConditions: any[] = [eq(courses.status, "approved")];
 
@@ -3067,12 +3069,22 @@ class DatabaseStorage implements IStorage {
         .from(courses)
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
 
+      const sortKey = sort || "recent";
+      const orderBy =
+        sortKey === "title"
+          ? [asc(courses.title), desc(courses.id)]
+          : sortKey === "title_desc"
+            ? [desc(courses.title), desc(courses.id)]
+            : sortKey === "newest"
+              ? [desc(courses.created_at), desc(courses.id)]
+              : [desc(courses.updated_at), desc(courses.created_at), desc(courses.id)];
+
       // Get courses
       const coursesList = await db
         .select()
         .from(courses)
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-        .orderBy(desc(courses.updated_at), desc(courses.created_at), desc(courses.id))
+        .orderBy(...orderBy)
         .limit(limit)
         .offset(offset);
 

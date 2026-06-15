@@ -20,6 +20,7 @@ import {
   ListVideo,
   LayoutGrid,
   ChevronLeft,
+  ArrowUpDown,
 } from "lucide-react";
 import { Pagination } from "@/components/pagination";
 import { CourseThumbnail } from "@/components/course-thumbnail";
@@ -48,6 +49,13 @@ const LEVEL_LABEL: Record<string, string> = {
   advanced: "Nâng cao",
 };
 
+const SORT_OPTIONS = [
+  { value: "recent", label: "Mới cập nhật" },
+  { value: "newest", label: "Mới thêm" },
+  { value: "title", label: "Tên (A-Z)" },
+  { value: "title_desc", label: "Tên (Z-A)" },
+] as const;
+
 const selectClass =
   "w-full h-10 px-3 text-sm border border-[#004080]/15 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#004080]/30 uupm-focus";
 
@@ -55,19 +63,23 @@ function CourseFilters({
   topic,
   level,
   searchQuery,
+  sort,
   topicsData,
   onTopicChange,
   onLevelChange,
   onSearchChange,
+  onSortChange,
   onClear,
 }: {
   topic: string;
   level: string;
   searchQuery: string;
+  sort: string;
   topicsData?: { topic: string; count: number }[];
   onTopicChange: (v: string) => void;
   onLevelChange: (v: string) => void;
   onSearchChange: (v: string) => void;
+  onSortChange: (v: string) => void;
   onClear: () => void;
 }) {
   const totalTopics = topicsData?.reduce((sum, t) => sum + t.count, 0) || 0;
@@ -111,6 +123,17 @@ function CourseFilters({
         </select>
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">Sắp xếp</label>
+        <select value={sort} onChange={(e) => onSortChange(e.target.value)} className={selectClass}>
+          {SORT_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <button
         type="button"
         onClick={onClear}
@@ -129,6 +152,7 @@ export default function CoursesListPage() {
   const [topic, setTopic] = useState(searchParams.get("topic") || "all");
   const [level, setLevel] = useState(searchParams.get("level") || "all");
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const [sort, setSort] = useState(searchParams.get("sort") || "recent");
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -146,6 +170,7 @@ export default function CoursesListPage() {
     setTopic(params.get("topic") || "all");
     setLevel(params.get("level") || "all");
     setSearchQuery(params.get("search") || "");
+    setSort(params.get("sort") || "recent");
     setPage(parseInt(params.get("page") || "1", 10));
   }, [location]);
 
@@ -154,10 +179,11 @@ export default function CoursesListPage() {
     if (topic !== "all") params.set("topic", topic);
     if (level !== "all") params.set("level", level);
     if (searchQuery) params.set("search", searchQuery);
+    if (sort !== "recent") params.set("sort", sort);
     if (page !== 1) params.set("page", page.toString());
     const newUrl = `/courses${params.toString() ? "?" + params.toString() : ""}`;
     window.history.replaceState({}, "", newUrl);
-  }, [topic, level, searchQuery, page]);
+  }, [topic, level, searchQuery, sort, page]);
 
   const { data: topicsData } = useQuery({
     queryKey: ["/api/courses/topics"],
@@ -169,12 +195,13 @@ export default function CoursesListPage() {
   });
 
   const { data: coursesData, isLoading, error } = useQuery({
-    queryKey: ["/api/courses", topic, level, searchQuery, page],
+    queryKey: ["/api/courses", topic, level, searchQuery, sort, page],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (topic !== "all") params.set("topic", topic);
       if (level !== "all") params.set("level", level);
       if (searchQuery) params.set("search", searchQuery);
+      if (sort !== "recent") params.set("sort", sort);
       params.set("offset", ((page - 1) * 30).toString());
       params.set("limit", "30");
       const response = await fetch(`/api/courses?${params.toString()}`);
@@ -187,6 +214,7 @@ export default function CoursesListPage() {
     setTopic("all");
     setLevel("all");
     setSearchQuery("");
+    setSort("recent");
     setPage(1);
   };
 
@@ -205,11 +233,17 @@ export default function CoursesListPage() {
     setPage(1);
   };
 
+  const handleSortChange = (value: string) => {
+    setSort(value);
+    setPage(1);
+  };
+
   const totalPages = Math.ceil((coursesData?.total || 0) / 30);
   const listReturnPath = buildCoursesListPath({
     topic,
     level,
     search: searchQuery,
+    sort,
     page,
   });
   const heroTitle = topic === "all" ? "Khóa học lập trình" : topic;
@@ -281,10 +315,12 @@ export default function CoursesListPage() {
                     topic={topic}
                     level={level}
                     searchQuery={searchQuery}
+                    sort={sort}
                     topicsData={topicsData}
                     onTopicChange={handleTopicChange}
                     onLevelChange={handleLevelChange}
                     onSearchChange={handleSearchChange}
+                    onSortChange={handleSortChange}
                     onClear={clearFilters}
                   />
                 )}
@@ -301,10 +337,12 @@ export default function CoursesListPage() {
                   topic={topic}
                   level={level}
                   searchQuery={searchQuery}
+                  sort={sort}
                   topicsData={topicsData}
                   onTopicChange={handleTopicChange}
                   onLevelChange={handleLevelChange}
                   onSearchChange={handleSearchChange}
+                  onSortChange={handleSortChange}
                   onClear={() => {
                     clearFilters();
                     setFiltersOpen(false);
@@ -316,14 +354,34 @@ export default function CoursesListPage() {
             <div className="flex-1 min-w-0 space-y-5">
               {/* Toolbar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setFiltersOpen(true)}
-                  className="lg:hidden inline-flex items-center gap-2 h-10 px-4 border border-[#004080]/20 rounded-lg text-sm font-medium hover:bg-[#004080]/5 transition-colors uupm-focus"
-                >
-                  <SlidersHorizontal className="h-4 w-4 text-[#004080]" />
-                  Bộ lọc
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(true)}
+                    className="lg:hidden inline-flex items-center gap-2 h-10 px-4 border border-[#004080]/20 rounded-lg text-sm font-medium hover:bg-[#004080]/5 transition-colors uupm-focus"
+                  >
+                    <SlidersHorizontal className="h-4 w-4 text-[#004080]" />
+                    Bộ lọc
+                  </button>
+                  <div className="inline-flex items-center gap-2 h-10 px-3 border border-[#004080]/20 rounded-lg bg-white text-sm">
+                    <ArrowUpDown className="h-4 w-4 text-[#004080] shrink-0" />
+                    <label htmlFor="courses-sort" className="sr-only">
+                      Sắp xếp khóa học
+                    </label>
+                    <select
+                      id="courses-sort"
+                      value={sort}
+                      onChange={(e) => handleSortChange(e.target.value)}
+                      className="bg-transparent border-0 p-0 pr-6 text-sm font-medium text-slate-700 focus:outline-none focus:ring-0 cursor-pointer uupm-focus"
+                    >
+                      {SORT_OPTIONS.map((s) => (
+                        <option key={s.value} value={s.value}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
                 {!isLoading && !error && (
                   <p className="text-sm text-muted-foreground">
                     Hiển thị{" "}

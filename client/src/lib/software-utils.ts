@@ -1,3 +1,25 @@
+export function normalizeExternalUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const candidate = url.trim().split(/\s+/)[0]?.split(",")[0]?.trim();
+  if (!candidate || !/^https?:\/\//i.test(candidate)) return null;
+  try {
+    return new URL(candidate).href;
+  } catch {
+    return null;
+  }
+}
+
+export function resolveDocumentationLink(
+  documentationLink?: string | null,
+  downloadLink?: string | null,
+): string | null {
+  const doc = normalizeExternalUrl(documentationLink);
+  const download = normalizeExternalUrl(downloadLink);
+  if (!doc) return null;
+  if (download && doc === download) return null;
+  return doc;
+}
+
 export function getSoftwareUrl(software: { slug?: string | null; id: number }): string {
   return software.slug ? `/software/${software.slug}` : `/software/${software.id}`;
 }

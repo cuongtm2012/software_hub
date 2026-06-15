@@ -32,6 +32,7 @@ function yamlToEntry(raw: string): FreeSoftwareEntry | null {
   const sourceCode = String(data.source_code_url ?? "");
   const url = website || sourceCode;
   if (!url) return null;
+  const downloadLink = sourceCode || website;
 
   return {
     name,
@@ -39,8 +40,8 @@ function yamlToEntry(raw: string): FreeSoftwareEntry | null {
     category: "Self-hosted",
     subcategory: category,
     url,
-    download_link: sourceCode || website,
-    documentation_link: website || undefined,
+    download_link: downloadLink,
+    documentation_link: website && website !== downloadLink ? website : undefined,
     platform: normalizePlatforms(platforms),
     license: licenses,
     source: "awesome-selfhosted",

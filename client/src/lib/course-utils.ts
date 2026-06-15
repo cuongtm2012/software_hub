@@ -6,12 +6,14 @@ export function buildCoursesListPath(params: {
   topic?: string;
   level?: string;
   search?: string;
+  sort?: string;
   page?: number;
 }): string {
   const qs = new URLSearchParams();
   if (params.topic && params.topic !== "all") qs.set("topic", params.topic);
   if (params.level && params.level !== "all") qs.set("level", params.level);
   if (params.search) qs.set("search", params.search);
+  if (params.sort && params.sort !== "recent") qs.set("sort", params.sort);
   if (params.page && params.page > 1) qs.set("page", String(params.page));
   const query = qs.toString();
   return query ? `/courses?${query}` : "/courses";
