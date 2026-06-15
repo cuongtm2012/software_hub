@@ -179,6 +179,7 @@ ssl/*.p12
 # ============================================
 scripts/*.json
 scripts/*-data.json
+scripts/data/*.json
 !scripts/package.json
 
 # ============================================

@@ -643,18 +643,71 @@ npm start              # node dist/server/index.js
 
 ### 11.1. Seed Data Sources
 
-| Source | Script |
-|---|---|
-| Awesome Linux/Windows software lists | `scripts/parse-awesome-*.ts` |
-| Voz forum reviews | `scripts/scrape-voz-software.ts` |
-| Free apps catalogue | `scripts/parse-free-apps.ts` |
-| IT courses (YouTube) | `scripts/seed-it-courses.ts` |
-| API listings | `scripts/parse-apis.ts` |
+| Source | Script | Status |
+|---|---|---|
+| Awesome Linux/Windows software lists | `scripts/parse-awesome-*.ts` | ✅ Done (legacy) |
+| Voz forum reviews | `scripts/scrape-voz-software.ts` | ✅ Done (legacy) |
+| Free apps catalogue | `scripts/parse-free-apps.ts` | ✅ Done (legacy) |
+| IT courses (YouTube) | `scripts/seed-it-courses.ts` | ⛔ Chuyển sang nguồn mới |
+| API listings | `scripts/parse-apis.ts` | ✅ Done (legacy) |
+| **download.com.vn** (hot trend) | `scripts/parse-downloadcomvn.ts` | 🆕 Phase 6 |
+| **Axorax/awesome-free-apps** (600+ entries, 5.5k⭐) | `scripts/parse-awesome-free-apps.ts` | 🆕 Phase 6 |
+| **awesome-selfhosted** (2000+ entries, 225k⭐) | `scripts/parse-awesome-selfhosted.ts` | 🆕 Phase 6 |
+| **EbookFoundation/free-programming-books** (340k⭐) | `scripts/parse-ebookfoundation-courses.ts` | 🆕 Phase 6 |
+| **YouTube channels VN** (~50 courses) | `scripts/seed-it-courses-v2.ts` (thủ công) | 🆕 Phase 6 |
+| **Seed all free software** (hợp nhất) | `scripts/seed-all-free-software.ts` | 🆕 Phase 6 |
 
-### 11.2. Database Dumps
+### 11.2. Data Expansion Strategy (Phase 6)
+
+Chi tiết: [`SPEC_DATA_EXPANSION.md`](./SPEC_DATA_EXPANSION.md)
+
+#### Phần mềm Free Hot Trend
+
+**Nguồn chính (xếp theo ưu tiên):**
+
+| # | Nguồn | Format | Số lượng | ⭐ | Phương pháp |
+|---|-------|--------|---------|---|------------|
+| 1 | **download.com.vn** | Vietnamese software listing | ~500+ | — | Playwright JS-rendered |
+| 2 | **Axorax/awesome-free-apps** | GitHub README markdown | ~600+ | 5.5k⭐ | Fetch markdown → parse |
+| 3 | **awesome-selfhosted** | GitHub README markdown | ~2000+ | 225k⭐ | Fetch markdown → parse |
+
+**Bỏ:** johnjago/awesome-free-software (cũ, 111 entries), awesome-windows, awesome-linux — thay bằng Axorax.
+
+**Scripts:**
+
+| Script | Mô tả |
+|---|---|
+| `scripts/parse-downloadcomvn.ts` | Playwright crawl download.com.vn → JSON |
+| `scripts/parse-awesome-free-apps.ts` | Crawl Axorax/awesome-free-apps README → JSON |
+| `scripts/parse-awesome-selfhosted.ts` | Crawl awesome-selfhosted README → JSON |
+| `scripts/seed-all-free-software.ts` | Merge JSON từ tất cả nguồn → insert/update DB |
+
+**Schema:** Table `softwares` (đã có) + `categories` (đã có) — không cần migration.
+
+#### Tài liệu IT (Courses)
+
+**Nguồn chính (xếp theo ưu tiên):**
+
+| # | Nguồn | Format | Số lượng | ⭐ | Phương pháp |
+|---|-------|--------|---------|---|------------|
+| 1 | **EbookFoundation/free-programming-books** | GitHub HTML page | ~200+ | 340k⭐ | HTML parse |
+| 2 | **YouTube channels VN** | Playlists | ~50+ | — | Thêm thủ công |
+
+**Bỏ:** tmsanghoclaptrinh/tai-lieu-lap-trinh-tieng-viet-mien-phi (nguồn cũ, không maintain) — thay bằng EbookFoundation.
+
+**Scripts:**
+
+| Script | Mô tả |
+|---|---|
+| `scripts/parse-ebookfoundation-courses.ts` | Crawl HTML từ EbookFoundation → JSON |
+| `scripts/seed-it-courses-v2.ts` | Seed tất cả courses từ EbookFoundation + YouTube channels |
+
+**Schema:** Table `courses` (đã có) — không cần migration.
+
+### 11.3. Database Dumps
 
 - Location: `database/dumps/` and `shared/data-dumps/`
-- Format: Full SQL dumps + schema-only + data-only
+- Format: Full SQL dumps + Schema-only + Data-only
 
 ---
 
@@ -679,7 +732,7 @@ npm start              # node dist/server/index.js
 | Phase 4 | ✅ Done | IT Services UI + API + service payments + email notifications |
 | Phase 3b | ✅ Done | **payOS migration** — §15.9 |
 | Phase 5 | ✅ Done | GTM core + admin course SEO CMS (`/admin/courses`) |
-| Phase 6 | 🔄 Evolving | Design system rollout (`SPEC_UI_IMPROVEMENT_v1.md`), dashboard refactor |
+|| Phase 6 | 🆕 In Progress | Design system rollout (`SPEC_UI_IMPROVEMENT_v1.md`), dashboard refactor, **data expansion** — download.com.vn + Axorax/awesome-free-apps (600+, 5.5k⭐) + awesome-selfhosted (2000+, 225k⭐) + EbookFoundation courses (200+, 340k⭐) + YouTube VN channels |
 
 ---
 
