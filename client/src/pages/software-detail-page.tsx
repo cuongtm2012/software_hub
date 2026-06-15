@@ -91,7 +91,13 @@ function SectionCard({
 export default function SoftwareDetailPage() {
   const [, params] = useRoute("/software/:idOrSlug");
   const idOrSlug = params?.idOrSlug;
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const softwareListUrl = (() => {
+    const returnTo = searchParams.get("returnTo");
+    if (returnTo === "/software" || returnTo?.startsWith("/software?")) return returnTo;
+    return "/software";
+  })();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -216,7 +222,7 @@ export default function SoftwareDetailPage() {
             <p className="text-gray-600 mb-6">
               Phần mềm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
             </p>
-            <Button onClick={() => navigate("/software")} className="bg-[#004080] hover:bg-[#003366]">
+            <Button onClick={() => navigate(softwareListUrl)} className="bg-[#004080] hover:bg-[#003366]">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Quay về kho phần mềm
             </Button>
@@ -284,9 +290,10 @@ export default function SoftwareDetailPage() {
             <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
               <button
                 type="button"
-                onClick={() => navigate("/software")}
-                className="hover:text-[#004080] transition-colors"
+                onClick={() => navigate(softwareListUrl)}
+                className="hover:text-[#004080] transition-colors inline-flex items-center gap-1"
               >
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Phần mềm
               </button>
               <ChevronRight className="h-3.5 w-3.5 shrink-0" />

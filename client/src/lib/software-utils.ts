@@ -1,3 +1,33 @@
+export function getSoftwareUrl(software: { slug?: string | null; id: number }): string {
+  return software.slug ? `/software/${software.slug}` : `/software/${software.id}`;
+}
+
+export function buildSoftwareListPath(params: {
+  category?: string;
+  platform?: string;
+  sort?: string;
+  search?: string;
+  page?: number;
+}): string {
+  const qs = new URLSearchParams();
+  if (params.category && params.category !== "all") qs.set("category", params.category);
+  if (params.platform && params.platform !== "all") qs.set("platform", params.platform);
+  if (params.sort && params.sort !== "name") qs.set("sort", params.sort);
+  if (params.search) qs.set("search", params.search);
+  if (params.page && params.page > 1) qs.set("page", String(params.page));
+  const query = qs.toString();
+  return query ? `/software?${query}` : "/software";
+}
+
+export function buildSoftwareDetailUrl(
+  software: { slug?: string | null; id: number },
+  returnTo?: string,
+): string {
+  const base = getSoftwareUrl(software);
+  if (!returnTo || (returnTo !== "/software" && !returnTo.startsWith("/software?"))) return base;
+  return `${base}?returnTo=${encodeURIComponent(returnTo)}`;
+}
+
 export function buildSoftwareSeoDescription(software: {
   name: string;
   description?: string | null;

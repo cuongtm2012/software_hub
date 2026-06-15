@@ -28,10 +28,12 @@ import {
   Search,
   Package,
   LayoutGrid,
+  ChevronLeft,
 } from "lucide-react";
 import { Pagination } from "@/components/pagination";
 import { cn } from "@/lib/utils";
 import { PageMeta } from "@/components/seo/page-meta";
+import { buildSoftwareDetailUrl, buildSoftwareListPath } from "@/lib/software-utils";
 import { absoluteUrl } from "@/lib/seo-config";
 
 const PLATFORMS = [
@@ -156,6 +158,14 @@ export default function SoftwareListPage() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1", 10));
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("software-filters-collapsed") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("software-filters-collapsed", String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -203,8 +213,16 @@ export default function SoftwareListPage() {
     },
   });
 
+  const listReturnPath = buildSoftwareListPath({
+    category,
+    platform,
+    sort,
+    search: searchQuery,
+    page,
+  });
+
   const handleOpenSoftware = (software: SoftwareProductCardData) => {
-    navigate(`/software/${software.slug || software.id}`);
+    navigate(buildSoftwareDetailUrl(software, listReturnPath));
   };
 
   const handleFilterChange = (filterType: string, value: string) => {
@@ -247,13 +265,42 @@ export default function SoftwareListPage() {
         <div className={cn(pageContainerClass, "py-6 sm:py-8")}>
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Sidebar filters */}
-            <aside className="w-full lg:w-64 xl:w-72 shrink-0">
-              <div className="bg-white rounded-xl border border-[#004080]/10 p-5 sticky top-24 uupm-card space-y-5">
-                <div className="flex items-center gap-2 text-[#004080]">
-                  <LayoutGrid className="h-5 w-5" />
-                  <h2 className="text-base font-semibold text-[#004080]">Bộ lọc</h2>
-                </div>
+            <aside
+              className={cn(
+                "shrink-0 transition-[width] duration-300 ease-in-out",
+                sidebarCollapsed ? "w-full lg:w-14" : "w-full lg:w-64 xl:w-72",
+              )}
+            >
+              <div
+                className={cn(
+                  "bg-white rounded-xl border border-[#004080]/10 sticky top-24 uupm-card transition-all duration-300",
+                  sidebarCollapsed ? "p-2 lg:p-3" : "p-5 space-y-5",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed((c) => !c)}
+                  className={cn(
+                    "flex items-center text-[#004080] rounded-lg transition-colors uupm-focus",
+                    sidebarCollapsed
+                      ? "justify-center w-full p-2 hover:bg-[#004080]/8"
+                      : "gap-2 w-full p-1 -m-1 hover:bg-[#004080]/5",
+                  )}
+                  aria-expanded={!sidebarCollapsed}
+                  aria-label={sidebarCollapsed ? "Mở bộ lọc" : "Thu gọn bộ lọc"}
+                  title={sidebarCollapsed ? "Mở bộ lọc" : "Thu gọn bộ lọc"}
+                >
+                  <LayoutGrid className="h-5 w-5 shrink-0" />
+                  {!sidebarCollapsed && (
+                    <>
+                      <h2 className="text-base font-semibold flex-1 text-left">Bộ lọc</h2>
+                      <ChevronLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </>
+                  )}
+                </button>
 
+                {!sidebarCollapsed && (
+                  <>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Tìm kiếm
@@ -365,6 +412,8 @@ export default function SoftwareListPage() {
                     </Button>
                   </div>
                 </div>
+                  </>
+                )}
               </div>
             </aside>
 

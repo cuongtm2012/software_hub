@@ -16,9 +16,10 @@ import {
   Loader2,
   Search,
   SlidersHorizontal,
-  GraduationCap,
   AlertCircle,
   ListVideo,
+  LayoutGrid,
+  ChevronLeft,
 } from "lucide-react";
 import { Pagination } from "@/components/pagination";
 import { CourseThumbnail } from "@/components/course-thumbnail";
@@ -130,6 +131,14 @@ export default function CoursesListPage() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("courses-filters-collapsed") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("courses-filters-collapsed", String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   // Restore filters/page when returning via browser back
   useEffect(() => {
@@ -234,22 +243,51 @@ export default function CoursesListPage() {
         <div className="w-full min-w-0 max-w-full px-[4%] py-8">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Desktop sidebar */}
-            <aside className="hidden lg:block w-full lg:w-64 xl:w-72 shrink-0">
-              <div className="bg-white rounded-xl border border-[#004080]/10 p-5 sticky top-24 uupm-card">
-                <div className="flex items-center gap-2 text-[#004080] mb-5">
-                  <GraduationCap className="h-5 w-5" />
-                  <h2 className="text-base font-semibold">Bộ lọc</h2>
-                </div>
-                <CourseFilters
-                  topic={topic}
-                  level={level}
-                  searchQuery={searchQuery}
-                  topicsData={topicsData}
-                  onTopicChange={handleTopicChange}
-                  onLevelChange={handleLevelChange}
-                  onSearchChange={handleSearchChange}
-                  onClear={clearFilters}
-                />
+            <aside
+              className={cn(
+                "hidden lg:block shrink-0 transition-[width] duration-300 ease-in-out",
+                sidebarCollapsed ? "w-full lg:w-14" : "w-full lg:w-64 xl:w-72",
+              )}
+            >
+              <div
+                className={cn(
+                  "bg-white rounded-xl border border-[#004080]/10 sticky top-24 uupm-card transition-all duration-300",
+                  sidebarCollapsed ? "p-2 lg:p-3" : "p-5",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed((c) => !c)}
+                  className={cn(
+                    "flex items-center text-[#004080] rounded-lg transition-colors uupm-focus",
+                    sidebarCollapsed
+                      ? "justify-center w-full p-2 hover:bg-[#004080]/8"
+                      : "gap-2 w-full p-1 -m-1 mb-5 hover:bg-[#004080]/5",
+                  )}
+                  aria-expanded={!sidebarCollapsed}
+                  aria-label={sidebarCollapsed ? "Mở bộ lọc" : "Thu gọn bộ lọc"}
+                  title={sidebarCollapsed ? "Mở bộ lọc" : "Thu gọn bộ lọc"}
+                >
+                  <LayoutGrid className="h-5 w-5 shrink-0" />
+                  {!sidebarCollapsed && (
+                    <>
+                      <h2 className="text-base font-semibold flex-1 text-left">Bộ lọc</h2>
+                      <ChevronLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </>
+                  )}
+                </button>
+                {!sidebarCollapsed && (
+                  <CourseFilters
+                    topic={topic}
+                    level={level}
+                    searchQuery={searchQuery}
+                    topicsData={topicsData}
+                    onTopicChange={handleTopicChange}
+                    onLevelChange={handleLevelChange}
+                    onSearchChange={handleSearchChange}
+                    onClear={clearFilters}
+                  />
+                )}
               </div>
             </aside>
 

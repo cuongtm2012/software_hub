@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { PageHero } from "@/components/design-system/page-hero";
 import { SectionPanel } from "@/components/design-system/section-panel";
 import { PaymentForm } from "@/components/payment-form";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -217,22 +218,32 @@ export default function ServiceRequestDetailPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f9]">
       <Header />
+      <PageHero
+        badge="IT Studio"
+        title={request.title}
+        subtitle={`Gửi ngày ${format(new Date(request.created_at), "dd/MM/yyyy")}`}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/services")}
+              className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Danh sách yêu cầu
+            </Button>
+            <Badge className="bg-white/10 text-white border border-white/20">
+              {STATUS_LABEL[request.status] || request.status}
+            </Badge>
+          </>
+        }
+      />
+
       <main className="flex-grow py-10">
         <div className="w-full min-w-0 max-w-full px-[4%] space-y-6">
-          <Button variant="ghost" onClick={() => navigate("/services")} className="mb-2">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Quay lại danh sách
-          </Button>
 
-          <SectionPanel
-            title={request.title}
-            subtitle={`Gửi ngày ${format(new Date(request.created_at), "dd/MM/yyyy")}`}
-            action={
-              <Badge className="bg-[#004080]/10 text-[#004080]">
-                {STATUS_LABEL[request.status] || request.status}
-              </Badge>
-            }
-          >
+          <SectionPanel title="Chi tiết yêu cầu">
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{request.description}</p>
             {request.requirements && (
               <div className="mt-4 pt-4 border-t">
