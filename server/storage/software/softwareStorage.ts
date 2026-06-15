@@ -112,7 +112,7 @@ export class SoftwareStorage implements ISoftwareStorage {
     }
 
     if (params.platform) {
-      whereConditions.push(eq(softwares.platform, params.platform));
+      whereConditions.push(sql`${softwares.platform} @> ARRAY[${params.platform}]::text[]`);
     }
 
     if (params.search) {
@@ -152,7 +152,7 @@ export class SoftwareStorage implements ISoftwareStorage {
     }
 
     if (filters.platform) {
-      whereConditions.push(eq(softwares.platform, filters.platform));
+      whereConditions.push(sql`${softwares.platform} @> ARRAY[${filters.platform}]::text[]`);
     }
 
     if (filters.search) {

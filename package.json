@@ -40,6 +40,7 @@
     "data:parse": "npm run parse:awesome-free-apps && npm run parse:awesome-selfhosted && npm run parse:ebookfoundation && npm run parse:youtube-channels",
     "data:seed": "npm run seed:courses-v2 && npm run seed:free-software",
     "data:expand": "npm run data:parse && npm run data:seed",
+    "migrate:software-categories": "tsx scripts/migrate-software-categories.ts",
     "db:rls": "tsx scripts/enable-rls.ts",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -188,9 +188,7 @@ export default function SoftwareListPage() {
       const params = new URLSearchParams();
 
       if (category !== "all" && categories && Array.isArray(categories)) {
-        const categoryObj = categories.find(
-          (c: any) => c.name.toLowerCase() === category.toLowerCase(),
-        );
+        const categoryObj = categories.find((c: { slug: string }) => c.slug === category);
         if (categoryObj) params.set("category", categoryObj.id.toString());
       }
 
@@ -222,9 +220,9 @@ export default function SoftwareListPage() {
     if (category === "all") return "Tất cả phần mềm";
     const categoryObj =
       categories && Array.isArray(categories)
-        ? categories.find((c: any) => c.name.toLowerCase() === category.toLowerCase())
+        ? categories.find((c: { slug: string; name: string }) => c.slug === category)
         : null;
-    return categoryObj ? categoryObj.name : category;
+    return categoryObj ? categoryObj.name : "Tất cả phần mềm";
   };
 
   const selectClass =
@@ -286,9 +284,10 @@ export default function SoftwareListPage() {
                   >
                     <option value="all">Tất cả danh mục</option>
                     {categories && Array.isArray(categories)
-                      ? categories.map((cat: any) => (
-                          <option key={cat.id} value={cat.name.toLowerCase()}>
+                      ? categories.map((cat: { id: number; slug: string; name: string; count: number }) => (
+                          <option key={cat.id} value={cat.slug}>
                             {cat.name}
+                            {cat.count > 0 ? ` (${cat.count.toLocaleString("vi-VN")})` : ""}
                           </option>
                         ))
                       : null}

@@ -8,13 +8,11 @@ import { isAuthenticated, optionalAuth } from "../middleware/auth.middleware";
 
 const router = Router();
 
-// Get all categories (public) - only parent categories
+// Get user-need software categories with counts (public)
 router.get("/categories", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const allCategories = await storage.getCategories();
-    // Filter to only parent categories (parent_id is null)
-    const parentCategories = allCategories.filter((cat: any) => cat.parent_id === null);
-    res.json(parentCategories);
+    const categoriesWithCounts = await storage.getSoftwareUseCategories("approved");
+    res.json(categoriesWithCounts);
   } catch (error) {
     next(error);
   }

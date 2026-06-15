@@ -36,6 +36,15 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or, isNull, isNotNull } from "drizzle-orm";
+import { SOFTWARE_USE_CATEGORIES } from "@shared/software-category-taxonomy";
+
+export type SoftwareUseCategoryItem = {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+  parent_id: number | null;
+};
 
 export type EnrichedServiceRequest = ServiceRequest & {
   client_name: string;
@@ -81,6 +90,7 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   getCategories(): Promise<Category[]>;
   getCategoryById(id: number): Promise<Category | undefined>;
+  getSoftwareUseCategories(status?: "approved" | "pending" | "rejected"): Promise<SoftwareUseCategoryItem[]>;
 
   // Software
   createSoftware(software: InsertSoftware, userId: number): Promise<Software>;
@@ -512,6 +522,43 @@ class DatabaseStorage implements IStorage {
     return category;
   }
 
+  async getSoftwareUseCategories(
+    status: "approved" | "pending" | "rejected" = "approved",
+  ): Promise<SoftwareUseCategoryItem[]> {
+    const taxonomyNames = SOFTWARE_USE_CATEGORIES.map((c) => c.name);
+
+    const rows = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        parent_id: categories.parent_id,
+        count: sql<number>`COUNT(${softwares.id})::int`,
+      })
+      .from(categories)
+      .leftJoin(
+        softwares,
+        and(eq(softwares.category_id, categories.id), eq(softwares.status, status)),
+      )
+      .where(and(inArray(categories.name, taxonomyNames), isNull(categories.parent_id)))
+      .groupBy(categories.id, categories.name, categories.parent_id);
+
+    const byName = new Map(rows.map((row) => [row.name, row]));
+
+    return SOFTWARE_USE_CATEGORIES.flatMap((cat) => {
+      const row = byName.get(cat.name);
+      if (!row) return [];
+      return [
+        {
+          id: row.id,
+          name: row.name,
+          slug: cat.slug,
+          count: Number(row.count) || 0,
+          parent_id: row.parent_id,
+        },
+      ];
+    });
+  }
+
   // Software
   async createSoftware(software: InsertSoftware, userId: number): Promise<Software> {
     const [createdSoftware] = await db
@@ -606,25 +653,7 @@ class DatabaseStorage implements IStorage {
     let whereConditions = [];
 
     if (params.category) {
-      // Check if this is a parent category
-      const allCategories = await db.select().from(categories);
-      const selectedCategory = allCategories.find(c => c.id === params.category);
-
-      if (selectedCategory) {
-        // If it's a parent category (parent_id is null), get all its children
-        if (selectedCategory.parent_id === null) {
-          const childCategories = allCategories
-            .filter(c => c.parent_id === params.category)
-            .map(c => c.id);
-
-          // Include both parent and all children
-          const categoryIds = [params.category, ...childCategories];
-          whereConditions.push(inArray(softwares.category_id, categoryIds));
-        } else {
-          // It's a subcategory, filter directly
-          whereConditions.push(eq(softwares.category_id, params.category));
-        }
-      }
+      whereConditions.push(eq(softwares.category_id, params.category));
     }
 
     if (params.platform) {
@@ -672,7 +701,7 @@ class DatabaseStorage implements IStorage {
     }
 
     if (filters.platform) {
-      whereConditions.push(eq(softwares.platform, filters.platform));
+      whereConditions.push(sql`${softwares.platform} @> ARRAY[${filters.platform}]::text[]`);
     }
 
     if (filters.search) {

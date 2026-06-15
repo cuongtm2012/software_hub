@@ -17,6 +17,10 @@ import {
   getSeedAdminUserId,
   readJson,
 } from "./lib/data-expansion.js";
+import {
+  SOFTWARE_USE_CATEGORIES,
+  resolveUseCategorySlug,
+} from "../shared/software-category-taxonomy.js";
 
 const DATA_FILES = [
   "awesome-free-apps.json",
@@ -73,24 +77,21 @@ async function main() {
   let updated = 0;
   let skipped = 0;
 
+  const useCategoryBySlug = new Map(
+    SOFTWARE_USE_CATEGORIES.map((c) => [c.slug, c.name]),
+  );
+
   for (const entry of entries) {
     const existing = await db.query.softwares.findFirst({
       where: eq(softwares.name, entry.name),
     });
 
-    const parentKey = entry.category;
-    let parentId = categoryCache.get(parentKey);
-    if (!parentId) {
-      parentId = await getOrCreateCategory(parentKey, null);
-      categoryCache.set(parentKey, parentId);
-    }
-
-    const subKey = `${entry.category}::${entry.subcategory}`;
-    let subId = categoryCache.get(subKey);
-    if (!subId) {
-      const subName = `${entry.subcategory} (${entry.category})`.slice(0, 120);
-      subId = await getOrCreateCategory(subName, parentId);
-      categoryCache.set(subKey, subId);
+    const useSlug = resolveUseCategorySlug(entry.subcategory || entry.category);
+    const useName = useCategoryBySlug.get(useSlug) ?? "Khác";
+    let categoryId = categoryCache.get(useSlug);
+    if (!categoryId) {
+      categoryId = await getOrCreateCategory(useName, null);
+      categoryCache.set(useSlug, categoryId);
     }
 
     if (existing) {
@@ -126,7 +127,7 @@ async function main() {
         slug,
         description: entry.description,
         seo_description: `Tải ${entry.name} miễn phí — ${entry.subcategory}.`,
-        category_id: subId,
+        category_id: categoryId,
         platform: entry.platform,
         download_link: entry.download_link || entry.url,
         image_url: entry.image_url ?? undefined,
