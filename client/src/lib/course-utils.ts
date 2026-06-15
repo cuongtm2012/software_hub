@@ -2,6 +2,30 @@ export function getCourseUrl(course: { slug?: string | null; id: number }): stri
   return course.slug ? `/courses/${course.slug}` : `/courses/${course.id}`;
 }
 
+export function buildCoursesListPath(params: {
+  topic?: string;
+  level?: string;
+  search?: string;
+  page?: number;
+}): string {
+  const qs = new URLSearchParams();
+  if (params.topic && params.topic !== "all") qs.set("topic", params.topic);
+  if (params.level && params.level !== "all") qs.set("level", params.level);
+  if (params.search) qs.set("search", params.search);
+  if (params.page && params.page > 1) qs.set("page", String(params.page));
+  const query = qs.toString();
+  return query ? `/courses?${query}` : "/courses";
+}
+
+export function buildCourseDetailUrl(
+  course: { slug?: string | null; id: number },
+  returnTo?: string,
+): string {
+  const base = getCourseUrl(course);
+  if (!returnTo || !returnTo.startsWith("/courses")) return base;
+  return `${base}?returnTo=${encodeURIComponent(returnTo)}`;
+}
+
 import { LEVEL_SEO_LABEL } from "./seo-config";
 
 export function buildSeoTitle(course: {

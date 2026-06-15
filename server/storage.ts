@@ -3041,7 +3041,7 @@ class DatabaseStorage implements IStorage {
     try {
       const { topic, level, search, limit = 12, offset = 0 } = filters;
 
-      const whereConditions: any[] = [];
+      const whereConditions: any[] = [eq(courses.status, "approved")];
 
       if (topic) {
         whereConditions.push(eq(courses.topic, topic));
@@ -3072,7 +3072,7 @@ class DatabaseStorage implements IStorage {
         .select()
         .from(courses)
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-        .orderBy(desc(courses.created_at))
+        .orderBy(desc(courses.updated_at), desc(courses.created_at), desc(courses.id))
         .limit(limit)
         .offset(offset);
 
@@ -3094,6 +3094,7 @@ class DatabaseStorage implements IStorage {
           count: sql<number>`count(*)::int`,
         })
         .from(courses)
+        .where(eq(courses.status, "approved"))
         .groupBy(courses.topic)
         .orderBy(desc(sql<number>`count(*)`));
 
@@ -3109,7 +3110,7 @@ class DatabaseStorage implements IStorage {
       const [course] = await db
         .select()
         .from(courses)
-        .where(eq(courses.id, id))
+        .where(and(eq(courses.id, id), eq(courses.status, "approved")))
         .limit(1);
 
       return course;
@@ -3124,7 +3125,7 @@ class DatabaseStorage implements IStorage {
       const [course] = await db
         .select()
         .from(courses)
-        .where(eq(courses.slug, slug))
+        .where(and(eq(courses.slug, slug), eq(courses.status, "approved")))
         .limit(1);
 
       return course;

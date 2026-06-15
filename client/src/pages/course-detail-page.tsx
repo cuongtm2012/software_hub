@@ -10,6 +10,7 @@ import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { LeadCaptureForm } from "@/components/lead-capture-form";
 import {
   getCourseUrl,
+  buildCourseDetailUrl,
   buildSeoTitle,
   buildSeoDescription,
   buildSeoContent,
@@ -36,6 +37,7 @@ import {
   MessageSquare,
   ExternalLink,
   BookOpen,
+  ListVideo,
 } from "lucide-react";
 import { CourseThumbnail } from "@/components/course-thumbnail";
 import { useAuth } from "@/hooks/use-auth";
@@ -122,9 +124,15 @@ function resolveYoutubeEmbed(url: string, playlistId?: string | null) {
 
 export default function CourseDetailPage() {
   const [, params] = useRoute("/courses/:idOrSlug");
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { user } = useAuth();
   const idOrSlug = params?.idOrSlug;
+  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const coursesListUrl = (() => {
+    const returnTo = searchParams.get("returnTo");
+    if (returnTo?.startsWith("/courses")) return returnTo;
+    return "/courses";
+  })();
 
   const { data: course, isLoading, error } = useQuery<Course>({
     queryKey: ["/api/courses", idOrSlug],
@@ -229,6 +237,7 @@ export default function CourseDetailPage() {
   const metaRows = [
     course.instructor ? { label: "Giảng viên", value: course.instructor } : null,
     course.topic ? { label: "Chủ đề", value: course.topic } : null,
+    course.playlist_id ? { label: "Định dạng", value: "Playlist YouTube" } : null,
     course.level
       ? { label: "Trình độ", value: LEVEL_LABEL[course.level] || course.level }
       : null,
@@ -275,9 +284,10 @@ export default function CourseDetailPage() {
             <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
               <button
                 type="button"
-                onClick={() => navigate("/courses")}
-                className="hover:text-[#004080] transition-colors"
+                onClick={() => navigate(coursesListUrl)}
+                className="hover:text-[#004080] transition-colors inline-flex items-center gap-1"
               >
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Khóa học
               </button>
               <ChevronRight className="h-3.5 w-3.5 shrink-0" />
@@ -309,6 +319,12 @@ export default function CourseDetailPage() {
               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-200">
                 Miễn phí
               </span>
+              {course.playlist_id && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-700 border border-violet-200">
+                  <ListVideo className="h-3 w-3 mr-1" />
+                  Playlist YouTube
+                </span>
+              )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-3 break-words">
@@ -337,6 +353,8 @@ export default function CourseDetailPage() {
                     <CourseThumbnail
                       videoUrl={course.youtube_url || course.thumbnail_url || ""}
                       title={course.title}
+                      playlistId={course.playlist_id}
+                      thumbnailUrl={course.thumbnail_url}
                       fallbackGradient={getPlaceholderGradient(course.title)}
                     />
                   </div>
@@ -400,13 +418,15 @@ export default function CourseDetailPage() {
                         <button
                           key={related.id}
                           type="button"
-                          onClick={() => navigate(getCourseUrl(related))}
+                          onClick={() => navigate(buildCourseDetailUrl(related, coursesListUrl))}
                           className="w-full text-left group flex gap-3 p-2 rounded-lg hover:bg-[#004080]/5 transition-colors"
                         >
                           <div className="relative w-20 shrink-0 aspect-video rounded-md overflow-hidden border border-[#004080]/10">
                             <CourseThumbnail
                               videoUrl={related.youtube_url || related.thumbnail_url || ""}
                               title={related.title}
+                              playlistId={related.playlist_id}
+                              thumbnailUrl={related.thumbnail_url}
                               fallbackGradient={getPlaceholderGradient(related.title)}
                             />
                           </div>

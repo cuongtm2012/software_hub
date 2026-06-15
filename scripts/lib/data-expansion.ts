@@ -99,8 +99,9 @@ export function extractPlaylistId(url: string): string {
   return match?.[1] ?? "";
 }
 
-export function playlistThumbnail(playlistId: string): string {
-  return playlistId ? `https://i.ytimg.com/vi/${playlistId}/hqdefault.jpg` : "";
+export function playlistThumbnail(_playlistId: string): string {
+  // Playlist IDs are not video IDs — thumbnail is resolved via oEmbed during audit/seed.
+  return "";
 }
 
 export async function getOrCreateCategory(

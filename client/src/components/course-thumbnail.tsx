@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
-import { extractYouTubeVideoId } from "@/lib/youtube-utils";
+import { useState, useEffect, useMemo } from "react";
+import { resolveCourseThumbnailUrls } from "@/lib/youtube-utils";
 import { cn } from "@/lib/utils";
 
 interface CourseThumbnailProps {
   videoUrl: string;
   title: string;
+  playlistId?: string | null;
+  thumbnailUrl?: string | null;
   fallbackGradient?: string;
   className?: string;
 }
@@ -31,55 +33,41 @@ function Placeholder({
 }
 
 /**
- * YouTube thumbnail with fallback chain. Must sit inside a sized parent
- * (e.g. `relative aspect-video` or `relative pt-[56%]`).
+ * YouTube thumbnail with fallback chain. Parent must be `relative` with defined size.
  */
 export function CourseThumbnail({
   videoUrl,
   title,
+  playlistId,
+  thumbnailUrl,
   fallbackGradient = "from-[#004080] to-[#003366]",
   className,
 }: CourseThumbnailProps) {
-  const [currentSrc, setCurrentSrc] = useState("");
-  const [fallbackIndex, setFallbackIndex] = useState(0);
-  const [showPlaceholder, setShowPlaceholder] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const candidates = useMemo(
+    () => resolveCourseThumbnailUrls(videoUrl, { playlistId, thumbnailUrl }),
+    [videoUrl, playlistId, thumbnailUrl],
+  );
 
-  const videoId = extractYouTubeVideoId(videoUrl);
-
-  const thumbnailUrls = videoId
-    ? [
-        `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-        `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-        `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
-      ]
-    : [];
+  const [srcIndex, setSrcIndex] = useState(0);
+  const [showPlaceholder, setShowPlaceholder] = useState(candidates.length === 0);
+  const [isLoading, setIsLoading] = useState(candidates.length > 0);
 
   useEffect(() => {
-    if (thumbnailUrls.length > 0) {
-      setCurrentSrc(thumbnailUrls[0]);
-      setFallbackIndex(0);
-      setShowPlaceholder(false);
-      setIsLoading(true);
-    } else {
-      setShowPlaceholder(true);
-      setIsLoading(false);
-    }
-  }, [videoUrl, title]);
+    setSrcIndex(0);
+    setShowPlaceholder(candidates.length === 0);
+    setIsLoading(candidates.length > 0);
+  }, [videoUrl, playlistId, thumbnailUrl, candidates.length]);
+
+  const currentSrc = candidates[srcIndex];
 
   const handleError = () => {
-    const nextIndex = fallbackIndex + 1;
-    if (nextIndex < thumbnailUrls.length) {
-      setCurrentSrc(thumbnailUrls[nextIndex]);
-      setFallbackIndex(nextIndex);
+    const next = srcIndex + 1;
+    if (next < candidates.length) {
+      setSrcIndex(next);
     } else {
       setShowPlaceholder(true);
       setIsLoading(false);
     }
-  };
-
-  const handleLoad = () => {
-    setIsLoading(false);
   };
 
   return (
@@ -94,7 +82,7 @@ export function CourseThumbnail({
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             onError={handleError}
-            onLoad={handleLoad}
+            onLoad={() => setIsLoading(false)}
           />
           {isLoading && <Placeholder title={title} fallbackGradient={fallbackGradient} />}
         </>

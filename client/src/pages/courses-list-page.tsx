@@ -18,10 +18,11 @@ import {
   SlidersHorizontal,
   GraduationCap,
   AlertCircle,
+  ListVideo,
 } from "lucide-react";
 import { Pagination } from "@/components/pagination";
 import { CourseThumbnail } from "@/components/course-thumbnail";
-import { getCourseUrl } from "@/lib/course-utils";
+import { buildCourseDetailUrl, buildCoursesListPath } from "@/lib/course-utils";
 import { PageMeta } from "@/components/seo/page-meta";
 import { absoluteUrl } from "@/lib/seo-config";
 import { cn } from "@/lib/utils";
@@ -130,6 +131,15 @@ export default function CoursesListPage() {
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // Restore filters/page when returning via browser back
+  useEffect(() => {
+    const params = new URLSearchParams(location.split("?")[1] || "");
+    setTopic(params.get("topic") || "all");
+    setLevel(params.get("level") || "all");
+    setSearchQuery(params.get("search") || "");
+    setPage(parseInt(params.get("page") || "1", 10));
+  }, [location]);
+
   useEffect(() => {
     const params = new URLSearchParams();
     if (topic !== "all") params.set("topic", topic);
@@ -187,6 +197,12 @@ export default function CoursesListPage() {
   };
 
   const totalPages = Math.ceil((coursesData?.total || 0) / 30);
+  const listReturnPath = buildCoursesListPath({
+    topic,
+    level,
+    search: searchQuery,
+    page,
+  });
   const heroTitle = topic === "all" ? "Khóa học lập trình" : topic;
   const metaTitle =
     topic === "all"
@@ -322,24 +338,34 @@ export default function CoursesListPage() {
                   <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                     {coursesData.courses.map((course: {
                       id: number;
+                      slug?: string;
                       title: string;
                       instructor?: string;
                       topic?: string;
                       level?: string;
                       youtube_url?: string;
                       thumbnail_url?: string;
+                      playlist_id?: string;
                     }) => (
                       <article
                         key={course.id}
-                        onClick={() => navigate(getCourseUrl(course))}
+                        onClick={() => navigate(buildCourseDetailUrl(course, listReturnPath))}
                         className="group uupm-card uupm-interactive overflow-hidden border border-[#004080]/10 rounded-xl bg-white cursor-pointer flex flex-col"
                       >
                         <div className="relative pt-[56%] overflow-hidden">
                           <CourseThumbnail
                             videoUrl={course.youtube_url || course.thumbnail_url || ""}
                             title={course.title}
+                            playlistId={course.playlist_id}
+                            thumbnailUrl={course.thumbnail_url}
                             fallbackGradient={getPlaceholderGradient(course.title)}
                           />
+                          {course.playlist_id && (
+                            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-semibold">
+                              <ListVideo className="h-3 w-3" />
+                              Playlist
+                            </span>
+                          )}
                           {course.level && (
                             <span
                               className={cn(
