@@ -116,8 +116,8 @@ export interface IStorage {
 
   // Reviews
   createReview(review: InsertReview, userId: number): Promise<Review>;
-  getReviewsBySoftwareId(softwareId: number): Promise<Review[]>;
-  getSoftwareReviews(softwareId: number): Promise<Review[]>;
+  getReviewsBySoftwareId(softwareId: number): Promise<(Review & { user_name: string })[]>;
+  getSoftwareReviews(softwareId: number): Promise<(Review & { user_name: string })[]>;
   getUserReviewForSoftware(userId: number, softwareId: number): Promise<Review | undefined>;
   getReviewById(id: number): Promise<Review | undefined>;
   deleteReview(id: number, userId: number): Promise<boolean>;
@@ -744,19 +744,26 @@ class DatabaseStorage implements IStorage {
     return createdReview;
   }
 
-  async getReviewsBySoftwareId(softwareId: number): Promise<Review[]> {
-    const reviewsList = await db
-      .select()
-      .from(reviews)
-      .where(and(eq(reviews.target_type, "software"), eq(reviews.target_id, softwareId)));
-    return reviewsList;
+  async getReviewsBySoftwareId(softwareId: number): Promise<(Review & { user_name: string })[]> {
+    return this.getSoftwareReviews(softwareId);
   }
 
-  async getSoftwareReviews(softwareId: number): Promise<Review[]> {
+  async getSoftwareReviews(softwareId: number): Promise<(Review & { user_name: string })[]> {
     const reviewsList = await db
-      .select()
+      .select({
+        id: reviews.id,
+        user_id: reviews.user_id,
+        target_type: reviews.target_type,
+        target_id: reviews.target_id,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        created_at: reviews.created_at,
+        user_name: users.name,
+      })
       .from(reviews)
-      .where(and(eq(reviews.target_type, "software"), eq(reviews.target_id, softwareId)));
+      .innerJoin(users, eq(reviews.user_id, users.id))
+      .where(and(eq(reviews.target_type, "software"), eq(reviews.target_id, softwareId)))
+      .orderBy(desc(reviews.created_at));
     return reviewsList;
   }
 

@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useRoute } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -8,471 +8,541 @@ import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { Software, Review, InsertReview } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Download, Monitor, Calendar, ArrowLeft, FileText, Shield, Layers, BadgeCheck } from "lucide-react";
+import {
+  Loader2,
+  Download,
+  Monitor,
+  Calendar,
+  ArrowLeft,
+  FileText,
+  Shield,
+  BadgeCheck,
+  ClipboardList,
+  MessageSquare,
+  ChevronRight,
+} from "lucide-react";
 import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
 import { buildSoftwareSeoDescription, buildSoftwareSeoContent } from "@/lib/software-utils";
 import { renderSeoMarkdown } from "@/lib/render-seo-markdown";
-import { useState } from "react";
 import { PageMeta } from "@/components/seo/page-meta";
 import { SoftwareSchema } from "@/components/seo/software-schema";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { LeadCaptureForm } from "@/components/lead-capture-form";
+import {
+  pageContainerClass,
+  pageMainClass,
+  pageShellClass,
+} from "@/components/design-system/tokens";
+import { cn } from "@/lib/utils";
 
 interface ReviewWithUser extends Review {
-    user_name?: string;
+  user_name?: string;
+}
+
+type ContentSection = {
+  id: string;
+  label: string;
+  visible: boolean;
+};
+
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3 text-sm">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="font-medium text-slate-900 text-right">{value}</span>
+    </div>
+  );
+}
+
+function SectionCard({
+  id,
+  title,
+  icon: Icon,
+  children,
+  className,
+}: {
+  id: string;
+  title: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      id={id}
+      className={cn(
+        "scroll-mt-24 bg-white rounded-xl border border-[#004080]/10 p-6 sm:p-8 uupm-card",
+        className,
+      )}
+    >
+      <h2 className="flex items-center gap-2 text-lg sm:text-xl font-semibold text-slate-900 mb-5">
+        {Icon ? <Icon className="h-5 w-5 text-[#004080] shrink-0" /> : null}
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
 }
 
 export default function SoftwareDetailPage() {
-    const [, params] = useRoute("/software/:idOrSlug");
-    const idOrSlug = params?.idOrSlug;
-    const [, navigate] = useLocation();
-    const { user } = useAuth();
-    const { toast } = useToast();
-    const queryClient = useQueryClient();
-    const [userRating, setUserRating] = useState(5);
-    const [reviewComment, setReviewComment] = useState("");
+  const [, params] = useRoute("/software/:idOrSlug");
+  const idOrSlug = params?.idOrSlug;
+  const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [userRating, setUserRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
 
-    // Fetch software details
-    const {
-        data: software,
-        isLoading: isLoadingSoftware,
-        error: softwareError
-    } = useQuery<Software>({
-        queryKey: ["/api/softwares", idOrSlug],
-        queryFn: async () => {
-            const response = await fetch(`/api/softwares/${idOrSlug}`);
-            if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error("Software not found");
-                }
-                throw new Error("Failed to fetch software");
-            }
-            return response.json();
-        },
-        enabled: !!idOrSlug,
-    });
+  const {
+    data: software,
+    isLoading: isLoadingSoftware,
+    error: softwareError,
+  } = useQuery<Software>({
+    queryKey: ["/api/softwares", idOrSlug],
+    queryFn: async () => {
+      const response = await fetch(`/api/softwares/${idOrSlug}`);
+      if (!response.ok) {
+        if (response.status === 404) throw new Error("Software not found");
+        throw new Error("Failed to fetch software");
+      }
+      return response.json();
+    },
+    enabled: !!idOrSlug,
+  });
 
-    const softwareId = software?.id;
+  const softwareId = software?.id;
 
-    // Fetch reviews for the software
-    const { data: reviews, isLoading: isLoadingReviews } = useQuery<ReviewWithUser[]>({
-        queryKey: ["/api/reviews/software", softwareId],
-        queryFn: async () => {
-            if (!softwareId) return [];
-            const res = await fetch(`/api/reviews/software/${softwareId}`);
-            if (!res.ok) throw new Error("Failed to fetch reviews");
-            return res.json();
-        },
-        enabled: !!softwareId,
-    });
+  const { data: reviews, isLoading: isLoadingReviews } = useQuery<ReviewWithUser[]>({
+    queryKey: ["/api/reviews/software", softwareId],
+    queryFn: async () => {
+      if (!softwareId) return [];
+      const res = await fetch(`/api/reviews/software/${softwareId}`);
+      if (!res.ok) throw new Error("Failed to fetch reviews");
+      return res.json();
+    },
+    enabled: !!softwareId,
+  });
 
-    // Submit review mutation
-    const submitReviewMutation = useMutation({
-        mutationFn: async (reviewData: InsertReview) => {
-            if (!softwareId) throw new Error("Software ID not available");
-            const res = await apiRequest("POST", `/api/reviews/software/${softwareId}`, reviewData);
-            return res.json();
-        },
-        onSuccess: () => {
-            toast({
-                title: "Đã gửi đánh giá",
-                description: "Đánh giá của bạn đã được gửi thành công.",
-            });
-            setReviewComment("");
-            setUserRating(5);
-            // Invalidate the reviews query to reload the data
-            if (softwareId) {
-                queryClient.invalidateQueries({ queryKey: ["/api/reviews/software", softwareId] });
-            }
-        },
-        onError: (error: Error) => {
-            toast({
-                title: "Gửi đánh giá thất bại",
-                description: error.message,
-                variant: "destructive",
-            });
-        },
-    });
+  const submitReviewMutation = useMutation({
+    mutationFn: async (reviewData: InsertReview) => {
+      if (!softwareId) throw new Error("Software ID not available");
+      const res = await apiRequest("POST", `/api/reviews/software/${softwareId}`, reviewData);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Đã gửi đánh giá",
+        description: "Đánh giá của bạn đã được gửi thành công.",
+      });
+      setReviewComment("");
+      setUserRating(5);
+      if (softwareId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/reviews/software", softwareId] });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Gửi đánh giá thất bại",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
-    const handleSubmitReview = () => {
-        if (!software || !user) return;
-
-        if (!reviewComment.trim()) {
-            toast({
-                title: "Cần có đánh giá",
-                description: "Vui lòng viết nhận xét cho đánh giá của bạn.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        const reviewData: InsertReview = {
-            target_type: "software",
-            target_id: software.id,
-            rating: userRating,
-            comment: reviewComment,
-        };
-
-        submitReviewMutation.mutate(reviewData);
-    };
-
-    // Calculate average rating
-    const averageRating = reviews && reviews.length > 0
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-        : 0;
-
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map(part => part[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
-    };
-
-    const platformText = Array.isArray(software?.platform)
-        ? software.platform.map((platform) => platform.charAt(0).toUpperCase() + platform.slice(1)).join(" · ")
-        : "N/A";
-
-    // Scroll to top on mount
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
-
-    if (isLoadingSoftware) {
-        return (
-            <div className="min-h-screen flex flex-col bg-gray-50">
-                <Header />
-                <main className="flex-grow flex items-center justify-center">
-                    <Loader2 className="h-12 w-12 animate-spin text-[#004080]" />
-                </main>
-                <Footer />
-            </div>
-        );
+  const handleSubmitReview = () => {
+    if (!software || !user) return;
+    if (!reviewComment.trim()) {
+      toast({
+        title: "Cần có đánh giá",
+        description: "Vui lòng viết nhận xét cho đánh giá của bạn.",
+        variant: "destructive",
+      });
+      return;
     }
+    submitReviewMutation.mutate({
+      target_type: "software",
+      target_id: software.id,
+      rating: userRating,
+      comment: reviewComment,
+    });
+  };
 
-    if (softwareError || !software) {
-        return (
-            <div className="min-h-screen flex flex-col bg-gray-50">
-                <Header />
-                <main className="flex-grow flex items-center justify-center">
-                    <div className="text-center">
-                        <Monitor className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy phần mềm</h2>
-                        <p className="text-gray-600 mb-6">Phần mềm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
-                        <Button onClick={() => navigate("/")} className="bg-[#004080] hover:bg-[#003366]">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Quay về trang chủ
-                        </Button>
-                    </div>
-                </main>
-                <Footer />
-            </div>
-        );
-    }
+  const averageRating =
+    reviews && reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
 
-    const softwarePath = `/software/${(software as any).slug || software.id}`;
-    const softwareUrl = `${window.location.origin}${softwarePath}`;
-    const seoDesc = buildSoftwareSeoDescription(software as Parameters<typeof buildSoftwareSeoDescription>[0]);
-    const seoContent = buildSoftwareSeoContent(software as Parameters<typeof buildSoftwareSeoContent>[0]);
+  const getInitials = (name: string) =>
+    name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
 
+  const platformLabels = Array.isArray(software?.platform)
+    ? software.platform.map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    : [];
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [idOrSlug]);
+
+  if (isLoadingSoftware) {
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
-            <PageMeta
-                title={`${software.name} — Tải miễn phí & Hướng dẫn cài đặt`}
-                description={seoDesc}
-                canonicalUrl={softwareUrl}
-                ogImage={software.image_url ?? undefined}
-            />
-            <SoftwareSchema
-                name={software.name}
-                description={seoDesc}
-                url={softwareUrl}
-                image={software.image_url ?? undefined}
-                operatingSystem={Array.isArray(software.platform) ? software.platform : undefined}
-                downloadUrl={software.download_link}
-            />
-            <BreadcrumbSchema
-                items={[
-                    { name: "Trang chủ", url: window.location.origin },
-                    { name: "Phần mềm", url: `${window.location.origin}/software` },
-                    { name: software.name, url: softwareUrl },
-                ]}
-            />
-            <Header />
+      <div className={pageShellClass}>
+        <Header />
+        <main className={cn(pageMainClass, "flex items-center justify-center py-24")}>
+          <Loader2 className="h-12 w-12 animate-spin text-[#004080]" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-            <main className="flex-grow">
-                {/* Breadcrumb */}
-                <div className="bg-white border-b">
-                    <div className="w-full px-[4%] py-4">
-                        <button
-                            onClick={() => navigate("/")}
-                            className="inline-flex items-center text-sm text-gray-600 hover:text-[#004080] transition-colors"
-                        >
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Quay lại trang chủ
-                        </button>
-                    </div>
+  if (softwareError || !software) {
+    return (
+      <div className={pageShellClass}>
+        <Header />
+        <main className={cn(pageMainClass, "flex items-center justify-center py-24")}>
+          <div className="text-center px-4">
+            <Monitor className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy phần mềm</h2>
+            <p className="text-gray-600 mb-6">
+              Phần mềm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
+            </p>
+            <Button onClick={() => navigate("/software")} className="bg-[#004080] hover:bg-[#003366]">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Quay về kho phần mềm
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const softwarePath = `/software/${(software as Software & { slug?: string }).slug || software.id}`;
+  const softwareUrl = `${window.location.origin}${softwarePath}`;
+  const seoDesc = buildSoftwareSeoDescription(
+    software as Parameters<typeof buildSoftwareSeoDescription>[0],
+  );
+  const seoContent = buildSoftwareSeoContent(
+    software as Parameters<typeof buildSoftwareSeoContent>[0],
+  );
+
+  const hasInstallGuide = Boolean(software.installation_instructions?.trim());
+  const hasDetailedGuide = Boolean(seoContent?.trim());
+
+  const contentSections: ContentSection[] = [
+    { id: "tong-quan", label: "Tổng quan", visible: Boolean(software.description?.trim()) },
+    { id: "cai-dat", label: "Cài đặt", visible: hasInstallGuide },
+    { id: "huong-dan", label: "Hướng dẫn chi tiết", visible: hasDetailedGuide },
+    { id: "danh-gia", label: "Đánh giá", visible: true },
+  ].filter((s) => s.visible);
+
+  const metaRows = [
+    software.version ? { label: "Phiên bản", value: software.version } : null,
+    software.vendor ? { label: "Nhà phát triển", value: software.vendor } : null,
+    software.license ? { label: "Giấy phép", value: software.license } : null,
+    platformLabels.length ? { label: "Nền tảng", value: platformLabels.join(" · ") } : null,
+  ].filter(Boolean) as { label: string; value: string }[];
+
+  return (
+    <div className={pageShellClass}>
+      <PageMeta
+        title={`${software.name} — Tải miễn phí & Hướng dẫn cài đặt`}
+        description={seoDesc}
+        canonicalUrl={softwareUrl}
+        ogImage={software.image_url ?? undefined}
+      />
+      <SoftwareSchema
+        name={software.name}
+        description={seoDesc}
+        url={softwareUrl}
+        image={software.image_url ?? undefined}
+        operatingSystem={Array.isArray(software.platform) ? software.platform : undefined}
+        downloadUrl={software.download_link}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: "Trang chủ", url: window.location.origin },
+          { name: "Phần mềm", url: `${window.location.origin}/software` },
+          { name: software.name, url: softwareUrl },
+        ]}
+      />
+      <Header />
+
+      <main className={pageMainClass}>
+        <div className="bg-white border-b border-[#004080]/10">
+          <div className={cn(pageContainerClass, "py-3")}>
+            <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+              <button
+                type="button"
+                onClick={() => navigate("/software")}
+                className="hover:text-[#004080] transition-colors"
+              >
+                Phần mềm
+              </button>
+              <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-slate-900 font-medium truncate">{software.name}</span>
+            </nav>
+          </div>
+        </div>
+
+        <div className={cn(pageContainerClass, "py-6 sm:py-8")}>
+          {/* Hero — title & summary only, no heavy card */}
+          <header className="mb-6 sm:mb-8">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-200">
+                {software.license || "Miễn phí"}
+              </span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#004080]/10 text-[#004080]">
+                <BadgeCheck className="h-3.5 w-3.5 mr-1" />
+                Đã kiểm duyệt
+              </span>
+              {platformLabels.slice(0, 4).map((p) => (
+                <span
+                  key={p}
+                  className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600"
+                >
+                  {p}
+                </span>
+              ))}
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-3">
+              {software.name}
+            </h1>
+
+            <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mb-4">
+              {getShortDescription(software.description, 200)}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <StarRating value={averageRating || 0} size="sm" />
+                <span className="font-medium text-slate-700">
+                  {averageRating ? averageRating.toFixed(1) : "Chưa có đánh giá"}
+                </span>
+                {reviews && reviews.length > 0 && (
+                  <span>({reviews.length} đánh giá)</span>
+                )}
+              </div>
+              <span className="hidden sm:inline text-slate-300">|</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" />
+                Cập nhật {format(new Date(software.created_at), "dd/MM/yyyy")}
+              </span>
+            </div>
+          </header>
+
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Sidebar — actions & metadata */}
+            <aside className="w-full lg:w-72 xl:w-80 shrink-0">
+              <div className="lg:sticky lg:top-24 space-y-4">
+                <div className="bg-white rounded-xl border border-[#004080]/10 overflow-hidden uupm-card">
+                  <div className="relative aspect-[4/3] bg-gradient-to-br from-slate-100 to-slate-200">
+                    {software.image_url ? (
+                      <img
+                        src={software.image_url}
+                        alt={software.name}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-4xl font-bold text-white bg-[#004080]/80 w-16 h-16 rounded-xl flex items-center justify-center">
+                          {software.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <a
+                      href={software.download_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Tải xuống ${software.name}`}
+                      className="w-full inline-flex items-center justify-center px-5 py-3 text-base font-semibold rounded-lg text-white bg-[#004080] hover:bg-[#003366] transition-colors"
+                    >
+                      <Download className="h-5 w-5 mr-2" />
+                      Tải ngay
+                    </a>
+
+                    {software.documentation_link && (
+                      <a
+                        href={software.documentation_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Xem tài liệu hướng dẫn"
+                        className="w-full inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium rounded-lg border border-[#004080]/15 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Tài liệu chính thức
+                      </a>
+                    )}
+                  </div>
                 </div>
 
-                {/* Software Details */}
-                <section className="py-8">
-                    <div className="w-full px-[4%]">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Left Column - Image and Quick Actions */}
-                            <div className="lg:col-span-1">
-                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-20">
-                                    {/* Software Image */}
-                                    <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200">
-                                        {software.image_url ? (
-                                            <img
-                                                src={software.image_url}
-                                                alt={software.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <Monitor className="h-20 w-20 text-gray-400" />
-                                            </div>
-                                        )}
-                                        <div className="absolute top-4 right-4">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                                {software.license || "Free"}
-                                            </span>
-                                        </div>
-                                    </div>
+                {metaRows.length > 0 && (
+                  <div className="bg-white rounded-xl border border-[#004080]/10 p-5 uupm-card space-y-3">
+                    <h3 className="text-sm font-semibold text-slate-900">Thông tin</h3>
+                    {metaRows.map((row) => (
+                      <MetaRow key={row.label} label={row.label} value={row.value} />
+                    ))}
+                  </div>
+                )}
 
-                                    {/* Download Section */}
-                                    <div className="p-6 space-y-4">
-                                        <a
-                                            href={software.download_link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            title={`Tải xuống ${software.name}`}
-                                            className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-xl shadow-sm text-white bg-[#004080] hover:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#004080] transition-all cursor-pointer"
-                                        >
-                                            <Download className="h-5 w-5 mr-2" />
-                                            Tải ngay
-                                        </a>
+                {contentSections.length > 1 && (
+                  <nav className="hidden lg:block bg-white rounded-xl border border-[#004080]/10 p-5 uupm-card">
+                    <h3 className="text-sm font-semibold text-slate-900 mb-3">Mục lục</h3>
+                    <ul className="space-y-1">
+                      {contentSections.map((section) => (
+                        <li key={section.id}>
+                          <a
+                            href={`#${section.id}`}
+                            className="block text-sm text-muted-foreground hover:text-[#004080] py-1.5 transition-colors"
+                          >
+                            {section.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                )}
+              </div>
+            </aside>
 
-                                        {software.documentation_link && (
-                                            <a
-                                                href={software.documentation_link}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                title="Xem tài liệu hướng dẫn"
-                                                className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#004080] transition-all cursor-pointer"
-                                            >
-                                                <FileText className="h-5 w-5 mr-2" />
-                                                Tài liệu
-                                            </a>
-                                        )}
+            {/* Main content — guide first, reviews last */}
+            <div className="flex-1 min-w-0 space-y-6">
+              {software.description?.trim() && (
+                <SectionCard id="tong-quan" title="Tổng quan" icon={Monitor}>
+                  <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                    {software.description}
+                  </p>
+                </SectionCard>
+              )}
 
-                                        {/* Software Info */}
-                                        <div className="pt-4 border-t border-gray-200 space-y-3">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500">Phiên bản</span>
-                                                <span className="font-semibold text-gray-900">{software.version || "N/A"}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500">Nhà phát triển</span>
-                                                <span className="font-semibold text-gray-900 text-right">{software.vendor || "N/A"}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500">Giấy phép</span>
-                                                <span className="font-semibold text-gray-900">{software.license || "Free"}</span>
-                                            </div>
-                                            <div className="flex items-start justify-between text-sm gap-4">
-                                                <span className="text-gray-500">Nền tảng</span>
-                                                <span className="font-semibold text-gray-900 text-right">{platformText}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+              {hasInstallGuide && (
+                <SectionCard id="cai-dat" title="Hướng dẫn cài đặt" icon={Shield}>
+                  <div className="prose prose-sm max-w-none text-slate-700">
+                    <p className="whitespace-pre-wrap">{software.installation_instructions}</p>
+                  </div>
+                </SectionCard>
+              )}
 
-                            {/* Right Column - Details and Reviews */}
-                            <div className="lg:col-span-2 space-y-6">
-                                {/* Header */}
-                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1">
-                                            <div className="flex flex-wrap items-center gap-2 mb-3">
-                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#004080]/10 text-[#004080]">
-                                                    <BadgeCheck className="h-3.5 w-3.5 mr-1" />
-                                                    Đã kiểm duyệt
-                                                </span>
-                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                                    <Layers className="h-3.5 w-3.5 mr-1" />
-                                                    {software.type || "Software"}
-                                                </span>
-                                            </div>
-                                            <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">{software.name}</h1>
-                                            <p className="text-gray-600 mb-4">
-                                                {getShortDescription(software.description, 140)}
-                                            </p>
-                                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                                                <div className="flex items-center">
-                                                    <Calendar className="h-4 w-4 mr-1.5 text-gray-400" />
-                                                    <span>Ngày thêm: {format(new Date(software.created_at), "dd/MM/yyyy")}</span>
-                                                </div>
-                                                <div className="flex items-center">
-                                                    <Monitor className="h-4 w-4 mr-1.5 text-gray-400" />
-                                                    <span>{platformText}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                                            <StarRating value={averageRating || 0} size="lg" />
-                                            <span className="ml-2 text-lg font-medium text-gray-700">
-                                                {averageRating ? averageRating.toFixed(1) : "Chưa có đánh giá"}
-                                            </span>
-                                            {reviews && reviews.length > 0 && (
-                                                <span className="ml-1 text-sm text-gray-500">({reviews.length} đánh giá)</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+              {hasDetailedGuide && (
+                <SectionCard id="huong-dan" title="Hướng dẫn chi tiết" icon={ClipboardList}>
+                  <div className="prose prose-sm max-w-none text-slate-700">
+                    {renderSeoMarkdown(seoContent)}
+                  </div>
+                </SectionCard>
+              )}
 
-                                {/* Description */}
-                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                                    <h2 className="text-xl font-bold text-gray-900 mb-4">Mô tả chi tiết</h2>
-                                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{software.description}</p>
-                                </div>
-
-                                {/* Installation Instructions */}
-                                {software.installation_instructions && (
-                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                                            <Shield className="h-5 w-5 mr-2 text-[#004080]" />
-                                            Hướng dẫn cài đặt
-                                        </h2>
-                                        <div className="prose prose-sm max-w-none text-gray-700">
-                                            <p className="whitespace-pre-wrap">{software.installation_instructions}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Reviews Section */}
-                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                                    <h2 className="text-xl font-bold text-gray-900 mb-6">Đánh giá</h2>
-
-                                    {user ? (
-                                        <div className="mb-8 border border-gray-300 rounded-lg p-6 bg-gray-50">
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Viết đánh giá của bạn</h3>
-                                            <div className="flex items-center mb-4">
-                                                <span className="text-sm text-gray-600 mr-3">Đánh giá của bạn:</span>
-                                                <StarRating
-                                                    value={userRating}
-                                                    onChange={setUserRating}
-                                                    readonly={false}
-                                                />
-                                            </div>
-                                            <div className="mb-4">
-                                                <Textarea
-                                                    id="comment"
-                                                    placeholder="Viết đánh giá của bạn..."
-                                                    value={reviewComment}
-                                                    onChange={(e) => setReviewComment(e.target.value)}
-                                                    rows={4}
-                                                    className="resize-none"
-                                                />
-                                            </div>
-                                            <div className="flex justify-end">
-                                                <Button
-                                                    onClick={handleSubmitReview}
-                                                    disabled={submitReviewMutation.isPending}
-                                                    className="bg-[#004080] hover:bg-[#003366] inline-flex items-center"
-                                                >
-                                                    {submitReviewMutation.isPending && (
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    )}
-                                                    Gửi đánh giá
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="mb-8 bg-gray-50 rounded-lg p-6 text-center">
-                                            <p className="text-gray-600">
-                                                Vui lòng{" "}
-                                                <Button
-                                                    variant="link"
-                                                    className="p-0 h-auto text-[#004080] hover:text-[#003366]"
-                                                    onClick={() => navigate("/auth")}
-                                                >
-                                                    đăng nhập
-                                                </Button>{" "}
-                                                để viết đánh giá.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Reviews List */}
-                                    <div className="space-y-6">
-                                        {isLoadingReviews ? (
-                                            <div className="flex justify-center py-8">
-                                                <Loader2 className="h-8 w-8 animate-spin text-[#004080]" />
-                                            </div>
-                                        ) : reviews?.length ? (
-                                            reviews.map((review) => (
-                                                <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <div className="flex items-center">
-                                                            <Avatar className="h-10 w-10 rounded-full">
-                                                                <AvatarFallback>{getInitials(review.user_name || "User")}</AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="ml-3">
-                                                                <span className="font-medium text-gray-900">{review.user_name || "User"}</span>
-                                                                <div className="flex items-center mt-1">
-                                                                    <StarRating value={review.rating} size="sm" />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <span className="text-sm text-gray-500">
-                                                            {format(new Date(review.created_at), "dd/MM/yyyy")}
-                                                        </span>
-                                                    </div>
-                                                    <div className="ml-13">
-                                                        <p className="text-gray-700">{review.comment}</p>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="text-center py-8 text-gray-500">
-                                                <Monitor className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                                                <p>Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">Hướng dẫn chi tiết</h2>
-                            <div className="prose prose-sm max-w-none">
-                                {renderSeoMarkdown(seoContent)}
-                            </div>
-                        </div>
-
-                        <div className="mt-10">
-                            <LeadCaptureForm
-                                source="software_page"
-                                sourceId={software.id}
-                                title="Cần hỗ trợ cài đặt hoặc tư vấn IT?"
-                                description="Team Software Hub hỗ trợ cài đặt phần mềm và tư vấn giải pháp IT cho doanh nghiệp miễn phí."
-                            />
-                        </div>
+              <SectionCard id="danh-gia" title="Đánh giá từ cộng đồng" icon={MessageSquare}>
+                {user ? (
+                  <div className="mb-6 rounded-lg border border-[#004080]/10 p-5 bg-[#f9f9f9]">
+                    <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                      Viết đánh giá của bạn
+                    </h3>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-sm text-muted-foreground">Điểm:</span>
+                      <StarRating value={userRating} onChange={setUserRating} readonly={false} />
                     </div>
-                </section>
-            </main>
+                    <Textarea
+                      placeholder="Chia sẻ trải nghiệm sử dụng..."
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      rows={3}
+                      className="resize-none mb-3 bg-white"
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleSubmitReview}
+                        disabled={submitReviewMutation.isPending}
+                        className="bg-[#004080] hover:bg-[#003366]"
+                        size="sm"
+                      >
+                        {submitReviewMutation.isPending && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        Gửi đánh giá
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mb-6 text-sm text-muted-foreground">
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-[#004080] hover:text-[#003366]"
+                      onClick={() => navigate("/auth")}
+                    >
+                      Đăng nhập
+                    </Button>{" "}
+                    để viết đánh giá.
+                  </p>
+                )}
 
-            <Footer />
+                <div className="space-y-5">
+                  {isLoadingReviews ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="h-7 w-7 animate-spin text-[#004080]" />
+                    </div>
+                  ) : reviews?.length ? (
+                    reviews.map((review) => (
+                      <article
+                        key={review.id}
+                        className="border-b border-slate-100 pb-5 last:border-0 last:pb-0"
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Avatar className="h-9 w-9 shrink-0">
+                              <AvatarFallback className="text-xs">
+                                {getInitials(review.user_name || "User")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="font-medium text-slate-900 truncate">
+                                {review.user_name || "User"}
+                              </p>
+                              <StarRating value={review.rating} size="sm" />
+                            </div>
+                          </div>
+                          <time className="text-xs text-muted-foreground shrink-0">
+                            {format(new Date(review.created_at), "dd/MM/yyyy")}
+                          </time>
+                        </div>
+                        <p className="text-sm text-slate-700 pl-12">{review.comment}</p>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="text-center py-6 text-sm text-muted-foreground">
+                      Chưa có đánh giá. Hãy là người đầu tiên!
+                    </p>
+                  )}
+                </div>
+              </SectionCard>
+            </div>
+          </div>
+
+          <div className="mt-10">
+            <LeadCaptureForm
+              source="software_page"
+              sourceId={software.id}
+              title="Cần hỗ trợ cài đặt hoặc tư vấn IT?"
+              description="Team Software Hub hỗ trợ cài đặt phần mềm và tư vấn giải pháp IT cho doanh nghiệp miễn phí."
+            />
+          </div>
         </div>
-    );
+      </main>
+
+      <Footer />
+    </div>
+  );
 }
