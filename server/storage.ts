@@ -36,7 +36,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, ilike, inArray, or, isNull, isNotNull } from "drizzle-orm";
-import { SOFTWARE_USE_CATEGORIES } from "@shared/software-category-taxonomy";
+import { SOFTWARE_USE_CATEGORIES } from "../shared/software-category-taxonomy.js";
 
 export type SoftwareUseCategoryItem = {
   id: number;
