@@ -35,7 +35,7 @@ import {
   type ChatMessage, type InsertChatMessage
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, like, ilike, inArray, or, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, desc, asc, sql, like, ilike, inArray, or, isNull, isNotNull } from "drizzle-orm";
 import { SOFTWARE_USE_CATEGORIES } from "../shared/software-category-taxonomy.js";
 
 export type SoftwareUseCategoryItem = {
@@ -109,6 +109,7 @@ export interface IStorage {
     search?: string;
     type?: 'software' | 'api';
     status?: 'pending' | 'approved' | 'rejected';
+    sort?: string;
     limit?: number;
     offset?: number;
   }): Promise<{ softwares: Software[], total: number }>;
@@ -647,6 +648,7 @@ class DatabaseStorage implements IStorage {
     search?: string;
     type?: 'software' | 'api';
     status?: 'pending' | 'approved' | 'rejected';
+    sort?: string;
     limit?: number;
     offset?: number;
   }): Promise<{ softwares: Software[], total: number }> {
@@ -674,11 +676,21 @@ class DatabaseStorage implements IStorage {
       whereConditions.push(eq(softwares.status, params.status));
     }
 
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+    const sortKey = params.sort || "newest";
+    const orderBy =
+      sortKey === "popular" || sortKey === "downloads"
+        ? [asc(softwares.id)]
+        : sortKey === "name"
+          ? [asc(softwares.name)]
+          : [desc(softwares.created_at), desc(softwares.id)];
+
     // Get total count
     const [countResult] = await db
       .select({ count: sql<number>`COUNT(*)` })
       .from(softwares)
-      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+      .where(whereClause);
 
     const total = countResult?.count || 0;
 
@@ -686,7 +698,8 @@ class DatabaseStorage implements IStorage {
     const softwaresList = await db
       .select()
       .from(softwares)
-      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .where(whereClause)
+      .orderBy(...orderBy)
       .limit(params.limit || 10)
       .offset(params.offset || 0);
 

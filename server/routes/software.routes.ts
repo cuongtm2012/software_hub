@@ -44,6 +44,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       search: search as string,
       type: type as 'software' | 'api' | undefined,
       status: 'approved', // Only show approved software publicly
+      sort: sort as string,
       limit: limitNum,
       offset: offset
     });

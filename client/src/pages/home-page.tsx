@@ -6,20 +6,18 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import {
   TrendingUp,
-  Clock,
-  Star,
-  Download,
   Monitor,
   Code,
-  Users,
-  Briefcase,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import {
   SoftwareProductCard,
-  softwareProductCardClass,
+  SoftwareProductCardSkeleton,
 } from "@/components/software-product-card";
+import { CourseThumbnail } from "@/components/course-thumbnail";
+import { getCourseUrl } from "@/lib/course-utils";
 import { PageHero } from "@/components/design-system/page-hero";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
 import { HorizontalScrollRow } from "@/components/horizontal-scroll-row";
@@ -95,30 +93,24 @@ export default function HomePage() {
     return () => window.removeEventListener('resize', calculateGrid);
   }, []);
 
-  // Fetch popular software
-  const {
-    data: popularSoftware,
-    isLoading: isLoadingPopular
-  } = useQuery({
+  // Fetch curated popular software (legacy catalog, stable order)
+  const { data: popularSoftware, isLoading: isLoadingPopular } = useQuery({
     queryKey: ["/api/softwares/popular"],
     queryFn: async () => {
-      const response = await fetch("/api/softwares?limit=10&sort=downloads");
+      const response = await fetch("/api/softwares?limit=10&sort=popular");
       if (!response.ok) throw new Error("Failed to fetch popular software");
       return response.json();
-    }
+    },
   });
 
-  // Fetch recent software
-  const {
-    data: recentSoftware,
-    isLoading: isLoadingRecent
-  } = useQuery({
-    queryKey: ["/api/softwares/recent"],
+  // Fetch latest courses (distinct content from software carousel)
+  const { data: latestCourses, isLoading: isLoadingCourses } = useQuery({
+    queryKey: ["/api/courses/latest"],
     queryFn: async () => {
-      const response = await fetch("/api/softwares?limit=10&sort=updated_at");
-      if (!response.ok) throw new Error("Failed to fetch recent software");
+      const response = await fetch("/api/courses?limit=10");
+      if (!response.ok) throw new Error("Failed to fetch courses");
       return response.json();
-    }
+    },
   });
 
   // Fetch all software with type-based filtering
@@ -239,150 +231,141 @@ export default function HomePage() {
           }
         />
 
-        {/* Top Downloads Section */}
+        {/* Popular Software */}
         <section className="overflow-hidden border-b bg-white py-8">
           <div className="w-full min-w-0 max-w-full px-[4%]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-amber-600" />
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 bg-amber-100 rounded-lg shrink-0">
+                  <TrendingUp className="w-6 h-6 text-amber-600" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-2xl font-bold text-gray-900">Phần mềm nổi bật</h2>
+                  <p className="text-sm text-gray-600">Bộ sưu tập được tuyển chọn — tải miễn phí</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Tải nhiều nhất</h2>
-                <p className="text-sm text-gray-600">Phần mềm và tài liệu phổ biến nhất tuần này</p>
-              </div>
+              <Button
+                variant="link"
+                className="text-[#004080] shrink-0 hidden sm:inline-flex"
+                onClick={() => navigate("/software")}
+              >
+                Xem tất cả <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
             </div>
 
             <HorizontalScrollRow>
-              {(popularSoftware?.softwares || Array(10).fill(null)).map((software: any, index: number) => (
-                <div
-                  key={software?.id || index}
-                  onClick={() => software && navigate(`/software/${software.id}`)}
-                  className={`w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] bg-white ${softwareProductCardClass}`}
-                  title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
-                >
-                  <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-                    {software?.image_url ? (
-                      <img
-                        src={software.image_url}
-                        alt={software.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          const placeholder = e.currentTarget.nextElementSibling;
-                          if (placeholder) {
-                            (placeholder as HTMLElement).style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${software ? getPlaceholderGradient(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
-                      style={{ display: software?.image_url ? 'none' : 'flex' }}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-white opacity-90 mb-1">
-                          {software?.name ? software.name.charAt(0).toUpperCase() : '?'}
-                        </div>
-                        <Monitor className="h-8 w-8 text-white opacity-75 mx-auto" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-3 flex flex-col flex-grow">
-                    <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1">
-                      {software?.name || "Loading..."}
-                    </h3>
-                    <div className="flex items-center justify-between text-xs mb-2">
-                      <span className="text-gray-500">Software</span>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-amber-400 fill-current" />
-                        <span className="font-semibold">4.5</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-slate-600">
-                      <Download className="w-3 h-3" />
-                      <span className="font-semibold">{Math.floor(Math.random() * 5000)}K</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              {isLoadingPopular
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <SoftwareProductCardSkeleton
+                      key={i}
+                      className="w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)]"
+                    />
+                  ))
+                : (popularSoftware?.softwares || []).map((software: Parameters<typeof openSoftware>[0]) => (
+                    <SoftwareProductCard
+                      key={software.id}
+                      software={software}
+                      onOpen={openSoftware}
+                      className="w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)]"
+                    />
+                  ))}
             </HorizontalScrollRow>
           </div>
         </section>
 
-
-        {/* Recent Updates Section */}
+        {/* Latest Courses */}
         <section className="overflow-hidden border-b bg-gradient-to-br from-slate-50 to-white py-8">
           <div className="w-full min-w-0 max-w-full px-[4%]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Clock className="w-6 h-6 text-green-600" />
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 bg-[#004080]/10 rounded-lg shrink-0">
+                  <GraduationCap className="w-6 h-6 text-[#004080]" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-2xl font-bold text-gray-900">Khóa học IT</h2>
+                  <p className="text-sm text-gray-600">Học miễn phí qua YouTube — lộ trình tiếng Việt</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Vừa cập nhật</h2>
-                <p className="text-sm text-gray-600">Phiên bản mới nhất và cập nhật gần đây</p>
-              </div>
+              <Button
+                variant="link"
+                className="text-[#004080] shrink-0 hidden sm:inline-flex"
+                onClick={() => navigate("/courses")}
+              >
+                Xem tất cả <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
             </div>
 
             <HorizontalScrollRow>
-              {(recentSoftware?.softwares || Array(10).fill(null)).map((software: any, index: number) => (
-                <div
-                  key={software?.id || index}
-                  onClick={() => software && navigate(`/software/${software.id}`)}
-                  className={`w-[calc((100%-1rem)/2.2)] min-w-[160px] max-w-[220px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] bg-white ${softwareProductCardClass}`}
-                  title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
-                >
-                  <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-                    {software?.image_url ? (
-                      <img
-                        src={software.image_url}
-                        alt={software.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          const placeholder = e.currentTarget.nextElementSibling;
-                          if (placeholder) {
-                            (placeholder as HTMLElement).style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
+              {isLoadingCourses
+                ? Array.from({ length: 6 }).map((_, i) => (
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${software ? getPlaceholderGradient(software.name) : 'from-gray-300 to-gray-400'} flex items-center justify-center transition-all duration-300`}
-                      style={{ display: software?.image_url ? 'none' : 'flex' }}
+                      key={i}
+                      className="w-[calc((100%-1rem)/2.2)] min-w-[180px] max-w-[240px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] rounded-xl border border-[#004080]/10 bg-white overflow-hidden"
                     >
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-white opacity-90 mb-1">
-                          {software?.name ? software.name.charAt(0).toUpperCase() : '?'}
+                      <div className="aspect-video bg-slate-100 animate-pulse" />
+                      <div className="p-3 space-y-2">
+                        <div className="h-4 bg-slate-100 rounded animate-pulse" />
+                        <div className="h-3 bg-slate-100 rounded w-2/3 animate-pulse" />
+                      </div>
+                    </div>
+                  ))
+                : (latestCourses?.courses || []).map(
+                    (course: {
+                      id: number;
+                      title: string;
+                      instructor?: string;
+                      topic?: string;
+                      level?: string;
+                      youtube_url?: string;
+                      thumbnail_url?: string;
+                      slug?: string;
+                    }) => (
+                      <button
+                        key={course.id}
+                        type="button"
+                        onClick={() => navigate(getCourseUrl(course))}
+                        className="w-[calc((100%-1rem)/2.2)] min-w-[180px] max-w-[240px] shrink-0 snap-start sm:w-[calc((100%-2.5rem)/3.5)] lg:w-[calc((100%-5rem)/5.2)] text-left rounded-xl border border-[#004080]/10 bg-white overflow-hidden uupm-card uupm-interactive group"
+                      >
+                        <div className="relative aspect-video bg-slate-100 overflow-hidden">
+                          <CourseThumbnail
+                            videoUrl={course.youtube_url || course.thumbnail_url || ""}
+                            title={course.title}
+                            fallbackGradient={getPlaceholderGradient(course.title)}
+                          />
+                          {course.level && (
+                            <span className="absolute top-2 left-2 bg-[#004080] text-white px-2 py-0.5 rounded text-[10px] font-semibold uppercase">
+                              {course.level === "beginner"
+                                ? "Cơ bản"
+                                : course.level === "advanced"
+                                  ? "Nâng cao"
+                                  : "Trung cấp"}
+                            </span>
+                          )}
                         </div>
-                        <Monitor className="h-8 w-8 text-white opacity-75 mx-auto" />
-                      </div>
-                    </div>
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-0.5 rounded text-xs font-semibold">
-                      NEW
-                    </div>
-                  </div>
-                  <div className="p-3 flex flex-col flex-grow">
-                    <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1">
-                      {software?.name || "Loading..."}
-                    </h3>
-                    <div className="flex items-center justify-between text-xs mb-2">
-                      <span className="text-gray-500">Software</span>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-amber-400 fill-current" />
-                        <span className="font-semibold">4.5</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600 font-semibold">Latest</span>
-                      <div className="flex items-center gap-1 text-gray-500">
-                        <Clock className="w-3 h-3" />
-                        <span>Today</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                        <div className="p-3">
+                          <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 group-hover:text-[#004080] transition-colors mb-1">
+                            {course.title}
+                          </h3>
+                          {course.instructor && (
+                            <p className="text-xs text-muted-foreground truncate">{course.instructor}</p>
+                          )}
+                          {course.topic && (
+                            <p className="text-xs text-[#004080] mt-1 truncate">#{course.topic}</p>
+                          )}
+                        </div>
+                      </button>
+                    ),
+                  )}
             </HorizontalScrollRow>
+
+            {!isLoadingCourses && (!latestCourses?.courses || latestCourses.courses.length === 0) && (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Chưa có khóa học.{" "}
+                <button type="button" className="text-[#004080] underline" onClick={() => navigate("/courses")}>
+                  Khám phá kho học
+                </button>
+              </p>
+            )}
           </div>
         </section>
 
