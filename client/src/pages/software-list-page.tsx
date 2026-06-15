@@ -34,6 +34,7 @@ import { Pagination } from "@/components/pagination";
 import { cn } from "@/lib/utils";
 import { PageMeta } from "@/components/seo/page-meta";
 import { buildSoftwareDetailUrl, buildSoftwareListPath } from "@/lib/software-utils";
+import { getUrlSearchParams } from "@/lib/url-search";
 import { absoluteUrl } from "@/lib/seo-config";
 
 const PLATFORMS = [
@@ -150,7 +151,7 @@ function SoftwareListCard({ software, onOpen }: SoftwareListCardProps) {
 
 export default function SoftwareListPage() {
   const [location, navigate] = useLocation();
-  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const searchParams = getUrlSearchParams();
 
   const [category, setCategory] = useState(searchParams.get("category") || "all");
   const [platform, setPlatform] = useState(searchParams.get("platform") || "all");
@@ -166,6 +167,16 @@ export default function SoftwareListPage() {
   useEffect(() => {
     localStorage.setItem("software-filters-collapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  // Restore filters/page when URL changes (browser back, returnTo links)
+  useEffect(() => {
+    const params = getUrlSearchParams();
+    setCategory(params.get("category") || "all");
+    setPlatform(params.get("platform") || "all");
+    setSort(params.get("sort") || "name");
+    setSearchQuery(params.get("search") || "");
+    setPage(parseInt(params.get("page") || "1", 10));
+  }, [location]);
 
   useEffect(() => {
     const params = new URLSearchParams();

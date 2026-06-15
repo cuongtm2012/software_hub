@@ -27,6 +27,7 @@ import {
 import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
 import { buildSoftwareSeoDescription, buildSoftwareSeoContent, normalizeExternalUrl, resolveDocumentationLink } from "@/lib/software-utils";
+import { getUrlSearchParams } from "@/lib/url-search";
 import { renderSeoMarkdown } from "@/lib/render-seo-markdown";
 import { PageMeta } from "@/components/seo/page-meta";
 import { SoftwareSchema } from "@/components/seo/software-schema";
@@ -92,7 +93,7 @@ export default function SoftwareDetailPage() {
   const [, params] = useRoute("/software/:idOrSlug");
   const idOrSlug = params?.idOrSlug;
   const [location, navigate] = useLocation();
-  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const searchParams = getUrlSearchParams();
   const softwareListUrl = (() => {
     const returnTo = searchParams.get("returnTo");
     if (returnTo === "/software" || returnTo?.startsWith("/software?")) return returnTo;

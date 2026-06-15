@@ -25,6 +25,7 @@ import {
 import { Pagination } from "@/components/pagination";
 import { CourseThumbnail } from "@/components/course-thumbnail";
 import { buildCourseDetailUrl, buildCoursesListPath } from "@/lib/course-utils";
+import { getUrlSearchParams } from "@/lib/url-search";
 import { PageMeta } from "@/components/seo/page-meta";
 import { absoluteUrl } from "@/lib/seo-config";
 import { cn } from "@/lib/utils";
@@ -147,7 +148,7 @@ function CourseFilters({
 
 export default function CoursesListPage() {
   const [location, navigate] = useLocation();
-  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const searchParams = getUrlSearchParams();
 
   const [topic, setTopic] = useState(searchParams.get("topic") || "all");
   const [level, setLevel] = useState(searchParams.get("level") || "all");
@@ -164,9 +165,9 @@ export default function CoursesListPage() {
     localStorage.setItem("courses-filters-collapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
 
-  // Restore filters/page when returning via browser back
+  // Restore filters/page when URL changes (browser back, returnTo links)
   useEffect(() => {
-    const params = new URLSearchParams(location.split("?")[1] || "");
+    const params = getUrlSearchParams();
     setTopic(params.get("topic") || "all");
     setLevel(params.get("level") || "all");
     setSearchQuery(params.get("search") || "");

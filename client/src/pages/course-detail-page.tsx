@@ -15,6 +15,7 @@ import {
   buildSeoDescription,
   buildSeoContent,
 } from "@/lib/course-utils";
+import { getUrlSearchParams } from "@/lib/url-search";
 import { renderSeoMarkdown } from "@/lib/render-seo-markdown";
 import {
   getPlaceholderGradient,
@@ -127,7 +128,7 @@ export default function CourseDetailPage() {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const idOrSlug = params?.idOrSlug;
-  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const searchParams = getUrlSearchParams();
   const coursesListUrl = (() => {
     const returnTo = searchParams.get("returnTo");
     if (returnTo?.startsWith("/courses")) return returnTo;
