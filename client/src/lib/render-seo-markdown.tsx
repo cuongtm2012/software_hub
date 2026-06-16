@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
 
+/** Strip Markdown image references like ![Freeware][freeware icon] from text. */
+export function stripImageRefs(text: string): string {
+  return text.replace(/!\[([^\]]*)\]\[([^\]]*)\]/g, "").trim();
+}
+
 /** Lightweight markdown renderer for SEO content blocks (headings, lists, links, image references). */
 export function renderSeoMarkdown(content: string): ReactNode[] {
   const linkRe = /\[([^\]]+)\]\(([^)]+)\)/g;

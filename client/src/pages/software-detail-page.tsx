@@ -28,7 +28,7 @@ import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
 import { buildSoftwareSeoDescription, buildSoftwareSeoContent, normalizeExternalUrl, resolveDocumentationLink } from "@/lib/software-utils";
 import { getUrlSearchParams } from "@/lib/url-search";
-import { renderSeoMarkdown } from "@/lib/render-seo-markdown";
+import { renderSeoMarkdown, stripImageRefs } from "@/lib/render-seo-markdown";
 import { PageMeta } from "@/components/seo/page-meta";
 import { SoftwareSchema } from "@/components/seo/software-schema";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
@@ -306,7 +306,7 @@ export default function SoftwareDetailPage() {
                 Phần mềm
               </button>
               <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-              <span className="text-slate-900 font-medium truncate">{software.name}</span>
+              <span className="text-slate-900 font-medium truncate">{stripImageRefs(software.name)}</span>
             </nav>
           </div>
         </div>
@@ -333,7 +333,7 @@ export default function SoftwareDetailPage() {
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-3">
-              {software.name}
+              {stripImageRefs(software.name)}
             </h1>
 
             <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mb-4">

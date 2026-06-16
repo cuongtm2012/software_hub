@@ -22,6 +22,7 @@ import {
 import { Pagination } from "@/components/pagination";
 import { SoftwareDetailModal } from "@/components/software-detail-modal";
 import { StarRating } from "@/components/ui/star-rating";
+import { stripImageRefs } from "@/lib/render-seo-markdown";
 
 export default function SoftwareCatalogPage() {
   const [location] = useLocation();
@@ -229,7 +230,7 @@ export default function SoftwareCatalogPage() {
                       </div>
 
                       <div className="p-4 flex-grow flex flex-col">
-                        <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 mb-1">{software.name}</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 mb-1">{stripImageRefs(software.name)}</h3>
                         <p className="text-xs text-gray-500 mb-2 line-clamp-2 flex-grow">{software.description}</p>
 
                         <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
@@ -276,7 +277,7 @@ export default function SoftwareCatalogPage() {
                       <div className="flex-grow min-w-0">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">{software.name}</h3>
+                            <h3 className="text-lg font-semibold text-gray-900">{stripImageRefs(software.name)}</h3>
                             <div className="flex items-center gap-2 mt-1">
                               <StarRating value={4.5} size="sm" />
                               <span className="text-sm text-gray-600">4.5</span>

@@ -16,6 +16,7 @@ import {
   SoftwareProductCardSkeleton,
   type SoftwareProductCardData,
 } from "@/components/software-product-card";
+import { stripImageRefs } from "@/lib/render-seo-markdown";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +109,7 @@ function SoftwareListCard({ software, onOpen }: SoftwareListCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
             <h3 className="text-base font-semibold text-slate-900 group-hover:text-[#004080] transition-colors">
-              {software.name}
+              {stripImageRefs(software.name)}
             </h3>
             <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 shrink-0">
               Miễn phí

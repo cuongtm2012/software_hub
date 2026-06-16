@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Monitor, Download, Star } from "lucide-react";
 import { getPlaceholderGradient } from "@/components/design-system/tokens";
 import { getShortDescription } from "@/lib/translations";
+import { stripImageRefs } from "@/lib/render-seo-markdown";
 import { cn } from "@/lib/utils";
 
 export const softwareProductCardClass =
@@ -38,7 +39,7 @@ export function SoftwareProductCard({ software, onOpen, className }: SoftwarePro
     <Card
       onClick={() => software && onOpen?.(software)}
       className={cn(softwareProductCardClass, className)}
-      title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
+      title={software?.name ? `Xem chi tiết ${stripImageRefs(software.name)}` : undefined}
     >
       <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
         {software?.image_url ? (
@@ -78,7 +79,7 @@ export function SoftwareProductCard({ software, onOpen, className }: SoftwarePro
 
       <div className="p-4 flex flex-col flex-grow">
         <h3 className="font-semibold text-base text-gray-900 mb-2 line-clamp-1">
-          {software?.name || "Đang tải..."}
+          {software?.name ? stripImageRefs(software.name) : "Đang tải..."}
         </h3>
         <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-grow">
           {software?.description
@@ -102,8 +103,7 @@ export function SoftwareProductCard({ software, onOpen, className }: SoftwarePro
           }}
           className="w-full bg-[#004080] hover:bg-[#003366] text-white rounded-lg shadow-md transition-all cursor-pointer"
           size="sm"
-          title={software?.name ? `Xem chi tiết ${software.name}` : undefined}
-        >
+          title={software?.name ? `Xem chi tiết ${stripImageRefs(software.name)}` : undefined}
           <Download className="w-4 h-4 mr-2" />
           Tải ngay
         </Button>

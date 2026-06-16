@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { stripImageRefs } from "@/lib/render-seo-markdown";
 import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { Software, Review, InsertReview } from "@shared/schema";
@@ -120,7 +121,7 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
         <div id="software-description" className="sr-only">Software details and reviews</div>
         {software && (
           <>
-            <DialogTitle className="sr-only">{software.name} Details</DialogTitle>
+            <DialogTitle className="sr-only">{stripImageRefs(software.name)} Details</DialogTitle>
             <div className="flex flex-col md:flex-row">
               {/* Software image */}
               <div className="flex-shrink-0 relative bg-gray-100 md:w-2/5">
@@ -145,7 +146,7 @@ export function SoftwareDetailModal({ software, open, onOpenChange }: SoftwareDe
               {/* Software details */}
               <div className="p-6 flex-1 overflow-y-auto max-h-[70vh]">
                 <div className="flex justify-between items-start">
-                  <h3 className="text-2xl font-bold text-gray-900">{software.name}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">{stripImageRefs(software.name)}</h3>
                   <div className="flex items-center">
                     <StarRating value={averageRating || 0} size="lg" />
                     <span className="ml-1 font-medium text-gray-700">{averageRating ? averageRating.toFixed(1) : "Chưa có đánh giá"}</span>
