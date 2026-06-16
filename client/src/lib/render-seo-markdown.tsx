@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 
-/** Lightweight markdown renderer for SEO content blocks (headings, lists, links). */
+/** Lightweight markdown renderer for SEO content blocks (headings, lists, links, image references). */
 export function renderSeoMarkdown(content: string): ReactNode[] {
   const linkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const imgRefRe = /!\[([^\]]*)\]\[([^\]]*)\]/g;
 
-  const renderInline = (text: string, keyPrefix: string): ReactNode => {
+  function renderInlineLinks(text: string, keyPrefix: string): ReactNode {
     const parts: ReactNode[] = [];
     let last = 0;
     let m: RegExpExecArray | null;
@@ -27,7 +28,31 @@ export function renderSeoMarkdown(content: string): ReactNode[] {
     }
     if (last < text.length) parts.push(text.slice(last));
     return parts.length === 1 ? parts[0] : <>{parts}</>;
-  };
+  }
+
+  function renderInline(text: string, keyPrefix: string): ReactNode {
+    // First pass: extract image references ![alt][ref]
+    const imgParts: ReactNode[] = [];
+    let imgLast = 0;
+    let imgM: RegExpExecArray | null;
+    const imgRe = new RegExp(imgRefRe.source, "g");
+    while ((imgM = imgRe.exec(text)) !== null) {
+      if (imgM.index > imgLast) {
+        imgParts.push(renderInlineLinks(text.slice(imgLast, imgM.index), `${keyPrefix}-before-${imgLast}`));
+      }
+      const alt = imgM[1] || "";
+      const refName = imgM[2] || "";
+      const label = alt || refName;
+      imgParts.push(
+        <span key={`${keyPrefix}-img-${imgM.index}`} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">
+          {label}
+        </span>
+      );
+      imgLast = imgM.index + imgM[0].length;
+    }
+    if (imgLast < text.length) imgParts.push(renderInlineLinks(text.slice(imgLast), `${keyPrefix}-after`));
+    return imgParts.length === 1 ? imgParts[0] : <>{imgParts}</>;
+  }
 
   return content.split("\n").map((line, i) => {
     if (line.startsWith("## ")) {

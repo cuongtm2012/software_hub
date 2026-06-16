@@ -443,9 +443,9 @@ export default function SoftwareDetailPage() {
             <div className="flex-1 min-w-0 space-y-6">
               {software.description?.trim() && (
                 <SectionCard id="tong-quan" title="Tổng quan" icon={Monitor}>
-                  <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-                    {software.description}
-                  </p>
+                  <div className="text-slate-700 leading-relaxed prose prose-sm max-w-none">
+                    {renderSeoMarkdown(software.description)}
+                  </div>
                 </SectionCard>
               )}
 

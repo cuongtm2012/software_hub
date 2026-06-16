@@ -254,4 +254,5 @@ session-*.json
 # Health Check & Monitoring
 # ============================================
 healthcheck-*.log
-monitoring-*.json
+monitoring-*.json.env
+client/.env
