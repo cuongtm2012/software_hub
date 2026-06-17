@@ -104,6 +104,7 @@ export function SoftwareProductCard({ software, onOpen, className }: SoftwarePro
           className="w-full bg-[#004080] hover:bg-[#003366] text-white rounded-lg shadow-md transition-all cursor-pointer"
           size="sm"
           title={software?.name ? `Xem chi tiết ${stripImageRefs(software.name)}` : undefined}
+        >
           <Download className="w-4 h-4 mr-2" />
           Tải ngay
         </Button>

@@ -38,6 +38,8 @@
     "seed:free-software": "tsx scripts/seed-all-free-software.ts",
     "seed:courses-v2": "tsx scripts/seed-it-courses-v2.ts",
     "data:parse": "npm run parse:awesome-free-apps && npm run parse:awesome-selfhosted && npm run parse:ebookfoundation && npm run parse:youtube-channels",
+    "data:parse:downloadcomvn": "npm run parse:downloadcomvn",
+    "data:parse:full": "npm run data:parse && npm run parse:downloadcomvn",
     "data:seed": "npm run seed:courses-v2 && npm run seed:free-software",
     "data:expand": "npm run data:parse && npm run data:seed",
     "audit:youtube-courses": "tsx scripts/audit-youtube-courses.ts",

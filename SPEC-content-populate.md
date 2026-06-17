@@ -1,111 +1,127 @@
 # SPEC: Content Populate & Download.com.vn Integration
 
 ## Objectives
-- [x] Populate DB với free software data (awesome-free-software ~500+ entries)
+- [x] Populate DB với free software data (awesome-free-apps + awesome-selfhosted)
 - [x] Populate DB với IT courses (EbookFoundation + YouTube channels)
-- [ ] Parse download.com.vn → thêm phần mềm Việt Nam vào `softwares` table
+- [x] Parse download.com.vn → JSON (`scripts/data/downloadcomvn.json`)
+- [ ] Seed download.com.vn vào production (`npm run seed:free-software`)
 - [x] Tất cả content hiển thị trên UI (home page, `/software`, `/courses`) sau khi seed
-- [x] Lead capture form trên software detail + course detail pages để build GTM funnel
+- [x] Lead capture form trên software detail + course detail pages
 
 ## Non-Goals
-- Không làm thay đổi schema DB (không thêm/bớt table/column) ngoài phạm vi seed/content
-- Không xử lý các nguồn crawl mới ngoài `download.com.vn` (VD: app store, crack sites)
-- Không cố tối ưu SEO/performance sâu (chỉ đảm bảo UI/UX & API hoạt động đúng sau khi seed)
+- Không thay đổi schema DB
+- Không crawl nguồn mới ngoài `download.com.vn`
+- Không rehost file — chỉ lưu link gốc
 
 ## Data Sources
 
-### 1. Free Software (existing)
-- Source: awesome-free-software (GitHub README)
-- Script: `scripts/parse-free-software.ts` → `scripts/free-software-data.json`
-- Seed: `scripts/seed-free-software.ts`
-- ~500 entries
-- Categories hiển thị trên UI được **remap theo user-need taxonomy** (không còn “bucket theo nguồn/platform”)
-  - Taxonomy file: `shared/software-category-taxonomy.ts`
-  - API categories cho UI: `GET /api/softwares/categories` (trả `slug`, `name`, `count`)
+### 1. Free Software (GitHub awesome lists)
+- **awesome-free-apps:** `scripts/parse-awesome-free-apps.ts` → `scripts/data/awesome-free-apps.json`
+- **awesome-selfhosted:** `scripts/parse-awesome-selfhosted.ts` → `scripts/data/awesome-selfhosted.json`
+- **Seed:** `scripts/seed-all-free-software.ts` (merge 3 nguồn, gồm download.com.vn)
+- Categories trên UI dùng **user-need taxonomy** (`shared/software-category-taxonomy.ts`)
+- API: `GET /api/softwares/categories` (slug + name + count)
 
-### 2. IT Courses (existing)
-- Source: EbookFoundation + manual YouTube channels
-- Script: `scripts/parse-it-courses.ts`
-- Seed: `scripts/seed-it-courses-v2.ts` (recommended, handles slugs + dedup)
-- Topics: JavaScript, Python, React, Flutter, PHP, NodeJS, Android, C, etc.
+### 2. IT Courses
+- **EbookFoundation:** `scripts/parse-ebookfoundation-courses.ts`
+- **YouTube VN:** `scripts/parse-youtube-channels.ts`
+- **Seed:** `scripts/seed-it-courses-v2.ts`
 
-### 3. Download.com.vn (new — to be built)
+### 3. Download.com.vn
 - Source: https://download.com.vn/
-- Vietnamese software portal — categories: Windows, Android, iOS, Web, Games
-- Script mới: `scripts/parse-downloadcomvn.ts` → `scripts/downloadcomvn-data.json`
-- Seed: reuse `seed-free-software.ts` logic or write dedicated seed
-- Expected: 50-100+ Vietnamese software entries (freeware, open source, tools)
+- **Parse:** `scripts/parse-downloadcomvn.ts` → `scripts/data/downloadcomvn.json`
+- **Seed:** qua `scripts/seed-all-free-software.ts` (không có script seed riêng)
+- Chi tiết crawl: xem [`SPEC_DATA_EXPANSION.md`](./SPEC_DATA_EXPANSION.md) § Download.com.vn
 
-## Current Product Behavior (matching source code)
+## Parse download.com.vn — Process
 
-### Software list UI (`/software`)
-- Filters (query params):
-  - `page` (1-based), `limit`
-  - `category` (category slug từ `GET /api/softwares/categories`)
-  - `platform`: `windows|mac|linux|android|ios|web`
-  - `search`: text search theo `name`
-  - `sort`: `name|popular|recent|rating`
-- Back navigation:
-  - Software detail link luôn kèm `returnTo` để quay lại đúng trang/filter trước đó.
-  - Fix production: query params được đọc từ `window.location.search` (vì wouter `location` không có query string).
-  - Helper: `client/src/lib/url-search.ts`
+### Pipeline
+```
+Playwright crawl → downloadcomvn.json → seed-all-free-software.ts → DB
+```
 
-### Courses list UI (`/courses`)
-- Filters (query params):
-  - `page`, `limit`
-  - `topic`, `level`, `search`
-  - `sort`: `recent|newest|title|title_desc`
-- Sort mapping (API):
-  - `recent`: mới cập nhật (order by `updated_at` desc)
-  - `newest`: mới thêm (order by `created_at` desc)
-  - `title`: A→Z
-  - `title_desc`: Z→A
-- Back navigation:
-  - Course detail link luôn kèm `returnTo` để quay lại đúng list state.
+### Commands
+```bash
+# Parse riêng (chậm, ~3-4h full crawl)
+npm run parse:downloadcomvn
 
-### External links trên Software detail
-- UI tránh mở “Tài liệu chính thức” trùng với “Tải về” khi `documentation_link === download_link` (đặc biệt với self-hosted entries).
-- URL normalization + harden double click nằm trong `client/src/lib/software-utils.ts`.
+# Parse tất cả nguồn (GitHub + courses + download.com.vn)
+npm run data:parse:full
 
-## Technical Approach
+# Seed (dry-run trước)
+npm run seed:free-software -- --dry-run
+npm run seed:free-software
+```
 
-### Parse download.com.vn
-- Playwright-based crawler (like existing parse scripts)
-- Categories to scrape:
-  - Windows: Ung dung van phong, Do hoa, Bao mat, Mang internet, etc.
-  - Android: Ung dung, Game
-  - iOS: Ung dung, Game
-- Fields to extract: name, description, category, platform, download link, image, license info
-- Output: `scripts/downloadcomvn-data.json`
+### Env vars
+| Var | Default | Mô tả |
+|-----|---------|-------|
+| `PARSE_LIMIT` | `50` | Max items mỗi category |
+| `PARSE_MAX_PAGES` | `5` | Max trang list (`?p=2`, `?p=3`…) |
+| `PARSE_CATEGORIES` | all 14 keys | Danh sách category keys, comma-separated |
+
+### Category keys (`PARSE_CATEGORIES`)
+| Key | Path | Taxonomy subcategory |
+|-----|------|---------------------|
+| `windows` | `/windows` | utility → tien-ich |
+| `games` | `/download-game-tro-choi` | games |
+| `office` | `/download-phan-mem-van-phong` | office → van-phong |
+| `education` | `/download-phan-mem-giao-duc` | education → giao-duc |
+| `video` | `/download-phan-mem-video` | video → am-thanh-video |
+| `devtools` | `/download-cong-cu-lap-trinh` | development → lap-trinh |
+| `business` | `/download-phan-mem-doanh-nghiep` | office |
+| `network` | `/download-phan-mem-mang` | internet |
+| `audio` | `/download-phan-mem-nhac-audio` | audio |
+| `driver` | `/download-driver-firmware` | utility → tien-ich |
+| `graphics` | `/download-do-hoa` | graphics → do-hoa |
+| `social` | `/download-mang-xa-hoi` | communication |
+| `android` | `/android` | utility → tien-ich |
+| `ios` | `/ios` | utility → tien-ich |
+
+`subcategory` dùng **English alias** để `resolveUseCategorySlug()` map đúng taxonomy khi seed.
+
+### Fields extracted
+| Field | Nguồn |
+|-------|-------|
+| `name`, `description` | List page + detail page |
+| `url` | Detail page URL |
+| `download_link` | `#DownloadButtonTop[data-downloadurl]` |
+| `version` | Info box "Version:" hoặc regex từ h1 |
+| `vendor` | Info box "Phát hành:" |
+| `license` | Info box "Sử dụng:" |
+| `image_url` | `meta[property="og:image"]` |
+| `platform` | Từ category config |
+| `category`, `subcategory` | Từ category config (không hardcode "download.com.vn") |
+
+### Download link policy
+- Mirror/redirect domains (`fa.getpedia.net`, `bit.ly`…) → fallback về page URL
+- Không rehost file
 
 ### Seed Strategy
 | Step | Script | Est. Entries |
 |------|--------|-------------|
-| 1. Seed free software | `seed-free-software.ts` | ~500 |
-| 2. Seed IT courses | `seed-it-courses-v2.ts` | ~200-400 |
-| 3. Parse download.com.vn | `parse-downloadcomvn.ts` (new) | 50-100+ |
-| 4. Seed download.com.vn | `seed-downloadcomvn.ts` (new) | 50-100+ |
+| 1. Parse GitHub sources | `parse-awesome-free-apps` + `parse-awesome-selfhosted` | ~2600 |
+| 2. Parse download.com.vn | `parse-downloadcomvn` | 50–500+ |
+| 3. Parse courses | `parse-ebookfoundation` + `parse-youtube-channels` | ~200+ |
+| 4. Seed software | `seed-all-free-software.ts` | merge 3 JSON |
+| 5. Seed courses | `seed-it-courses-v2.ts` | ~200+ |
 
-### Lead Capture (Conversion Funnel)
-- Add `LeadCapture` component to software detail page + course detail page
-- Trigger: user scrolls to bottom / clicks download / after 30s on page
-- Form: name, email, phone (minimal)
-- Submit to `/api/leads` — already has `leads` table in schema
-- Purpose: collect leads for IT Services team (SME/startup who download software → may need custom dev)
+Dedup: theo `name` (case-insensitive). Entry trùng tên → update, không insert duplicate.
 
 ## Implementation Plan
-1. [ ] Parse download.com.vn → JSON data file
-2. [ ] Write seed script for download.com.vn data
-3. [ ] Run seed free software on production (SSH + Docker exec)
-4. [ ] Run seed IT courses on production
-5. [ ] Seed download.com.vn data
-6. [ ] Add LeadCapture component to software detail + course detail pages
-7. [ ] Verify: home page shows content, /software shows 500+ items, /courses shows 200+ items
+1. [x] Parse download.com.vn → JSON (`parse-downloadcomvn.ts`)
+2. [x] Seed script merge download.com.vn (`seed-all-free-software.ts`)
+3. [x] Category mapping → user-need taxonomy
+4. [ ] Chạy full crawl production (`PARSE_LIMIT=50 PARSE_MAX_PAGES=5`)
+5. [ ] Seed production (`npm run seed:free-software -- --dry-run` → live)
+6. [x] LeadCapture trên software/course detail
+7. [x] Verify UI: home, `/software`, `/courses`
 
 ## Boundaries
-- **Always do:** dry-run first, check for duplicates before insert
-- **Ask first:** schema changes, adding dependencies
-- **Never do:** delete existing data, run untested parse scripts on production
+- **Always do:** dry-run seed trước, dedup theo name
+- **Ask first:** schema changes, thêm dependencies
+- **Never do:** delete existing data, chạy untested parse trên production
 
-## Open Questions
-- [ ] download.com.vn có chống crawler không? Cần Playwright headless hay chỉ HTTP GET là đủ?
+## Resolved Questions
+- [x] download.com.vn cần Playwright (JS-rendered) — HTTP GET không đủ
+- [x] Seed không cần script riêng — merge qua `seed-all-free-software.ts`

@@ -37,56 +37,56 @@ Table `softwares` trong `shared/schema.ts` (đã có — không cần migration)
 
 ### Download.com.vn Crawl
 
-**Đặc điểm:** Trang dùng JS-rendered (h3 trong box-iname không chứa <a>), click handler bằng JS.
+**Script:** `scripts/parse-downloadcomvn.ts` → `scripts/data/downloadcomvn.json`
+
+**Đặc điểm:** Trang JS-rendered; list page dùng `ul.listitem-view li.clearfix`; detail page có `#DownloadButtonTop[data-downloadurl]`.
 
 **Cách crawl (Playwright):**
 
-1. **Windows categories** (ưu tiên #1):
-   ```
-   /windows            → game, van-phong, he-thong, giao-duc, do-hoa, video, ...
-   /download-game-tro-choi
-   /download-phan-mem-van-phong
-   /download-phan-mem-giao-duc
-   /download-phan-mem-video
-   /download-cong-cu-lap-trinh
-   /download-phan-mem-doanh-nghiep
-   /download-phan-mem-mang
-   /download-phan-mem-nhac-audio
-   /download-driver-firmware
-   /download-do-hoa
-   /download-mang-xa-hoi
-   ```
+1. **14 category paths** (config trong script, env `PARSE_CATEGORIES`):
+   - Windows sub-categories: games, office, education, video, devtools, business, network, audio, driver, graphics, social
+   - Platform hubs: `/windows`, `/android`, `/ios`
 
-2. **Mobile categories:**
-   ```
-   /android
-   /ios
-   ```
+2. **Pagination:** list pages dùng `?p=2`, `?p=3` (link "Xem thêm"); env `PARSE_MAX_PAGES` (default 5)
 
-3. **Mỗi category page:**
-   - Parse box-iname → lấy name + description từ h3.item-title + span.item-description
-   - Click vào item → lấy detail page (download_link, image, version, platform)
+3. **Mỗi item:**
+   - List page → name + mô tả ngắn
+   - Detail page → download_link, version, vendor, license, image_url (og:image)
+   - Random delay 600–3000ms giữa requests
 
-4. **Output JSON format:**
+4. **Category mapping:** mỗi crawl path gán `category` (VN label) + `subcategory` (English alias cho taxonomy). Seed dùng `resolveUseCategorySlug(subcategory)` → UI filter đúng bucket (van-phong, lap-trinh, game…).
+
+5. **Download link policy:** block mirror domains (`fa.getpedia.net`, `bit.ly`…); fallback về page URL.
+
+6. **Output JSON format:**
 ```json
 {
   "source": "download.com.vn",
   "entries": [
     {
       "name": "EVKey",
-      "description": "Bộ gõ tiếng Việt miễn phí, hỗ trợ đầy đủ các bảng mã",
-      "category": "Ứng dụng văn phòng",
-      "subcategory": "Gõ tiếng Việt",
-      "url": "https://download.com.vn/evkey/download",
+      "description": "Bộ gõ tiếng Việt miễn phí",
+      "category": "Văn phòng & Năng suất",
+      "subcategory": "office",
+      "url": "https://download.com.vn/evkey-125877",
       "platform": ["windows"],
-      "version": "6.9.0",
-      "license": "Freeware",
-      "vendor": "Phạm Văn Tiến",
-      "download_link": "https://download.com.vn/evkey/download",
-      "image_url": null
+      "version": "6.0.4",
+      "license": "Miễn phí",
+      "vendor": "Lâm Quang Minh",
+      "download_link": "https://github.com/lamquangminh/EVKey/releases/download/Release/EVKey.zip",
+      "image_url": "https://st.download.com.vn/data/image/2023/12/08/evkey-700.jpg",
+      "source": "download.com.vn"
     }
   ]
 }
+```
+
+**Commands:**
+```bash
+npm run parse:downloadcomvn                              # parse (chạy riêng, chậm)
+PARSE_LIMIT=50 PARSE_MAX_PAGES=5 npm run parse:downloadcomvn  # full crawl
+npm run seed:free-software -- --dry-run                  # seed preview
+npm run data:parse:full                                  # parse tất cả nguồn
 ```
 
 ### GitHub Awesome-Free-Apps Crawl (Axorax)
@@ -274,8 +274,11 @@ Danh mục **"Phần mềm thiết yếu"** dành cho người dùng vừa cài 
 1. Axorax/awesome-free-apps    (dễ nhất, fetch markdown)
 2. EbookFoundation courses     (HTML parse, cũng dễ)
 3. awesome-selfhosted          (vừa, markdown parse)
-4. download.com.vn             (khó nhất, Playwright — làm cuối)
+4. download.com.vn             (khó nhất, Playwright — chạy riêng: npm run parse:downloadcomvn)
 ```
+
+`npm run data:parse` — GitHub + courses (nhanh).
+`npm run data:parse:full` — thêm download.com.vn (chậm, ~3-4h full crawl).
 
 ### Phase 2: Seed vào DB
 
