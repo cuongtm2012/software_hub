@@ -10,7 +10,7 @@
 
 **Architecture:** Monolith-first — single Express app serves API + built React SPA. Optional microservices (email, chat, notification) run under PM2. Primary database, auth, and file storage run on **Supabase** (managed PostgreSQL). Redis + MongoDB run locally on VPS via Docker for queue/chat.
 
-**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped. **Cổng thanh toán: [payOS](https://payos.vn/docs/)** — wallet, marketplace checkout, IT service payments (§4.2).
+**Status:** Production-deployed (`swhubco.com`). Core marketplace + IT Services + GTM + admin CMS shipped. **Cổng thanh toán: [payOS](https://payos.vn/docs/)** — wallet, marketplace checkout, IT service payments (§4.2). **GTM vận hành:** [`gtm-operations.md`](./gtm-operations.md).
 
 ---
 
@@ -650,16 +650,16 @@ npm start              # node dist/server/index.js
 | Free apps catalogue | `scripts/parse-free-apps.ts` | ✅ Done (legacy) |
 | IT courses (YouTube) | `scripts/seed-it-courses.ts` | ⛔ Chuyển sang nguồn mới |
 | API listings | `scripts/parse-apis.ts` | ✅ Done (legacy) |
-| **download.com.vn** (hot trend) | `scripts/parse-downloadcomvn.ts` | 🆕 Phase 6 |
-| **Axorax/awesome-free-apps** (600+ entries, 5.5k⭐) | `scripts/parse-awesome-free-apps.ts` | 🆕 Phase 6 |
-| **awesome-selfhosted** (2000+ entries, 225k⭐) | `scripts/parse-awesome-selfhosted.ts` | 🆕 Phase 6 |
-| **EbookFoundation/free-programming-books** (340k⭐) | `scripts/parse-ebookfoundation-courses.ts` | 🆕 Phase 6 |
-| **YouTube channels VN** (~50 courses) | `scripts/seed-it-courses-v2.ts` (thủ công) | 🆕 Phase 6 |
-| **Seed all free software** (hợp nhất) | `scripts/seed-all-free-software.ts` | 🆕 Phase 6 |
+| **download.com.vn** (hot trend) | `scripts/parse-downloadcomvn.ts` | ✅ Done — 639 entries production crawl |
+| **Axorax/awesome-free-apps** (600+ entries, 5.5k⭐) | `scripts/parse-awesome-free-apps.ts` | ✅ Done |
+| **awesome-selfhosted** (2000+ entries, 225k⭐) | `scripts/parse-awesome-selfhosted.ts` | ✅ Done |
+| **EbookFoundation/free-programming-books** (340k⭐) | `scripts/parse-ebookfoundation-courses.ts` | ✅ Done |
+| **YouTube channels VN** (~50 courses) | `scripts/seed-it-courses-v2.ts` (thủ công) | ✅ Done |
+| **Seed all free software** (hợp nhất) | `scripts/seed-all-free-software.ts` | ✅ Done — ~4,100+ software production |
 
 ### 11.2. Data Expansion Strategy (Phase 6)
 
-Chi tiết: [`SPEC_DATA_EXPANSION.md`](./SPEC_DATA_EXPANSION.md)
+Chi tiết: [`data-expansion.md`](./data-expansion.md)
 
 #### Phần mềm Free Hot Trend
 
@@ -732,11 +732,14 @@ Chi tiết: [`SPEC_DATA_EXPANSION.md`](./SPEC_DATA_EXPANSION.md)
 | Phase 4 | ✅ Done | IT Services UI + API + service payments + email notifications |
 | Phase 3b | ✅ Done | **payOS migration** — §15.9 |
 | Phase 5 | ✅ Done | GTM core + admin course SEO CMS (`/admin/courses`) |
-|| Phase 6 | 🆕 In Progress | Design system rollout (`SPEC_UI_IMPROVEMENT_v1.md`), dashboard refactor, **data expansion** — download.com.vn + Axorax/awesome-free-apps (600+, 5.5k⭐) + awesome-selfhosted (2000+, 225k⭐) + EbookFoundation courses (200+, 340k⭐) + YouTube VN channels |
+| Phase 6 | ✅ Done (data) / 🟡 UI polish | **Data expansion** shipped (~4,100 software, ~310 courses). Design system (`ui-improvement-v1.md`) mostly done. Catalog UI backlog: source badge, essential tab — `data-expansion.md` §Phase 3 |
+| Phase 7 | 🆕 Planned | AI Hub preview — `go-to-market.md` §10, `gtm-operations.md` §7 |
 
 ---
 
 ## 14. Go-to-Market Strategy
+
+> **Vận hành hàng ngày (KPI, lead SLA, content calendar, conversion backlog):** [`gtm-operations.md`](./gtm-operations.md)
 
 ### 14.1. Mô hình kinh doanh
 
@@ -842,11 +845,38 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 ### 14.7. KPI dự kiến (month 1-3)
 
+Chi tiết đo lường + cadence review: [`gtm-operations.md`](./gtm-operations.md) §3.
+
 - SEO keywords top 10: ~70 long-tail từ course pages
 - Traffic: 500-2000 visitors/tháng
 - Lead capture rate: 3-5%
 - Conversion lead → đơn: 5-10%
 - Giá trị đơn TB: 15-50tr (IT Studio) / 500k-5tr (Marketplace)
+
+### 14.8. Content targets (post-populate)
+
+Volume DB đủ SEO; ưu tiên **chất lượng content** — checklist đầy đủ `gtm-operations.md` §6.
+
+| Asset | Production (6/2026) | Target tháng 1–3 |
+|-------|---------------------|------------------|
+| Software catalog | ~4,100+ | ✅ Volume OK |
+| Courses | ~310+ | Enrich top 20–50 pages (500–800 từ) |
+| Blog posts | ~3 | **10–15** bài lộ trình |
+| Install guides (VN) | 0 | **20–30** phần mềm phổ biến |
+| IT Studio case studies | 0 | **2–3** case SME |
+
+### 14.9. Conversion backlog (code)
+
+| ID | Feature | Status |
+|----|---------|--------|
+| GTM-1 | Gate form khi click Tải ngay (software detail) | ❌ |
+| GTM-2 | Slide-in consultation sau 30s | ❌ |
+| GTM-3 | Bottom bar khi scroll 70% | ❌ |
+| GTM-4 | Email nurture sau lead (Resend) | ❌ |
+| GTM-5 | Pricing + case study trên `/it-services` | ❌ |
+| GTM-6 | GA4 custom events (`lead_submit`, `download_click`, …) | ❌ |
+
+Chi tiết: `gtm-operations.md` §7.
 
 ---
 
@@ -863,7 +893,14 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 ### 15.2. Medium Priority — SEO / GTM / Phase 4 polish
 
-> Không còn mục medium priority mở — xem §15.5.
+| # | Feature | Mô tả | Ref |
+|---|---|---|---|
+| GTM-1 | Download gate | Form trước khi mở link tải external | `gtm-operations.md` §7 |
+| GTM-2 | 30s slide-in | Consultation popup sau 30s | §7 |
+| GTM-3 | Scroll bottom bar | CTA bar khi scroll 70% | §7 |
+| GTM-4 | Lead nurture email | Auto email sau lead submit | §7 |
+| GTM-5 | IT Services pricing page | Bảng giá + case study public | §7 |
+| GTM-6 | GA4 custom events | `lead_submit`, `download_click`, … | §4.1 |
 
 ### 15.3. Low Priority — DevOps / chất lượng / tương lai
 
@@ -910,7 +947,7 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | C7 | **Dev Tools gọn** | P2 | ✅ Done — nhóm Dev Tools; Dashboard link → Queues |
 | C8 | **GA4 embedded charts** | P3 | 🟡 Partial — `ga4-traffic` API + chart 30d; cần `GA4_PROPERTY_ID` + service account |
 
-### 15.4. UI Package (`SPEC_UI_IMPROVEMENT_v1.md`)
+### 15.4. UI Package (`ui-improvement-v1.md`)
 
 | # | Feature | Status | Ghi chú |
 |---|---|---|---|

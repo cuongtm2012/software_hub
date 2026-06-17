@@ -1,6 +1,8 @@
 # Software Hub — Go-to-Market Strategy
 
-> Chiến lược đưa Software Studio ra thị trường | Cập nhật: Supabase fullstack migration
+> Chiến lược đưa Software Studio ra thị trường | Cập nhật: 2026-06-17  
+> **Vận hành GTM (KPI, lead SLA, content calendar):** [`gtm-operations.md`](./gtm-operations.md)  
+> **Tech implementation status:** [`product.md`](./product.md) §14.6
 
 ---
 
@@ -27,7 +29,7 @@
 ### Nguyên lý hoạt động
 
 1. **Content free kéo traffic** — sinh viên search "học react free" → vào trang course
-2. **Uy tín tự nhiên** — khách vào thấy catalog 50+ khóa học + 800+ phần mềm → "nó phải giỏi"
+2. **Uy tín tự nhiên** — khách vào thấy catalog **300+ khóa học + 4,000+ phần mềm** → "nó phải giỏi"
 3. **Lead gen mềm** — tư vấn lộ trình free, download ebook, chat hỗ trợ
 4. **Chốt đơn IT Studio** — gọi tư vấn, quote, nhận project
 
@@ -119,7 +121,7 @@ Sau khi migrate toàn bộ lên Supabase, tech stack của Software Hub là:
 
 ### 2.2. Lợi thế cạnh tranh của Software Hub
 
-- **Social proof hiếm có**: 50+ khóa học free + 800+ phần mềm = evidence năng lực
+- **Social proof hiếm có**: 300+ khóa học free + 4,000+ phần mềm = evidence năng lực
 - **Funnel tự nhiên**: Content free → trust → dịch vụ. Không agency nào có funnel này
 - **Chi phí vận hành thấp**: Server sẵn có, codebase sẵn có, chỉ tốn thời gian content
 - **SEO moat**: Càng nhiều course/software page → domain authority càng cao → càng khó bị overtake
@@ -412,11 +414,51 @@ Gọi điện tư vấn (warm call)
 
 ---
 
-## 9. Cần implement ngay
+## 9. Implementation status (cập nhật 2026-06)
 
-> **Lưu ý**: Thứ tự này đã tính đến Supabase migration. DB + Auth là bước nền tảng, xong mới làm SEO/content.
+> Phase 0–3 **platform đã xong**. Focus hiện tại: **content + ops** — [`gtm-operations.md`](./gtm-operations.md).
 
-### Phase 0: Supabase Migration (ưu tiên tuyệt đối)
+### Phase 0: Supabase Migration — ✅ Done
+
+| Bước | Status |
+|------|--------|
+| DB connection Supabase | ✅ |
+| Schema push + seed | ✅ |
+| Auth JWT (Supabase) | ✅ |
+| Production `swhubco.com` | ✅ |
+
+### Phase 1–3: SEO + GTM tech — ✅ Done (core)
+
+| Hạng mục | Status |
+|----------|--------|
+| `/courses/:slug` landing + Course schema | ✅ |
+| `/software/:slug` + SoftwareApplication schema | ✅ |
+| Blog module `/blog` + admin CRUD | ✅ |
+| Lead capture, ebook, booking, behavior popup | ✅ |
+| Sitemap, robots, prerender, GA4 client | ✅ |
+| Data expansion (awesome + download.com.vn) | ✅ — xem `content-populate.md` |
+
+### Phase 4: Launch content — 🟡 In progress
+
+| Việc | Status |
+|------|--------|
+| 5–10 blog posts lộ trình | 🟡 ~3 posts live |
+| Google Search Console submit | ⬜ Ops checklist — `gtm-operations.md` §4.3 |
+| GA4 admin embed trên VPS | 🟡 API có; cần env |
+| Enrich top course/software SEO | ⬜ Admin CMS sẵn có |
+| Share Facebook groups | ⬜ |
+| 2–3 case study IT Studio | ⬜ |
+
+### Phase 5–6: First customers + scale
+
+Xem timeline §7 và KPI §3 trong [`gtm-operations.md`](./gtm-operations.md).
+
+### Legacy: Chi tiết implement ban đầu (tham khảo)
+
+<details>
+<summary>Phase 0–4 checklist gốc (đã archive)</summary>
+
+### Phase 0: Supabase Migration (ưu tiên tuyệt đối) — ✅ Done
 
 | Bước | Mô tả | Files chạm vào | Thời gian |
 |---|---|---|---|
@@ -429,7 +471,7 @@ Gọi điện tư vấn (warm call)
 
 **Kết quả Phase 0**: App chạy trên Supabase fullstack. Không còn Docker Postgres/Redis cho session. Auth JWT.
 
-### Phase 1: Course Landing Pages + SEO (làm sau khi Supabase ổn định)
+### Phase 1: Course Landing Pages + SEO — ✅ Done
 
 | Tuần | Việc |
 |---|---|
@@ -440,31 +482,7 @@ Gọi điện tư vấn (warm call)
 | 5 | Google Search Console + GA4 setup |
 | 6-8 | Content định kỳ + SEO monitoring |
 
-### Chi tiết Tuần 1: Course Landing Pages
-
-1. Tách route `/courses/{slug}` riêng (hiện là 1 page list)
-2. Thêm SEO meta (title, description, Course schema)
-3. Thêm nội dung 500-800 chữ + internal links
-4. Thêm CTA lead capture ở cuối
-
-### Chi tiết Tuần 2: Blog + Schema
-
-5. Thêm `/blog/*` routes + admin CRUD
-6. Thêm SoftwareApplication schema cho phần mềm
-7. Thêm breadcrumb + Open Graph tags
-
-### Chi tiết Tuần 3: Lead Capture
-
-8. Form "Tư vấn lộ trình miễn phí" (email + SĐT)
-9. Ebook download với gate form
-10. Chat trigger theo behavior tracking
-
-### Chi tiết Tuần 4: Launch Content
-
-11. Viết 5-10 blog posts lộ trình học
-12. Viết hướng dẫn cài đặt cho 20 phần mềm phổ biến
-13. Share bài đầu tiên vào Facebook groups
-14. Submit sitemap lên Google Search Console
+</details>
 
 ---
 

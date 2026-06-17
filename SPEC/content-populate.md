@@ -1,10 +1,12 @@
 # SPEC: Content Populate & Download.com.vn Integration
 
+> Data pipeline cho catalog SEO. GTM vận hành (content quality, leads, KPI): [`gtm-operations.md`](./gtm-operations.md).
+
 ## Objectives
 - [x] Populate DB với free software data (awesome-free-apps + awesome-selfhosted)
 - [x] Populate DB với IT courses (EbookFoundation + YouTube channels)
 - [x] Parse download.com.vn → JSON (`scripts/data/downloadcomvn.json`)
-- [ ] Seed download.com.vn vào production (`npm run seed:free-software`)
+- [x] Seed download.com.vn vào production (`npm run seed:free-software`) — 639 entries crawl, ~4,100+ software total
 - [x] Tất cả content hiển thị trên UI (home page, `/software`, `/courses`) sau khi seed
 - [x] Lead capture form trên software detail + course detail pages
 
@@ -31,7 +33,7 @@
 - Source: https://download.com.vn/
 - **Parse:** `scripts/parse-downloadcomvn.ts` → `scripts/data/downloadcomvn.json`
 - **Seed:** qua `scripts/seed-all-free-software.ts` (không có script seed riêng)
-- Chi tiết crawl: xem [`SPEC_DATA_EXPANSION.md`](./SPEC_DATA_EXPANSION.md) § Download.com.vn
+- Chi tiết crawl: xem [`data-expansion.md`](./data-expansion.md) § Download.com.vn
 
 ## Parse download.com.vn — Process
 
@@ -112,10 +114,19 @@ Dedup: theo `name` (case-insensitive). Entry trùng tên → update, không inse
 1. [x] Parse download.com.vn → JSON (`parse-downloadcomvn.ts`)
 2. [x] Seed script merge download.com.vn (`seed-all-free-software.ts`)
 3. [x] Category mapping → user-need taxonomy
-4. [ ] Chạy full crawl production (`PARSE_LIMIT=50 PARSE_MAX_PAGES=5`)
-5. [ ] Seed production (`npm run seed:free-software -- --dry-run` → live)
+4. [x] Chạy full crawl production (`PARSE_LIMIT=50 PARSE_MAX_PAGES=5`) — 639 unique entries
+5. [x] Seed production (`npm run seed:free-software`) — 594 inserted, 1931 updated
 6. [x] LeadCapture trên software/course detail
 7. [x] Verify UI: home, `/software`, `/courses`
+
+## GTM readiness (sau populate)
+
+Volume DB đủ cho SEO; tiếp theo là **chất lượng content** — xem [`gtm-operations.md`](./gtm-operations.md) §6:
+
+- [ ] Enrich top 20–50 course pages (500–800 từ)
+- [ ] 10+ blog lộ trình
+- [ ] 20–30 software install guides tiếng Việt
+- [ ] 2–3 case study IT Studio
 
 ## Boundaries
 - **Always do:** dry-run seed trước, dedup theo name

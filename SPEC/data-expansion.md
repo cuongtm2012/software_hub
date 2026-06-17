@@ -1,7 +1,11 @@
 # SPEC: Data Expansion for Software Hub v2
 
+> GTM content targets + ops: [`gtm-operations.md`](./gtm-operations.md). Populate pipeline status: [`content-populate.md`](./content-populate.md).
+
 ## Overview
 Đẩy thêm data phần mềm Free (hot trend) và tài liệu IT lên Software Hub production.
+
+**Status (2026-06-17):** Crawl + seed production **done** — ~4,100+ software, ~310+ courses.
 
 ---
 
@@ -268,23 +272,23 @@ Danh mục **"Phần mềm thiết yếu"** dành cho người dùng vừa cài 
 
 **Seed:** Thêm field `tags` hoặc boolean `essential` trong JSON → khi seed sẽ set `admin_notes` hoặc tạo category riêng.
 
-### Phase 1: Crawl & Parse (thứ tự)
+### Phase 1: Crawl & Parse — ✅ Done
 
 ```
-1. Axorax/awesome-free-apps    (dễ nhất, fetch markdown)
-2. EbookFoundation courses     (HTML parse, cũng dễ)
-3. awesome-selfhosted          (vừa, markdown parse)
-4. download.com.vn             (khó nhất, Playwright — chạy riêng: npm run parse:downloadcomvn)
+1. Axorax/awesome-free-apps    ✅
+2. EbookFoundation courses     ✅
+3. awesome-selfhosted          ✅
+4. download.com.vn             ✅ — 639 entries (PARSE_LIMIT=50, PARSE_MAX_PAGES=5)
 ```
 
-`npm run data:parse` — GitHub + courses (nhanh).
+`npm run data:parse` — GitHub + courses (nhanh).  
 `npm run data:parse:full` — thêm download.com.vn (chậm, ~3-4h full crawl).
 
-### Phase 2: Seed vào DB
+### Phase 2: Seed vào DB — ✅ Done
 
 ```
-1. Chạy seed-it-courses-v2.ts (courses từ EbookFoundation + YouTube)
-2. Chạy seed-all-free-software.ts (softwares từ 3 nguồn + essential flag)
+1. seed-it-courses-v2.ts       ✅ — ~310+ courses production
+2. seed-all-free-software.ts   ✅ — ~4,100+ software production
 ```
 
 ### Phase 3: UI
@@ -292,13 +296,13 @@ Danh mục **"Phần mềm thiết yếu"** dành cho người dùng vừa cài 
 Hiện tại:
 - `/software` — danh sách software ✅
 - `/courses` — danh sách khóa học ✅
+- Filter theo platform (Windows/Mac/Linux/Web) ✅ — `software-list-page.tsx`
+- Filter theo category ✅
+- Sort: tên, phổ biến, mới thêm, đánh giá ✅
 
-Thêm:
-- Filter theo platform (Windows/Mac/Linux/Web)
-- Filter theo category
-- Source badge: "Từ download.com.vn" / "GitHub"
-- Tab "Thiết yếu" — essential apps cho máy tính mới
-- Sort: mới nhất, phổ biến nhất
+Còn lại:
+- [ ] Source badge: "Từ download.com.vn" / "GitHub"
+- [ ] Tab "Thiết yếu" — essential apps cho máy tính mới (`essential` flag trong seed JSON)
 
 ---
 
@@ -324,17 +328,16 @@ Thêm:
    - `scripts/seed-it-courses-v2.ts` (merge EbookFoundation + YouTube)
    - `scripts/seed-all-free-software.ts` (merge 3 nguồn phần mềm)
 
-3. **Kết quả ước tính:**
-   - ~600 phần mềm từ awesome-free-apps
-   - ~2000+ phần mềm từ awesome-selfhosted
-   - ~500+ phần mềm từ download.com.vn
-   - ~200+ courses từ EbookFoundation
-   - ~50 courses từ YouTube channels
+3. **Kết quả production (2026-06-17):**
+   - ~4,100+ phần mềm (merge 3 nguồn + download.com.vn)
+   - ~310+ courses (EbookFoundation + YouTube)
 
-4. **UI improvements (nếu cần):**
-   - Platform filter
-   - Source badge
-   - Category filter
+4. **UI improvements (backlog):**
+   - [ ] Source badge
+   - [x] Platform filter
+   - [x] Category filter
+   - [x] Sort options
+   - [ ] Essential tab
 
 ---
 
