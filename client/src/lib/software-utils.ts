@@ -50,6 +50,41 @@ export function buildSoftwareDetailUrl(
   return `${base}?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
+/** Strip redundant platform suffix when badges already show platform (e.g. "EVKey cho iOS" → "EVKey"). */
+export function formatSoftwareDisplayTitle(
+  name: string,
+  platforms?: string[] | null,
+): string {
+  let title = name.trim();
+  if (!title) return title;
+
+  const normalizedPlatforms = new Set(
+    (platforms ?? []).map((p) => p.toLowerCase()),
+  );
+
+  const suffixPatterns = [
+    /\s+cho\s+(iOS|Android|Windows|macOS|Mac|Linux|Web)$/i,
+    /\s+for\s+(iOS|Android|Windows|macOS|Mac|Linux|Web)$/i,
+    /\s+trên\s+(iOS|Android|Windows|macOS|Mac|Linux|Web)$/i,
+    /\s*[-–—]\s*(iOS|Android|Windows|macOS|Mac|Linux|Web)$/i,
+  ];
+
+  for (const re of suffixPatterns) {
+    const match = title.match(re);
+    if (!match) continue;
+    const label = match[1].toLowerCase();
+    const matchesBadge =
+      normalizedPlatforms.has(label) ||
+      (label === "macos" && normalizedPlatforms.has("mac"));
+    if (matchesBadge) {
+      title = title.replace(re, "").trim();
+      break;
+    }
+  }
+
+  return title;
+}
+
 export function buildSoftwareSeoDescription(software: {
   name: string;
   description?: string | null;

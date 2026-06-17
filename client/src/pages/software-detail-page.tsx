@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getShortDescription } from "@/lib/translations";
-import { buildSoftwareSeoDescription, buildSoftwareSeoContent, normalizeExternalUrl, resolveDocumentationLink } from "@/lib/software-utils";
+import { buildSoftwareSeoDescription, buildSoftwareSeoContent, formatSoftwareDisplayTitle, normalizeExternalUrl, resolveDocumentationLink } from "@/lib/software-utils";
 import { getUrlSearchParams } from "@/lib/url-search";
 import { renderSeoMarkdown, stripImageRefs } from "@/lib/render-seo-markdown";
 import { PageMeta } from "@/components/seo/page-meta";
@@ -262,6 +262,16 @@ export default function SoftwareDetailPage() {
 
   const downloadUrl = normalizeExternalUrl(software.download_link);
   const documentationUrl = resolveDocumentationLink(software.documentation_link, software.download_link);
+  const displayName = formatSoftwareDisplayTitle(
+    stripImageRefs(software.name),
+    software.platform,
+  );
+  const titleSizeClass =
+    displayName.length > 48
+      ? "text-xl sm:text-2xl lg:text-3xl"
+      : displayName.length > 32
+        ? "text-xl sm:text-2xl lg:text-[1.75rem]"
+        : "text-2xl sm:text-3xl lg:text-4xl";
 
   const handleExternalLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation();
@@ -306,14 +316,16 @@ export default function SoftwareDetailPage() {
                 Phần mềm
               </button>
               <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-              <span className="text-slate-900 font-medium truncate">{stripImageRefs(software.name)}</span>
+              <span className="text-slate-900 font-medium truncate max-w-[min(100%,28rem)]">
+                {displayName}
+              </span>
             </nav>
           </div>
         </div>
 
         <div className={cn(pageContainerClass, "py-6 sm:py-8")}>
           {/* Hero — title & summary only, no heavy card */}
-          <header className="mb-6 sm:mb-8">
+          <header className="mb-6 sm:mb-8 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-200">
                 {software.license || "Miễn phí"}
@@ -332,11 +344,16 @@ export default function SoftwareDetailPage() {
               ))}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-3">
-              {stripImageRefs(software.name)}
+            <h1
+              className={cn(
+                titleSizeClass,
+                "font-bold tracking-tight text-balance text-pretty leading-[1.2] break-words text-slate-900 mb-3 max-w-4xl",
+              )}
+            >
+              {displayName}
             </h1>
 
-            <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mb-4">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mb-4 leading-relaxed break-words">
               {getShortDescription(software.description, 200)}
             </p>
 
@@ -358,9 +375,9 @@ export default function SoftwareDetailPage() {
             </div>
           </header>
 
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 min-w-0">
             {/* Sidebar — actions & metadata */}
-            <aside className="w-full lg:w-72 xl:w-80 shrink-0">
+            <aside className="w-full lg:w-72 xl:w-80 shrink-0 order-2 lg:order-1">
               <div className="lg:sticky lg:top-24 space-y-4">
                 <div className="bg-white rounded-xl border border-[#004080]/10 overflow-hidden uupm-card">
                   <div className="relative aspect-[4/3] bg-gradient-to-br from-slate-100 to-slate-200">
@@ -440,10 +457,10 @@ export default function SoftwareDetailPage() {
             </aside>
 
             {/* Main content — guide first, reviews last */}
-            <div className="flex-1 min-w-0 space-y-6">
+            <div className="flex-1 min-w-0 w-full order-1 lg:order-2 space-y-6">
               {software.description?.trim() && (
                 <SectionCard id="tong-quan" title="Tổng quan" icon={Monitor}>
-                  <div className="text-slate-700 leading-relaxed prose prose-sm max-w-none">
+                  <div className="text-slate-700 leading-relaxed prose prose-sm max-w-none break-words [overflow-wrap:anywhere]">
                     {renderSeoMarkdown(software.description)}
                   </div>
                 </SectionCard>
@@ -459,7 +476,7 @@ export default function SoftwareDetailPage() {
 
               {hasDetailedGuide && (
                 <SectionCard id="huong-dan" title="Hướng dẫn chi tiết" icon={ClipboardList}>
-                  <div className="prose prose-sm max-w-none text-slate-700">
+                  <div className="prose prose-sm max-w-none text-slate-700 break-words [overflow-wrap:anywhere]">
                     {renderSeoMarkdown(seoContent)}
                   </div>
                 </SectionCard>
