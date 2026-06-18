@@ -116,3 +116,9 @@ pm2 status || true
 echo "=================================="
 echo "✅ Deploy finished"
 echo "=================================="
+
+if [ -f "$APP_ROOT/install-blog-crawler-cron.sh" ]; then
+  echo "⏰ Installing blog crawler cron (08:00 Asia/Ho_Chi_Minh)..."
+  chmod +x "$APP_ROOT/install-blog-crawler-cron.sh" "$APP_ROOT/run-blog-crawl-cron.sh" 2>/dev/null || true
+  "$APP_ROOT/install-blog-crawler-cron.sh"
+fi

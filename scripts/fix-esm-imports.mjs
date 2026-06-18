@@ -55,7 +55,7 @@ function walk(dir) {
   }
 }
 
-for (const sub of ["server", "services"]) {
+for (const sub of ["server", "services", "scripts"]) {
   const dir = join(root, sub);
   try {
     walk(dir);

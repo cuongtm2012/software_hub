@@ -22,7 +22,9 @@
     "include": [
         "server/**/*",
         "shared/**/*",
-        "services/**/*"
+        "services/**/*",
+        "scripts/run-blog-crawler.ts",
+        "scripts/blog-crawler/**/*"
     ],
     "exclude": [
         "node_modules",

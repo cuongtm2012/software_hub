@@ -49,7 +49,9 @@ jobs:
           cp ecosystem.config.cjs deploy/
           cp docker-compose.vps.yml deploy/
           cp scripts/deploy-vps-docker.sh deploy/
-          chmod +x deploy/deploy-vps-docker.sh
+          cp scripts/run-blog-crawl-cron.sh deploy/
+          cp scripts/install-blog-crawler-cron.sh deploy/
+          chmod +x deploy/deploy-vps-docker.sh deploy/run-blog-crawl-cron.sh deploy/install-blog-crawler-cron.sh
           tar -czf software-hub.tar.gz -C deploy .
 
       - name: Deploy to VPS

@@ -43,6 +43,7 @@
     "data:seed": "npm run seed:courses-v2 && npm run seed:free-software",
     "data:expand": "npm run data:parse && npm run data:seed",
     "blog:crawl": "tsx scripts/run-blog-crawler.ts",
+    "blog:crawl:prod": "node dist/scripts/run-blog-crawler.js",
     "audit:youtube-courses": "tsx scripts/audit-youtube-courses.ts",
     "migrate:software-categories": "tsx scripts/migrate-software-categories.ts",
     "db:rls": "tsx scripts/enable-rls.ts",
