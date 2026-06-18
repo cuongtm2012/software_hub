@@ -3259,21 +3259,46 @@ class DatabaseStorage implements IStorage {
     return post;
   }
 
+  private normalizeBlogTimestamp(value: unknown): Date | null | undefined {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    if (value instanceof Date) return value;
+    const parsed = new Date(String(value));
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
   async createBlogPost(data: any): Promise<any> {
+    const publishedAt =
+      data.status === "published"
+        ? this.normalizeBlogTimestamp(data.published_at) ?? new Date()
+        : this.normalizeBlogTimestamp(data.published_at) ?? null;
+
     const [post] = await db
       .insert(blogPosts)
       .values({
         ...data,
-        published_at: data.status === "published" ? new Date() : data.published_at,
+        published_at: publishedAt,
       })
       .returning();
     return post;
   }
 
   async updateBlogPost(id: number, data: any): Promise<any | undefined> {
+    const patch: Record<string, unknown> = {
+      ...data,
+      updated_at: new Date(),
+    };
+
+    if ("published_at" in data) {
+      patch.published_at = this.normalizeBlogTimestamp(data.published_at);
+    }
+    if (data.status === "published" && !patch.published_at) {
+      patch.published_at = new Date();
+    }
+
     const [post] = await db
       .update(blogPosts)
-      .set({ ...data, updated_at: new Date() })
+      .set(patch)
       .where(eq(blogPosts.id, id))
       .returning();
     return post;

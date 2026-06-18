@@ -47,3 +47,11 @@ export const supportRateLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: "Quá nhiều ticket hỗ trợ. Vui lòng thử lại sau." },
 });
+
+export const aiRewriteRateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Quá nhiều yêu cầu AI. Vui lòng thử lại sau." },
+});

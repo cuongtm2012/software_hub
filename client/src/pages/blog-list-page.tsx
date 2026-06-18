@@ -3,7 +3,10 @@ import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { PageMeta } from "@/components/seo/page-meta";
-import { Calendar, Loader2, Newspaper, Tag } from "lucide-react";
+import { PageHero } from "@/components/design-system/page-hero";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatBlogDate, getDisplayTags, estimateReadingTimeMinutes } from "@/lib/blog-display";
+import { Calendar, Clock, Tag, User } from "lucide-react";
 
 export default function BlogListPage() {
   const [, navigate] = useLocation();
@@ -18,7 +21,7 @@ export default function BlogListPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-[#f9f9f9] flex flex-col overflow-x-hidden">
       <PageMeta
         title="Blog IT — Lộ trình học lập trình miễn phí | Software Hub"
         description="Đọc các bài viết lộ trình học lập trình, hướng dẫn IT và tips cho sinh viên, người mới bắt đầu."
@@ -26,70 +29,102 @@ export default function BlogListPage() {
       />
       <Header />
 
-      <main className="min-w-0 flex-grow overflow-x-hidden">
-        <section className="bg-gradient-to-r from-slate-800 to-slate-700 text-white py-16">
-          <div className="w-full min-w-0 max-w-full px-[4%]">
-            <div className="flex items-center gap-3 mb-4">
-              <Newspaper className="h-8 w-8 text-[#ffcc00]" />
-              <h1 className="text-4xl font-bold">Blog IT</h1>
-            </div>
-            <p className="text-xl text-slate-200 max-w-2xl">
-              Lộ trình học, hướng dẫn và kinh nghiệm thực chiến cho developer Việt Nam
-            </p>
-          </div>
-        </section>
+      <PageHero
+        badge="Software Hub Blog"
+        title="Blog IT"
+        subtitle="Lộ trình học, hướng dẫn và kinh nghiệm thực chiến cho developer Việt Nam"
+        align="centered"
+      />
 
-        <div className="w-full min-w-0 max-w-full px-[4%] py-12">
+      <main className="min-w-0 flex-grow overflow-x-hidden">
+        <div className="w-full min-w-0 max-w-full px-[4%] py-10 sm:py-12">
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="h-12 w-12 animate-spin text-indigo-600" />
+            <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border bg-white overflow-hidden">
+                  <Skeleton className="h-48 w-full rounded-none" />
+                  <div className="p-6 space-y-3">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !data?.posts?.length ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <p className="text-slate-600">Chưa có bài viết nào.</p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              {data?.posts?.map((post: any) => (
-                <article
-                  key={post.id}
-                  onClick={() => navigate(`/blog/${post.slug}`)}
-                  className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-                >
-                  {post.cover_image && (
-                    <img
-                      src={post.cover_image}
-                      alt={post.title}
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                  <div className="p-6">
-                    {post.tags?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {post.tags.slice(0, 2).map((tag: string) => (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full"
-                          >
-                            <Tag className="h-3 w-3" />
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <h2 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 hover:text-indigo-600">
-                      {post.title}
-                    </h2>
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-                      {post.excerpt || post.seo_description}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Calendar className="h-3 w-3" />
-                      {post.published_at
-                        ? new Date(post.published_at).toLocaleDateString("vi-VN")
-                        : new Date(post.created_at).toLocaleDateString("vi-VN")}
-                      <span>·</span>
-                      <span>{post.author_name || "Software Hub"}</span>
+            <div className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+              {data.posts.map((post: any) => {
+                const displayTags = getDisplayTags(post.tags);
+                const readingMinutes = estimateReadingTimeMinutes(post.content || post.excerpt || "");
+
+                return (
+                  <article
+                    key={post.id}
+                    onClick={() => navigate(`/blog/${post.slug}`)}
+                    className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#004080]/20 hover:shadow-lg"
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                      {post.cover_image ? (
+                        <img
+                          src={post.cover_image}
+                          alt={post.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#004080]/10 to-[#004080]/5">
+                          <span className="text-4xl font-bold text-[#004080]/20">SH</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                     </div>
-                  </div>
-                </article>
-              ))}
+
+                    <div className="p-5 sm:p-6">
+                      {displayTags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {displayTags.slice(0, 2).map((tag: string) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center gap-1 rounded-full bg-[#004080]/8 px-2.5 py-0.5 text-xs font-medium text-[#004080]"
+                            >
+                              <Tag className="h-3 w-3" />
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <h2 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2 leading-snug group-hover:text-[#004080] transition-colors">
+                        {post.title}
+                      </h2>
+
+                      <p className="text-slate-600 text-sm line-clamp-3 mb-4 leading-relaxed">
+                        {post.excerpt || post.seo_description}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                        <span className="inline-flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {post.author_name || "Software Hub"}
+                        </span>
+                        <span>·</span>
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatBlogDate(post.published_at || post.created_at)}
+                        </span>
+                        <span>·</span>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {readingMinutes} phút
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>

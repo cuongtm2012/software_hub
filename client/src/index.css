@@ -464,4 +464,95 @@
       transition: none !important;
     }
   }
+
+  .blog-content a {
+    @apply text-[#004080] underline underline-offset-2 hover:text-[#003366];
+  }
+
+  .blog-content blockquote {
+    @apply my-6 rounded-r-lg border-l-4 border-[#004080]/40 bg-slate-50 py-3 pl-5 pr-4 not-italic text-slate-700;
+  }
+
+  .blog-content h2 {
+    @apply mt-10 mb-4 text-2xl font-bold tracking-tight text-slate-900 scroll-mt-24;
+  }
+
+  .blog-content h3 {
+    @apply mt-8 mb-3 text-xl font-semibold text-slate-900 scroll-mt-24;
+  }
+
+  .blog-content p {
+    @apply mb-5 leading-[1.8] text-slate-700;
+  }
+
+  .blog-content ul,
+  .blog-content ol {
+    @apply my-5 space-y-2 pl-6;
+  }
+
+  .blog-content li {
+    @apply leading-relaxed text-slate-700;
+  }
+
+  .blog-content ul li {
+    @apply list-disc marker:text-[#004080];
+  }
+
+  .blog-content ol li {
+    @apply list-decimal;
+  }
+
+  .blog-content strong {
+    @apply font-semibold text-slate-900;
+  }
+
+  .blog-content code {
+    @apply rounded bg-slate-100 px-1.5 py-0.5 text-[0.875em] font-mono text-[#004080];
+  }
+
+  .blog-content pre {
+    @apply my-6 overflow-x-auto rounded-xl border border-slate-800 bg-[#0f172a] p-4 text-[0.8125rem] leading-relaxed shadow-inner;
+  }
+
+  .blog-content pre code {
+    @apply block bg-transparent p-0 text-slate-100 whitespace-pre font-mono;
+    font-size: inherit;
+    color: #e2e8f0;
+  }
+
+  .blog-content :not(pre) > code {
+    @apply rounded bg-slate-100 px-1.5 py-0.5 text-[0.875em] font-mono text-[#004080];
+  }
+
+  .ProseMirror.blog-content code {
+    @apply rounded bg-slate-100 px-1.5 py-0.5 text-[0.875em] font-mono text-[#004080];
+  }
+
+  .ProseMirror.blog-content pre {
+    @apply my-4 overflow-x-auto rounded-xl border border-slate-800 bg-[#0f172a] p-4 text-[0.8125rem] leading-relaxed shadow-inner;
+  }
+
+  .ProseMirror.blog-content pre code {
+    @apply block bg-transparent p-0 text-slate-100 whitespace-pre font-mono;
+    font-size: inherit;
+    color: #e2e8f0;
+  }
+
+  .ProseMirror.blog-content :not(pre) > code {
+    @apply rounded bg-slate-100 px-1.5 py-0.5 text-[0.875em] font-mono text-[#004080];
+  }
+
+  .blog-content img {
+    @apply my-8 rounded-xl border border-slate-200 shadow-sm;
+  }
+
+  .blog-content.prose :where(code)::before,
+  .blog-content.prose :where(code)::after {
+    content: none !important;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    @apply text-muted-foreground pointer-events-none float-left h-0;
+    content: attr(data-placeholder);
+  }
 }

@@ -65,10 +65,14 @@ import {
   Clock,
   Archive,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { slugify } from "@/lib/slug";
 import { cn } from "@/lib/utils";
+import { isBlogContentEmpty, normalizeAiContentForEditor } from "@/lib/blog-content";
+import { BlogRichTextEditor } from "@/components/blog-rich-text-editor";
+import { BlogContentView } from "@/components/blog-content-view";
 
 type BlogStatus = "draft" | "published" | "archived";
 
@@ -168,6 +172,23 @@ function TableSkeleton({ rows = 4 }: { rows?: number }) {
   );
 }
 
+function parseApiErrorMessage(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  const jsonMatch = raw.match(/^\d{3}:\s*(\{[\s\S]*\})$/);
+  if (jsonMatch) {
+    try {
+      const body = JSON.parse(jsonMatch[1]) as { message?: string };
+      if (body.message) return body.message;
+    } catch {
+      // ignore
+    }
+  }
+  if (raw.includes("Unexpected token") && raw.includes("<!DOCTYPE")) {
+    return "API không phản hồi JSON. Hãy restart server dev (`npm run dev`) rồi thử lại.";
+  }
+  return raw || "Không gọi được AI";
+}
+
 export default function BlogManagementPage() {
   const { toast } = useToast();
   const [searchInput, setSearchInput] = useState("");
@@ -177,6 +198,17 @@ export default function BlogManagementPage() {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [form, setForm] = useState<BlogForm>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState<BlogPost | null>(null);
+  const [previewPost, setPreviewPost] = useState<BlogPost | null>(null);
+
+  const [aiPreset, setAiPreset] = useState<
+    "seo_vi" | "summarize" | "normalize_markdown" | "translate_en_vi"
+  >("seo_vi");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiKeepAttribution, setAiKeepAttribution] = useState(true);
+  const [aiIsRunning, setAiIsRunning] = useState(false);
+  const [aiUndo, setAiUndo] = useState<
+    Pick<BlogForm, "content" | "excerpt" | "seo_description"> | null
+  >(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -286,10 +318,36 @@ export default function BlogManagementPage() {
     setEditorOpen(false);
     setEditingPost(null);
     setForm(EMPTY_FORM);
+    setAiPreset("seo_vi");
+    setAiPrompt("");
+    setAiKeepAttribution(true);
+    setAiIsRunning(false);
+    setAiUndo(null);
+  };
+
+  const validateEditorForm = () => {
+    if (!form.title.trim()) {
+      toast({
+        title: "Thiếu tiêu đề",
+        description: "Vui lòng nhập tiêu đề bài viết.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (isBlogContentEmpty(form.content)) {
+      toast({
+        title: "Thiếu nội dung",
+        description: "Vui lòng nhập nội dung bài viết.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateEditorForm()) return;
     const payload = {
       title: form.title.trim(),
       slug: form.slug.trim() || slugify(form.title),
@@ -300,6 +358,99 @@ export default function BlogManagementPage() {
       tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
       status: form.status,
       published_at: form.status === "published" ? new Date().toISOString() : null,
+    };
+    saveMutation.mutate(payload);
+  };
+
+  const runAiRewrite = async () => {
+    if (isBlogContentEmpty(form.content)) {
+      toast({
+        title: "Thiếu nội dung",
+        description: "Cần có content để AI chỉnh sửa.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!aiPrompt.trim()) {
+      toast({
+        title: "Thiếu prompt",
+        description: "Nhập prompt để AI biết cần sửa gì.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAiIsRunning(true);
+    setAiUndo({
+      content: form.content,
+      excerpt: form.excerpt,
+      seo_description: form.seo_description,
+    });
+
+    try {
+      const res = await apiRequest("POST", "/api/blog/admin/ai-rewrite", {
+        title: form.title,
+        content: form.content,
+        excerpt: form.excerpt.trim() ? form.excerpt : null,
+        seo_description: form.seo_description.trim() ? form.seo_description : null,
+        tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+        prompt: aiPrompt,
+        preset: aiPreset,
+        keepAttribution: aiKeepAttribution,
+      });
+      const data = await res.json();
+
+      setForm((prev) => ({
+        ...prev,
+        content:
+          typeof data?.content === "string"
+            ? normalizeAiContentForEditor(data.content)
+            : prev.content,
+        excerpt: typeof data?.excerpt === "string" ? data.excerpt : prev.excerpt,
+        seo_description:
+          typeof data?.seo_description === "string" ? data.seo_description : prev.seo_description,
+      }));
+
+      toast({
+        title: "Đã sửa bằng AI",
+        description: data?.notes || "Kiểm tra lại nội dung trước khi xuất bản.",
+      });
+    } catch (e: unknown) {
+      toast({
+        title: "Lỗi AI",
+        description: parseApiErrorMessage(e),
+        variant: "destructive",
+      });
+      setAiUndo(null);
+    } finally {
+      setAiIsRunning(false);
+    }
+  };
+
+  const undoAiRewrite = () => {
+    if (!aiUndo) return;
+    setForm((prev) => ({
+      ...prev,
+      content: aiUndo.content,
+      excerpt: aiUndo.excerpt,
+      seo_description: aiUndo.seo_description,
+    }));
+    setAiUndo(null);
+    toast({ title: "Đã hoàn tác" });
+  };
+
+  const saveAsStatus = (status: BlogStatus) => {
+    if (!validateEditorForm()) return;
+    const payload = {
+      title: form.title.trim(),
+      slug: form.slug.trim() || slugify(form.title),
+      excerpt: form.excerpt.trim() || null,
+      content: form.content.trim(),
+      seo_description: form.seo_description.trim() || null,
+      cover_image: form.cover_image.trim() || null,
+      tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+      status,
+      published_at: status === "published" ? new Date().toISOString() : null,
     };
     saveMutation.mutate(payload);
   };
@@ -494,10 +645,20 @@ export default function BlogManagementPage() {
                               </div>
                             )}
                             <div className="min-w-0">
-                              <p className="font-medium truncate">{post.title}</p>
-                              <p className="text-xs text-muted-foreground truncate">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewPost(post)}
+                                className="font-medium truncate text-left text-[#004080] hover:underline hover:text-[#003366] w-full"
+                              >
+                                {post.title}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setPreviewPost(post)}
+                                className="text-xs text-muted-foreground truncate text-left hover:text-foreground hover:underline w-full"
+                              >
                                 /blog/{post.slug}
-                              </p>
+                              </button>
                               {post.excerpt && (
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                                   {post.excerpt}
@@ -620,16 +781,24 @@ export default function BlogManagementPage() {
                     Hủy
                   </Button>
                   <Button
-                    type="submit"
-                    form="blog-editor-form"
+                    type="button"
+                    variant="outline"
+                    disabled={saveMutation.isPending}
+                    onClick={() => saveAsStatus("draft")}
+                  >
+                    Lưu nháp
+                  </Button>
+                  <Button
+                    type="button"
                     disabled={saveMutation.isPending}
                     className="bg-[#004080] hover:bg-[#003366]"
+                    onClick={() => saveAsStatus("published")}
                   >
                     {saveMutation.isPending
                       ? "Đang lưu..."
                       : editingPost
-                        ? "Cập nhật"
-                        : "Xuất bản / Lưu"}
+                        ? "Xuất bản"
+                        : "Xuất bản"}
                   </Button>
                 </div>
               </div>
@@ -687,13 +856,12 @@ export default function BlogManagementPage() {
 
                     <div className="flex flex-col flex-1 min-h-[360px]">
                       <Label htmlFor="content">Nội dung *</Label>
-                      <Textarea
+                      <BlogRichTextEditor
+                        key={editingPost?.id ?? "new"}
                         id="content"
-                        required
                         value={form.content}
-                        onChange={(e) => setForm({ ...form, content: e.target.value })}
-                        className="mt-1 font-mono text-sm flex-1 min-h-[calc(100dvh-320px)] resize-none"
-                        placeholder={"## Tiêu đề\n\nNội dung bài viết..."}
+                        onChange={(content) => setForm({ ...form, content })}
+                        placeholder="Viết nội dung bài viết — dùng thanh công cụ để định dạng..."
                       />
                     </div>
                   </div>
@@ -731,6 +899,65 @@ export default function BlogManagementPage() {
 
                     <Separator />
 
+                    <div className="rounded-xl border-2 border-[#004080]/25 bg-gradient-to-br from-[#004080]/8 via-background to-amber-50/40 dark:to-amber-950/20 p-4 space-y-3 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#004080] text-[#ffcc00]">
+                          <Sparkles className="h-4 w-4" />
+                        </div>
+                        <Label className="text-base font-semibold text-[#004080]">AI editor</Label>
+                      </div>
+                      <Select value={aiPreset} onValueChange={(v) => setAiPreset(v as any)}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Chọn preset" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="seo_vi">SEO tiếng Việt</SelectItem>
+                          <SelectItem value="summarize">Tóm tắt</SelectItem>
+                          <SelectItem value="normalize_markdown">Chuẩn hóa markdown</SelectItem>
+                          <SelectItem value="translate_en_vi">Dịch EN → VI</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Textarea
+                        rows={5}
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        className="bg-background"
+                        placeholder="Nhập prompt… VD: Viết lại tiếng Việt, thêm headings, giữ nguyên ý, không bịa."
+                      />
+
+                      <label className="flex items-center gap-2 text-sm select-none">
+                        <input
+                          type="checkbox"
+                          checked={aiKeepAttribution}
+                          onChange={(e) => setAiKeepAttribution(e.target.checked)}
+                        />
+                        Giữ attribution block ở cuối (Original link)
+                      </label>
+
+                      <div className="flex flex-col gap-2 pt-1">
+                        <Button
+                          type="button"
+                          disabled={aiIsRunning}
+                          onClick={runAiRewrite}
+                          className="w-full h-11 bg-gradient-to-r from-[#004080] to-[#0066cc] hover:from-[#003366] hover:to-[#004080] text-white font-semibold shadow-md ring-2 ring-[#ffcc00]/50 ring-offset-2 transition-all"
+                        >
+                          <Sparkles className={cn("h-4 w-4 mr-2", aiIsRunning && "animate-pulse")} />
+                          {aiIsRunning ? "Đang sửa bằng AI..." : "Sửa bằng AI"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-muted-foreground"
+                          disabled={!aiUndo || aiIsRunning}
+                          onClick={undoAiRewrite}
+                        >
+                          Hoàn tác
+                        </Button>
+                      </div>
+                    </div>
+
                     <div>
                       <Label htmlFor="seo_description">SEO description</Label>
                       <Textarea
@@ -767,6 +994,84 @@ export default function BlogManagementPage() {
                   </div>
                 </div>
               </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Preview popup */}
+          <Dialog open={!!previewPost} onOpenChange={(open) => !open && setPreviewPost(null)}>
+            <DialogContent className="flex flex-col gap-0 p-0 overflow-hidden max-w-3xl w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)]">
+              {previewPost && (
+                <>
+                  <div className="flex items-start justify-between gap-4 border-b px-5 py-4 shrink-0">
+                    <DialogHeader className="space-y-1 text-left flex-1 min-w-0">
+                      <DialogTitle className="text-xl leading-snug pr-4">
+                        {previewPost.title}
+                      </DialogTitle>
+                      <DialogDescription className="flex flex-wrap items-center gap-2">
+                        <span>/blog/{previewPost.slug}</span>
+                        <Badge
+                          variant="outline"
+                          className={cn("text-xs", STATUS_CONFIG[previewPost.status].badge)}
+                        >
+                          {STATUS_CONFIG[previewPost.status].label}
+                        </Badge>
+                        {previewPost.author_name && <span>· {previewPost.author_name}</span>}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {previewPost.status === "published" && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a
+                            href={`/blog/${previewPost.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Xem public
+                          </a>
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        className="bg-[#004080] hover:bg-[#003366]"
+                        onClick={() => {
+                          const post = previewPost;
+                          setPreviewPost(null);
+                          openEdit(post);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Chỉnh sửa
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="overflow-y-auto px-5 py-5 flex-1">
+                    {previewPost.cover_image && (
+                      <img
+                        src={previewPost.cover_image}
+                        alt=""
+                        className="w-full h-48 object-cover rounded-lg border mb-4"
+                      />
+                    )}
+                    {previewPost.excerpt && (
+                      <p className="text-sm text-muted-foreground mb-4 border-l-4 border-[#004080]/30 pl-3">
+                        {previewPost.excerpt}
+                      </p>
+                    )}
+                    {(previewPost.tags || []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-4">
+                        {(previewPost.tags || []).map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    <BlogContentView content={previewPost.content} className="prose-sm" />
+                  </div>
+                </>
+              )}
             </DialogContent>
           </Dialog>
 
