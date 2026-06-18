@@ -13,6 +13,7 @@ import {
   getDeepseekSettingsPublic,
   saveDeepseekSettings,
 } from "../lib/deepseek-settings.js";
+import { getGaSettingsPublic, saveGaSettings } from "../lib/ga-settings.js";
 import { deepseekChatCompletion } from "../lib/deepseek.js";
 
 const router = Router();
@@ -114,6 +115,30 @@ router.post("/settings/deepseek/test", adminMiddleware, async (_req: Request, re
   } catch (error) {
     const message = error instanceof Error ? error.message : "DeepSeek test failed";
     res.status(502).json({ ok: false, message });
+  }
+});
+
+router.get("/settings/ga4", adminMiddleware, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const settings = await getGaSettingsPublic();
+    res.json(settings);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put("/settings/ga4", adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { measurementId, clearMeasurementId } = req.body ?? {};
+    const settings = await saveGaSettings({
+      measurementId: typeof measurementId === "string" ? measurementId : undefined,
+      clearMeasurementId: clearMeasurementId === true,
+    });
+    res.json(settings);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Không lưu được cài đặt GA4";
+    console.error("Save GA4 settings failed:", error);
+    res.status(500).json({ message });
   }
 });
 

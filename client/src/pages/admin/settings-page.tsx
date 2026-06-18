@@ -21,6 +21,14 @@ type DeepseekSettings = {
   hasEnvKey: boolean;
 };
 
+type GaSettings = {
+  configured: boolean;
+  source: "database" | "env" | "none";
+  measurementIdMasked: string | null;
+  hasDatabaseValue: boolean;
+  hasEnvValue: boolean;
+};
+
 const SOURCE_LABEL: Record<DeepseekSettings["source"], string> = {
   database: "Database (Admin)",
   env: "File .env",
@@ -32,10 +40,22 @@ export default function AdminSettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [baseUrl, setBaseUrl] = useState("https://api.deepseek.com");
   const [model, setModel] = useState("deepseek-chat");
+  const [gaMeasurementId, setGaMeasurementId] = useState("");
 
   const { data, isLoading, refetch, error: loadError } = useQuery<DeepseekSettings>({
     queryKey: ["/api/admin/settings/deepseek"],
     queryFn: () => apiRequestJson<DeepseekSettings>("GET", "/api/admin/settings/deepseek"),
+    retry: false,
+  });
+
+  const {
+    data: gaData,
+    isLoading: isLoadingGa,
+    refetch: refetchGa,
+    error: loadGaError,
+  } = useQuery<GaSettings>({
+    queryKey: ["/api/admin/settings/ga4"],
+    queryFn: () => apiRequestJson<GaSettings>("GET", "/api/admin/settings/ga4"),
     retry: false,
   });
 
@@ -44,6 +64,11 @@ export default function AdminSettingsPage() {
     setBaseUrl(data.baseUrl || "https://api.deepseek.com");
     setModel(data.model || "deepseek-chat");
   }, [data]);
+
+  useEffect(() => {
+    if (!gaData) return;
+    setGaMeasurementId("");
+  }, [gaData]);
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -99,6 +124,39 @@ export default function AdminSettingsPage() {
         description: parseApiErrorMessage(e),
         variant: "destructive",
       });
+    },
+  });
+
+  const saveGaMutation = useMutation({
+    mutationFn: () =>
+      apiRequestJson<GaSettings>("PUT", "/api/admin/settings/ga4", {
+        ...(gaMeasurementId.trim() ? { measurementId: gaMeasurementId.trim() } : {}),
+      }),
+    onSuccess: () => {
+      setGaMeasurementId("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/ga4"] });
+      toast({ title: "Đã lưu cài đặt GA4" });
+      refetchGa();
+    },
+    onError: (e: unknown) => {
+      toast({
+        title: "Lỗi lưu cài đặt",
+        description: parseApiErrorMessage(e),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const clearGaMutation = useMutation({
+    mutationFn: () => apiRequestJson<GaSettings>("PUT", "/api/admin/settings/ga4", { clearMeasurementId: true }),
+    onSuccess: () => {
+      setGaMeasurementId("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/ga4"] });
+      toast({ title: "Đã xóa GA Measurement ID trong database" });
+      refetchGa();
+    },
+    onError: (e: unknown) => {
+      toast({ title: "Lỗi", description: parseApiErrorMessage(e), variant: "destructive" });
     },
   });
 
@@ -242,6 +300,100 @@ export default function AdminSettingsPage() {
                   onClick={() => clearKeyMutation.mutate()}
                 >
                   Xóa key (DB)
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="max-w-2xl border-[#004080]/15">
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-[#004080]">
+                  <Settings className="h-5 w-5 text-[#ffcc00]" />
+                  Google Analytics (GA4)
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Cấu hình <code className="text-xs">Measurement ID</code> để bật tracking GA4 (client) cho toàn site.
+                  Giá trị lưu trong database sẽ dùng runtime (không cần build lại).
+                </CardDescription>
+              </div>
+              {isLoadingGa ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : gaData?.configured ? (
+                <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Đã cấu hình
+                </Badge>
+              ) : (
+                <Badge variant="secondary">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Chưa cấu hình
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-5">
+            {loadGaError && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                {parseApiErrorMessage(loadGaError)}
+              </div>
+            )}
+
+            {gaData && (
+              <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm space-y-1">
+                <p>
+                  <span className="text-muted-foreground">Nguồn đang dùng:</span>{" "}
+                  <strong>{gaData.source === "database" ? "Database (Admin)" : gaData.source === "env" ? "Env" : "Chưa cấu hình"}</strong>
+                </p>
+                {gaData.measurementIdMasked && (
+                  <p>
+                    <span className="text-muted-foreground">Measurement ID:</span>{" "}
+                    <code className="text-xs">{gaData.measurementIdMasked}</code>
+                  </p>
+                )}
+                {gaData.hasEnvValue && gaData.source !== "env" && (
+                  <p className="text-xs text-muted-foreground">
+                    Có fallback từ env nếu xóa value trong database.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="ga-measurement-id">GA4 Measurement ID</Label>
+              <Input
+                id="ga-measurement-id"
+                placeholder={gaData?.measurementIdMasked ? "Để trống nếu không đổi" : "G-XXXXXXXXXX"}
+                value={gaMeasurementId}
+                onChange={(e) => setGaMeasurementId(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Ví dụ: <code className="text-xs">G-XXXXXXXXXX</code>
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                className="bg-[#004080] hover:bg-[#003366]"
+                disabled={saveGaMutation.isPending}
+                onClick={() => saveGaMutation.mutate()}
+              >
+                {saveGaMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Lưu cài đặt
+              </Button>
+              {gaData?.hasDatabaseValue && (
+                <Button
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  disabled={clearGaMutation.isPending}
+                  onClick={() => clearGaMutation.mutate()}
+                >
+                  Xóa value (DB)
                 </Button>
               )}
             </div>

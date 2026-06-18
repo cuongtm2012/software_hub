@@ -22,20 +22,25 @@ Chuyển từ **“có sản phẩm”** sang **“có traffic → lead → đơ
 
 ## 2. Trạng thái hiện tại (production)
 
-### 2.1. Platform GTM (code) — ~90% xong
+### 2.1. Platform GTM (code) — ~95% xong
 
 | Hạng mục | Status | Ghi chú |
 |----------|--------|---------|
 | Course/software detail + schema | ✅ | `/courses/:slug`, `/software/:slug` |
-| Blog CMS | ✅ | `/blog`, `/admin/blog` |
+| Blog CMS | ✅ | `/blog`, `/admin/blog` + TipTap + AI rewrite |
 | Leads API + admin | ✅ | `/api/leads`, `/admin/leads` |
 | LeadCapture detail pages | ✅ | software + course detail |
 | Ebook gate | ✅ | `/ebook/fullstack-roadmap` |
 | Booking | ✅ | `/booking` |
-| Behavior popup (3+ pages) | ✅ | `GtmBehaviorTracker` |
+| Behavior popup (3+ pages) | ✅ | `GtmBehaviorTracker` → `ConsultationPopup` |
+| Slide-in 30s + scroll CTA 70% | ✅ | `ConsultationSlideIn`, `GtmScrollCtaBar` |
+| Software download gate | ✅ | `SoftwareDownloadGate` |
+| Lead nurture email | ✅ | `sendLeadNurtureEmail` (Resend) |
+| IT Services pricing + case study | ✅ | `/it-services` §pricing |
 | Sitemap, robots, llms.txt, prerender | ✅ | |
-| GA4 client script | ✅ | `VITE_GA_MEASUREMENT_ID` |
-| GA4 admin embed | 🟡 | Cần `GA4_PROPERTY_ID` + service account trên VPS |
+| GA4 client + custom events | ✅ | `gtm-analytics.ts`; events §4.1 |
+| GA4 Measurement ID (admin) | ✅ | `/admin/settings` → `app_settings`; runtime `GET /api/config` |
+| GA4 admin embed (reporting API) | 🟡 | Cần `GA4_PROPERTY_ID` + service account trên VPS |
 
 Chi tiết: [`product.md`](./product.md) §14.6.
 
@@ -46,7 +51,7 @@ Chi tiết: [`product.md`](./product.md) §14.6.
 | Software catalog | ~4,100+ | ✅ Đủ volume SEO |
 | Courses | ~310+ | ✅ Đủ volume; cần enrich top pages |
 | Blog posts | ~3 | **10–15** bài lộ trình |
-| Case study IT Studio | 0 public | **2–3** case SME |
+| Case study IT Studio | 3 (section `/it-services`) | Enrich thêm blog/case chi tiết |
 | Ebook PDF file | Gate form có; file PDF cần xác nhận | 1 PDF + email auto |
 
 Nguồn data populate: [`content-populate.md`](./content-populate.md), [`data-expansion.md`](./data-expansion.md).
@@ -82,12 +87,16 @@ Nguồn data populate: [`content-populate.md`](./content-populate.md), [`data-ex
 
 ### 4.1. GA4 (client — đã có)
 
-- [x] `VITE_GA_MEASUREMENT_ID` trên production
-- [ ] Custom events (khuyến nghị implement):
+- [x] Measurement ID — admin `/admin/settings` (DB) hoặc env `VITE_GA_MEASUREMENT_ID` / `GA_MEASUREMENT_ID`
+- [x] Runtime client load qua `GET /api/config` (không cần rebuild khi đổi ID trong admin)
+- [x] Custom events (`client/src/lib/gtm-analytics.ts`):
   - `lead_submit` — form `/api/leads` success
-  - `download_click` — nút Tải ngay software detail
+  - `download_click` — nút Tải ngay software detail (sau download gate)
   - `booking_view` — `/booking` page view
   - `ebook_gate_submit` — ebook form success
+  - `page_view` — SPA route change (`analytics.tsx`)
+
+**Lưu ý:** `ca-pub-…` (AdSense) ≠ `G-…` (GA4). AdSense script trong `client/index.html`; GA4 cấu hình riêng.
 
 ### 4.2. GA4 Reporting API (admin embed — partial)
 
@@ -158,7 +167,7 @@ Ghi `source` vào lead nếu có (`leads.source` field).
 | MVP Launch | Startup | 50–150tr |
 | Custom Solution | Trường / DN lớn | 100–300tr |
 
-Hiển thị public: cân nhắc section trên `/it-services` (backlog GTM-5).
+Hiển thị public: section **Bảng giá tham khảo** + **Case study SME** trên `/it-services` (✅ Done).
 
 ---
 
@@ -201,12 +210,12 @@ Mỗi trang priority phải có:
 | LeadCapture cuối detail | SPEC §14.5 | ✅ | — |
 | Ebook gate + booking | SPEC §14.5 | ✅ | — |
 | Popup consultation | SPEC §14.6 | ✅ | — |
-| Gate form khi click Tải ngay | go-to-market.md §5 | ❌ Link external trực tiếp | **GTM-1** |
-| Slide-in sau 30s | go-to-market.md §5 | ❌ | **GTM-2** |
-| Bottom bar scroll 70% | go-to-market.md §5 | ❌ | **GTM-3** |
-| Email nurture sau lead | go-to-market.md §5 | ❌ (Resend có) | **GTM-4** |
-| GA4 custom events | §4.1 | ❌ | **GTM-6** |
-| Pricing/case study trên `/it-services` | go-to-market.md §6 | ❌ | **GTM-5** |
+| Gate form khi click Tải ngay | go-to-market.md §5 | ✅ `SoftwareDownloadGate` | — |
+| Slide-in sau 30s | go-to-market.md §5 | ✅ `ConsultationSlideIn` | — |
+| Bottom bar scroll 70% | go-to-market.md §5 | ✅ `GtmScrollCtaBar` | — |
+| Email nurture sau lead | go-to-market.md §5 | ✅ `sendLeadNurtureEmail` (Resend) | — |
+| GA4 custom events | §4.1 | ✅ `gtm-analytics.ts` | — |
+| Pricing/case study trên `/it-services` | go-to-market.md §6 | ✅ | — |
 
 ---
 

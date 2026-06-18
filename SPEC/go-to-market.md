@@ -435,7 +435,9 @@ Gọi điện tư vấn (warm call)
 | `/software/:slug` + SoftwareApplication schema | ✅ |
 | Blog module `/blog` + admin CRUD | ✅ |
 | Lead capture, ebook, booking, behavior popup | ✅ |
-| Sitemap, robots, prerender, GA4 client | ✅ |
+| GTM conversion funnel (download gate, slide-in, scroll CTA, nurture email) | ✅ |
+| GA4 client + custom events + admin Measurement ID | ✅ |
+| Sitemap, robots, prerender | ✅ |
 | Data expansion (awesome + download.com.vn) | ✅ — xem `content-populate.md` |
 
 ### Phase 4: Launch content — 🟡 In progress
@@ -447,7 +449,7 @@ Gọi điện tư vấn (warm call)
 | GA4 admin embed trên VPS | 🟡 API có; cần env |
 | Enrich top course/software SEO | ⬜ Admin CMS sẵn có |
 | Share Facebook groups | ⬜ |
-| 2–3 case study IT Studio | ⬜ |
+| 2–3 case study IT Studio | 🟡 3 summary cards trên `/it-services` |
 
 ### Phase 5–6: First customers + scale
 

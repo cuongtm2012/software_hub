@@ -55,6 +55,58 @@ const services = [
     },
 ];
 
+const pricingTiers = [
+    {
+        name: "Web Starter",
+        audience: "Shop, landing page",
+        price: "8–15 triệu",
+        features: ["Landing / shop cơ bản", "Responsive mobile", "Form liên hệ", "SEO on-page cơ bản"],
+        highlighted: false,
+    },
+    {
+        name: "Business Pro",
+        audience: "SME — web + CRM/booking",
+        price: "20–50 triệu",
+        features: ["Web doanh nghiệp đầy đủ", "CRM / booking tích hợp", "Admin dashboard", "Bảo trì 3 tháng"],
+        highlighted: true,
+    },
+    {
+        name: "MVP Launch",
+        audience: "Startup ra mắt sản phẩm",
+        price: "50–150 triệu",
+        features: ["Web + app MVP", "Auth & thanh toán", "API backend", "Deploy production"],
+        highlighted: false,
+    },
+    {
+        name: "Custom Solution",
+        audience: "Trường học / doanh nghiệp lớn",
+        price: "100–300 triệu",
+        features: ["Hệ thống tùy chỉnh", "Tích hợp legacy", "SLA & support", "Team dedicated"],
+        highlighted: false,
+    },
+];
+
+const smeCaseStudies = [
+    {
+        title: "Chuỗi nhà sách PageTurner",
+        industry: "Bán lẻ",
+        summary: "Hệ thống quản lý tồn kho cho 12 chi nhánh, thay thế Excel thủ công.",
+        result: "Giảm 65% thời gian quản lý tồn kho",
+    },
+    {
+        title: "Shop thời trang StyleStock",
+        industry: "E-commerce",
+        summary: "Web bán hàng + quét barcode tích hợp kho, đồng bộ đa kênh.",
+        result: "Độ chính xác tồn kho 89.8%, giảm 35% hàng dư",
+    },
+    {
+        title: "Corporate Pulse",
+        industry: "B2B Services",
+        summary: "Website giới thiệu công ty với analytics thời gian thực cho team sales.",
+        result: "Traffic tăng 47% sau 4 tháng ra mắt",
+    },
+];
+
 const successProjects = [
     {
         id: 1,
@@ -154,6 +206,10 @@ export default function ITServicesPage() {
         }
     };
 
+    const scrollToPricing = () => {
+        document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+    };
+
     return (
         <div className="min-h-screen flex flex-col overflow-x-hidden bg-gray-50">
             <PageMeta
@@ -188,6 +244,7 @@ export default function ITServicesPage() {
                                 </Button>
                                 <Button
                                     variant="outline"
+                                    onClick={scrollToPricing}
                                     className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20 font-semibold"
                                     size="lg"
                                 >
@@ -230,6 +287,91 @@ export default function ITServicesPage() {
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Pricing */}
+                <section id="pricing" className="py-16 bg-white scroll-mt-20">
+                    <div className="w-full min-w-0 max-w-full px-[4%]">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                                Bảng giá tham khảo
+                            </h2>
+                            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                                Giá cụ thể phụ thuộc phạm vi dự án. Liên hệ để nhận báo giá chi tiết trong 24h.
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+                            {pricingTiers.map((tier) => (
+                                <div
+                                    key={tier.name}
+                                    className={`rounded-xl border p-6 flex flex-col ${
+                                        tier.highlighted
+                                            ? "border-amber-400 bg-amber-50/50 shadow-md ring-1 ring-amber-200"
+                                            : "border-gray-100 bg-white shadow-sm"
+                                    }`}
+                                >
+                                    {tier.highlighted && (
+                                        <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded self-start mb-3">
+                                            Phổ biến nhất
+                                        </span>
+                                    )}
+                                    <h3 className="text-lg font-bold text-gray-900">{tier.name}</h3>
+                                    <p className="text-sm text-gray-500 mt-1">{tier.audience}</p>
+                                    <p className="text-2xl font-bold text-slate-800 mt-4">{tier.price}</p>
+                                    <ul className="mt-4 space-y-2 flex-1">
+                                        {tier.features.map((feature) => (
+                                            <li key={feature} className="flex items-start gap-2 text-sm text-gray-600">
+                                                <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                                                {feature}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <Button
+                                        onClick={goToServiceRequest}
+                                        className={`w-full mt-6 ${
+                                            tier.highlighted
+                                                ? "bg-amber-500 hover:bg-amber-400 text-slate-900"
+                                                : "bg-slate-700 hover:bg-slate-800 text-white"
+                                        }`}
+                                        size="sm"
+                                    >
+                                        Nhận báo giá
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* SME Case Studies */}
+                <section className="py-16 bg-gray-50">
+                    <div className="w-full min-w-0 max-w-full px-[4%]">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                                Case study SME
+                            </h2>
+                            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                                Các dự án thực tế cho doanh nghiệp vừa và nhỏ tại Việt Nam
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-6">
+                            {smeCaseStudies.map((study) => (
+                                <div
+                                    key={study.title}
+                                    className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow"
+                                >
+                                    <span className="text-xs font-semibold text-[#004080] bg-[#004080]/10 px-2 py-1 rounded">
+                                        {study.industry}
+                                    </span>
+                                    <h3 className="text-lg font-bold text-gray-900 mt-3">{study.title}</h3>
+                                    <p className="text-sm text-gray-600 mt-2">{study.summary}</p>
+                                    <p className="text-sm font-semibold text-green-700 mt-4">{study.result}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>

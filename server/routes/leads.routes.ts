@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 import { adminMiddleware } from "../middleware/auth.middleware.js";
 import { leadRateLimiter } from "../middleware/rate-limit.js";
+import { sendLeadNurtureEmail } from "../email.js";
 
 const router = Router();
 
@@ -55,6 +56,11 @@ router.post("/", leadRateLimiter, async (req: Request, res: Response, next: Next
       phone: phoneClean,
       source,
       source_id,
+    });
+
+    // Fire-and-forget nurture email (non-blocking)
+    sendLeadNurtureEmail(email.trim(), name, source).catch((err) => {
+      console.error("Lead nurture email failed:", err);
     });
 
     res.status(201).json({ success: true, id: lead.id });

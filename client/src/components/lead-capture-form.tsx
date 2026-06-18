@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Phone, Mail, Headphones, Clock, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trackGtmEvent } from "@/lib/gtm-analytics";
 
 interface LeadCaptureFormProps {
   source?: string;
@@ -11,6 +12,7 @@ interface LeadCaptureFormProps {
   title?: string;
   description?: string;
   compact?: boolean;
+  onSuccess?: () => void;
 }
 
 export function LeadCaptureForm({
@@ -46,6 +48,12 @@ export function LeadCaptureForm({
 
       if (!res.ok) throw new Error("Submit failed");
 
+      const eventName = source === "ebook" ? "ebook_gate_submit" : "lead_submit";
+      trackGtmEvent(eventName, {
+        source,
+        source_id: sourceId?.toString(),
+      });
+
       toast({
         title: "Đã gửi thành công!",
         description: "Chúng tôi sẽ liên hệ tư vấn trong vòng 4 giờ.",
@@ -53,6 +61,7 @@ export function LeadCaptureForm({
       setEmail("");
       setPhone("");
       setName("");
+      onSuccess?.();
     } catch {
       toast({
         title: "Gửi thất bại",

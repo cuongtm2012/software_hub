@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 declare global {
@@ -29,19 +29,43 @@ function loadGtag(id: string) {
 
 export function Analytics() {
   const [location] = useLocation();
+  const gaIdFromEnv = GA_ID;
+  const [gaId, setGaId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!GA_ID) return;
-    loadGtag(GA_ID);
+    // Prefer build-time env, but allow runtime config from admin (/api/config)
+    if (gaIdFromEnv) {
+      loadGtag(gaIdFromEnv);
+      return;
+    }
+
+    let cancelled = false;
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((data: { gaMeasurementId?: string | null }) => {
+        if (cancelled) return;
+        const id = data?.gaMeasurementId?.trim();
+        if (!id) return;
+        setGaId(id);
+        loadGtag(id);
+      })
+      .catch(() => {
+        // ignore
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    if (!GA_ID || !window.gtag) return;
+    const activeId = gaIdFromEnv || gaId;
+    if (!activeId || !window.gtag) return;
     window.gtag("event", "page_view", {
       page_path: location,
       page_title: document.title,
     });
-  }, [location]);
+  }, [location, gaId, gaIdFromEnv]);
 
   return null;
 }

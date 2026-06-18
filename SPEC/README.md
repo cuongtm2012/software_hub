@@ -11,6 +11,8 @@ Tài liệu đặc tả sản phẩm, GTM và data pipeline. Đặt tên theo **
 | [`gtm-operations.md`](./gtm-operations.md) | Vận hành GTM — KPI, lead SLA, analytics, content calendar | Ops hàng tuần/tháng |
 | [`content-populate.md`](./content-populate.md) | Crawl/seed pipeline — download.com.vn, awesome lists | Chạy data populate |
 | [`data-expansion.md`](./data-expansion.md) | Nguồn data, schema, UI catalog backlog | Mở rộng catalog |
+| [`content-crawler-SPEC.md`](./content-crawler-SPEC.md) | Blog content crawler + AI rewrite pipeline | Crawl blog drafts |
+| — | Google AdSense: `ca-pub-6124954442503878` trong `client/index.html` (khác GA4 `G-…`) | Monetization |
 | [`ui-improvement-v1.md`](./ui-improvement-v1.md) | Design system v1 — tokens, components | UI/UX polish |
 
 ## Quan hệ giữa các file

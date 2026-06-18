@@ -34,6 +34,11 @@ import { SoftwareSchema } from "@/components/seo/software-schema";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { LeadCaptureForm } from "@/components/lead-capture-form";
 import {
+  SoftwareDownloadGate,
+  hasPassedDownloadGate,
+  openDownloadUrl,
+} from "@/components/software-download-gate";
+import {
   pageContainerClass,
   pageMainClass,
   pageShellClass,
@@ -104,6 +109,7 @@ export default function SoftwareDetailPage() {
   const queryClient = useQueryClient();
   const [userRating, setUserRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [downloadGateOpen, setDownloadGateOpen] = useState(false);
 
   const {
     data: software,
@@ -278,6 +284,16 @@ export default function SoftwareDetailPage() {
     if (e.detail > 1) e.preventDefault();
   };
 
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!downloadUrl || !software) return;
+    if (hasPassedDownloadGate(software.id)) {
+      openDownloadUrl(downloadUrl, software.id, software.name);
+      return;
+    }
+    setDownloadGateOpen(true);
+  };
+
   return (
     <div className={pageShellClass}>
       <PageMeta
@@ -398,17 +414,15 @@ export default function SoftwareDetailPage() {
 
                   <div className="p-5 space-y-3">
                     {downloadUrl && (
-                      <a
-                        href={downloadUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
                         title={`Tải xuống ${software.name}`}
-                        onClick={handleExternalLinkClick}
+                        onClick={handleDownloadClick}
                         className="w-full inline-flex items-center justify-center px-5 py-3 text-base font-semibold rounded-lg text-white bg-[#004080] hover:bg-[#003366] transition-colors"
                       >
                         <Download className="h-5 w-5 mr-2" />
                         Tải ngay
-                      </a>
+                      </button>
                     )}
 
                     {documentationUrl && (
@@ -578,6 +592,16 @@ export default function SoftwareDetailPage() {
           </div>
         </div>
       </main>
+
+      {downloadUrl && software && (
+        <SoftwareDownloadGate
+          open={downloadGateOpen}
+          onClose={() => setDownloadGateOpen(false)}
+          softwareName={software.name}
+          softwareId={software.id}
+          downloadUrl={downloadUrl}
+        />
+      )}
 
       <Footer />
     </div>

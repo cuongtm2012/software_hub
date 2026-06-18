@@ -43,7 +43,7 @@ Internet → Nginx (80/443) → PM2 app :5000
 - Firebase SDK (push notifications)
 - Uppy (file uploads → Supabase Storage)
 - Recharts (analytics)
-- Google Tag Manager / GA4 (`VITE_GA_MEASUREMENT_ID`)
+- GA4 client (`analytics.tsx`) — Measurement ID từ `/admin/settings` → `app_settings`, env (`VITE_GA_MEASUREMENT_ID`), hoặc runtime `GET /api/config`
 
 **Backend**
 - Node.js 20 + Express (TypeScript via `tsx` dev, compiled to `dist/server/`)
@@ -73,7 +73,7 @@ Internet → Nginx (80/443) → PM2 app :5000
 
 Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push`).
 
-### 3.1. Core Tables (28 tables)
+### 3.1. Core Tables (29 tables)
 
 **Users & Auth**
 | Table | Purpose | Key Fields |
@@ -90,6 +90,7 @@ Schema defined in `shared/schema.ts`, managed with Drizzle Kit (`npm run db:push
 | `courses` | IT learning courses | title, topic, youtube_url, playlist_id, level, language, slug |
 | `blog_posts` | Blog articles (GTM) | title, slug, content, status, author_id |
 | `leads` | Lead capture forms (GTM) | name, email, phone, source, status |
+| `app_settings` | Admin-managed config (key-value) | key, value, updated_at — DeepSeek API key, GA4 Measurement ID |
 | `user_downloads` | Download tracking | user_id, software_id, version |
 
 **Project Management**
@@ -367,7 +368,8 @@ Refactored dashboard architecture:
 - `GlobalCartSidebar` + `CartTrigger` (`cart-sidebar.tsx`) — unified slide-over cart via `useCart` (localStorage)
 - `PaymentForm` — redirect tới payOS `checkoutUrl`
 - `LeadCaptureForm` — GTM lead capture (navy/yellow brand)
-- `GtmBehaviorTracker` + `ConsultationPopup` — behavior-based consultation popup
+- `GtmBehaviorTracker` + `ConsultationPopup` + `ConsultationSlideIn` + `GtmScrollCtaBar` — behavior-based GTM triggers
+- `SoftwareDownloadGate` — lead form trước khi mở link tải phần mềm
 - `FloatingChatButton` — real-time chat widget
 - `Pagination`, `StarRating`, `Breadcrumb`, `Stepper`
 - `SearchWithAutocomplete` — global search
@@ -390,7 +392,8 @@ Refactored dashboard architecture:
 | `/admin/software` | AdminSoftwareManagementPage | Marketplace | Catalog `softwares` (miễn phí) |
 | `/admin/products` | AdminProductsPage | Marketplace | Duyệt `products` marketplace (`PATCH status`) |
 | `/admin/orders` | AdminOrdersPage | Marketplace | Đơn hàng marketplace — enriched API, filter status |
-| `/admin/blog` | BlogManagementPage | Nội dung & GTM | Blog CRUD |
+| `/admin/blog` | BlogManagementPage | Nội dung & GTM | Blog CRUD + AI rewrite (DeepSeek) |
+| `/admin/settings` | SettingsPage | Dev Tools | DeepSeek API key + GA4 Measurement ID (`app_settings`) |
 | `/admin/courses` | CoursesManagementPage | Nội dung & GTM | SEO editor khóa học |
 | `/admin/leads` | LeadsManagementPage | Nội dung & GTM | GTM lead capture |
 | `/admin/projects` | AdminProjectsPage | Vận hành | **Unified** `external_requests` — filter nguồn, priority, search; banner phân biệt IT Services |
@@ -422,6 +425,8 @@ Refactored dashboard architecture:
 | Seller approvals | `GET/PUT /api/admin/sellers/*` | admin |
 | Queues | `GET /api/admin/queue/stats`, retry/clear | admin |
 | Analytics timelines | `GET /api/admin/analytics/orders-timeline`, `leads-timeline` | admin |
+| App settings | `GET/PUT /api/admin/settings/deepseek`, `POST .../test`; `GET/PUT /api/admin/settings/ga4` | admin |
+| Public runtime config | `GET /api/config` → `{ gaMeasurementId }` | public |
 | Orders (buyer/seller) | `GET /api/orders` → `{ orders, total }` enriched | role-based |
 | IT service requests | `GET /api/service-requests` (+ `status`, `priority`, `search` for admin) | admin / client |
 | Blog / Leads / Courses / Support | (unchanged) | admin |
@@ -490,11 +495,12 @@ Refactored dashboard architecture:
 | **payOS** | Wallet top-up + marketplace + IT service payments | ✅ Active (§4.2) |
 | SendGrid / Resend | Transactional email | ✅ Active |
 | Firebase FCM | Push notifications | ✅ Active |
-| Google Analytics 4 | Traffic tracking (`VITE_GA_MEASUREMENT_ID`) | ✅ Active |
-| Stripe | Card payments | ⛔ Legacy (env vars only, not wired) |
-| Google Generative AI | Chat AI responses | ✅ Active |
-| Redis | Message queue | ✅ VPS Docker |
-| MongoDB | Chat message store | ✅ VPS Docker |
+|| **Google Analytics 4** | Traffic tracking (`VITE_GA_MEASUREMENT_ID`) | ✅ Active |
+|| **Google AdSense** | Ad display revenue (`client/index.html`) | ✅ Active |
+|| Stripe | Card payments | ⛔ Legacy (env vars only, not wired) |
+|| Google Generative AI | Chat AI responses | ✅ Active |
+|| Redis | Message queue | ✅ VPS Docker |
+|| MongoDB | Chat message store | ✅ VPS Docker |
 
 ### 7.3. Supabase Integration (Completed)
 
@@ -506,6 +512,18 @@ Refactored dashboard architecture:
 | Local users sync | `users.supabase_id` links Supabase user → local role/permissions |
 | Schema | Drizzle ORM + `drizzle-kit push` |
 | Admin UI | Supabase Studio dashboard |
+
+### 7.4. Google AdSense
+
+| Item | Detail |
+|------|--------|
+| Client ID | `ca-pub-6124954442503878` |
+| Script location | `client/index.html` — in `<head>` |
+| Script | `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6124954442503878" crossorigin="anonymous"></script>` |
+| Setup | Thủ công via `client/index.html` (không qua GTM). Cần verify site trong Google AdSense console. |
+| Deployment | Khi build, script được bundle vào SPA `index.html` → deploy theo server. |
+
+> **Lưu ý:** AdSense cần content quality + traffic đủ để được approval. Chạy song song với GTM/GA4.
 
 ---
 
@@ -832,11 +850,16 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 | SEO markdown internal links | ✅ Done | `render-seo-markdown.tsx` |
 | Ebook download gate | ✅ Done | `/ebook/fullstack-roadmap` |
 | Booking page | ✅ Done | `/booking` |
-| GA4 tracking | ✅ Done | `VITE_GA_MEASUREMENT_ID` |
+| GA4 tracking | ✅ Done | `analytics.tsx` + `gtm-analytics.ts`; ID: admin `/admin/settings` → `app_settings` hoặc env; runtime `GET /api/config` |
+| GA4 admin config | ✅ Done | `/admin/settings` — Measurement ID `G-…` (DB ưu tiên env) |
+| Software download gate (GTM-1) | ✅ Done | `SoftwareDownloadGate` trên `/software/:slug` |
+| GA4 custom events (GTM-6) | ✅ Done | `lead_submit`, `download_click`, `booking_view`, `ebook_gate_submit` |
+| Lead nurture email (GTM-4) | ✅ Done | `sendLeadNurtureEmail` sau `POST /api/leads` (Resend) |
+| IT Services pricing (GTM-5) | ✅ Done | Bảng giá + case study SME trên `/it-services` |
 | Course landing SEO meta | ✅ Done | `PageMeta` + auto `buildSeoContent()` + admin editor `/admin/courses` |
 | Software SEO content | ✅ Done | `software-utils.ts` + `SoftwareSchema` on detail page |
 | Schema.org markup | ✅ Done | `CourseSchema`, `SoftwareSchema`, `BreadcrumbSchema`, `ArticleSchema` |
-| Chat trigger theo behavior | ✅ Done | `GtmBehaviorTracker` → `ConsultationPopup` |
+| Chat trigger theo behavior | ✅ Done | `GtmBehaviorTracker` → popup 3+ pages, slide-in 30s, scroll CTA 70% |
 | Dashboard lead tracking | ✅ Done | `/admin/leads` |
 | Software SEO admin CMS | ✅ Done | `/admin/software-seo` + `PUT /api/admin/software/:id/seo` |
 | Default OG image (1200×630 PNG) | ✅ Done | `client/public/og-default.png` · `npm run generate:og-image` |
@@ -863,18 +886,18 @@ Volume DB đủ SEO; ưu tiên **chất lượng content** — checklist đầy 
 | Courses | ~310+ | Enrich top 20–50 pages (500–800 từ) |
 | Blog posts | ~3 | **10–15** bài lộ trình |
 | Install guides (VN) | 0 | **20–30** phần mềm phổ biến |
-| IT Studio case studies | 0 | **2–3** case SME |
+| IT Studio case studies | 3 (trên `/it-services`) | Enrich thêm blog/case chi tiết |
 
 ### 14.9. Conversion backlog (code)
 
 | ID | Feature | Status |
 |----|---------|--------|
-| GTM-1 | Gate form khi click Tải ngay (software detail) | ❌ |
-| GTM-2 | Slide-in consultation sau 30s | ❌ |
-| GTM-3 | Bottom bar khi scroll 70% | ❌ |
-| GTM-4 | Email nurture sau lead (Resend) | ❌ |
-| GTM-5 | Pricing + case study trên `/it-services` | ❌ |
-| GTM-6 | GA4 custom events (`lead_submit`, `download_click`, …) | ❌ |
+| GTM-1 | Gate form khi click Tải ngay (software detail) | ✅ |
+| GTM-2 | Slide-in consultation sau 30s | ✅ |
+| GTM-3 | Bottom bar khi scroll 70% | ✅ |
+| GTM-4 | Email nurture sau lead (Resend) | ✅ |
+| GTM-5 | Pricing + case study trên `/it-services` | ✅ |
+| GTM-6 | GA4 custom events (`lead_submit`, `download_click`, …) | ✅ |
 
 Chi tiết: `gtm-operations.md` §7.
 
@@ -893,14 +916,7 @@ Chi tiết: `gtm-operations.md` §7.
 
 ### 15.2. Medium Priority — SEO / GTM / Phase 4 polish
 
-| # | Feature | Mô tả | Ref |
-|---|---|---|---|
-| GTM-1 | Download gate | Form trước khi mở link tải external | `gtm-operations.md` §7 |
-| GTM-2 | 30s slide-in | Consultation popup sau 30s | §7 |
-| GTM-3 | Scroll bottom bar | CTA bar khi scroll 70% | §7 |
-| GTM-4 | Lead nurture email | Auto email sau lead submit | §7 |
-| GTM-5 | IT Services pricing page | Bảng giá + case study public | §7 |
-| GTM-6 | GA4 custom events | `lead_submit`, `download_click`, … | §4.1 |
+> GTM conversion backlog (GTM-1…GTM-6) — ✅ Done tháng 6/2026. Chi tiết §14.9, `gtm-operations.md` §7.
 
 ### 15.3. Low Priority — DevOps / chất lượng / tương lai
 

@@ -328,5 +328,49 @@ export async function sendServiceNotificationEmail(
   });
 }
 
+export async function sendLeadNurtureEmail(
+  leadEmail: string,
+  leadName?: string,
+  source?: string,
+): Promise<EmailResult> {
+  const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
+  const frontendUrl = process.env.FRONTEND_URL || process.env.APP_URL || "http://localhost:5001";
+  const greeting = leadName ? `Xin chào ${leadName},` : "Xin chào,";
+
+  return sendEmail({
+    to: leadEmail,
+    from: fromEmail,
+    replyTo: fromEmail,
+    subject: "Software Hub — Cảm ơn bạn đã để lại thông tin",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #004080; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #ffcc00; margin: 0; font-size: 20px;">Software Hub</h1>
+        </div>
+        <div style="padding: 24px; background: #f9f9f9; border-radius: 0 0 8px 8px;">
+          <p style="color: #333; line-height: 1.6;">${greeting}</p>
+          <p style="color: #333; line-height: 1.6;">
+            Cảm ơn bạn đã liên hệ qua Software Hub${source ? ` (${source})` : ""}.
+            Team của chúng tôi sẽ gọi tư vấn trong vòng <strong>4 giờ</strong> (giờ hành chính).
+          </p>
+          <p style="color: #333; line-height: 1.6;">Trong lúc chờ, bạn có thể:</p>
+          <ul style="color: #333; line-height: 1.8;">
+            <li><a href="${frontendUrl}/ebook/fullstack-roadmap" style="color: #004080;">Tải ebook lộ trình Fullstack 6 tháng</a></li>
+            <li><a href="${frontendUrl}/booking" style="color: #004080;">Đặt lịch tư vấn trực tiếp</a></li>
+            <li><a href="${frontendUrl}/it-services" style="color: #004080;">Xem dịch vụ IT Studio</a></li>
+          </ul>
+          <p style="margin-top: 24px; font-size: 13px; color: #888;">
+            Software Hub — Tư vấn lộ trình & phát triển phần mềm
+          </p>
+        </div>
+      </div>
+    `,
+    tags: [
+      { name: "category", value: "lead-nurture" },
+      { name: "source", value: source || "unknown" },
+    ],
+  });
+}
+
 // Export the core function as well for custom emails
 export { sendEmail };

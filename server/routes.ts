@@ -26,6 +26,7 @@ import { seoPrerenderMiddleware } from "./middleware/seo-prerender.js";
 import uploadRouter from "./routes/upload.routes.js";
 import portfolioRouter, { portfolioReviewRouter } from "./routes/portfolio.routes.js";
 import supportRouter from "./routes/support.routes.js";
+import configRouter from "./routes/config.routes.js";
 import { authRateLimiter } from "./middleware/rate-limit.js";
 
 // Import named exports (register functions)
@@ -256,6 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/chat", chatRouter);
   app.use("/api/orders", orderRouter);
   app.use("/api/admin", adminRouter);
+  app.use("/api/config", configRouter);
   app.use("/api/products", productRouter);
   app.use("/api/softwares", softwareRouter);
   app.use("/api/courses", coursesRouter);

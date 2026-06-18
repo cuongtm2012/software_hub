@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { PageMeta } from "@/components/seo/page-meta";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Loader2, Phone, CheckCircle } from "lucide-react";
+import { trackGtmEvent } from "@/lib/gtm-analytics";
 
 export default function BookingPage() {
   const { toast } = useToast();
@@ -20,6 +21,10 @@ export default function BookingPage() {
     preferredTime: "",
     note: "",
   });
+
+  useEffect(() => {
+    trackGtmEvent("booking_view");
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +44,7 @@ export default function BookingPage() {
         }),
       });
       if (!res.ok) throw new Error("Failed");
+      trackGtmEvent("lead_submit", { source: "booking" });
       setSubmitted(true);
       toast({
         title: "Đặt lịch thành công!",
