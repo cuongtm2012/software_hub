@@ -1,3 +1,11 @@
+import {
+  getDeepseekRuntimeConfig,
+  isDeepseekConfigured as isDeepseekConfiguredFromSettings,
+  refreshDeepseekRuntimeSettings,
+} from "./deepseek-settings";
+
+export { refreshDeepseekRuntimeSettings, isDeepseekConfiguredFromSettings as isDeepseekConfigured };
+
 type DeepseekRole = "system" | "user" | "assistant";
 
 export type DeepseekChatMessage = {
@@ -19,26 +27,10 @@ type DeepseekChatCompletionResponse = {
   }>;
 };
 
-export function isDeepseekConfigured(): boolean {
-  return Boolean(process.env.DEEPSEEK_API_KEY?.trim());
-}
-
-export function getDeepseekConfig() {
-  const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
-  const baseUrl = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
-  const model = process.env.DEEPSEEK_MODEL || "deepseek-chat";
-
-  if (!apiKey) {
-    throw new Error("DEEPSEEK_API_KEY chưa được cấu hình trên server");
-  }
-
-  return { apiKey, baseUrl, model };
-}
-
 export async function deepseekChatCompletion(
   req: Omit<DeepseekChatCompletionRequest, "model"> & { model?: string },
 ): Promise<string> {
-  const { apiKey, baseUrl, model: defaultModel } = getDeepseekConfig();
+  const { apiKey, baseUrl, model: defaultModel } = getDeepseekRuntimeConfig();
   const model = req.model || defaultModel;
 
   const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/chat/completions`, {
@@ -66,4 +58,3 @@ export async function deepseekChatCompletion(
   if (!content) throw new Error("DeepSeek returned empty content");
   return content;
 }
-

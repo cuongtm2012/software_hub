@@ -170,6 +170,13 @@ export const blogPosts = pgTable("blog_posts", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Key-value app settings (admin-managed secrets/config)
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Lead capture for GTM conversion funnel
 export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),

@@ -75,7 +75,8 @@ router.post(
 
       if (!isDeepseekConfigured()) {
         return res.status(503).json({
-          message: "DeepSeek chưa được cấu hình. Thêm DEEPSEEK_API_KEY vào file .env rồi restart server.",
+          message:
+            "DeepSeek chưa được cấu hình. Thêm API key tại Admin → Cài đặt hoặc DEEPSEEK_API_KEY trong .env.",
         });
       }
 

@@ -104,6 +104,13 @@ app.use((req, res, next) => {
     // Initialize database first
     await initializeDatabase();
 
+    try {
+      const { refreshDeepseekRuntimeSettings } = await import("./lib/deepseek-settings.js");
+      await refreshDeepseekRuntimeSettings();
+    } catch (error) {
+      console.warn("DeepSeek settings bootstrap skipped:", error);
+    }
+
     // Initialize Firebase Admin SDK for push notifications
     try {
       const { initializeFirebaseAdmin } = await import("./lib/firebase-admin.js");

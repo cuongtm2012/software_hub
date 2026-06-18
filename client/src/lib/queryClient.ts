@@ -1,11 +1,43 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { getAuthHeaders } from "./auth-token";
 
+export function parseApiErrorMessage(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  const jsonMatch = raw.match(/^\d{3}:\s*(\{[\s\S]*\})$/);
+  if (jsonMatch) {
+    try {
+      const body = JSON.parse(jsonMatch[1]) as { message?: string };
+      if (body.message) return body.message;
+    } catch {
+      // ignore
+    }
+  }
+  if (raw.includes("Unexpected token") && raw.includes("<!DOCTYPE")) {
+    return "API trả về HTML thay vì JSON. Hãy restart server (`npm run dev`) rồi thử lại.";
+  }
+  if (raw.includes("API trả về HTML")) return raw;
+  return raw || "Yêu cầu API thất bại";
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
+}
+
+export async function readApiJson<T = unknown>(res: Response): Promise<T> {
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    const text = await res.text();
+    if (text.trimStart().startsWith("<!DOCTYPE") || text.trimStart().startsWith("<html")) {
+      throw new Error(
+        "API trả về HTML thay vì JSON. Route chưa sẵn sàng — hãy restart server (`npm run dev`).",
+      );
+    }
+    throw new Error(`${res.status}: ${text.slice(0, 240)}`);
+  }
+  return res.json() as Promise<T>;
 }
 
 export async function apiRequest(
@@ -26,6 +58,15 @@ export async function apiRequest(
 
   await throwIfResNotOk(res);
   return res;
+}
+
+export async function apiRequestJson<T = unknown>(
+  method: string,
+  url: string,
+  data?: unknown,
+): Promise<T> {
+  const res = await apiRequest(method, url, data);
+  return readApiJson<T>(res);
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -62,7 +103,7 @@ export const getQueryFn: <T>(options: {
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    return await readApiJson(res);
   };
 
 export const queryClient = new QueryClient({

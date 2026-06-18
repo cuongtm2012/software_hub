@@ -89,6 +89,7 @@ import AdminAnalyticsPage from "@/pages/admin/analytics-page";
 import AdminProductsPage from "@/pages/admin/products-page";
 import AdminOrdersPage from "@/pages/admin/orders-page";
 import ProjectEditPage from "@/pages/admin/project-edit-page";
+import AdminSettingsPage from "@/pages/admin/settings-page";
 import SellerAnalyticsPage from "@/pages/seller-analytics-page";
 import EbookPage from "@/pages/ebook-page";
 import BookingPage from "@/pages/booking-page";
@@ -160,6 +161,7 @@ function Router() {
       <ProtectedRoute path="/admin/software-seo" component={SoftwareSeoManagementPage} roles={['admin']} />
       <ProtectedRoute path="/admin/support-tickets" component={AdminSupportTicketsPage} roles={['admin']} />
       <ProtectedRoute path="/admin/analytics" component={AdminAnalyticsPage} roles={['admin']} />
+      <ProtectedRoute path="/admin/settings" component={AdminSettingsPage} roles={['admin']} />
       <ProtectedRoute path="/admin/service-requests" component={AdminServiceRequestsPage} roles={['admin']} />
 
 

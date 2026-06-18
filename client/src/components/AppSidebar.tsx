@@ -23,6 +23,7 @@ import {
     Headphones,
     Store,
     Monitor,
+    Settings,
 } from "lucide-react";
 import {
     Sidebar,
@@ -92,6 +93,7 @@ const adminMenuGroups: MenuGroup[] = [
 const adminDevGroup: MenuGroup = {
     label: "Dev Tools",
     items: [
+        { title: "Cài đặt", url: "/admin/settings", icon: Settings },
         { title: "Email Tests", url: "/admin/email-tests", icon: Mail },
         { title: "E2E Tests", url: "/admin/end-to-end-tests", icon: FlaskConical },
         { title: "Push Tests", url: "/admin/push-notifications", icon: Bell },

@@ -9,6 +9,11 @@ import { fromZodError } from "zod-validation-error";
 import { insertSoftwareSchema, insertCategorySchema } from "@shared/schema";
 import { adminMiddleware } from "../middleware/auth.middleware";
 import { queueManager } from "../lib/queue.js";
+import {
+  getDeepseekSettingsPublic,
+  saveDeepseekSettings,
+} from "../lib/deepseek-settings.js";
+import { deepseekChatCompletion } from "../lib/deepseek.js";
 
 const router = Router();
 
@@ -67,6 +72,48 @@ router.delete("/queue/:queueName/failed", adminMiddleware, async (req: Request, 
     });
   } catch (error) {
     next(error);
+  }
+});
+
+// ============ App Settings ============
+
+router.get("/settings/deepseek", adminMiddleware, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const settings = await getDeepseekSettingsPublic();
+    res.json(settings);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put("/settings/deepseek", adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { apiKey, baseUrl, model, clearApiKey } = req.body ?? {};
+    const settings = await saveDeepseekSettings({
+      apiKey: typeof apiKey === "string" ? apiKey : undefined,
+      baseUrl: typeof baseUrl === "string" ? baseUrl : undefined,
+      model: typeof model === "string" ? model : undefined,
+      clearApiKey: clearApiKey === true,
+    });
+    res.json(settings);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Không lưu được cài đặt DeepSeek";
+    console.error("Save DeepSeek settings failed:", error);
+    res.status(500).json({ message });
+  }
+});
+
+router.post("/settings/deepseek/test", adminMiddleware, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const reply = await deepseekChatCompletion({
+      messages: [{ role: "user", content: "Reply with exactly: OK" }],
+      max_tokens: 16,
+      temperature: 0,
+    });
+    res.json({ ok: true, reply: reply.trim() });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "DeepSeek test failed";
+    res.status(502).json({ ok: false, message });
   }
 });
 
