@@ -13,7 +13,6 @@ const appRoot = existsSync(join(scriptDir, "dist", "server"))
   ? scriptDir
   : join(scriptDir, "..");
 const root = join(appRoot, "dist");
-const schemaTarget = join(root, "shared", "schema.js");
 
 function hasExtension(specifier) {
   return /\.(?:js|json|node|mjs|cjs)$/.test(specifier);
@@ -31,11 +30,13 @@ function fixRelativeExtensions(source) {
     });
 }
 
-function rewriteSharedSchema(source, filePath) {
-  if (!source.includes("@shared/schema")) return source;
-  let rel = relative(dirname(filePath), schemaTarget).replaceAll(sep, "/");
-  if (!rel.startsWith(".")) rel = `./${rel}`;
-  return source.replace(/(["'])@shared\/schema\1/g, `$1${rel}$1`);
+function rewriteSharedImports(source, filePath) {
+  return source.replace(/(["'])@shared\/([^"']+)\1/g, (match, q, subpath) => {
+    const target = join(root, "shared", `${subpath}.js`);
+    let rel = relative(dirname(filePath), target).replaceAll(sep, "/");
+    if (!rel.startsWith(".")) rel = `./${rel}`;
+    return `${q}${rel}${q}`;
+  });
 }
 
 function walk(dir) {
@@ -48,7 +49,7 @@ function walk(dir) {
     if (!entry.name.endsWith(".js")) continue;
 
     const original = readFileSync(filePath, "utf8");
-    let updated = rewriteSharedSchema(original, filePath);
+    let updated = rewriteSharedImports(original, filePath);
     updated = fixRelativeExtensions(updated);
     if (updated !== original) writeFileSync(filePath, updated);
   }
