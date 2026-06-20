@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Settings, Sparkles, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Settings, Sparkles, CheckCircle2, XCircle, Search } from "lucide-react";
 
 type DeepseekSettings = {
   configured: boolean;
@@ -29,6 +29,15 @@ type GaSettings = {
   hasEnvValue: boolean;
 };
 
+type GscSettings = {
+  configured: boolean;
+  source: "database" | "env" | "none";
+  tokenMasked: string | null;
+  hasDatabaseValue: boolean;
+  hasEnvValue: boolean;
+  sitemapUrl: string;
+};
+
 const SOURCE_LABEL: Record<DeepseekSettings["source"], string> = {
   database: "Database (Admin)",
   env: "File .env",
@@ -41,6 +50,7 @@ export default function AdminSettingsPage() {
   const [baseUrl, setBaseUrl] = useState("https://api.deepseek.com");
   const [model, setModel] = useState("deepseek-chat");
   const [gaMeasurementId, setGaMeasurementId] = useState("");
+  const [gscVerificationToken, setGscVerificationToken] = useState("");
 
   const { data, isLoading, refetch, error: loadError } = useQuery<DeepseekSettings>({
     queryKey: ["/api/admin/settings/deepseek"],
@@ -56,6 +66,17 @@ export default function AdminSettingsPage() {
   } = useQuery<GaSettings>({
     queryKey: ["/api/admin/settings/ga4"],
     queryFn: () => apiRequestJson<GaSettings>("GET", "/api/admin/settings/ga4"),
+    retry: false,
+  });
+
+  const {
+    data: gscData,
+    isLoading: isLoadingGsc,
+    refetch: refetchGsc,
+    error: loadGscError,
+  } = useQuery<GscSettings>({
+    queryKey: ["/api/admin/settings/gsc"],
+    queryFn: () => apiRequestJson<GscSettings>("GET", "/api/admin/settings/gsc"),
     retry: false,
   });
 
@@ -154,6 +175,40 @@ export default function AdminSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/ga4"] });
       toast({ title: "Đã xóa GA Measurement ID trong database" });
       refetchGa();
+    },
+    onError: (e: unknown) => {
+      toast({ title: "Lỗi", description: parseApiErrorMessage(e), variant: "destructive" });
+    },
+  });
+
+  const saveGscMutation = useMutation({
+    mutationFn: () =>
+      apiRequestJson<GscSettings>("PUT", "/api/admin/settings/gsc", {
+        ...(gscVerificationToken.trim() ? { verificationToken: gscVerificationToken.trim() } : {}),
+      }),
+    onSuccess: () => {
+      setGscVerificationToken("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/gsc"] });
+      toast({ title: "Đã lưu verification token Search Console" });
+      refetchGsc();
+    },
+    onError: (e: unknown) => {
+      toast({
+        title: "Lỗi lưu cài đặt",
+        description: parseApiErrorMessage(e),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const clearGscMutation = useMutation({
+    mutationFn: () =>
+      apiRequestJson<GscSettings>("PUT", "/api/admin/settings/gsc", { clearVerificationToken: true }),
+    onSuccess: () => {
+      setGscVerificationToken("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/gsc"] });
+      toast({ title: "Đã xóa verification token trong database" });
+      refetchGsc();
     },
     onError: (e: unknown) => {
       toast({ title: "Lỗi", description: parseApiErrorMessage(e), variant: "destructive" });
@@ -394,6 +449,132 @@ export default function AdminSettingsPage() {
                   onClick={() => clearGaMutation.mutate()}
                 >
                   Xóa value (DB)
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="max-w-2xl border-[#004080]/15">
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-[#004080]">
+                  <Search className="h-5 w-5 text-[#ffcc00]" />
+                  Google Search Console
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Verification token (HTML meta tag) để xác minh sở hữu{" "}
+                  <code className="text-xs">swhubco.com</code> trên Search Console. Sau verify, submit sitemap{" "}
+                  <code className="text-xs">sitemap.xml</code> trong GSC dashboard.
+                </CardDescription>
+              </div>
+              {isLoadingGsc ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : gscData?.configured ? (
+                <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Đã cấu hình
+                </Badge>
+              ) : (
+                <Badge variant="secondary">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Chưa cấu hình
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-5">
+            {loadGscError && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                {parseApiErrorMessage(loadGscError)}
+              </div>
+            )}
+
+            {gscData && (
+              <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm space-y-1">
+                <p>
+                  <span className="text-muted-foreground">Sitemap URL:</span>{" "}
+                  <a
+                    href={gscData.sitemapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#004080] underline break-all"
+                  >
+                    {gscData.sitemapUrl}
+                  </a>
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Nguồn token:</span>{" "}
+                  <strong>
+                    {gscData.source === "database"
+                      ? "Database (Admin)"
+                      : gscData.source === "env"
+                        ? "Env"
+                        : "Chưa cấu hình"}
+                  </strong>
+                </p>
+                {gscData.tokenMasked && (
+                  <p>
+                    <span className="text-muted-foreground">Token:</span>{" "}
+                    <code className="text-xs">{gscData.tokenMasked}</code>
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm text-amber-950 space-y-2">
+              <p className="font-medium">Cách lấy token</p>
+              <ol className="list-decimal list-inside space-y-1 text-xs">
+                <li>
+                  Vào{" "}
+                  <a
+                    href="https://search.google.com/search-console"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#004080] underline"
+                  >
+                    Google Search Console
+                  </a>{" "}
+                  → Add property → HTML tag
+                </li>
+                <li>Copy phần <code>content</code> trong thẻ meta (không copy cả thẻ)</li>
+                <li>Lưu ở đây → Verify trên GSC → Sitemaps → submit <code>sitemap.xml</code></li>
+              </ol>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gsc-verification-token">Verification token</Label>
+              <Input
+                id="gsc-verification-token"
+                type="password"
+                autoComplete="off"
+                placeholder={gscData?.tokenMasked ? "Để trống nếu không đổi" : "Dán content từ GSC..."}
+                value={gscVerificationToken}
+                onChange={(e) => setGscVerificationToken(e.target.value)}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                className="bg-[#004080] hover:bg-[#003366]"
+                disabled={saveGscMutation.isPending || !gscVerificationToken.trim()}
+                onClick={() => saveGscMutation.mutate()}
+              >
+                {saveGscMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Lưu token
+              </Button>
+              {gscData?.hasDatabaseValue && (
+                <Button
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  disabled={clearGscMutation.isPending}
+                  onClick={() => clearGscMutation.mutate()}
+                >
+                  Xóa token (DB)
                 </Button>
               )}
             </div>

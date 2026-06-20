@@ -181,10 +181,10 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 | `/robots.txt` | `sitemap.routes.ts` | Robots file |
 | `/health` | Inline | Service health check |
 
-### 4.2. Payment API (payOS — target)
+### 4.2. Payment API (payOS)
 
 > **Tài liệu gốc:** [payOS API](https://payos.vn/docs/api/) · Production base: `https://api-merchant.payos.vn`  
-> **Trạng thái code:** Routes bên dưới **đã có**; implementation bên trong vẫn gọi SePay — xem migration **§15.1 H5**.
+> **Trạng thái code:** ✅ Implemented — `server/lib/payos.ts`, webhook `/api/payment/webhook` (§15.9).
 
 #### 4.2.1. payOS primitives (merchant API)
 
@@ -202,14 +202,14 @@ Route registration in `server/routes.ts`. 22 route modules under `server/routes/
 
 **Webhook:** Verify `signature` trên payload; phản hồi HTTP 2xx để xác nhận nhận thành công. Chi tiết: [Kiểm tra dữ liệu webhook](https://payos.vn/docs/tich-hop-webhook/kiem-tra-du-lieu-voi-signature/).
 
-#### 4.2.2. Software Hub routes (giữ path, đổi backend)
+#### 4.2.2. Software Hub routes (payOS — implemented)
 
-| Method | Path | Auth | Target behavior (payOS) |
+| Method | Path | Auth | Behavior |
 |---|---|---|---|
 | `POST` | `/api/payment/initiate` | ✅ | Wallet top-up (min 1.000₫) → `POST /v2/payment-requests` → redirect `checkoutUrl` |
 | `POST` | `/api/payment/checkout` | ✅ buyer/admin | Tạo `pending` order → payment link → `checkoutUrl` |
-| `POST` | `/api/payment/webhook` | Public (payOS) | Nhận webhook; verify signature; fulfill order / credit wallet |
-| `POST` | `/api/payment/ipn` | Public | **Alias legacy** → redirect handler tới webhook (trong lúc migration) |
+| `POST` | `/api/payment/webhook` | Public (payOS) | Verify signature; fulfill order / credit wallet |
+| `POST` | `/api/payment/ipn` | Public | Legacy alias → same payOS webhook handler |
 | `GET` | `/api/payments` | ✅ | Role-filtered payment list |
 | `POST` | `/api/payments` | ✅ | Manual project/order payment record |
 | `PUT` | `/api/payments/:id/status` | admin | Update payment status |
@@ -495,12 +495,13 @@ Refactored dashboard architecture:
 | **payOS** | Wallet top-up + marketplace + IT service payments | ✅ Active (§4.2) |
 | SendGrid / Resend | Transactional email | ✅ Active |
 | Firebase FCM | Push notifications | ✅ Active |
-|| **Google Analytics 4** | Traffic tracking (`VITE_GA_MEASUREMENT_ID`) | ✅ Active |
-|| **Google AdSense** | Ad display revenue (`client/index.html`) | ✅ Active |
-|| Stripe | Card payments | ⛔ Legacy (env vars only, not wired) |
-|| Google Generative AI | Chat AI responses | ✅ Active |
-|| Redis | Message queue | ✅ VPS Docker |
-|| MongoDB | Chat message store | ✅ VPS Docker |
+| **Google Analytics 4** | Traffic tracking (admin DB + env + `/api/config`) | ✅ Active |
+| **Google AdSense** | Ad display revenue (`client/index.html`) | ✅ Active |
+| Stripe | Card payments | ⛔ Legacy (schema column only, not wired) |
+| Google Generative AI | Chat AI responses | ✅ Active |
+| DeepSeek | Blog AI rewrite (`/api/blog/admin/ai-rewrite`) | ✅ Active (admin settings) |
+| Redis | Message queue | ✅ VPS Docker |
+| MongoDB | Chat message store | ✅ VPS Docker |
 
 ### 7.3. Supabase Integration (Completed)
 
@@ -624,6 +625,7 @@ Source of truth: `.env.example` (local), `.env.vps.example` (VPS-specific).
    - `docker compose -f docker-compose.vps.yml up -d` (Redis + Mongo)
    - `npm ci --omit=dev`
    - `pm2 reload ecosystem.config.cjs --env production`
+   - `install-blog-crawler-cron.sh` — crontab 08:00 `Asia/Ho_Chi_Minh`
 5. Health check: `curl :5000/health`
 
 **GitHub Secrets required:** `SSH_HOST`, `SSH_USERNAME`, `SSH_KEY`, `SSH_PORT`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_ANON_KEY`, `VITE_GA_MEASUREMENT_ID`, `VITE_GEMINI_API_KEY`, `SITE_URL`, `VPS_ENV_B64` (full runtime `.env` — sync via `bash scripts/sync-github-secrets.sh`)
@@ -674,8 +676,23 @@ npm start              # node dist/server/index.js
 | **EbookFoundation/free-programming-books** (340k⭐) | `scripts/parse-ebookfoundation-courses.ts` | ✅ Done |
 | **YouTube channels VN** (~50 courses) | `scripts/seed-it-courses-v2.ts` (thủ công) | ✅ Done |
 | **Seed all free software** (hợp nhất) | `scripts/seed-all-free-software.ts` | ✅ Done — ~4,100+ software production |
+| **Blog content crawler** | `scripts/run-blog-crawler.ts` | ✅ Done — dev.to + RSS; cron VPS 08:00 daily |
 
-### 11.2. Data Expansion Strategy (Phase 6)
+### 11.2. Blog crawler (production cron)
+
+| Item | Detail |
+|------|--------|
+| CLI (dev) | `npm run blog:crawl` — `tsx scripts/run-blog-crawler.ts` |
+| CLI (prod) | `npm run blog:crawl:prod` — `node dist/scripts/run-blog-crawler.js` |
+| Sources (default cron) | `devto`, `freecodecamp` (Hashnode excluded — rate limit 429) |
+| Output | Insert `blog_posts` with `status = draft`, tag `source:*` |
+| Cron | `0 8 * * * TZ=Asia/Ho_Chi_Minh` → `/var/www/software-hub/run-blog-crawl-cron.sh` |
+| Log | `/var/log/software-hub-blog-crawler.log` |
+| Admin workflow | `/admin/blog` — filter draft → AI rewrite (DeepSeek) → publish |
+
+Chi tiết: [`content-crawler-SPEC.md`](./content-crawler-SPEC.md).
+
+### 11.3. Data Expansion Strategy (Phase 6)
 
 Chi tiết: [`data-expansion.md`](./data-expansion.md)
 
@@ -722,7 +739,7 @@ Chi tiết: [`data-expansion.md`](./data-expansion.md)
 
 **Schema:** Table `courses` (đã có) — không cần migration.
 
-### 11.3. Database Dumps
+### 11.4. Database Dumps
 
 - Location: `database/dumps/` and `shared/data-dumps/`
 - Format: Full SQL dumps + Schema-only + Data-only
@@ -751,7 +768,7 @@ Chi tiết: [`data-expansion.md`](./data-expansion.md)
 | Phase 3b | ✅ Done | **payOS migration** — §15.9 |
 | Phase 5 | ✅ Done | GTM core + admin course SEO CMS (`/admin/courses`) |
 | Phase 6 | ✅ Done (data) / 🟡 UI polish | **Data expansion** shipped (~4,100 software, ~310 courses). Design system (`ui-improvement-v1.md`) mostly done. Catalog UI backlog: source badge, essential tab — `data-expansion.md` §Phase 3 |
-| Phase 7 | 🆕 Planned | AI Hub preview — `go-to-market.md` §10, `gtm-operations.md` §7 |
+| Phase 7 | 🆕 Planned | AI Hub — free tools + khóa AI + consulting (`go-to-market.md` §1, `gtm-operations.md` §11) |
 
 ---
 
@@ -838,7 +855,8 @@ Tư vấn → quote → đơn hàng (IT Studio hoặc Marketplace)
 
 | Feature | Status | Notes |
 |---|---|---|
-| Blog module (`/blog`, `/admin/blog`) | ✅ Done | Admin CMS: full-size modal editor, stats, CRUD |
+| Blog module (`/blog`, `/admin/blog`) | ✅ Done | Admin CMS + DeepSeek AI rewrite |
+| Blog content crawler (cron) | ✅ Done | 08:00 daily VPS; ~68 drafts sau lần chạy đầu (6/2026) |
 | Admin analytics (`/admin/analytics`) | 🟡 Partial | Platform metrics + orders/leads timeline charts + GTM counts; GA4 traffic vẫn link-out |
 | Lead capture (`/api/leads`, `/admin/leads`) | ✅ Done | |
 | LeadCaptureForm component | ✅ Done | Navy/yellow brand |
@@ -884,7 +902,7 @@ Volume DB đủ SEO; ưu tiên **chất lượng content** — checklist đầy 
 |-------|---------------------|------------------|
 | Software catalog | ~4,100+ | ✅ Volume OK |
 | Courses | ~310+ | Enrich top 20–50 pages (500–800 từ) |
-| Blog posts | ~3 | **10–15** bài lộ trình |
+| Blog posts (published) | ~5 | **10–15** bài lộ trình (crawler ~68+ draft cần review/publish) |
 | Install guides (VN) | 0 | **20–30** phần mềm phổ biến |
 | IT Studio case studies | 3 (trên `/it-services`) | Enrich thêm blog/case chi tiết |
 
@@ -906,15 +924,25 @@ Chi tiết: `gtm-operations.md` §7.
 ## 15. Implementation Backlog
 
 > Tổng hợp tính năng **chưa implement** hoặc **còn thiếu**, đối chiếu codebase tháng 6/2026.
-> Các mục đã xong (pending DB, portfolio API, cart unify, support tickets, schema.org, …) đã gỡ khỏi backlog.
+> Platform GTM + payOS + blog crawler cron **đã ship** — backlog còn lại chủ yếu content ops, UI polish, Phase 7.
 
 ### 15.1. High Priority — Ảnh hưởng doanh thu / UX
 
-| # | Feature | Mô tả | Files / gợi ý |
+| # | Feature | Mô tả | Status |
 |---|---|---|---|
-| H5 | **payOS migration** — thay SePay toàn stack | ✅ Done — §15.9 | `server/lib/payos.ts`, webhook `/api/payment/webhook` |
+| H5 | payOS migration | Thay SePay toàn stack | ✅ Done — §15.9 |
+| H6 | **Multi-seller cart split UX** | Checkout hiện reject mixed-seller cart | ⬜ Chưa có UX tách đơn theo seller |
+| H7 | **Blog publish pipeline** | Crawler tạo draft; cần review + AI rewrite + publish | 🟡 Ops — tool sẵn, content chưa publish |
 
-### 15.2. Medium Priority — SEO / GTM / Phase 4 polish
+### 15.2. Medium Priority — SEO / GTM / Catalog UI
+
+| # | Feature | Mô tả | Status |
+|---|---|---|---|
+| M7 | **Catalog source badge** | Hiển thị "Từ download.com.vn" / GitHub trên `/software` | ⬜ `data-expansion.md` §Phase 3 |
+| M8 | **Essential apps tab** | Tab "Thiết yếu" cho máy mới cài | ⬜ Cần `essential` flag trong seed |
+| M9 | **GA4 admin embed** | Chart traffic 30d trong `/admin/analytics` | 🟡 API có; cần `GA4_PROPERTY_ID` + service account trên VPS |
+| M10 | **Software/course content enrich** | 500–800 từ tiếng Việt cho top pages | ⬜ Admin CMS sẵn; chưa làm content |
+| M11 | **Install guides VN** | 20–30 hướng dẫn cài đặt qua `/admin/software-seo` | ⬜ |
 
 > GTM conversion backlog (GTM-1…GTM-6) — ✅ Done tháng 6/2026. Chi tiết §14.9, `gtm-operations.md` §7.
 
@@ -929,7 +957,11 @@ Chi tiết: `gtm-operations.md` §7.
 | L8 | **Remove SePay after H5** | ✅ Done — gỡ `sepay-pg-node`, `sepay.ts`, env templates → `PAYOS_*` |
 | L5 | **Deduplicate docker-compose** | ✅ Done — `docker/COMPOSE.md`; deprecate `prod`/`production` compose |
 | L6 | **Drop `cart_items` table** | ✅ Done — removed schema + storage; SQL `database/migrations/005_drop_cart_items.sql` |
-| L7 | **`/api/cart` REST API** | ✅ N/A — dead storage removed; cart = `localStorage` only (no server route planned) |
+| L7 | **`/api/cart` REST API** | ✅ N/A — cart = `localStorage` only |
+| L9 | **Blog crawler sources** | ⬜ Partial — juejin/segmentfault chưa có; Hashnode tắt trên cron prod |
+| L10 | **AI rewrite audit log** | ⬜ Table `ai_rewrite_logs` — Phase 2 |
+| L11 | **Seller analytics gaps** | ⬜ `totalFavorites` / `totalDownloads` stub trong storage |
+| L12 | **Data refresh cron** | ⬜ Optional — scripts manual only |
 
 ### 15.6. Admin Dashboard — Polish & Gaps
 
@@ -1073,4 +1105,4 @@ Các mục sau **đã implement** — không còn trong backlog:
 
 ---
 
-*Last updated — payOS target gateway, June 2026*
+*Last updated — blog crawler cron + payOS, June 2026*

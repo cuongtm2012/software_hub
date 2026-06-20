@@ -3,7 +3,7 @@
 > Vận hành Go-to-Market sau khi platform tech đã ship. Bổ sung cho [`product.md`](./product.md) §14 (strategy) và [`go-to-market.md`](./go-to-market.md) (chiến lược dài hạn).
 
 **Production:** https://swhubco.com  
-**Cập nhật:** 2026-06-17
+**Cập nhật:** 2026-06-19
 
 ---
 
@@ -27,7 +27,8 @@ Chuyển từ **“có sản phẩm”** sang **“có traffic → lead → đơ
 | Hạng mục | Status | Ghi chú |
 |----------|--------|---------|
 | Course/software detail + schema | ✅ | `/courses/:slug`, `/software/:slug` |
-| Blog CMS | ✅ | `/blog`, `/admin/blog` + TipTap + AI rewrite |
+| Blog CMS + AI rewrite | ✅ | `/blog`, `/admin/blog` + DeepSeek |
+| Blog crawler cron | ✅ | 08:00 daily VPS — [`content-crawler-SPEC.md`](./content-crawler-SPEC.md) |
 | Leads API + admin | ✅ | `/api/leads`, `/admin/leads` |
 | LeadCapture detail pages | ✅ | software + course detail |
 | Ebook gate | ✅ | `/ebook/fullstack-roadmap` |
@@ -44,13 +45,14 @@ Chuyển từ **“có sản phẩm”** sang **“có traffic → lead → đơ
 
 Chi tiết: [`product.md`](./product.md) §14.6.
 
-### 2.2. Content inventory (2026-06-17)
+### 2.2. Content inventory (2026-06-19)
 
 | Asset | Production | GTM target (tháng 1–3) |
 |-------|------------|-------------------------|
 | Software catalog | ~4,100+ | ✅ Đủ volume SEO |
 | Courses | ~310+ | ✅ Đủ volume; cần enrich top pages |
-| Blog posts | ~3 | **10–15** bài lộ trình |
+| Blog posts (published) | ~5 | **10–15** bài lộ trình |
+| Blog drafts (crawler) | ~68+ | Review → AI rewrite → publish |
 | Case study IT Studio | 3 (section `/it-services`) | Enrich thêm blog/case chi tiết |
 | Ebook PDF file | Gate form có; file PDF cần xác nhận | 1 PDF + email auto |
 
@@ -114,10 +116,14 @@ GA4_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
 
 ### 4.3. Google Search Console
 
-- [ ] Verify domain `swhubco.com`
-- [ ] Submit `https://swhubco.com/sitemap.xml`
+> Hướng dẫn đầy đủ: [`google-search-console.md`](./google-search-console.md)
+
+- [ ] Tạo property `https://swhubco.com` trên [Search Console](https://search.google.com/search-console)
+- [ ] Lấy HTML tag token → lưu tại `/admin/settings` (card Search Console) hoặc env `GOOGLE_SITE_VERIFICATION`
+- [ ] Bấm **Verify** trên GSC (meta tag inject runtime vào homepage)
+- [ ] Submit sitemap: `sitemap.xml` (URL đầy đủ hiển thị trong admin settings)
 - [ ] Monitor: crawl errors, Core Web Vitals, top queries
-- [ ] Re-submit sitemap sau bulk seed content lớn
+- [ ] Re-submit sitemap sau bulk seed / publish blog lớn
 
 ### 4.4. UTM convention (outreach / share)
 
@@ -177,7 +183,7 @@ Hiển thị public: section **Bảng giá tham khảo** + **Case study SME** tr
 
 | # | Loại | Số lượng | Công cụ / path |
 |---|------|----------|----------------|
-| 1 | Blog lộ trình học | 5–10 bài | `/admin/blog` |
+| 1 | Blog lộ trình học | 5–10 bài publish | `/admin/blog` — filter draft crawler → AI rewrite |
 | 2 | Enrich top courses SEO | 20–50 trang | `/admin/courses` — 500–800 từ, internal links |
 | 3 | Software install guides VN | 20–30 trang | `/admin/software-seo` — EVKey, Docker, VS Code… |
 | 4 | Case study IT Studio | 2–3 | Blog hoặc `/it-services` |

@@ -1,6 +1,6 @@
 # Software Hub — Go-to-Market Strategy
 
-> Chiến lược đưa Software Studio ra thị trường | Cập nhật: 2026-06-17  
+> Chiến lược đưa Software Studio ra thị trường | Cập nhật: 2026-06-19  
 > **Vận hành GTM (KPI, lead SLA, content calendar):** [`gtm-operations.md`](./gtm-operations.md)  
 > **Tech implementation status:** [`product.md`](./product.md) §14.6
 
@@ -433,7 +433,8 @@ Gọi điện tư vấn (warm call)
 |----------|--------|
 | `/courses/:slug` landing + Course schema | ✅ |
 | `/software/:slug` + SoftwareApplication schema | ✅ |
-| Blog module `/blog` + admin CRUD | ✅ |
+| Blog module `/blog` + admin CRUD + AI rewrite | ✅ |
+| Blog content crawler (cron 08:00 VPS) | ✅ — xem `content-crawler-SPEC.md` |
 | Lead capture, ebook, booking, behavior popup | ✅ |
 | GTM conversion funnel (download gate, slide-in, scroll CTA, nurture email) | ✅ |
 | GA4 client + custom events + admin Measurement ID | ✅ |
@@ -444,7 +445,7 @@ Gọi điện tư vấn (warm call)
 
 | Việc | Status |
 |------|--------|
-| 5–10 blog posts lộ trình | 🟡 ~3 posts live |
+| 5–10 blog posts lộ trình **published** | 🟡 ~5 published; ~68+ draft từ crawler cần review |
 | Google Search Console submit | ⬜ Ops checklist — `gtm-operations.md` §4.3 |
 | GA4 admin embed trên VPS | 🟡 API có; cần env |
 | Enrich top course/software SEO | ⬜ Admin CMS sẵn có |

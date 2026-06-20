@@ -5,7 +5,7 @@
 ## Overview
 Đẩy thêm data phần mềm Free (hot trend) và tài liệu IT lên Software Hub production.
 
-**Status (2026-06-17):** Crawl + seed production **done** — ~4,100+ software, ~310+ courses.
+**Status (2026-06-19):** Crawl + seed production **done** — ~4,100+ software, ~310+ courses. Catalog UI backlog: source badge + essential tab.
 
 ---
 

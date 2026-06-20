@@ -124,9 +124,11 @@ Dedup: theo `name` (case-insensitive). Entry trùng tên → update, không inse
 Volume DB đủ cho SEO; tiếp theo là **chất lượng content** — xem [`gtm-operations.md`](./gtm-operations.md) §6:
 
 - [ ] Enrich top 20–50 course pages (500–800 từ)
-- [ ] 10+ blog lộ trình
+- [ ] Publish 10+ blog lộ trình (crawler cron đã tạo draft — review tại `/admin/blog`)
 - [ ] 20–30 software install guides tiếng Việt
-- [ ] 2–3 case study IT Studio
+- [ ] 2–3 case study IT Studio chi tiết
+
+**Blog crawler:** [`content-crawler-SPEC.md`](./content-crawler-SPEC.md) — cron 08:00 VPS, không thuộc pipeline seed catalog.
 
 ## Boundaries
 - **Always do:** dry-run seed trước, dedup theo name

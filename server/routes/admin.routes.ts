@@ -14,6 +14,7 @@ import {
   saveDeepseekSettings,
 } from "../lib/deepseek-settings.js";
 import { getGaSettingsPublic, saveGaSettings } from "../lib/ga-settings.js";
+import { getGscSettingsPublic, saveGscSettings } from "../lib/gsc-settings.js";
 import { deepseekChatCompletion } from "../lib/deepseek.js";
 
 const router = Router();
@@ -139,6 +140,30 @@ router.put("/settings/ga4", adminMiddleware, async (req: Request, res: Response)
     const message = error instanceof Error ? error.message : "Không lưu được cài đặt GA4";
     console.error("Save GA4 settings failed:", error);
     res.status(500).json({ message });
+  }
+});
+
+router.get("/settings/gsc", adminMiddleware, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const settings = await getGscSettingsPublic();
+    res.json(settings);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put("/settings/gsc", adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { verificationToken, clearVerificationToken } = req.body ?? {};
+    const settings = await saveGscSettings({
+      verificationToken: typeof verificationToken === "string" ? verificationToken : undefined,
+      clearVerificationToken: clearVerificationToken === true,
+    });
+    res.json(settings);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Không lưu được cài đặt Search Console";
+    console.error("Save GSC settings failed:", error);
+    res.status(400).json({ message });
   }
 });
 

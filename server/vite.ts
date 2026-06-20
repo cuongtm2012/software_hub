@@ -3,6 +3,8 @@ import fs from "fs";
 import path from "path";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
+import { getGoogleSiteVerificationToken } from "./lib/gsc-settings.js";
+import { injectGoogleSiteVerification } from "./lib/inject-html-meta.js";
 
 // Don't import vite at top level - it will be dynamically imported in setupVite
 
@@ -57,6 +59,8 @@ export async function setupVite(app: Express, server: Server) {
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      const gscToken = await getGoogleSiteVerificationToken();
+      template = injectGoogleSiteVerification(template, gscToken);
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
@@ -88,8 +92,17 @@ export function serveStatic(app: Express) {
   console.log(`Serving static files from: ${distPath}`);
   app.use(express.static(distPath));
 
+  const indexPath = path.resolve(distPath, "index.html");
+
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  app.use("*", async (_req, res, next) => {
+    try {
+      let html = await fs.promises.readFile(indexPath, "utf-8");
+      const gscToken = await getGoogleSiteVerificationToken();
+      html = injectGoogleSiteVerification(html, gscToken);
+      res.status(200).set({ "Content-Type": "text/html" }).send(html);
+    } catch (error) {
+      next(error);
+    }
   });
 }
